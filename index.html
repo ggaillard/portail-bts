@@ -95,6 +95,12 @@ tr:last-child td{border-bottom:0}
 .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
 .scroll{overflow-x:auto}
 
+.avatars{display:flex;flex-wrap:wrap;gap:.4rem}
+.av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
+    border-radius:8px;padding:.45rem .5rem;cursor:pointer}
+.av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
+.av[disabled]{opacity:.25;cursor:not-allowed}
+
 footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
        font-size:.83rem;color:var(--ink-faint);display:flex;flex-direction:column;gap:.35rem}
 .spin{color:var(--ink-faint);font-size:.92rem}
@@ -164,10 +170,18 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
 <section id="espace-etu" hidden>
   <div class="ident">
     <span class="ident-num" id="mon-numero"></span>
+    <span class="ident-num" id="mon-avatar"></span>
     <span class="ident-txt">Vous êtes le numéro <b id="mon-numero-2"></b> en <b id="ma-classe"></b>.<br>
       Vos projets s'ouvrent sans nouvelle saisie.</span>
     <button class="btn btn-sec" id="b-sortie-etu">Ce n'est pas moi</button>
   </div>
+  <div class="card" id="bloc-avatar" hidden>
+    <h2>Choisissez votre avatar</h2>
+    <p class="hint">Il sera à vous seul toute l'année. C'est lui qu'on verra au tableau, jamais votre nom. Les avatars grisés sont déjà pris.</p>
+    <div id="err-avatar"></div>
+    <div class="avatars" id="grille-avatars"></div>
+  </div>
+
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
 </section>
@@ -262,12 +276,52 @@ function afficherProjets(conteneur, liste){
   liste.forEach(function(p){ c.appendChild(carte(p)); });
 }
 
+// ── Choix de l'avatar ──────────────────────────────────────────────────────
+var AVATARS = ["🦊","🐢","🦉","🐙","🦁","🐺","🦄","🐝","🐬","🦋",
+               "🐧","🦔","🐳","🦅","🐨","🦝","🐸","🦖","🦩","🐍",
+               "🦎","🐊","🦦","🐼","🦒","🐯","🦓","🐘","🦥","🐐",
+               "🦡","🐇","🦭","🦈","🐴","🦌","🐡","🐖","🦃","🦚"];
+
+function proposerAvatar(moi){
+  $("bloc-avatar").hidden = false;
+  var grille = $("grille-avatars");
+
+  sb.rpc("avatars_pris", { p_classe_code: moi.classe_code }).then(function(r){
+    var pris = {};
+    (r.data || []).forEach(function(x){ pris[x.avatar || x] = true; });
+    grille.innerHTML = "";
+
+    AVATARS.forEach(function(a){
+      var b = document.createElement("button");
+      b.className = "av";
+      b.type = "button";
+      b.textContent = a;
+      b.setAttribute("aria-label", "Choisir l'avatar " + a);
+      if (pris[a]) { b.disabled = true; }
+      else {
+        b.addEventListener("click", function(){
+          erreur("err-avatar", "");
+          sb.rpc("choisir_avatar", { p_avatar: a }).then(function(rc){
+            if (rc.error) { erreur("err-avatar", rc.error.message); return; }
+            $("bloc-avatar").hidden = true;
+            $("mon-avatar").textContent = a;
+          });
+        });
+      }
+      grille.appendChild(b);
+    });
+  });
+}
+
 // ── Espace étudiant ────────────────────────────────────────────────────────
 function ouvrirEspaceEtudiant(moi){
   $("mon-numero").textContent   = moi.numero;
   $("mon-numero-2").textContent = moi.numero;
   $("ma-classe").textContent    = moi.classe_nom || moi.classe_code;
+  $("mon-avatar").textContent   = moi.avatar || "";
   montrer("espace-etu");
+
+  if (!moi.avatar) proposerAvatar(moi);
 
   sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", moi.classe_id).order("ordre")
