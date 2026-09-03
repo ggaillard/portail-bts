@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tour de contrôle — Portail BTS SIO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#F4F6F8; --surface:#FFF; --surface-alt:#EDF1F4;
+  --ink:#17212B; --ink-soft:#5A6B7B; --ink-faint:#8697A6;
+  --rule:#DCE3E9; --rule-soft:#E9EEF2;
+  --accent:#0E6E6E; --accent-ink:#0A5555; --accent-soft:#E1EFEE;
+  --signal:#B45309; --signal-soft:#FBF0E2;
+  --ok:#1B7F4B; --ok-soft:#E3F2E9;
+  --f-sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#0F171E; --surface:#16202A; --surface-alt:#1B2733;
+  --ink:#E4EAF0; --ink-soft:#9CACBB; --ink-faint:#71828F;
+  --rule:#26333F; --rule-soft:#1F2B36;
+  --accent:#4FB3AD; --accent-ink:#79CBC5; --accent-soft:#123230;
+  --signal:#D9903F; --signal-soft:#33260F;
+  --ok:#4FBF84; --ok-soft:#10301F;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-sans);
+     font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:52rem;margin:0 auto;padding:0 1.25rem 4rem}
+
+header{border-bottom:1px solid var(--rule);padding:2.75rem 0 1.5rem;margin-bottom:2rem}
+.eyebrow{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;
+         text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.5rem}
+h1{font-size:2rem;line-height:1.1;letter-spacing:-.02em;font-weight:600}
+.sub{color:var(--ink-soft);margin-top:.5rem}
+
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:8px;
+      padding:1.5rem;margin-bottom:1rem}
+h2{font-size:1.15rem;font-weight:600;letter-spacing:-.01em;margin-bottom:.35rem}
+.hint{color:var(--ink-soft);font-size:.92rem;margin-bottom:1.1rem}
+
+.tabs{display:flex;gap:.4rem;margin-bottom:1.5rem}
+.tab{flex:1;background:var(--surface);border:1px solid var(--rule);border-radius:7px;
+     padding:.6rem .8rem;font:inherit;font-size:.92rem;font-weight:500;color:var(--ink-soft);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+
+.field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.9rem}
+label{font-size:.83rem;font-weight:500;color:var(--ink-soft)}
+input,select{background:var(--surface-alt);color:var(--ink);border:1px solid var(--rule);
+  border-radius:7px;padding:.6rem .7rem;font:inherit;font-size:.95rem;width:100%}
+.row{display:flex;gap:.7rem}
+.row .field{flex:1}
+
+.btn{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:.65rem 1.1rem;
+     font:inherit;font-size:.95rem;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn-sec{background:transparent;color:var(--ink-soft);border:1px solid var(--rule)}
+
+.msg{border-left:2px solid var(--signal);background:var(--signal-soft);
+     border-radius:0 5px 5px 0;padding:.7rem .9rem;font-size:.9rem;margin-bottom:1rem}
+.msg.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+
+.ident{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+       background:var(--accent-soft);border:1px solid var(--accent);
+       border-radius:8px;padding:.85rem 1.1rem;margin-bottom:1.25rem}
+.ident-num{font-family:var(--f-mono);font-size:1.35rem;font-weight:600;color:var(--accent-ink)}
+.ident-txt{flex:1;font-size:.92rem;color:var(--ink)}
+.ident-txt b{font-weight:600}
+
+.projets{display:grid;gap:.8rem;grid-template-columns:1fr}
+@media(min-width:38rem){.projets{grid-template-columns:1fr 1fr}}
+a.projet{display:flex;gap:.9rem;align-items:flex-start;text-decoration:none;color:inherit;
+  background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:1.1rem}
+a.projet:hover{border-color:var(--accent);background:var(--accent-soft)}
+.projet-ico{font-family:var(--f-mono);font-size:.72rem;font-weight:600;letter-spacing:.04em;
+  color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);
+  border-radius:5px;padding:.3rem .45rem;flex:none;margin-top:.15rem}
+a.projet:hover .projet-ico{background:var(--surface)}
+.projet-t{font-weight:600;font-size:.98rem;margin-bottom:.15rem}
+.projet-d{font-size:.87rem;color:var(--ink-soft);line-height:1.45}
+
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.09em;
+   text-transform:uppercase;color:var(--ink-faint);font-weight:500;
+   padding:0 .6rem .45rem 0;border-bottom:1px solid var(--rule)}
+td{padding:.55rem .6rem .55rem 0;border-bottom:1px solid var(--rule-soft);color:var(--ink-soft)}
+td:first-child,th:first-child{padding-left:0}
+tr:last-child td{border-bottom:0}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.scroll{overflow-x:auto}
+
+footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
+       font-size:.83rem;color:var(--ink-faint);display:flex;flex-direction:column;gap:.35rem}
+.spin{color:var(--ink-faint);font-size:.92rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">BTS SIO · Année 2026-2027</span>
+  <h1>Tour de contrôle</h1>
+  <p class="sub">Identifiez-vous une fois : vous accédez ensuite à tous vos projets sans ressaisir quoi que ce soit.</p>
+</header>
+
+<p id="chargement" class="spin">Chargement…</p>
+
+<!-- ══════════ CONNEXION ══════════ -->
+<section id="connexion" hidden>
+  <div class="tabs" role="tablist">
+    <button class="tab" id="t-etu" role="tab" aria-selected="true" aria-controls="p-etu">Étudiant</button>
+    <button class="tab" id="t-ens" role="tab" aria-selected="false" aria-controls="p-ens">Enseignant</button>
+  </div>
+
+  <div class="card" id="p-etu" role="tabpanel">
+    <h2>Accéder à mes projets</h2>
+    <p class="hint">Votre numéro et votre code vous ont été remis par votre enseignant. Aucun nom n'est demandé, et aucun n'est enregistré.</p>
+    <div id="err-etu"></div>
+    <form id="f-etu">
+      <div class="field">
+        <label for="classe">Votre classe</label>
+        <select id="classe" required></select>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="numero">Numéro</label>
+          <input id="numero" inputmode="numeric" autocomplete="off" placeholder="07" maxlength="3" required>
+        </div>
+        <div class="field">
+          <label for="pin">Code à 4 chiffres</label>
+          <input id="pin" inputmode="numeric" autocomplete="off" placeholder="····" maxlength="4">
+        </div>
+      </div>
+      <button class="btn" type="submit" id="b-etu">Me connecter</button>
+    </form>
+  </div>
+
+  <div class="card" id="p-ens" role="tabpanel" hidden>
+    <h2>Espace enseignant</h2>
+    <p class="hint">Connexion avec le compte enseignant déclaré dans Supabase.</p>
+    <div id="err-ens"></div>
+    <form id="f-ens">
+      <div class="field">
+        <label for="email">Adresse électronique</label>
+        <input id="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="mdp">Mot de passe</label>
+        <input id="mdp" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn" type="submit" id="b-ens">Me connecter</button>
+    </form>
+  </div>
+</section>
+
+<!-- ══════════ ÉTUDIANT CONNECTÉ ══════════ -->
+<section id="espace-etu" hidden>
+  <div class="ident">
+    <span class="ident-num" id="mon-numero"></span>
+    <span class="ident-txt">Vous êtes le numéro <b id="mon-numero-2"></b> en <b id="ma-classe"></b>.<br>
+      Vos projets s'ouvrent sans nouvelle saisie.</span>
+    <button class="btn btn-sec" id="b-sortie-etu">Ce n'est pas moi</button>
+  </div>
+  <h2 style="margin-bottom:.9rem">Vos projets</h2>
+  <div class="projets" id="mes-projets"></div>
+</section>
+
+<!-- ══════════ ENSEIGNANT CONNECTÉ ══════════ -->
+<section id="espace-ens" hidden>
+  <div class="ident">
+    <span class="ident-txt">Connecté en <b>enseignant</b>. Vous voyez toutes les classes.</span>
+    <button class="btn btn-sec" id="b-sortie-ens">Se déconnecter</button>
+  </div>
+  <div class="card">
+    <h2>Vos classes</h2>
+    <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
+    <div class="scroll"><table id="t-classes">
+      <thead><tr><th>Classe</th><th>Code</th><th>Étudiants</th><th>Connectés</th><th>Unités</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+  <h2 style="margin-bottom:.9rem">Tous les projets</h2>
+  <div class="projets" id="tous-projets"></div>
+</section>
+
+<footer>
+  <span>Aucun nom, aucune adresse électronique d'élève n'est enregistré. Seuls un numéro et un avatar sont conservés.</span>
+  <span>Données hébergées dans l'Union européenne (Francfort). Suppression en fin d'année scolaire.</span>
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+
+var CFG = window.TDC_CONFIG;
+var $ = function(id){ return document.getElementById(id); };
+
+if (!CFG || !CFG.url || !CFG.cle) {
+  $("chargement").textContent = "Configuration absente : le fichier config.js n'a pas été chargé.";
+  return;
+}
+if (!window.supabase || !window.supabase.createClient) {
+  $("chargement").textContent = "La librairie Supabase n'a pas pu être chargée. Vérifiez votre connexion.";
+  return;
+}
+
+var sb = window.supabase.createClient(CFG.url, CFG.cle, {
+  auth: { persistSession: true, autoRefreshToken: true }
+});
+
+function erreur(zone, texte, ok){
+  $(zone).innerHTML = texte ? '<div class="msg' + (ok ? ' ok' : '') + '">' + texte + '</div>' : '';
+}
+function montrer(id){
+  ["chargement","connexion","espace-etu","espace-ens"].forEach(function(s){
+    $(s).hidden = (s !== id);
+  });
+}
+
+// ── Onglets ────────────────────────────────────────────────────────────────
+function onglet(actif){
+  var etu = actif === "etu";
+  $("t-etu").setAttribute("aria-selected", etu);
+  $("t-ens").setAttribute("aria-selected", !etu);
+  $("p-etu").hidden = !etu;
+  $("p-ens").hidden = etu;
+}
+$("t-etu").addEventListener("click", function(){ onglet("etu"); });
+$("t-ens").addEventListener("click", function(){ onglet("ens"); });
+
+// ── Rendu des cartes projet ────────────────────────────────────────────────
+function carte(p){
+  var a = document.createElement("a");
+  a.className = "projet";
+  a.href = p.url;
+  a.innerHTML = '<span class="projet-ico"></span><span><span class="projet-t"></span>' +
+                '<span class="projet-d"></span></span>';
+  a.querySelector(".projet-ico").textContent = p.icone || "•";
+  a.querySelector(".projet-t").textContent   = p.titre;
+  a.querySelector(".projet-d").textContent   = p.description || "";
+  return a;
+}
+
+function afficherProjets(conteneur, liste){
+  var c = $(conteneur);
+  c.innerHTML = "";
+  if (!liste || !liste.length) {
+    c.innerHTML = '<p class="hint">Aucun projet n\'est encore associé à cette classe.</p>';
+    return;
+  }
+  liste.forEach(function(p){ c.appendChild(carte(p)); });
+}
+
+// ── Espace étudiant ────────────────────────────────────────────────────────
+function ouvrirEspaceEtudiant(moi){
+  $("mon-numero").textContent   = moi.numero;
+  $("mon-numero-2").textContent = moi.numero;
+  $("ma-classe").textContent    = moi.classe_nom || moi.classe_code;
+  montrer("espace-etu");
+
+  sb.from("projets").select("titre,description,url,icone,ordre")
+    .eq("classe_id", moi.classe_id).order("ordre")
+    .then(function(r){ afficherProjets("mes-projets", r.data); });
+}
+
+// ── Espace enseignant ──────────────────────────────────────────────────────
+function ouvrirEspaceEnseignant(){
+  montrer("espace-ens");
+
+  sb.from("classes").select("id,code,nom").order("code").then(function(rc){
+    var classes = rc.data || [];
+    var corps = $("t-classes").querySelector("tbody");
+    corps.innerHTML = "";
+
+    classes.forEach(function(c){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + c.nom + "</td><td class='num'>" + c.code +
+                     "</td><td class='num' data-e>…</td><td class='num' data-c>…</td>" +
+                     "<td class='num' data-s>…</td>";
+      corps.appendChild(tr);
+
+      sb.from("eleves").select("auth_id").eq("classe_id", c.id).then(function(re){
+        var l = re.data || [];
+        tr.querySelector("[data-e]").textContent = l.length;
+        tr.querySelector("[data-c]").textContent = l.filter(function(x){ return x.auth_id; }).length;
+      });
+      sb.from("seances").select("id").eq("classe_id", c.id).then(function(rs){
+        tr.querySelector("[data-s]").textContent = (rs.data || []).length;
+      });
+    });
+
+    sb.from("projets").select("titre,description,url,icone,ordre,classe_id")
+      .order("classe_id").order("ordre")
+      .then(function(rp){
+        var nomDe = {};
+        classes.forEach(function(c){ nomDe[c.id] = c.code; });
+        var liste = (rp.data || []).map(function(p){
+          return { titre: p.titre, url: p.url, icone: p.icone,
+                   description: (nomDe[p.classe_id] || "") + " — " + (p.description || "") };
+        });
+        afficherProjets("tous-projets", liste);
+      });
+  });
+}
+
+// ── Formulaire étudiant ────────────────────────────────────────────────────
+$("f-etu").addEventListener("submit", function(e){
+  e.preventDefault();
+  erreur("err-etu", "");
+  $("b-etu").disabled = true;
+  $("b-etu").textContent = "Connexion…";
+
+  sb.rpc("rejoindre", {
+    p_classe_code: $("classe").value,
+    p_numero:      $("numero").value.trim(),
+    p_pin:         $("pin").value.trim() || null
+  }).then(function(r){
+    $("b-etu").disabled = false;
+    $("b-etu").textContent = "Me connecter";
+    if (r.error) { erreur("err-etu", r.error.message); return; }
+    ouvrirEspaceEtudiant(r.data);
+  });
+});
+
+// ── Formulaire enseignant ──────────────────────────────────────────────────
+$("f-ens").addEventListener("submit", function(e){
+  e.preventDefault();
+  erreur("err-ens", "");
+  $("b-ens").disabled = true;
+  $("b-ens").textContent = "Connexion…";
+
+  sb.auth.signInWithPassword({ email: $("email").value, password: $("mdp").value })
+    .then(function(r){
+      $("b-ens").disabled = false;
+      $("b-ens").textContent = "Me connecter";
+      if (r.error) { erreur("err-ens", "Identifiants refusés."); return; }
+      return sb.rpc("est_enseignant").then(function(re){
+        if (re.data) { ouvrirEspaceEnseignant(); }
+        else {
+          erreur("err-ens", "Ce compte n'est pas déclaré comme enseignant.");
+          sb.auth.signOut();
+        }
+      });
+    });
+});
+
+// ── Déconnexion ────────────────────────────────────────────────────────────
+function sortir(){ sb.auth.signOut().then(function(){ location.reload(); }); }
+$("b-sortie-etu").addEventListener("click", sortir);
+$("b-sortie-ens").addEventListener("click", sortir);
+
+// ── Démarrage ──────────────────────────────────────────────────────────────
+function chargerClasses(){
+  return sb.from("classes").select("code,nom").order("code").then(function(r){
+    var sel = $("classe");
+    sel.innerHTML = "";
+    (r.data || []).forEach(function(c){
+      var o = document.createElement("option");
+      o.value = c.code;
+      o.textContent = c.nom;
+      sel.appendChild(o);
+    });
+    if (!r.data || !r.data.length) {
+      sel.innerHTML = '<option value="">Aucune classe disponible</option>';
+    }
+  });
+}
+
+sb.auth.getSession().then(function(s){
+  var session = s.data && s.data.session;
+  if (session) {
+    return sb.rpc("est_enseignant").then(function(re){
+      if (re.data) { ouvrirEspaceEnseignant(); return; }
+      return sb.rpc("qui_suis_je").then(function(rm){
+        if (rm.data) { ouvrirEspaceEtudiant(rm.data); }
+        else { return chargerClasses().then(function(){ montrer("connexion"); }); }
+      });
+    });
+  }
+  return sb.auth.signInAnonymously().then(function(){
+    return chargerClasses().then(function(){ montrer("connexion"); });
+  });
+}).catch(function(){
+  $("chargement").textContent =
+    "Connexion au service impossible. Réessayez dans un instant, ou prévenez votre enseignant.";
+});
+
+})();
+</script>
+</body>
+</html>
