@@ -1,86 +1,152 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  JEU D'ESSAI — classe de démonstration
+--  JEU D'ESSAI — toutes les situations d'une séance
 --
---  Crée une classe DEMO-2026 séparée de vos vraies classes, avec 12 élèves,
---  une séance de 10 questions et des réponses variées. Elle sert à voir le
---  suivi fonctionner et à vous entraîner avant une vraie séance.
+--  Crée deux classes de démonstration, séparées de vos vraies classes :
 --
---  À coller dans Supabase → SQL Editor → New query → Run.
---  Supabase affichera un avertissement « opérations destructives » à cause
---  du DELETE de nettoyage en tête : c'est normal, il ne vide que DEMO-2026.
---  Confirmez avec le second bouton « Run query ».
+--   • DEMO-2026        12 élèves, 7 séances, une par scénario
+--   • DEMO-GRANDE-2026 30 élèves, 1 séance, pour voir tenir un gros effectif
 --
---  Pour tout supprimer plus tard :
---     delete from public.classes where code = 'DEMO-2026';
+--  Vous choisissez la variante dans le menu « séance » du suivi : aucune
+--  manipulation supplémentaire, chaque séance raconte une situation différente.
+--
+--  À coller dans Supabase → SQL Editor → Run. Le DELETE de tête ne vide que
+--  les classes de démonstration : Supabase affichera l'avertissement rouge,
+--  confirmez avec le second bouton « Run query ».
+--
+--  Pour tout supprimer ensuite :
+--     delete from public.classes where code like 'DEMO%';
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Repartir d'une base propre si le jeu d'essai existe déjà
-delete from public.classes where code = 'DEMO-2026';
+delete from public.classes where code in ('DEMO-2026', 'DEMO-GRANDE-2026');
 
--- ─── 1. La classe ──────────────────────────────────────────────────────────
+-- ═══ CLASSE 1 — douze élèves ═══════════════════════════════════════════════
 insert into public.classes (code, nom, annee) values
-  ('DEMO-2026', 'Classe de demonstration (jeu d''essai)', '2026-2027');
+  ('DEMO-2026', 'Classe de demonstration', '2026-2027');
 
--- ─── 2. Douze élèves, avec avatar et code PIN ──────────────────────────────
+-- L'élève 12 n'a volontairement pas d'avatar : il affiche le repère « • ».
 insert into public.eleves (classe_id, numero, avatar, pin)
-select c.id, v.num, v.av, v.pin
+select c.id, v.n, v.a, v.p
   from public.classes c,
        (values
          ('01','🦊','1101'), ('02','🐢','1102'), ('03','🦉','1103'),
          ('04','🐙','1104'), ('05','🦁','1105'), ('06','🐺','1106'),
          ('07','🦄','1107'), ('08','🐝','1108'), ('09','🐬','1109'),
-         ('10','🦋','1110'), ('11','🐧','1111'), ('12','🦔','1112')
-       ) as v(num, av, pin)
+         ('10','🦋','1110'), ('11','🐧','1111'), ('12', null ,'1112')
+       ) as v(n, a, p)
  where c.code = 'DEMO-2026';
 
--- ─── 3. Une séance ouverte ─────────────────────────────────────────────────
+-- Sept séances, une par situation
 insert into public.seances (classe_id, numero, titre, notee, ouverte)
-select id, 1, 'Demonstration - 10 questions', false, true
-  from public.classes where code = 'DEMO-2026';
+select c.id, v.num, v.titre, v.notee, v.ouv
+  from public.classes c,
+       (values
+         (1, 'Demarrage - les premieres reponses arrivent',  false, true),
+         (2, 'En cours - classe contrastee',                 false, true),
+         (3, 'Terminee - objectif atteint, confettis',       false, true),
+         (4, 'Classe en difficulte - a reprendre',           false, true),
+         (5, 'Classe brillante - longues series',            false, true),
+         (6, 'Fermee - aucune reponse possible',             false, false),
+         (7, 'Evaluee - correction masquee aux eleves',      true,  true)
+       ) as v(num, titre, notee, ouv)
+ where c.code = 'DEMO-2026';
 
--- ─── 4. Les dix corrigés ───────────────────────────────────────────────────
+-- Dix corrigés par séance, bonne réponse B
 insert into public.corriges (seance_id, question, bonne_reponse, explication)
 select s.id, 'q' || g, 'B', 'Explication de la question ' || g || '.'
   from public.seances s
   join public.classes c on c.id = s.classe_id,
        generate_series(1, 10) g
- where c.code = 'DEMO-2026' and s.numero = 1;
+ where c.code = 'DEMO-2026';
 
--- ─── 5. Les réponses, volontairement contrastées ───────────────────────────
---  repondu = nombre de questions traitées, juste = nombre de bonnes réponses.
---  La difficulté est répartie sur les questions par une permutation, pour que
---  le panneau « réussite par question » soit lisible et non monotone.
+-- Les réponses, un scénario par séance.
+--   rep = questions traitées, jus = bonnes réponses
+--   Séance 5 : les bonnes réponses sont groupées en fin de parcours,
+--   ce qui produit de longues séries et fait apparaître les badges 🔥.
 insert into public.reponses (eleve_id, seance_id, question, reponse, correct, updated_at)
 select e.id, s.id, 'q' || g,
-       case when ((g * 7 - 7) % 10) + 1 <= v.juste then 'B' else 'C' end,
-       ((g * 7 - 7) % 10) + 1 <= v.juste,
-       now() - ((v.repondu - g) * interval '80 seconds')
+       case when p.juste then 'B' else (array['A','C','D'])[1 + (g % 3)] end,
+       p.juste,
+       now() - ((p.rep - g) * interval '70 seconds')
+  from public.classes c
+  join public.eleves  e on e.classe_id = c.id
+  join public.seances s on s.classe_id = c.id
+  cross join generate_series(1, 10) g
+  cross join lateral (
+    select r.rep, r.jus,
+           case when s.numero = 5 then g > r.rep - r.jus
+                else ((g * 7 - 7) % 10) + 1 <= r.jus end as juste
+      from (select
+              case s.numero
+                when 1 then (array[3,2,1,2,0,0,0,0,0,0,0,0])[e.numero::int]
+                when 2 then (array[10,10,8,10,6,4,10,7,3,0,9,2])[e.numero::int]
+                when 3 then 10
+                when 4 then 10
+                when 5 then 10
+                when 7 then (array[8,6,10,4,9,3,10,5,7,0,6,2])[e.numero::int]
+                else 0
+              end as rep,
+              case s.numero
+                when 1 then (array[2,1,1,1,0,0,0,0,0,0,0,0])[e.numero::int]
+                when 2 then (array[9,7,6,4,5,1,10,3,2,0,5,0])[e.numero::int]
+                when 3 then (array[10,9,8,7,10,6,10,8,9,7,8,6])[e.numero::int]
+                when 4 then (array[3,2,4,1,3,2,4,1,2,3,1,2])[e.numero::int]
+                when 5 then (array[10,9,10,8,9,10,10,9,8,10,9,8])[e.numero::int]
+                when 7 then (array[6,4,9,2,7,1,10,3,5,0,4,1])[e.numero::int]
+                else 0
+              end as jus
+           ) r
+  ) p
+ where c.code = 'DEMO-2026' and g <= p.rep;
+
+-- ═══ CLASSE 2 — trente élèves, pour voir tenir un gros effectif ════════════
+insert into public.classes (code, nom, annee) values
+  ('DEMO-GRANDE-2026', 'Classe de demonstration - 30 eleves', '2026-2027');
+
+insert into public.eleves (classe_id, numero, avatar, pin)
+select c.id, lpad(g::text, 2, '0'),
+       (array['🦊','🐢','🦉','🐙','🦁','🐺','🦄','🐝','🐬','🦋',
+              '🐧','🦔','🐳','🦅','🐨','🦝','🐸','🦖','🦩','🐍',
+              '🦎','🐊','🦦','🐼','🦒','🐯','🦓','🐘','🦥','🐐'])[g],
+       lpad((2000 + g)::text, 4, '0')
+  from public.classes c, generate_series(1, 30) g
+ where c.code = 'DEMO-GRANDE-2026';
+
+insert into public.seances (classe_id, numero, titre, notee, ouverte)
+select id, 1, 'Grande classe - 30 eleves en activite', false, true
+  from public.classes where code = 'DEMO-GRANDE-2026';
+
+insert into public.corriges (seance_id, question, bonne_reponse, explication)
+select s.id, 'q' || g, 'B', 'Explication de la question ' || g || '.'
+  from public.seances s
+  join public.classes c on c.id = s.classe_id,
+       generate_series(1, 10) g
+ where c.code = 'DEMO-GRANDE-2026';
+
+-- Avancement et réussite variés, calculés à partir du numéro
+insert into public.reponses (eleve_id, seance_id, question, reponse, correct, updated_at)
+select e.id, s.id, 'q' || g,
+       case when p.juste then 'B' else (array['A','C','D'])[1 + (g % 3)] end,
+       p.juste,
+       now() - ((p.rep - g) * interval '55 seconds')
   from public.classes c
   join public.eleves  e on e.classe_id = c.id
   join public.seances s on s.classe_id = c.id and s.numero = 1
-  join (values
-          ('01', 10, 9), ('02', 10, 7), ('03',  8, 6), ('04', 10, 4),
-          ('05',  6, 5), ('06',  4, 1), ('07', 10, 10), ('08', 7, 3),
-          ('09',  3, 2), ('10',  0, 0), ('11',  9, 5), ('12',  2, 0)
-       ) as v(num, repondu, juste) on v.num = e.numero
   cross join generate_series(1, 10) g
- where c.code = 'DEMO-2026' and g <= v.repondu;
+  cross join lateral (
+    select r.rep, r.jus, ((g * 7 - 7) % 10) + 1 <= r.jus as juste
+      from (select 3 + ((e.numero::int * 7) % 8) as rep,
+                   least(1 + ((e.numero::int * 5) % 9),
+                         3 + ((e.numero::int * 7) % 8)) as jus) r
+  ) p
+ where c.code = 'DEMO-GRANDE-2026' and g <= p.rep;
 
--- ─── 6. Un projet, pour que la classe existe aussi côté étudiant ───────────
-insert into public.projets (classe_id, titre, description, url, icone, ordre)
-select id, 'Seance de demonstration',
-       'Jeu d''essai pour prendre en main le suivi. Aucune note.',
-       'https://ggaillard.github.io/portail-bts/', 'DEMO', 1
-  from public.classes where code = 'DEMO-2026';
-
--- ─── 7. Contrôle ───────────────────────────────────────────────────────────
-select e.numero, e.avatar, e.pin,
-       count(r.id)                              as repondu,
-       count(*) filter (where r.correct)        as juste,
-       to_char(max(r.updated_at), 'HH24:MI:SS') as derniere_activite
-  from public.eleves e
-  join public.classes c on c.id = e.classe_id
-  left join public.reponses r on r.eleve_id = e.id
- where c.code = 'DEMO-2026'
- group by e.numero, e.avatar, e.pin
- order by e.numero;
+-- ═══ CONTRÔLE ══════════════════════════════════════════════════════════════
+select c.code, s.numero, s.titre, s.ouverte, s.notee,
+       count(r.id)                        as reponses,
+       count(*) filter (where r.correct)  as justes
+  from public.classes c
+  join public.seances s on s.classe_id = c.id
+  left join public.reponses r on r.seance_id = s.id
+ where c.code like 'DEMO%'
+ group by c.code, s.numero, s.titre, s.ouverte, s.notee
+ order by c.code, s.numero;
