@@ -227,14 +227,37 @@ tr:last-child td{border-bottom:0}
 .ce-fil{font-family:var(--f-mono);font-size:clamp(.62rem,1.4vmin,.9rem);color:#7B8FA1;
         flex:1 1 10rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 
-/* Fond vivant plutôt qu'un aplat */
-#classe-ecran{background:radial-gradient(1100px 620px at 12% -12%,#14212D 0%,#0B1017 62%)}
+/* Fond vivant : deux halos qui dérivent lentement */
+@keyframes tdcFond{
+  0%, 100% { background-position:   0%   0%, 100% 100%, 0 0; }
+  50%      { background-position:  28%  18%,  72%  82%, 0 0; }
+}
+#classe-ecran{
+  background:
+    radial-gradient(900px 520px at 15% -8%,  #17262F 0%, transparent 62%),
+    radial-gradient(820px 460px at 85% 108%, #14272B 0%, transparent 62%),
+    #0B1017;
+  background-size: 200% 200%, 200% 200%, auto;
+  animation: tdcFond 48s ease-in-out infinite;
+}
+
+/* Minuteur de séance */
+.ce-chrono{font-family:var(--f-mono);font-size:clamp(1.3rem,3.8vmin,2.8rem);font-weight:600;
+           color:#EAF2F8;font-variant-numeric:tabular-nums;text-align:center}
+.ce-chrono small{display:block;font-size:.3em;letter-spacing:.1em;text-transform:uppercase;
+                 color:#7B8FA1;font-weight:500}
+.ce-chrono.presse{color:#E3B872}
+.ce-chrono.fini{color:#E2576B}
+.ce-chrono[hidden]{display:none!important}
 
 /* Répartition des réponses : le moment fort */
 .ce-rep{flex:1;display:flex;flex-direction:column;gap:1.5vmin;justify-content:center;padding:0 3vmin}
 .ce-rep[hidden]{display:none!important}
-.ce-rep-q{font-size:clamp(1rem,2.9vmin,2rem);color:#EAF2F8;text-align:center;margin-bottom:1.5vmin}
-.ce-rep-q b{color:#FFD79A}
+.ce-rep-r{font-family:var(--f-mono);font-size:clamp(.7rem,1.6vmin,1rem);letter-spacing:.06em;
+          text-transform:uppercase;color:#7B8FA1;text-align:center;margin-bottom:.6vmin}
+.ce-rep-q{font-size:clamp(1.05rem,3.1vmin,2.2rem);color:#EAF2F8;text-align:center;
+          margin-bottom:1.8vmin;line-height:1.3;max-width:46rem;
+          margin-left:auto;margin-right:auto;text-wrap:balance}
 .ce-rep-l{display:flex;align-items:center;gap:1.6vmin}
 .ce-rep-k{font-family:var(--f-mono);font-size:clamp(1.1rem,3.5vmin,2.5rem);font-weight:600;
           width:2.1em;text-align:center;border-radius:10px;padding:.5vmin 0;flex:none;
@@ -307,8 +330,10 @@ tr:last-child td{border-bottom:0}
 #ce-confettis{position:absolute;inset:0;pointer-events:none;z-index:3}
 
 @media (prefers-reduced-motion: reduce){
-  .ce-pod, .tdc-entre, .ce-el.entre{animation:none}
+  .ce-pod, .tdc-entre, .ce-el.entre, .ce-el.fini{animation:none}
   .ce-rep-f, .ce-rep-l, .ce-rep-ok{transition:none}
+  #classe-ecran{animation:none}
+  #ce-banniere{transition:none}
 }
 
 footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
@@ -459,6 +484,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <span class="ce-kpi" id="ce-k1">0<small>en activité</small></span>
     <span class="ce-kpi" id="ce-k2">0<small>réponses</small></span>
     <span class="ce-kpi" id="ce-k3">—<small>de réussite</small></span>
+    <span class="ce-chrono" id="ce-chrono" hidden></span>
   </div>
   <div class="ce-objectif">
     <span class="ce-obj-l">Objectif de la classe</span>
@@ -483,6 +509,8 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <button class="ce-btn" id="ce-clas" type="button">Classement</button>
     <button class="ce-btn" id="ce-rep-b" type="button">Répartition</button>
     <button class="ce-btn" id="ce-auto" type="button">Rotation auto</button>
+    <button class="ce-btn" id="ce-min" type="button">Minuteur</button>
+    <button class="ce-btn" id="ce-son" type="button">Son</button>
     <button class="ce-btn" id="ce-plein" type="button">Plein écran</button>
     <button class="ce-btn" id="ce-quit" type="button">Quitter</button>
     <span class="ce-fil" id="ce-fil"></span>
@@ -680,7 +708,13 @@ function chargerStats(){
   return Promise.all([
     sb.from("eleves").select("id,numero,avatar,auth_id").eq("classe_id", suivi.classeId).order("numero"),
     sb.from("reponses").select("eleve_id,correct,reponse,updated_at").eq("seance_id", suivi.seanceId),
-    sb.from("corriges").select("question,bonne_reponse").eq("seance_id", suivi.seanceId)
+    // La colonne « intitule » est facultative : si elle n'existe pas, on relit sans.
+    sb.from("corriges").select("question,bonne_reponse,intitule").eq("seance_id", suivi.seanceId)
+      .then(function(r){
+        return r.error
+          ? sb.from("corriges").select("question,bonne_reponse").eq("seance_id", suivi.seanceId)
+          : r;
+      })
   ]).then(function(res){
     var eleves = res[0].data || [], reps = res[1].data || [], cor = res[2].data || [];
 
@@ -721,15 +755,19 @@ function chargerStats(){
     });
 
     // Réussite question par question : dit à l'enseignant quoi reprendre.
-    var bonneDe = {};
-    cor.forEach(function(c){ bonneDe[c.question] = c.bonne_reponse; });
+    var bonneDe = {}, texteDe = {};
+    cor.forEach(function(c){
+      bonneDe[c.question] = c.bonne_reponse;
+      if (c.intitule) texteDe[c.question] = c.intitule;
+    });
 
     var parQ = {};
     reps.forEach(function(r){
       if (!estEvaluee(r)) return;
       var q = parQ[r.question] ||
               (parQ[r.question] = { nom: r.question, n: 0, ok: 0,
-                                    bonne: bonneDe[r.question] || null, choix: {} });
+                                    bonne: bonneDe[r.question] || null,
+                                    texte: texteDe[r.question] || null, choix: {} });
       q.n++;
       if (estJuste(r)) q.ok++;
       // Répartition des réponses données, pour l'écran « Répartition »
@@ -882,7 +920,11 @@ function rendreEcran(s){
   $("ce-obj-n").textContent = s.reponses + " / " + vise + "  ·  " + pctClasse + " %";
 
   // Objectif franchi : on le fête une seule fois.
-  if (pctClasse >= 100 && !suivi.feteFaite) { suivi.feteFaite = true; confettis(); }
+  if (pctClasse >= 100 && !suivi.feteFaite) {
+    suivi.feteFaite = true;
+    confettis();
+    son(SONS.fini);
+  }
   if (pctClasse < 100) suivi.feteFaite = false;
 
   // ── Le défi du moment ──
@@ -912,23 +954,32 @@ function rendreEcran(s){
   // ── Événements à annoncer : une nouvelle série, un élève qui termine ──
   var premier = !suivi.series;
   var serieAvant = suivi.series || {};
-  var meilleure = null, finis = {};
+  var meilleure = null, finis = {}, demarrent = [];
   actifs.forEach(function(l){
     if (!premier && l.serie >= 3 && l.serie > (serieAvant[l.id] || 0)) {
       if (!meilleure || l.serie > meilleure.serie) meilleure = l;
     }
     if (l.n >= s.total && avant[l.id] !== undefined && avant[l.id] < s.total) finis[l.id] = true;
+    if (avant[l.id] === 0 && l.n > 0) demarrent.push(l);
   });
   suivi.series = {};
   s.lignes.forEach(function(l){ suivi.series[l.id] = l.serie; });
 
+  // Un seul événement annoncé à la fois, du plus marquant au plus discret.
   var quiFinit = actifs.filter(function(l){ return finis[l.id]; });
   if (meilleure) {
     banniere("🔥 <b>" + meilleure.avatar + "</b> enchaîne " + meilleure.serie + " bonnes réponses !");
+    son(SONS.serie);
   } else if (quiFinit.length === 1) {
     banniere("🎉 <b>" + quiFinit[0].avatar + "</b> a terminé la séance !");
+    son(SONS.fini);
   } else if (quiFinit.length > 1) {
     banniere("🎉 <b>" + quiFinit.length + " élèves</b> viennent de terminer !");
+    son(SONS.fini);
+  } else if (demarrent.length === 1) {
+    banniere("👋 <b>" + demarrent[0].avatar + "</b> se lance.");
+  } else if (demarrent.length > 1) {
+    banniere("👋 <b>" + demarrent.length + " élèves</b> viennent de se lancer.");
   }
 
   // ── Vue « Répartition » : quel choix a fait la classe ? ──
@@ -995,6 +1046,14 @@ function rendreEcran(s){
   var g = $("ce-grille");
   var large = lignes.length <= 12 ? "8.5rem" : (lignes.length <= 24 ? "6.5rem" : "5rem");
   g.style.gridTemplateColumns = "repeat(auto-fill,minmax(min(" + large + ",27vw),1fr))";
+
+  // On relève la position de chaque carte avant de reconstruire la grille.
+  var avantPos = {};
+  if (!trans) {
+    Array.prototype.forEach.call(g.children, function(el){
+      if (el.dataset.eleve) avantPos[el.dataset.eleve] = el.getBoundingClientRect();
+    });
+  }
   g.innerHTML = "";
   lignes.forEach(function(l, i){
     var rang = i + retires + 1;
@@ -1002,6 +1061,7 @@ function rendreEcran(s){
     var d = document.createElement("div");
     d.className = "ce-el" + (nouveaux[l.id] ? " pulse" : "") +
                   (finis[l.id] ? " fini" : "") + (trans ? " entre" : "");
+    d.dataset.eleve = l.id;
     if (trans) d.style.animationDelay = (i * 0.045) + "s";   // cascade
     d.innerHTML =
       (clas ? '<span class="ce-rang"></span>' : "") +
@@ -1026,6 +1086,23 @@ function rendreEcran(s){
     g.appendChild(d);
   });
 
+  // Chaque carte glisse visiblement de son ancienne place à la nouvelle.
+  if (!trans) {
+    Array.prototype.forEach.call(g.children, function(el){
+      var p = avantPos[el.dataset.eleve];
+      if (!p) return;
+      var n = el.getBoundingClientRect();
+      var dx = p.left - n.left, dy = p.top - n.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.style.transition = "none";
+      el.style.transform = "translate(" + dx + "px," + dy + "px)";
+      requestAnimationFrame(function(){
+        el.style.transition = "transform 1.2s cubic-bezier(.2,.8,.2,1)";
+        el.style.transform = "";
+      });
+    });
+  }
+
   if (clas) {
     // Le podium occupe les premières places : on les mémorise aussi.
     (retires ? lignesPodium : []).forEach(function(l, i){ rangMain[l.id] = i + 1; });
@@ -1033,6 +1110,69 @@ function rendreEcran(s){
   }
 
   majPied(s, actifs, nouveaux);
+}
+
+// ── Son : quelques notes de synthèse, aucun fichier. Coupé par défaut. ──
+var audio = null;
+function son(notes){
+  if (!suivi.son || !notes) return;
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    var t = audio.currentTime;
+    notes.forEach(function(n, i){
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.type = n.t || "triangle";
+      o.frequency.value = n.f;
+      var d = n.d || 0.16, dep = t + i * 0.11;
+      g.gain.setValueAtTime(0.0001, dep);
+      g.gain.exponentialRampToValueAtTime(n.v || 0.14, dep + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, dep + d);
+      o.connect(g); g.connect(audio.destination);
+      o.start(dep); o.stop(dep + d + 0.05);
+    });
+  } catch (e) { /* audio indisponible : on continue en silence */ }
+}
+var SONS = {
+  revele: [{ f: 523 }, { f: 659 }, { f: 784 }],
+  serie:  [{ f: 659 }, { f: 880, d: .26 }],
+  fini:   [{ f: 523 }, { f: 659 }, { f: 784 }, { f: 1047, d: .3 }],
+  vue:    [{ f: 392, d: .09, v: .06 }],
+  temps:  [{ f: 330 }, { f: 262, d: .32 }]
+};
+
+function basculerSon(){
+  suivi.son = !suivi.son;
+  $("ce-son").classList.toggle("on", suivi.son);
+  if (suivi.son) son(SONS.vue);
+}
+
+// ── Minuteur de séance : le bouton fait défiler arrêt, 5, 10, 15 minutes ──
+function minuteur(){
+  var cycles = [0, 5, 10, 15];
+  suivi.minutes = cycles[(cycles.indexOf(suivi.minutes || 0) + 1) % cycles.length];
+  if (suivi.chrono) { clearInterval(suivi.chrono); suivi.chrono = null; }
+
+  var el = $("ce-chrono");
+  $("ce-min").classList.toggle("on", suivi.minutes > 0);
+  $("ce-min").textContent = suivi.minutes ? "Minuteur " + suivi.minutes + " min" : "Minuteur";
+  if (!suivi.minutes) { el.hidden = true; return; }
+
+  suivi.fin = Date.now() + suivi.minutes * 60000;
+  el.hidden = false;
+  var tic = function(){
+    var reste = Math.max(0, Math.round((suivi.fin - Date.now()) / 1000));
+    el.innerHTML = Math.floor(reste / 60) + ":" +
+                   String(reste % 60).padStart(2, "0") + "<small>restant</small>";
+    el.className = "ce-chrono" + (reste === 0 ? " fini" : (reste <= 60 ? " presse" : ""));
+    if (reste === 0) {
+      clearInterval(suivi.chrono); suivi.chrono = null;
+      banniere("⏱️ <b>Temps écoulé.</b>");
+      son(SONS.temps);
+    }
+  };
+  tic();
+  suivi.chrono = setInterval(tic, 1000);
 }
 
 // Les quatre formes de réponse : triangle, losange, rond, carré.
@@ -1064,11 +1204,18 @@ function rendreRepartition(s, zone, trans){
 
   zone.innerHTML = "";
   var num = parseInt(String(q.nom).replace(/\D/g, ""), 10);
+
+  var repere = document.createElement("p");
+  repere.className = "ce-rep-r";
+  repere.textContent = (num ? "Question " + num + " sur " + s.total : String(q.nom)) +
+                       "  ·  " + q.ok + " sur " + q.n + " l'ont trouvée";
+  zone.appendChild(repere);
+
+  // L'intitulé réel s'affiche dès que la colonne est renseignée.
   var titre = document.createElement("p");
   titre.className = "ce-rep-q";
-  titre.innerHTML = (num ? "Question <b>" + num + "</b> sur " + s.total
-                         : "Question <b>" + q.nom + "</b>") +
-                    " &nbsp;·&nbsp; " + q.ok + " sur " + q.n + " l'ont trouvée";
+  titre.textContent = q.texte || "";
+  if (!q.texte) titre.style.display = "none";
   zone.appendChild(titre);
 
   var rangees = [];
@@ -1099,6 +1246,7 @@ function rendreRepartition(s, zone, trans){
       o.el.classList.toggle("juste", o.juste);
       o.el.classList.toggle("estompe", !o.juste);
     });
+    if (trans) son(SONS.revele);
   };
   if (suivi.revelation) clearTimeout(suivi.revelation);
   if (trans) suivi.revelation = setTimeout(reveler, 2400);
@@ -1136,6 +1284,7 @@ function ouvrirEcran(){
 function fermerEcran(){
   suivi.ecran = false;
   if (suivi.auto) { clearInterval(suivi.auto); suivi.auto = null; $("ce-auto").classList.remove("on"); }
+  if (suivi.chrono) { clearInterval(suivi.chrono); suivi.chrono = null; }
   $("classe-ecran").hidden = true;
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(function(){});
@@ -1369,6 +1518,8 @@ $("ce-rep-b").addEventListener("click", function(){
   modeEcran("rep");
 });
 $("ce-auto").addEventListener("click", rotationAuto);
+$("ce-min").addEventListener("click", minuteur);
+$("ce-son").addEventListener("click", basculerSon);
 
 document.addEventListener("keydown", function(e){
   if (e.key === "Escape" && suivi.ecran) fermerEcran();
