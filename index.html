@@ -277,6 +277,32 @@ tr:last-child td{border-bottom:0}
 .ce-rep-ok{opacity:0;transition:opacity .7s ease}
 .ce-rep-l.juste .ce-rep-ok{opacity:1}
 
+/* Les quatre formes de réponse, repère visuel immédiat */
+.ce-forme{position:relative;flex:none;display:inline-block;
+          width:2.5em;height:2.5em;font-size:clamp(1rem,3vmin,2.1rem)}
+.ce-forme-f{position:absolute;inset:0}
+.ce-forme-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+            color:#fff;font-family:var(--f-mono);font-weight:600;font-size:.6em;
+            text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.ce-forme.tri .ce-forme-l{align-items:flex-end;padding-bottom:.35em}
+
+/* Bandeau de série, plein écran */
+#ce-banniere{position:absolute;left:0;right:0;top:19%;z-index:4;text-align:center;
+             pointer-events:none;opacity:0;transform:scale(.93);
+             transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1)}
+#ce-banniere.on{opacity:1;transform:none}
+.ce-ban{display:inline-block;background:#2A1E10;border:2px solid #E3B872;border-radius:16px;
+        padding:1.5vmin 3.2vmin;font-size:clamp(1.05rem,3.4vmin,2.4rem);color:#FFD79A;
+        box-shadow:0 1.2vmin 4vmin rgba(0,0,0,.55)}
+.ce-ban b{color:#fff}
+
+/* Un élève vient de terminer */
+@keyframes tdcFini{
+  0%   { box-shadow:0 0 0 0 rgba(79,209,165,.9); }
+  100% { box-shadow:0 0 0 4.5vmin rgba(79,209,165,0); }
+}
+.ce-el.fini{animation:tdcFini 3s ease-out; border-color:#4FD1A5}
+
 /* Confettis */
 #ce-confettis{position:absolute;inset:0;pointer-events:none;z-index:3}
 
@@ -449,6 +475,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     Personne n'a encore répondu. Les avatars apparaîtront ici dès les premières réponses.
   </p>
 
+  <div id="ce-banniere"><span class="ce-ban" id="ce-ban-txt"></span></div>
   <canvas id="ce-confettis"></canvas>
 
   <div class="ce-pied">
@@ -882,6 +909,28 @@ function rendreEcran(s){
     if (avant[l.id] !== undefined && l.n > avant[l.id]) nouveaux[l.id] = l.n - avant[l.id];
   });
 
+  // ── Événements à annoncer : une nouvelle série, un élève qui termine ──
+  var premier = !suivi.series;
+  var serieAvant = suivi.series || {};
+  var meilleure = null, finis = {};
+  actifs.forEach(function(l){
+    if (!premier && l.serie >= 3 && l.serie > (serieAvant[l.id] || 0)) {
+      if (!meilleure || l.serie > meilleure.serie) meilleure = l;
+    }
+    if (l.n >= s.total && avant[l.id] !== undefined && avant[l.id] < s.total) finis[l.id] = true;
+  });
+  suivi.series = {};
+  s.lignes.forEach(function(l){ suivi.series[l.id] = l.serie; });
+
+  var quiFinit = actifs.filter(function(l){ return finis[l.id]; });
+  if (meilleure) {
+    banniere("🔥 <b>" + meilleure.avatar + "</b> enchaîne " + meilleure.serie + " bonnes réponses !");
+  } else if (quiFinit.length === 1) {
+    banniere("🎉 <b>" + quiFinit[0].avatar + "</b> a terminé la séance !");
+  } else if (quiFinit.length > 1) {
+    banniere("🎉 <b>" + quiFinit.length + " élèves</b> viennent de terminer !");
+  }
+
   // ── Vue « Répartition » : quel choix a fait la classe ? ──
   var trans = !!suivi.transition;
   suivi.transition = false;
@@ -951,7 +1000,8 @@ function rendreEcran(s){
     var rang = i + retires + 1;
     rangMain[l.id] = rang;
     var d = document.createElement("div");
-    d.className = "ce-el" + (nouveaux[l.id] ? " pulse" : "") + (trans ? " entre" : "");
+    d.className = "ce-el" + (nouveaux[l.id] ? " pulse" : "") +
+                  (finis[l.id] ? " fini" : "") + (trans ? " entre" : "");
     if (trans) d.style.animationDelay = (i * 0.045) + "s";   // cascade
     d.innerHTML =
       (clas ? '<span class="ce-rang"></span>' : "") +
@@ -985,6 +1035,23 @@ function rendreEcran(s){
   majPied(s, actifs, nouveaux);
 }
 
+// Les quatre formes de réponse : triangle, losange, rond, carré.
+var FORMES = {
+  A: { c: '#E21B3C', clip: 'polygon(50% 6%, 96% 94%, 4% 94%)',           cls: ' tri' },
+  B: { c: '#1368CE', clip: 'polygon(50% 3%, 97% 50%, 50% 97%, 3% 50%)',  cls: '' },
+  C: { c: '#D89E00', clip: 'circle(47% at 50% 50%)',                     cls: '' },
+  D: { c: '#26890C', clip: 'inset(5% round 14%)',                        cls: '' }
+};
+
+// Bandeau plein écran, pour un événement qui mérite qu'on lève les yeux.
+function banniere(html){
+  var b = $("ce-banniere");
+  $("ce-ban-txt").innerHTML = html;
+  b.classList.add("on");
+  if (suivi.banTimer) clearTimeout(suivi.banTimer);
+  suivi.banTimer = setTimeout(function(){ b.classList.remove("on"); }, 5000);
+}
+
 // ── Vue « Répartition » : ce que la classe a répondu, question par question ──
 function rendreRepartition(s, zone, trans){
   if (!s.questions.length) {
@@ -996,21 +1063,29 @@ function rendreRepartition(s, zone, trans){
   var maxi = cles.reduce(function(m, k){ return Math.max(m, q.choix[k]); }, 1);
 
   zone.innerHTML = "";
+  var num = parseInt(String(q.nom).replace(/\D/g, ""), 10);
   var titre = document.createElement("p");
   titre.className = "ce-rep-q";
-  titre.innerHTML = "Question <b>" + q.nom + "</b> — " + q.ok + " sur " + q.n + " l'ont trouvée";
+  titre.innerHTML = (num ? "Question <b>" + num + "</b> sur " + s.total
+                         : "Question <b>" + q.nom + "</b>") +
+                    " &nbsp;·&nbsp; " + q.ok + " sur " + q.n + " l'ont trouvée";
   zone.appendChild(titre);
 
   var rangees = [];
   cles.forEach(function(k){
     var n = q.choix[k];
     var juste = q.bonne !== null && k.toLowerCase() === String(q.bonne).toLowerCase();
+    var f = FORMES[String(k).toUpperCase()];
+    var marque = f
+      ? '<span class="ce-forme' + f.cls + '"><span class="ce-forme-f" style="background:' +
+        f.c + ';clip-path:' + f.clip + '"></span><span class="ce-forme-l"></span></span>'
+      : '<span class="ce-rep-k"></span>';
     var d = document.createElement("div");
     d.className = "ce-rep-l";
-    d.innerHTML = '<span class="ce-rep-k"></span>' +
+    d.innerHTML = marque +
                   '<span class="ce-rep-b"><span class="ce-rep-f"></span></span>' +
                   '<span class="ce-rep-n"></span><span class="ce-rep-ok">✓</span>';
-    d.querySelector(".ce-rep-k").textContent = k;
+    (d.querySelector(".ce-forme-l") || d.querySelector(".ce-rep-k")).textContent = k;
     d.querySelector(".ce-rep-n").textContent = n;
     pousse(d.querySelector(".ce-rep-f"), Math.round(n / maxi * 100) + "%", trans);
     zone.appendChild(d);
@@ -1051,6 +1126,7 @@ function ouvrirEcran(){
   suivi.ecran = true;
   // Repartir à blanc : sinon tout le monde clignote au premier affichage.
   suivi.precedent = null;
+  suivi.series = null;          // pas d'annonce de série au premier affichage
   suivi.fil = "";
   suivi.transition = true;
   $("classe-ecran").hidden = false;
