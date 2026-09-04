@@ -289,6 +289,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <select id="pk-seance" aria-label="Séance"></select>
     </div>
     <div id="stats-zone" hidden>
+      <div class="msg" id="stats-guide" hidden></div>
       <div class="tuiles" id="tuiles"></div>
       <div class="pick">
         <button class="btn" id="b-ecran" type="button">Afficher au tableau</button>
@@ -547,6 +548,23 @@ function rendreSuivi(s){
   $("stats-attente").hidden = true;
   $("stats-zone").hidden = false;
 
+  // Une séance vide n'est pas une panne : on dit pourquoi, et quoi faire.
+  var guide = $("stats-guide");
+  if (s.reponses === 0) {
+    guide.hidden = false;
+    guide.classList.toggle("ok", !!suivi.ouverte);
+    guide.innerHTML = suivi.ouverte
+      ? "Aucune réponse pour l'instant, et c'est normal : la séance est " +
+        "<b>ouverte</b> mais personne n'a encore commencé. Les compteurs se " +
+        "rempliront dès les premières réponses de vos élèves."
+      : "Aucune réponse, et cette séance est <b>fermée</b> : personne ne peut " +
+        "y répondre. Pour l'ouvrir, exécutez dans l'éditeur SQL de Supabase :<br>" +
+        "<code>update public.seances set ouverte = true where id = " +
+        suivi.seanceId + ";</code>";
+  } else {
+    guide.hidden = true;
+  }
+
   $("tuiles").innerHTML =
     tuile(s.actifs + " / " + s.inscrits, "en activité") +
     tuile(s.reponses, "réponses") +
@@ -706,8 +724,9 @@ function chargerSeancesDe(classeId){
         var o = document.createElement("option");
         o.value = s.id;
         o.textContent = s.numero + " — " + s.titre +
-          (s.ouverte ? " (ouverte)" : "") + (s.notee ? " ★" : "");
+          (s.ouverte ? " · ouverte" : " · fermée") + (s.notee ? " · notée" : "");
         o.dataset.titre = s.numero + " — " + s.titre;
+        o.dataset.ouverte = s.ouverte ? "1" : "";
         sel.appendChild(o);
       });
     });
@@ -830,6 +849,7 @@ $("pk-seance").addEventListener("change", function(){
   }
   suivi.seanceId = this.value;
   suivi.titre = opt.dataset.titre || opt.textContent;
+  suivi.ouverte = !!opt.dataset.ouverte;
   $("stats-attente").textContent = "Chargement…";
   rafraichir().then(lancerBoucle);
 });
