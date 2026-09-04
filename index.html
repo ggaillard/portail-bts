@@ -181,6 +181,49 @@ tr:last-child td{border-bottom:0}
 .ce-btn.on{background:#4FB3AD;color:#0B1017}
 .ce-vide{color:#7B8FA1;font-size:clamp(.95rem,2.2vmin,1.3rem);padding:5vmin;text-align:center}
 
+/* Objectif collectif : un but commun, pas une compétition */
+.ce-objectif{display:flex;align-items:center;gap:1.2rem;margin-bottom:1.4vmin;flex-wrap:wrap}
+.ce-obj-l{font-family:var(--f-mono);font-size:clamp(.68rem,1.5vmin,.95rem);letter-spacing:.08em;
+          text-transform:uppercase;color:#7B8FA1;flex:none}
+.ce-obj-barre{flex:1;min-width:8rem;height:clamp(10px,1.7vmin,18px);background:#1B2733;
+              border-radius:99px;overflow:hidden}
+.ce-obj-fill{display:block;height:100%;border-radius:99px;
+             background:linear-gradient(90deg,#2F8F86,#4FB3AD);transition:width .9s}
+.ce-obj-n{font-family:var(--f-mono);font-size:clamp(.85rem,2.1vmin,1.35rem);color:#4FB3AD;
+          font-variant-numeric:tabular-nums;flex:none}
+
+/* Le défi du moment : la question qui résiste */
+.ce-defi{background:#2A1E10;border:1px solid #6B4A1E;border-radius:8px;
+         padding:.9vmin 1.3vmin;margin-bottom:1.4vmin;
+         font-size:clamp(.78rem,1.9vmin,1.15rem);color:#E3B872}
+.ce-defi b{color:#FFD79A}
+.ce-defi[hidden]{display:none!important}
+
+/* Podium, en mode classement */
+.ce-podium{display:flex;justify-content:center;align-items:flex-end;gap:2vmin;margin-bottom:1.8vmin}
+.ce-podium[hidden]{display:none!important}
+.ce-pod{display:flex;flex-direction:column;align-items:center;gap:.5vmin;background:#141C26;
+        border:1px solid #22303D;border-radius:12px;padding:1.2vmin 2vmin}
+.ce-pod.or{border-color:#E3B872;background:#241D10}
+.ce-pod-m{font-size:clamp(1.1rem,2.8vmin,1.9rem)}
+.ce-pod-av{font-size:clamp(1.9rem,5.6vmin,4rem);line-height:1}
+.ce-pod-n{font-family:var(--f-mono);font-size:clamp(.68rem,1.5vmin,1rem);color:#8CA3B5}
+
+/* Série de bonnes réponses */
+.ce-serie{font-family:var(--f-mono);font-size:clamp(.6rem,1.35vmin,.9rem);color:#E3B872}
+
+/* Pulsation quand une réponse vient d'arriver */
+@keyframes tdcPulse{
+  0%   { box-shadow:0 0 0 0 rgba(79,179,173,.7); }
+  100% { box-shadow:0 0 0 2.2vmin rgba(79,179,173,0); }
+}
+.ce-el.pulse{animation:tdcPulse 1s ease-out}
+@media (prefers-reduced-motion: reduce){ .ce-el.pulse{animation:none} .ce-obj-fill{transition:none} }
+
+/* Fil d'activité */
+.ce-fil{font-family:var(--f-mono);font-size:clamp(.62rem,1.4vmin,.9rem);color:#7B8FA1;
+        flex:1 1 10rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
 footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
        font-size:.83rem;color:var(--ink-faint);display:flex;flex-direction:column;gap:.35rem}
 .spin{color:var(--ink-faint);font-size:.92rem}
@@ -330,14 +373,26 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <span class="ce-kpi" id="ce-k2">0<small>réponses</small></span>
     <span class="ce-kpi" id="ce-k3">—<small>de réussite</small></span>
   </div>
+  <div class="ce-objectif">
+    <span class="ce-obj-l">Objectif de la classe</span>
+    <span class="ce-obj-barre"><span class="ce-obj-fill" id="ce-obj-f" style="width:0%"></span></span>
+    <span class="ce-obj-n" id="ce-obj-n">0 / 0</span>
+  </div>
+
+  <div class="ce-defi" id="ce-defi" hidden></div>
+  <div class="ce-podium" id="ce-podium" hidden></div>
+
   <div class="ce-grille" id="ce-grille"></div>
   <p class="ce-vide" id="ce-vide" hidden>
     Personne n'a encore répondu. Les avatars apparaîtront ici dès les premières réponses.
   </p>
+
   <div class="ce-pied">
     <button class="ce-btn on" id="ce-prog" type="button">Progression</button>
     <button class="ce-btn" id="ce-clas" type="button">Classement</button>
+    <button class="ce-btn" id="ce-plein" type="button">Plein écran</button>
     <button class="ce-btn" id="ce-quit" type="button">Quitter</button>
+    <span class="ce-fil" id="ce-fil"></span>
     <span class="ce-n" id="ce-maj"></span>
   </div>
 </div>
@@ -486,10 +541,24 @@ function chargerStats(){
 
     var par = {};
     reps.forEach(function(r){
-      var e = par[r.eleve_id] || (par[r.eleve_id] = { n: 0, ev: 0, ok: 0, maj: null });
+      var e = par[r.eleve_id] ||
+              (par[r.eleve_id] = { n: 0, ev: 0, ok: 0, maj: null, serie: 0, liste: [] });
       e.n++;
       if (estEvaluee(r)) { e.ev++; if (estJuste(r)) e.ok++; }
       if (!e.maj || r.updated_at > e.maj) e.maj = r.updated_at;
+      e.liste.push(r);
+    });
+
+    // Série en cours : bonnes réponses consécutives en fin de parcours.
+    Object.keys(par).forEach(function(k){
+      var l = par[k].liste.filter(estEvaluee).sort(function(a, b){
+        return a.updated_at < b.updated_at ? -1 : 1;
+      });
+      var s = 0;
+      for (var i = l.length - 1; i >= 0; i--) {
+        if (estJuste(l[i])) s++; else break;
+      }
+      par[k].serie = s;
     });
 
     var maxN = 0;
@@ -497,10 +566,10 @@ function chargerStats(){
     var total = Math.max(cor.length, maxN, 1);
 
     var lignes = eleves.map(function(el){
-      var p = par[el.id] || { n: 0, ev: 0, ok: 0, maj: null };
+      var p = par[el.id] || { n: 0, ev: 0, ok: 0, maj: null, serie: 0 };
       return {
         id: el.id, numero: el.numero, avatar: el.avatar || "•",
-        connecte: !!el.auth_id, n: p.n, ev: p.ev, ok: p.ok, maj: p.maj,
+        connecte: !!el.auth_id, n: p.n, ev: p.ev, ok: p.ok, maj: p.maj, serie: p.serie,
         pct: Math.round(p.n / total * 100),
         reussite: p.ev ? Math.round(p.ok / p.ev * 100) : null
       };
@@ -652,37 +721,108 @@ function rendreEcran(s){
   $("ce-k2").innerHTML = s.reponses + "<small>réponses</small>";
   $("ce-k3").innerHTML = (s.reussite === null ? "—" : s.reussite + " %") + "<small>de réussite</small>";
 
-  var lignes = s.lignes.filter(function(l){ return l.n > 0; });
-  $("ce-vide").hidden = lignes.length > 0;
+  // ── Objectif collectif : un but commun plutôt qu'un duel ──
+  var vise = s.inscrits * s.total;
+  var pctClasse = vise ? Math.min(100, Math.round(s.reponses / vise * 100)) : 0;
+  $("ce-obj-f").style.width = pctClasse + "%";
+  $("ce-obj-n").textContent = s.reponses + " / " + vise + "  ·  " + pctClasse + " %";
 
-  if (suivi.classement) {
-    lignes = lignes.slice().sort(function(a, b){
-      return (b.ok - a.ok) || (b.n - a.n) || (a.numero < b.numero ? -1 : 1);
-    });
+  // ── Le défi du moment ──
+  var defi = $("ce-defi");
+  var dure = s.questions.length ? s.questions[0] : null;
+  if (pctClasse >= 100) {
+    defi.hidden = false;
+    defi.innerHTML = "<b>Objectif atteint.</b> Toute la classe est allée au bout de la séance.";
+  } else if (dure && dure.pct < 60) {
+    defi.hidden = false;
+    defi.innerHTML = "La question qui résiste : <b>" + dure.nom + "</b> — " +
+      dure.ok + " réussite" + (dure.ok > 1 ? "s" : "") + " sur " + dure.n + " tentatives.";
   } else {
-    lignes = lignes.slice().sort(function(a, b){
-      return a.numero < b.numero ? -1 : 1;
-    });
+    defi.hidden = true;
   }
 
+  var actifs = s.lignes.filter(function(l){ return l.n > 0; });
+  $("ce-vide").hidden = actifs.length > 0;
+
+  // ── Qui vient de répondre, depuis le dernier rafraîchissement ──
+  var avant = suivi.precedent || {};
+  var nouveaux = {};
+  actifs.forEach(function(l){
+    if (avant[l.id] !== undefined && l.n > avant[l.id]) nouveaux[l.id] = l.n - avant[l.id];
+  });
+
+  // ── Podium, seulement en mode classement ──
+  var pod = $("ce-podium");
+  var lignes, retires = 0;
+
+  if (suivi.classement) {
+    lignes = actifs.slice().sort(function(a, b){
+      return (b.ok - a.ok) || (b.n - a.n) || (a.numero < b.numero ? -1 : 1);
+    });
+    var trois = lignes.slice(0, 3);
+    if (trois.length >= 2) {
+      pod.hidden = false;
+      pod.innerHTML = "";
+      var med = ["🥇", "🥈", "🥉"];
+      var ordre = trois.length >= 3 ? [1, 0, 2] : [1, 0];   // 2e, 1er, 3e
+      ordre.forEach(function(i){
+        var l = trois[i];
+        if (!l) return;
+        var d = document.createElement("div");
+        d.className = "ce-pod" + (i === 0 ? " or" : "");
+        d.innerHTML = '<span class="ce-pod-m"></span><span class="ce-pod-av"></span>' +
+                      '<span class="ce-pod-n"></span>' +
+                      (l.serie >= 3 ? '<span class="ce-serie"></span>' : "");
+        d.querySelector(".ce-pod-m").textContent = med[i];
+        d.querySelector(".ce-pod-av").textContent = l.avatar;
+        d.querySelector(".ce-pod-n").textContent = l.ok + (l.ok > 1 ? " bonnes" : " bonne");
+        if (l.serie >= 3) d.querySelector(".ce-serie").textContent = "🔥 " + l.serie + " d'affilée";
+        pod.appendChild(d);
+      });
+      retires = trois.length;
+      lignes = lignes.slice(retires);
+    } else {
+      pod.hidden = true;
+    }
+  } else {
+    pod.hidden = true;
+    lignes = actifs.slice().sort(function(a, b){ return a.numero < b.numero ? -1 : 1; });
+  }
+
+  // ── La grille, dimensionnée selon l'effectif pour tenir sans déborder ──
   var g = $("ce-grille");
+  var large = lignes.length <= 12 ? "8.5rem" : (lignes.length <= 24 ? "6.5rem" : "5rem");
+  g.style.gridTemplateColumns = "repeat(auto-fill,minmax(min(" + large + ",27vw),1fr))";
   g.innerHTML = "";
   lignes.forEach(function(l, i){
     var d = document.createElement("div");
-    d.className = "ce-el" + (suivi.classement && i < 3 ? " top" : "");
+    d.className = "ce-el" + (nouveaux[l.id] ? " pulse" : "");
     d.innerHTML =
       (suivi.classement ? '<span class="ce-rang"></span>' : "") +
       '<span class="ce-av"></span>' +
       '<span class="ce-b"><span class="ce-f" style="width:' + l.pct + '%"></span></span>' +
-      '<span class="ce-n"></span>';
-    if (suivi.classement) d.querySelector(".ce-rang").textContent = "#" + (i + 1);
+      '<span class="ce-n"></span>' +
+      (l.serie >= 3 ? '<span class="ce-serie"></span>' : "");
+    if (suivi.classement) d.querySelector(".ce-rang").textContent = "#" + (i + retires + 1);
     d.querySelector(".ce-av").textContent = l.avatar;
     d.querySelector(".ce-n").textContent =
       suivi.classement && l.ev
         ? l.ok + (l.ok > 1 ? " bonnes" : " bonne")
         : l.n + "/" + s.total;
+    if (l.serie >= 3) d.querySelector(".ce-serie").textContent = "🔥 " + l.serie + " d'affilée";
     g.appendChild(d);
   });
+
+  // ── Fil d'activité ──
+  var evts = actifs.filter(function(l){ return nouveaux[l.id]; })
+                   .map(function(l){ return l.avatar + " +" + nouveaux[l.id]; });
+  if (evts.length) {
+    suivi.fil = (evts.join("   ") + "   " + (suivi.fil || "")).slice(0, 140);
+  }
+  $("ce-fil").textContent = suivi.fil || "";
+
+  suivi.precedent = {};
+  s.lignes.forEach(function(l){ suivi.precedent[l.id] = l.n; });
 
   $("ce-maj").textContent = "Mis à jour à " +
     new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -691,13 +831,34 @@ function rendreEcran(s){
 function ouvrirEcran(){
   if (!suivi.stats) return;
   suivi.ecran = true;
+  // Repartir à blanc : sinon tout le monde clignote au premier affichage.
+  suivi.precedent = null;
+  suivi.fil = "";
   $("classe-ecran").hidden = false;
   rendreEcran(suivi.stats);
 }
+
 function fermerEcran(){
   suivi.ecran = false;
   $("classe-ecran").hidden = true;
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(function(){});
+  }
 }
+
+function pleinEcran(){
+  var el = $("classe-ecran");
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(function(){});
+  } else if (el.requestFullscreen) {
+    el.requestFullscreen().catch(function(){});
+  }
+}
+
+document.addEventListener("fullscreenchange", function(){
+  $("ce-plein").textContent = document.fullscreenElement ? "Quitter le plein écran" : "Plein écran";
+  $("ce-plein").classList.toggle("on", !!document.fullscreenElement);
+});
 
 function modeEcran(classement){
   suivi.classement = classement;
@@ -860,6 +1021,7 @@ $("pk-tri").addEventListener("change", function(){
 });
 $("b-ecran").addEventListener("click", ouvrirEcran);
 $("ce-quit").addEventListener("click", fermerEcran);
+$("ce-plein").addEventListener("click", pleinEcran);
 $("ce-prog").addEventListener("click", function(){ modeEcran(false); });
 $("ce-clas").addEventListener("click", function(){ modeEcran(true); });
 
