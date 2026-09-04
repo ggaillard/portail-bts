@@ -224,6 +224,50 @@ tr:last-child td{border-bottom:0}
 .ce-fil{font-family:var(--f-mono);font-size:clamp(.62rem,1.4vmin,.9rem);color:#7B8FA1;
         flex:1 1 10rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 
+/* Fond vivant plutôt qu'un aplat */
+#classe-ecran{background:radial-gradient(1100px 620px at 12% -12%,#14212D 0%,#0B1017 62%)}
+
+/* Répartition des réponses : le moment fort */
+.ce-rep{flex:1;display:flex;flex-direction:column;gap:1.5vmin;justify-content:center;padding:0 3vmin}
+.ce-rep[hidden]{display:none!important}
+.ce-rep-q{font-size:clamp(1rem,2.9vmin,2rem);color:#EAF2F8;text-align:center;margin-bottom:1.5vmin}
+.ce-rep-q b{color:#FFD79A}
+.ce-rep-l{display:flex;align-items:center;gap:1.6vmin}
+.ce-rep-k{font-family:var(--f-mono);font-size:clamp(1.1rem,3.5vmin,2.5rem);font-weight:600;
+          width:2.1em;text-align:center;border-radius:10px;padding:.5vmin 0;flex:none;
+          background:#22303D;color:#EAF2F8}
+.ce-rep-l.juste .ce-rep-k{background:#1F7A5A;color:#EAFBF3}
+.ce-rep-b{flex:1;height:clamp(16px,3.6vmin,40px);background:#141C26;border-radius:9px;overflow:hidden}
+.ce-rep-f{display:block;height:100%;border-radius:9px;background:#3E5265;
+          transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.ce-rep-l.juste .ce-rep-f{background:linear-gradient(90deg,#1F7A5A,#4FD1A5)}
+.ce-rep-n{font-family:var(--f-mono);font-size:clamp(.9rem,2.5vmin,1.7rem);color:#8CA3B5;
+          width:4.2em;flex:none;font-variant-numeric:tabular-nums}
+.ce-rep-l.juste .ce-rep-n{color:#4FD1A5}
+
+/* Podium révélé en cascade, le premier en dernier */
+@keyframes tdcMonte{
+  from { opacity:0; transform:translateY(2.6vmin) scale(.92); }
+  to   { opacity:1; transform:none; }
+}
+.ce-pod{animation:tdcMonte .55s cubic-bezier(.2,.8,.2,1) both}
+.ce-pod:nth-child(1){animation-delay:.08s}
+.ce-pod:nth-child(3){animation-delay:.26s}
+.ce-pod:nth-child(2){animation-delay:.46s}
+
+/* Mouvement dans le classement depuis le dernier relevé */
+.ce-fleche{font-family:var(--f-mono);font-size:clamp(.58rem,1.3vmin,.85rem)}
+.ce-fleche.monte{color:#4FD1A5}
+.ce-fleche.descend{color:#D98A3A}
+
+/* Confettis */
+#ce-confettis{position:absolute;inset:0;pointer-events:none;z-index:3}
+
+@media (prefers-reduced-motion: reduce){
+  .ce-pod{animation:none}
+  .ce-rep-f{transition:none}
+}
+
 footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
        font-size:.83rem;color:var(--ink-faint);display:flex;flex-direction:column;gap:.35rem}
 .spin{color:var(--ink-faint);font-size:.92rem}
@@ -383,13 +427,18 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   <div class="ce-podium" id="ce-podium" hidden></div>
 
   <div class="ce-grille" id="ce-grille"></div>
+  <div class="ce-rep" id="ce-rep" hidden></div>
   <p class="ce-vide" id="ce-vide" hidden>
     Personne n'a encore répondu. Les avatars apparaîtront ici dès les premières réponses.
   </p>
 
+  <canvas id="ce-confettis"></canvas>
+
   <div class="ce-pied">
     <button class="ce-btn on" id="ce-prog" type="button">Progression</button>
     <button class="ce-btn" id="ce-clas" type="button">Classement</button>
+    <button class="ce-btn" id="ce-rep-b" type="button">Répartition</button>
+    <button class="ce-btn" id="ce-auto" type="button">Rotation auto</button>
     <button class="ce-btn" id="ce-plein" type="button">Plein écran</button>
     <button class="ce-btn" id="ce-quit" type="button">Quitter</button>
     <span class="ce-fil" id="ce-fil"></span>
@@ -519,7 +568,58 @@ function ouvrirEspaceEtudiant(moi){
    ══════════════════════════════════════════════════════════════════════════ */
 
 var suivi = { classeId: null, seanceId: null, titre: "", stats: null,
-              minuteur: null, classement: false, ecran: false };
+              minuteur: null, vue: "prog", ecran: false,
+              rangs: null, auto: null, chiffres: {}, repIndex: 0, feteFaite: false };
+
+// Compteur qui monte au lieu de sauter : le regard suit le mouvement.
+function anime(id, valeur, suffixe, libelle){
+  var el = $(id);
+  var de = suivi.chiffres[id];
+  suivi.chiffres[id] = valeur;
+  var petit = "<small>" + libelle + "</small>";
+  if (de === undefined || de === valeur || Math.abs(valeur - de) > 400) {
+    el.innerHTML = valeur + suffixe + petit;
+    return;
+  }
+  var t0 = performance.now(), duree = 700;
+  (function pas(t){
+    var k = Math.min(1, (t - t0) / duree);
+    var v = Math.round(de + (valeur - de) * (1 - Math.pow(1 - k, 3)));
+    el.innerHTML = v + suffixe + petit;
+    if (k < 1) requestAnimationFrame(pas);
+  })(t0);
+}
+
+// Confettis : une gerbe courte, sans librairie.
+function confettis(){
+  var cv = $("ce-confettis"), ec = $("classe-ecran");
+  if (!cv || !ec || ec.hidden) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var L = cv.width = ec.clientWidth, H = cv.height = ec.clientHeight;
+  var ctx = cv.getContext("2d");
+  var teintes = ["#4FB3AD", "#4FD1A5", "#E3B872", "#7FB2E5", "#EAF2F8"];
+  var p = [];
+  for (var i = 0; i < 90; i++) {
+    p.push({ x: L / 2 + (Math.random() - .5) * L * .5, y: H * .45,
+             vx: (Math.random() - .5) * 9, vy: -6 - Math.random() * 9,
+             r: 3 + Math.random() * 5, a: Math.random() * 6.3,
+             c: teintes[(Math.random() * teintes.length) | 0] });
+  }
+  var t0 = performance.now();
+  (function pas(t){
+    var age = t - t0;
+    ctx.clearRect(0, 0, L, H);
+    p.forEach(function(o){
+      o.vy += .28; o.x += o.vx; o.y += o.vy; o.a += .12;
+      ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.a);
+      ctx.globalAlpha = Math.max(0, 1 - age / 2600);
+      ctx.fillStyle = o.c;
+      ctx.fillRect(-o.r, -o.r * .5, o.r * 2, o.r);
+      ctx.restore();
+    });
+    if (age < 2600) requestAnimationFrame(pas); else ctx.clearRect(0, 0, L, H);
+  })(t0);
+}
 
 // Une réponse « évaluée » est celle qui a un corrigé : on ne calcule le taux
 // de réussite que sur celles-là. Une mission cochée n'est pas une bonne réponse.
@@ -535,7 +635,7 @@ function chargerStats(){
   return Promise.all([
     sb.from("eleves").select("id,numero,avatar,auth_id").eq("classe_id", suivi.classeId).order("numero"),
     sb.from("reponses").select("eleve_id,correct,reponse,updated_at").eq("seance_id", suivi.seanceId),
-    sb.from("corriges").select("question").eq("seance_id", suivi.seanceId)
+    sb.from("corriges").select("question,bonne_reponse").eq("seance_id", suivi.seanceId)
   ]).then(function(res){
     var eleves = res[0].data || [], reps = res[1].data || [], cor = res[2].data || [];
 
@@ -576,12 +676,20 @@ function chargerStats(){
     });
 
     // Réussite question par question : dit à l'enseignant quoi reprendre.
+    var bonneDe = {};
+    cor.forEach(function(c){ bonneDe[c.question] = c.bonne_reponse; });
+
     var parQ = {};
     reps.forEach(function(r){
       if (!estEvaluee(r)) return;
-      var q = parQ[r.question] || (parQ[r.question] = { nom: r.question, n: 0, ok: 0 });
+      var q = parQ[r.question] ||
+              (parQ[r.question] = { nom: r.question, n: 0, ok: 0,
+                                    bonne: bonneDe[r.question] || null, choix: {} });
       q.n++;
       if (estJuste(r)) q.ok++;
+      // Répartition des réponses données, pour l'écran « Répartition »
+      var v = (r.reponse === null || r.reponse === undefined) ? "—" : String(r.reponse);
+      q.choix[v] = (q.choix[v] || 0) + 1;
     });
     var questions = Object.keys(parQ).map(function(k){
       var q = parQ[k];
@@ -718,14 +826,19 @@ function arreterBoucle(){
 function rendreEcran(s){
   $("ce-titre").textContent = suivi.titre;
   $("ce-k1").innerHTML = s.actifs + " / " + s.inscrits + "<small>en activité</small>";
-  $("ce-k2").innerHTML = s.reponses + "<small>réponses</small>";
-  $("ce-k3").innerHTML = (s.reussite === null ? "—" : s.reussite + " %") + "<small>de réussite</small>";
+  anime("ce-k2", s.reponses, "", "réponses");
+  if (s.reussite === null) $("ce-k3").innerHTML = "—<small>de réussite</small>";
+  else anime("ce-k3", s.reussite, " %", "de réussite");
 
   // ── Objectif collectif : un but commun plutôt qu'un duel ──
   var vise = s.inscrits * s.total;
   var pctClasse = vise ? Math.min(100, Math.round(s.reponses / vise * 100)) : 0;
   $("ce-obj-f").style.width = pctClasse + "%";
   $("ce-obj-n").textContent = s.reponses + " / " + vise + "  ·  " + pctClasse + " %";
+
+  // Objectif franchi : on le fête une seule fois.
+  if (pctClasse >= 100 && !suivi.feteFaite) { suivi.feteFaite = true; confettis(); }
+  if (pctClasse < 100) suivi.feteFaite = false;
 
   // ── Le défi du moment ──
   var defi = $("ce-defi");
@@ -751,11 +864,24 @@ function rendreEcran(s){
     if (avant[l.id] !== undefined && l.n > avant[l.id]) nouveaux[l.id] = l.n - avant[l.id];
   });
 
+  // ── Vue « Répartition » : quel choix a fait la classe ? ──
+  var zoneRep = $("ce-rep");
+  if (suivi.vue === "rep") {
+    $("ce-grille").hidden = true;
+    $("ce-podium").hidden = true;
+    zoneRep.hidden = false;
+    rendreRepartition(s, zoneRep);
+    majPied(s, actifs, nouveaux);
+    return;
+  }
+  zoneRep.hidden = true;
+  $("ce-grille").hidden = false;
+
   // ── Podium, seulement en mode classement ──
   var pod = $("ce-podium");
-  var lignes, retires = 0;
+  var lignes, retires = 0, lignesPodium = [];
 
-  if (suivi.classement) {
+  if (suivi.vue === "clas") {
     lignes = actifs.slice().sort(function(a, b){
       return (b.ok - a.ok) || (b.n - a.n) || (a.numero < b.numero ? -1 : 1);
     });
@@ -780,6 +906,7 @@ function rendreEcran(s){
         pod.appendChild(d);
       });
       retires = trois.length;
+      lignesPodium = trois;
       lignes = lignes.slice(retires);
     } else {
       pod.hidden = true;
@@ -790,30 +917,77 @@ function rendreEcran(s){
   }
 
   // ── La grille, dimensionnée selon l'effectif pour tenir sans déborder ──
+  var clas = suivi.vue === "clas";
+  var rangAvant = suivi.rangs || {};
+  var rangMain = {};
+
   var g = $("ce-grille");
   var large = lignes.length <= 12 ? "8.5rem" : (lignes.length <= 24 ? "6.5rem" : "5rem");
   g.style.gridTemplateColumns = "repeat(auto-fill,minmax(min(" + large + ",27vw),1fr))";
   g.innerHTML = "";
   lignes.forEach(function(l, i){
+    var rang = i + retires + 1;
+    rangMain[l.id] = rang;
     var d = document.createElement("div");
     d.className = "ce-el" + (nouveaux[l.id] ? " pulse" : "");
     d.innerHTML =
-      (suivi.classement ? '<span class="ce-rang"></span>' : "") +
+      (clas ? '<span class="ce-rang"></span>' : "") +
       '<span class="ce-av"></span>' +
       '<span class="ce-b"><span class="ce-f" style="width:' + l.pct + '%"></span></span>' +
       '<span class="ce-n"></span>' +
-      (l.serie >= 3 ? '<span class="ce-serie"></span>' : "");
-    if (suivi.classement) d.querySelector(".ce-rang").textContent = "#" + (i + retires + 1);
+      (l.serie >= 3 ? '<span class="ce-serie"></span>' : "") +
+      (clas && rangAvant[l.id] && rangAvant[l.id] !== rang ? '<span class="ce-fleche"></span>' : "");
+    if (clas) d.querySelector(".ce-rang").textContent = "#" + rang;
     d.querySelector(".ce-av").textContent = l.avatar;
     d.querySelector(".ce-n").textContent =
-      suivi.classement && l.ev
-        ? l.ok + (l.ok > 1 ? " bonnes" : " bonne")
-        : l.n + "/" + s.total;
+      clas && l.ev ? l.ok + (l.ok > 1 ? " bonnes" : " bonne") : l.n + "/" + s.total;
     if (l.serie >= 3) d.querySelector(".ce-serie").textContent = "🔥 " + l.serie + " d'affilée";
+
+    var fl = d.querySelector(".ce-fleche");
+    if (fl) {
+      var ecart = rangAvant[l.id] - rang;
+      fl.className = "ce-fleche " + (ecart > 0 ? "monte" : "descend");
+      fl.textContent = (ecart > 0 ? "▲ +" : "▼ ") + Math.abs(ecart);
+    }
     g.appendChild(d);
   });
 
-  // ── Fil d'activité ──
+  if (clas) {
+    // Le podium occupe les premières places : on les mémorise aussi.
+    (retires ? lignesPodium : []).forEach(function(l, i){ rangMain[l.id] = i + 1; });
+    suivi.rangs = rangMain;
+  }
+
+  majPied(s, actifs, nouveaux);
+}
+
+// ── Vue « Répartition » : ce que la classe a répondu, question par question ──
+function rendreRepartition(s, zone){
+  if (!s.questions.length) {
+    zone.innerHTML = '<p class="ce-vide">Aucune question corrigée pour l\'instant.</p>';
+    return;
+  }
+  var q = s.questions[suivi.repIndex % s.questions.length];
+  var cles = Object.keys(q.choix).sort();
+  var maxi = cles.reduce(function(m, k){ return Math.max(m, q.choix[k]); }, 1);
+
+  var h = '<p class="ce-rep-q">Question <b>' + q.nom + '</b> — ' +
+          q.ok + " sur " + q.n + " l'ont trouvée</p>";
+  cles.forEach(function(k){
+    var n = q.choix[k];
+    var juste = q.bonne !== null && k.toLowerCase() === String(q.bonne).toLowerCase();
+    h += '<div class="ce-rep-l' + (juste ? " juste" : "") + '">' +
+           '<span class="ce-rep-k">' + k + '</span>' +
+           '<span class="ce-rep-b"><span class="ce-rep-f" style="width:' +
+              Math.round(n / maxi * 100) + '%"></span></span>' +
+           '<span class="ce-rep-n">' + n + (juste ? " ✓" : "") + '</span>' +
+         '</div>';
+  });
+  zone.innerHTML = h;
+}
+
+// ── Pied d'écran : fil d'activité et horodatage ──
+function majPied(s, actifs, nouveaux){
   var evts = actifs.filter(function(l){ return nouveaux[l.id]; })
                    .map(function(l){ return l.avatar + " +" + nouveaux[l.id]; });
   if (evts.length) {
@@ -840,6 +1014,7 @@ function ouvrirEcran(){
 
 function fermerEcran(){
   suivi.ecran = false;
+  if (suivi.auto) { clearInterval(suivi.auto); suivi.auto = null; $("ce-auto").classList.remove("on"); }
   $("classe-ecran").hidden = true;
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(function(){});
@@ -860,11 +1035,29 @@ document.addEventListener("fullscreenchange", function(){
   $("ce-plein").classList.toggle("on", !!document.fullscreenElement);
 });
 
-function modeEcran(classement){
-  suivi.classement = classement;
-  $("ce-prog").classList.toggle("on", !classement);
-  $("ce-clas").classList.toggle("on", classement);
+function modeEcran(v){
+  suivi.vue = v;
+  $("ce-prog").classList.toggle("on", v === "prog");
+  $("ce-clas").classList.toggle("on", v === "clas");
+  $("ce-rep-b").classList.toggle("on", v === "rep");
   if (suivi.stats) rendreEcran(suivi.stats);
+}
+
+// Rotation automatique : l'écran ne se fige jamais pendant l'heure.
+function rotationAuto(){
+  if (suivi.auto) {
+    clearInterval(suivi.auto);
+    suivi.auto = null;
+    $("ce-auto").classList.remove("on");
+    return;
+  }
+  $("ce-auto").classList.add("on");
+  var ordre = ["prog", "clas", "rep"], i = 0;
+  suivi.auto = setInterval(function(){
+    i = (i + 1) % ordre.length;
+    if (ordre[i] === "rep") suivi.repIndex = (suivi.repIndex || 0) + 1;
+    modeEcran(ordre[i]);
+  }, 12000);
 }
 
 // ── Sélecteurs classe et séance ────────────────────────────────────────────
@@ -1030,8 +1223,13 @@ $("pk-tri").addEventListener("change", function(){
 $("b-ecran").addEventListener("click", ouvrirEcran);
 $("ce-quit").addEventListener("click", fermerEcran);
 $("ce-plein").addEventListener("click", pleinEcran);
-$("ce-prog").addEventListener("click", function(){ modeEcran(false); });
-$("ce-clas").addEventListener("click", function(){ modeEcran(true); });
+$("ce-prog").addEventListener("click", function(){ modeEcran("prog"); });
+$("ce-clas").addEventListener("click", function(){ modeEcran("clas"); });
+$("ce-rep-b").addEventListener("click", function(){
+  if (suivi.vue === "rep") suivi.repIndex++;   // reclic : question suivante
+  modeEcran("rep");
+});
+$("ce-auto").addEventListener("click", rotationAuto);
 
 document.addEventListener("keydown", function(e){
   if (e.key === "Escape" && suivi.ecran) fermerEcran();
