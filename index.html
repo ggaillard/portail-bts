@@ -120,12 +120,38 @@ tr:last-child td{border-bottom:0}
 .el-av{font-size:1.3rem;line-height:1;width:1.6rem;text-align:center;flex:none}
 .el-num{font-family:var(--f-mono);font-size:.82rem;color:var(--ink-faint);width:1.8rem;flex:none}
 .el-barre{flex:1;height:7px;background:var(--surface-alt);border-radius:4px;overflow:hidden;min-width:2.5rem}
-.el-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s}
+.el-fill{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .4s}
 .el-fill.bien{background:var(--ok)}
 .el-fill.faible{background:var(--signal)}
 .el-chiffres{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-soft);
              font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
-.el.absent{opacity:.45}
+.el.absent{opacity:.5}
+.el-maj{font-family:var(--f-mono);font-size:.72rem;color:var(--ink-faint);flex:none}
+@media(max-width:27rem){.el-maj{display:none}}
+
+.chip{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;
+      padding:.13rem .38rem;border-radius:3px;flex:none;white-space:nowrap}
+.chip-fini{color:var(--ok);background:var(--ok-soft)}
+.chip-cours{color:var(--accent);background:var(--accent-soft)}
+.chip-rien{color:var(--ink-faint);background:var(--surface-alt)}
+
+.sous-titre{font-size:.95rem;font-weight:600;margin:1.4rem 0 .2rem}
+.sous-hint{font-size:.85rem;color:var(--ink-soft);margin-bottom:.6rem}
+
+.questions{display:flex;flex-direction:column;gap:.35rem}
+.q{display:flex;align-items:center;gap:.6rem;background:var(--surface);
+   border:1px solid var(--rule);border-radius:7px;padding:.45rem .7rem}
+.q-nom{font-family:var(--f-mono);font-size:.8rem;color:var(--ink);width:2.4rem;flex:none}
+.q-barre{flex:1;height:7px;background:var(--surface-alt);border-radius:4px;overflow:hidden;min-width:2.5rem}
+.q-fill{display:block;height:100%;border-radius:4px;background:var(--accent);transition:width .4s}
+.q-fill.bien{background:var(--ok)}
+.q-fill.faible{background:var(--signal)}
+.q-pct{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);
+       font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.seance-etat{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.05em;
+             text-transform:uppercase;padding:.15rem .4rem;border-radius:3px;margin-left:.4rem}
+.etat-ouverte{color:var(--ok);background:var(--ok-soft)}
+.etat-fermee{color:var(--signal);background:var(--signal-soft)}
 
 /* ── Mode classe : projection au tableau ── */
 #classe-ecran{position:fixed;inset:0;background:#0B1017;color:#EAF2F8;z-index:50;
@@ -144,7 +170,7 @@ tr:last-child td{border-bottom:0}
 .ce-el.top{border-color:#4FB3AD;background:#10262A}
 .ce-av{font-size:clamp(1.5rem,4.2vmin,2.8rem);line-height:1}
 .ce-b{width:88%;height:6px;background:#22303D;border-radius:3px;overflow:hidden}
-.ce-f{height:100%;background:#4FB3AD;border-radius:3px;transition:width .6s}
+.ce-f{display:block;height:100%;background:#4FB3AD;border-radius:3px;transition:width .6s}
 .ce-n{font-family:var(--f-mono);font-size:clamp(.68rem,1.5vmin,.95rem);color:#8CA3B5;
       font-variant-numeric:tabular-nums}
 .ce-rang{font-family:var(--f-mono);font-size:clamp(.62rem,1.3vmin,.85rem);color:#4FB3AD;font-weight:600}
@@ -267,7 +293,18 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <div class="pick">
         <button class="btn" id="b-ecran" type="button">Afficher au tableau</button>
         <button class="btn btn-sec" id="b-rafraichir" type="button">Rafraîchir</button>
+        <select id="pk-tri" aria-label="Trier les élèves">
+          <option value="numero">Trier par numéro</option>
+          <option value="avancement">Les moins avancés d'abord</option>
+          <option value="reussite">Les plus en difficulté d'abord</option>
+        </select>
       </div>
+
+      <h3 class="sous-titre">Réussite par question</h3>
+      <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
+      <div class="questions" id="liste-questions"></div>
+
+      <h3 class="sous-titre">Élève par élève</h3>
       <div class="eleves" id="liste-eleves"></div>
     </div>
     <p class="hint" id="stats-attente">Sélectionnez une séance pour voir le détail élève par élève.</p>
@@ -468,12 +505,28 @@ function chargerStats(){
       };
     });
 
+    // Réussite question par question : dit à l'enseignant quoi reprendre.
+    var parQ = {};
+    reps.forEach(function(r){
+      if (!estEvaluee(r)) return;
+      var q = parQ[r.question] || (parQ[r.question] = { nom: r.question, n: 0, ok: 0 });
+      q.n++;
+      if (estJuste(r)) q.ok++;
+    });
+    var questions = Object.keys(parQ).map(function(k){
+      var q = parQ[k];
+      q.pct = Math.round(q.ok / q.n * 100);
+      return q;
+    }).sort(function(a, b){
+      return (a.pct - b.pct) || (a.nom < b.nom ? -1 : 1);
+    });
+
     var actifs = lignes.filter(function(l){ return l.n > 0; });
     var totalEv = lignes.reduce(function(s, l){ return s + l.ev; }, 0);
     var totalOk = lignes.reduce(function(s, l){ return s + l.ok; }, 0);
 
     return {
-      lignes: lignes, total: total,
+      lignes: lignes, total: total, questions: questions,
       inscrits: lignes.length,
       actifs: actifs.length,
       reponses: lignes.reduce(function(s, l){ return s + l.n; }, 0),
@@ -500,22 +553,62 @@ function rendreSuivi(s){
     tuile(s.avancement + " %", "avancement moyen") +
     tuile(s.reussite === null ? "—" : s.reussite + " %", "de réussite");
 
+  // ── Réussite par question ──
+  var q = $("liste-questions");
+  q.innerHTML = "";
+  if (!s.questions.length) {
+    q.innerHTML = '<p class="sous-hint">Aucune question corrigée pour l\'instant. ' +
+                  'Ce panneau se remplit dès les premières réponses évaluées.</p>';
+  }
+  s.questions.forEach(function(qu){
+    var t = qu.pct >= 70 ? " bien" : (qu.pct < 40 ? " faible" : "");
+    var d = document.createElement("div");
+    d.className = "q";
+    d.innerHTML =
+      '<span class="q-nom"></span>' +
+      '<span class="q-barre"><span class="q-fill' + t + '" style="width:' + qu.pct + '%"></span></span>' +
+      '<span class="q-pct"></span>';
+    d.querySelector(".q-nom").textContent = qu.nom;
+    d.querySelector(".q-pct").textContent = qu.ok + "/" + qu.n + " · " + qu.pct + " %";
+    q.appendChild(d);
+  });
+
+  // ── Élève par élève ──
+  var tri = $("pk-tri").value;
+  var lignes = s.lignes.slice().sort(function(a, b){
+    if (tri === "avancement") return (a.pct - b.pct) || (a.numero < b.numero ? -1 : 1);
+    if (tri === "reussite") {
+      var ra = a.reussite === null ? 999 : a.reussite;
+      var rb = b.reussite === null ? 999 : b.reussite;
+      return (ra - rb) || (a.numero < b.numero ? -1 : 1);
+    }
+    return a.numero < b.numero ? -1 : 1;
+  });
+
   var c = $("liste-eleves");
   c.innerHTML = "";
-  s.lignes.forEach(function(l){
+  lignes.forEach(function(l){
     var d = document.createElement("div");
     d.className = "el" + (l.n === 0 ? " absent" : "");
     var teinte = l.reussite === null ? "" :
                  (l.reussite >= 70 ? " bien" : (l.reussite < 40 ? " faible" : ""));
+    var etat = l.n === 0 ? ["chip-rien", "pas commencé"]
+             : (l.n >= s.total ? ["chip-fini", "terminé"] : ["chip-cours", "en cours"]);
     d.innerHTML =
       '<span class="el-av"></span>' +
       '<span class="el-num"></span>' +
       '<span class="el-barre"><span class="el-fill' + teinte + '" style="width:' + l.pct + '%"></span></span>' +
-      '<span class="el-chiffres"></span>';
+      '<span class="el-chiffres"></span>' +
+      '<span class="chip ' + etat[0] + '"></span>' +
+      '<span class="el-maj"></span>';
     d.querySelector(".el-av").textContent = l.avatar;
     d.querySelector(".el-num").textContent = l.numero;
     d.querySelector(".el-chiffres").textContent =
       l.n + "/" + s.total + (l.reussite === null ? "" : " · " + l.reussite + " %");
+    d.querySelector(".chip").textContent = etat[1];
+    d.querySelector(".el-maj").textContent = l.maj
+      ? new Date(l.maj).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+      : "";
     c.appendChild(d);
   });
 
@@ -742,6 +835,9 @@ $("pk-seance").addEventListener("change", function(){
 });
 
 $("b-rafraichir").addEventListener("click", rafraichir);
+$("pk-tri").addEventListener("change", function(){
+  if (suivi.stats) rendreSuivi(suivi.stats);
+});
 $("b-ecran").addEventListener("click", ouvrirEcran);
 $("ce-quit").addEventListener("click", fermerEcran);
 $("ce-prog").addEventListener("click", function(){ modeEcran(false); });
