@@ -122,10 +122,17 @@ select s.id, 'q' || g, 'B', 'Explication de la question ' || g || '.'
        generate_series(1, 10) g
  where c.code = 'DEMO-GRANDE-2026';
 
--- Avancement et réussite variés, calculés à partir du numéro
+-- Avancement et réussite variés.
+--   niveau  = force de l'élève, de 2 à 9
+--   juste   = croise le niveau de l'élève et la difficulté de la question,
+--             sans plafonner le niveau : les questions dures restent
+--             accessibles aux bons élèves
+--   fausse  = la lettre erronée dépend de l'élève ET de la question, pour que
+--             les quatre options se remplissent dans la vue Répartition
 insert into public.reponses (eleve_id, seance_id, question, reponse, correct, updated_at)
 select e.id, s.id, 'q' || g,
-       case when p.juste then 'B' else (array['A','C','D'])[1 + (g % 3)] end,
+       case when p.juste then 'B'
+            else (array['A','C','D'])[1 + ((e.numero::int + g) % 3)] end,
        p.juste,
        now() - ((p.rep - g) * interval '55 seconds')
   from public.classes c
@@ -133,10 +140,10 @@ select e.id, s.id, 'q' || g,
   join public.seances s on s.classe_id = c.id and s.numero = 1
   cross join generate_series(1, 10) g
   cross join lateral (
-    select r.rep, r.jus, ((g * 7 - 7) % 10) + 1 <= r.jus as juste
+    select r.rep,
+           ((e.numero::int * 13 + g * 7) % 10) < r.niveau as juste
       from (select 3 + ((e.numero::int * 7) % 8) as rep,
-                   least(1 + ((e.numero::int * 5) % 9),
-                         3 + ((e.numero::int * 7) % 8)) as jus) r
+                   2 + ((e.numero::int * 3) % 8) as niveau) r
   ) p
  where c.code = 'DEMO-GRANDE-2026' and g <= p.rep;
 
