@@ -868,6 +868,24 @@ function modeEcran(classement){
 }
 
 // ── Sélecteurs classe et séance ────────────────────────────────────────────
+function activerSeance(){
+  var sel = $("pk-seance");
+  var opt = sel.options[sel.selectedIndex];
+  if (!sel.value) {
+    suivi.seanceId = null;
+    suivi.stats = null;
+    arreterBoucle();
+    $("stats-zone").hidden = true;
+    $("stats-attente").hidden = false;
+    return;
+  }
+  suivi.seanceId = sel.value;
+  suivi.titre = opt.dataset.titre || opt.textContent;
+  suivi.ouverte = !!opt.dataset.ouverte;
+  $("stats-attente").textContent = "Chargement…";
+  rafraichir().then(lancerBoucle);
+}
+
 function chargerSeancesDe(classeId){
   suivi.classeId = classeId;
   suivi.seanceId = null;
@@ -890,6 +908,11 @@ function chargerSeancesDe(classeId){
         o.dataset.ouverte = s.ouverte ? "1" : "";
         sel.appendChild(o);
       });
+      // Une séance est chargée d'office : le panneau n'est jamais vide à l'arrivée.
+      if (sel.options.length > 1) {
+        sel.selectedIndex = 1;
+        activerSeance();
+      }
     });
 }
 
@@ -998,22 +1021,7 @@ $("pk-classe").addEventListener("change", function(){
   chargerSeancesDe(this.value);
 });
 
-$("pk-seance").addEventListener("change", function(){
-  var opt = this.options[this.selectedIndex];
-  if (!this.value) {
-    suivi.seanceId = null;
-    suivi.stats = null;
-    arreterBoucle();
-    $("stats-zone").hidden = true;
-    $("stats-attente").hidden = false;
-    return;
-  }
-  suivi.seanceId = this.value;
-  suivi.titre = opt.dataset.titre || opt.textContent;
-  suivi.ouverte = !!opt.dataset.ouverte;
-  $("stats-attente").textContent = "Chargement…";
-  rafraichir().then(lancerBoucle);
-});
+$("pk-seance").addEventListener("change", activerSeance);
 
 $("b-rafraichir").addEventListener("click", rafraichir);
 $("pk-tri").addEventListener("change", function(){
