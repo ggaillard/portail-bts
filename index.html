@@ -707,7 +707,8 @@ function chargerStats(){
   if (!suivi.classeId || !suivi.seanceId) return Promise.resolve(null);
   return Promise.all([
     sb.from("eleves").select("id,numero,avatar,auth_id").eq("classe_id", suivi.classeId).order("numero"),
-    sb.from("reponses").select("eleve_id,correct,reponse,updated_at").eq("seance_id", suivi.seanceId),
+    sb.from("reponses").select("eleve_id,question,correct,reponse,updated_at")
+      .eq("seance_id", suivi.seanceId),
     // La colonne « intitule » est facultative : si elle n'existe pas, on relit sans.
     sb.from("corriges").select("question,bonne_reponse,intitule").eq("seance_id", suivi.seanceId)
       .then(function(r){
