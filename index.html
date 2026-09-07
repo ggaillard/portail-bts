@@ -146,6 +146,17 @@ tr:last-child td{border-bottom:0}
 .ac-nums.vide{background:#DEF3E6;border-color:#C2E6D2}
 .ac-nums.vide .lbl,.ac-nums.vide .nums{color:#1B6B42}
 .ac-nums.vide .nums{font-size:1rem;font-weight:500;letter-spacing:0}
+.cn-q{padding:.7rem 0;border-top:1px solid var(--rule)}
+.cn-q:first-of-type{border-top:0}
+.cn-int{display:block;font-size:.95rem;font-weight:600;margin:0 0 .4rem}
+.cn-nums{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-soft);
+  margin:-.1rem 0 .35rem 4.1rem;word-spacing:.25rem}
+.cn-sig{margin-top:.9rem;padding:.6rem .85rem;border-radius:8px;
+  background:#FDF0DC;border:1px solid #F2DDB8}
+.cn-sig h4{margin:0 0 .35rem;font-size:.9rem;color:#8A5A16}
+.cn-sig ul{margin:0;padding-left:1.1rem;font-size:.88rem;color:#8A5A16}
+.cn-sig li{margin:.15rem 0}
+.cn-sig b{font-weight:600}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -481,6 +492,16 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="appel-choix" id="humeur-choix"></div>
   </div>
 
+  <div class="card" id="bloc-connaissance" hidden>
+    <h2>Faisons connaissance</h2>
+    <p class="hint">Quelques questions posées une seule fois dans l'année. Il n'y a
+      pas de bonne réponse : elles me servent à adapter les cours à ce que vous êtes.
+      <b id="conn-avance"></b></p>
+    <div id="err-conn"></div>
+    <p class="cn-int" id="conn-titre"></p>
+    <div class="appel-choix" id="conn-choix"></div>
+  </div>
+
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
 </section>
@@ -520,6 +541,13 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       </div>
       <div id="err-noms"></div>
     </details>
+  </div>
+
+  <div class="card" id="carte-connaissance" hidden>
+    <h2>Faisons connaissance</h2>
+    <p class="hint">Le questionnaire de rentrée. Aucune réponse n'est juste ou fausse :
+      ce sont des faits sur le groupe, pas une note.</p>
+    <div id="conn-classes"></div>
   </div>
 
   <div class="card">
@@ -727,6 +755,63 @@ function proposerAppel(){
   });
 }
 
+// ── Faisons connaissance — le questionnaire de rentrée ─────────────────────
+// Douze questions posées une seule fois, une à la fois : sur un téléphone,
+// une liste de douze questions se referme, une question unique se répond.
+// La carte disparaît d'elle-même quand tout est fait, et ne revient plus.
+function proposerConnaissance(){
+  $("bloc-connaissance").hidden = true;
+  sb.rpc("connaissance").then(function(r){
+    // Fonction pas déployée, ou classe sans séance 98 : rien ne s'affiche,
+    // exactement comme pour l'appel.
+    if (!r || r.error || !r.data || !r.data.questions || !r.data.questions.length) return;
+    rendreConnaissance(r.data);
+  });
+}
+
+function rendreConnaissance(d){
+  var bloc = $("bloc-connaissance");
+  var reste = d.questions.filter(function(q){ return !q.ma_reponse; });
+  if (!reste.length) { bloc.hidden = true; return; }
+  bloc.hidden = false;
+  erreur("err-conn", "");
+
+  var q = reste[0], faites = d.questions.length - reste.length;
+  $("conn-avance").textContent = "Question " + (faites + 1) + " sur " + d.questions.length + ".";
+  $("conn-titre").textContent = q.intitule || q.question;
+
+  var choix = $("conn-choix");
+  choix.innerHTML = "";
+  ["A","B","C","D"].forEach(function(lettre, i){
+    if (!q.options || !q.options[i]) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec appel-opt";
+    b.textContent = q.options[i];
+    b.addEventListener("click", function(){
+      var boutons = choix.querySelectorAll("button");
+      Array.prototype.forEach.call(boutons, function(x){ x.disabled = true; });
+      sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question, p_reponse: lettre })
+        .then(function(rr){
+          if (rr.error) {
+            erreur("err-conn", "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+            Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
+            return;
+          }
+          // On avance sur l'objet local : pas d'aller-retour entre deux questions.
+          q.ma_reponse = lettre;
+          if (d.questions.some(function(x){ return !x.ma_reponse; })) return rendreConnaissance(d);
+          $("conn-titre").textContent = "";
+          $("conn-avance").textContent = "";
+          choix.innerHTML = "";
+          erreur("err-conn", "Merci — c'est terminé. Ces réponses ne comptent pas " +
+                             "dans vos résultats.", true);
+        });
+    });
+    choix.appendChild(b);
+  });
+}
+
 // ── L'humeur du jour ───────────────────────────────────────────────────────
 // Posée après la question du jour, jamais notée. Elle dit dans quel état la
 // classe démarre, et elle laisse dire « je suis perdu » à ceux qui ne
@@ -849,6 +934,7 @@ function ouvrirEspaceEtudiant(moi){
 
   if (!moi.avatar) proposerAvatar(moi);
   proposerAppel();
+  proposerConnaissance();
 
   sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", moi.classe_id).order("ordre")
@@ -1712,16 +1798,16 @@ function numerosAbsents(abs){
                     .sort(function(a, b){ return Number(a) - Number(b); });
 }
 
-function ligneNumeros(c, abs){
+function ligneNumeros(c, abs, libelle, vide){
   var nums = numerosAbsents(abs);
   var d = document.createElement("div");
   d.className = "ac-nums" + (nums.length ? "" : " vide");
   var lbl = document.createElement("span");
   lbl.className = "lbl";
-  lbl.textContent = nums.length ? "Absents" : "Appel";
+  lbl.textContent = nums.length ? (libelle || "Absents") : (libelle || "Appel");
   var v = document.createElement("span");
   v.className = "nums";
-  v.textContent = nums.length ? nums.join("  ") : "Personne ne manque.";
+  v.textContent = nums.length ? nums.join("  ") : (vide || "Personne ne manque.");
   d.appendChild(lbl);
   d.appendChild(v);
   if (nums.length) {
@@ -1752,6 +1838,148 @@ function copierTexte(texte, bouton){
                                                      function(){ return dit(false); });
   }
   return Promise.resolve(dit(false));
+}
+
+// ── Le questionnaire de rentrée, côté enseignant ───────────────────────────
+// Une répartition par question, et sous chaque option les numéros de ceux qui
+// l'ont choisie : c'est ce qui distingue un camembert d'une information. Savoir
+// que trois étudiants n'ont pas d'ordinateur ne sert à rien si on ignore
+// lesquels.
+function chargerConnaissance(classes){
+  var carte = $("carte-connaissance"), z = $("conn-classes");
+  z.innerHTML = "";
+  carte.hidden = true;
+  if (!classes || !classes.length) return;
+
+  var restant = classes.length, affiches = 0;
+  classes.forEach(function(c){
+    var bloc = document.createElement("div");
+    bloc.className = "appel-classe";
+    bloc.hidden = true;
+    z.appendChild(bloc);
+
+    sb.rpc("connaissance_classe", { p_classe_id: Number(c.id) }).then(function(r){
+      restant--;
+      var d = (r && !r.error && r.data && r.data.ok) ? r.data : null;
+      if (d) { remplirConnaissanceClasse(bloc, c, d); bloc.hidden = false; affiches++; }
+      if (restant === 0) carte.hidden = affiches === 0;
+    });
+  });
+}
+
+// Les réponses qui demandent une décision pédagogique, pas seulement une
+// statistique. Ajouter une ligne ici suffit à faire remonter un signal.
+var SIGNAUX = [
+  { q: "conn-04", lettres: ["C","D"], quoi: "pas d'ordinateur à la maison" },
+  { q: "conn-05", lettres: ["C","D"], quoi: "connexion faible ou absente" },
+  { q: "conn-02", lettres: ["A"],     quoi: "n'a jamais écrit de code" },
+  { q: "conn-06", lettres: ["A"],     quoi: "moins d'une heure de travail perso par semaine" },
+  { q: "conn-11", lettres: ["D"],     quoi: "s'arrête et attend quand il bloque" },
+  { q: "conn-07", lettres: ["D"],     quoi: "orientation par défaut" }
+];
+
+function remplirConnaissanceClasse(bloc, c, d){
+  bloc.innerHTML = "";
+  var h = document.createElement("h3");
+  h.textContent = c.nom || c.code;
+  bloc.appendChild(h);
+
+  var nq = Number(d.total_questions) || 0;
+  var compte = document.createElement("p");
+  compte.className = "ac-compte";
+  compte.innerHTML = "<b></b> · <span class=\"hint\"></span>";
+  compte.querySelector("b").textContent =
+    (d.termines || 0) + " / " + (d.inscrits || 0) + " ont terminé";
+  compte.querySelector("span").textContent = nq + " questions";
+  bloc.appendChild(compte);
+
+  // Ceux qui n'ont pas fini : les numéros d'abord, comme pour l'appel.
+  var pas = (d.eleves || []).filter(function(e){ return (Number(e.faites) || 0) < nq; });
+  bloc.appendChild(ligneNumeros(c, pas.map(function(e){ return { numero: e.numero }; }),
+                                "À relancer", "Tout le monde a répondu."));
+
+  (d.questions || []).forEach(function(q){
+    bloc.appendChild(rendreQuestionConnaissance(c, q));
+  });
+
+  var sig = rendreSignaux(c, d);
+  if (sig) bloc.appendChild(sig);
+}
+
+function rendreQuestionConnaissance(c, q){
+  var z = document.createElement("div");
+  z.className = "cn-q";
+  var t = document.createElement("span");
+  t.className = "cn-int";
+  t.textContent = q.intitule || q.question;
+  z.appendChild(t);
+
+  var lettres = ["A","B","C","D"], compte = q.compte || {}, qui = q.qui || {};
+  var total = lettres.reduce(function(s, l){ return s + (Number(compte[l]) || 0); }, 0);
+  if (!total) {
+    var v = document.createElement("p");
+    v.className = "hint";
+    v.style.margin = "0";
+    v.textContent = "Aucune réponse pour l'instant.";
+    z.appendChild(v);
+    return z;
+  }
+
+  (q.options || []).forEach(function(libelle, i){
+    var l = lettres[i], n = Number(compte[l]) || 0;
+    var ligne = document.createElement("div");
+    ligne.className = "jalon";
+    ligne.innerHTML = '<span class="jalon-n"></span><span class="jalon-b"></span><span></span>';
+    ligne.querySelector(".jalon-n").textContent = l + " · " + n;
+    ligne.querySelector(".jalon-b").style.width = Math.round(n / total * 45) + "%";
+    ligne.querySelector("span:last-child").textContent = libelle;
+    z.appendChild(ligne);
+
+    var nums = qui[l] || [];
+    if (nums.length) {
+      var d2 = document.createElement("div");
+      d2.className = "cn-nums";
+      d2.textContent = nums.join(" ");
+      z.appendChild(d2);
+    }
+  });
+  return z;
+}
+
+function rendreSignaux(c, d){
+  var parCle = {};
+  (d.questions || []).forEach(function(q){ parCle[q.question] = q; });
+
+  var lignes = [];
+  SIGNAUX.forEach(function(sg){
+    var q = parCle[sg.q];
+    if (!q) return;
+    var nums = [];
+    sg.lettres.forEach(function(l){ nums = nums.concat((q.qui || {})[l] || []); });
+    nums = numerosAbsents(nums.map(function(n){ return { numero: n }; }));
+    if (nums.length) lignes.push({ quoi: sg.quoi, nums: nums });
+  });
+  if (!lignes.length) return null;
+
+  var z = document.createElement("div");
+  z.className = "cn-sig";
+  var h = document.createElement("h4");
+  h.textContent = "À prendre en compte";
+  z.appendChild(h);
+  var ul = document.createElement("ul");
+  lignes.forEach(function(x){
+    var li = document.createElement("li");
+    var b = document.createElement("b");
+    b.textContent = x.nums.map(function(n){
+      var nom = nomDe(c.code, n);
+      return nom ? n + " " + nom : "n° " + n;
+    }).join(", ");
+    li.appendChild(b);
+    li.appendChild(document.createTextNode(" — " + x.quoi));
+    ul.appendChild(li);
+  });
+  z.appendChild(ul);
+  return z;
 }
 
 // Combien de chaque humeur, dans l'ordre des options. Une barre par smiley :
@@ -2218,6 +2446,7 @@ function ouvrirEspaceEnseignant(){
     });
     suivi.classesConnues = classes;
     chargerAppelToutesClasses(classes);
+    chargerConnaissance(classes);
     if (classes.length) chargerSeancesDe(classes[0].id);
 
     classes.forEach(function(c){
@@ -2327,12 +2556,14 @@ $("b-noms-ok").addEventListener("click", function(){
   erreur("err-noms", r.lus + " noms enregistrés dans ce navigateur" +
          (r.ignores ? ", " + r.ignores + " lignes ignorées (format attendu : CLASSE;numéro;nom)" : "") + ".", true);
   chargerAppelToutesClasses(suivi.classesConnues || []);
+  chargerConnaissance(suivi.classesConnues || []);
 });
 $("b-noms-vider").addEventListener("click", function(){
   try { localStorage.removeItem(NOMS_CLE); } catch (e) {}
   $("noms-saisie").value = "";
   erreur("err-noms", "Noms effacés de ce navigateur.", true);
   chargerAppelToutesClasses(suivi.classesConnues || []);
+  chargerConnaissance(suivi.classesConnues || []);
 });
 $("b-demarrer").addEventListener("click", function(){
   pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");
