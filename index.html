@@ -96,6 +96,32 @@ tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto}
 
 .avatars{display:flex;flex-wrap:wrap;gap:.4rem}
+.appel-choix{display:flex;flex-direction:column;gap:.45rem;align-items:stretch}
+.appel-opt{text-align:left;font-size:.95rem}
+.prevol{border:1px solid var(--rule);border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem}
+.prevol-tete{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem}
+.prevol-etat{font-size:.85rem;font-weight:600;padding:.12rem .5rem;border-radius:99px}
+.prevol-etat.ok{background:#DEF3E6;color:#1B6B42}
+.prevol-etat.ko{background:#FBE6E6;color:#963232}
+.prevol-liste{list-style:none;padding:0;margin:0 0 .7rem}
+.prevol-liste li{display:flex;gap:.55rem;align-items:baseline;padding:.2rem 0;font-size:.92rem}
+.prevol-liste li b{font-weight:600}
+.prevol-liste .pv-i{flex:0 0 1.1rem}
+.prevol-liste .pv-ko{color:var(--ink-soft)}
+.rythme{border-radius:8px;padding:.6rem .85rem;margin-bottom:1rem;font-size:.92rem}
+.rythme.ok{background:#DEF3E6;color:#1B6B42}
+.rythme.avance{background:#E4EDFA;color:#24507F}
+.rythme.retard{background:#FDF0DC;color:#8A5A16}
+.rythme.mort{background:var(--surface);color:var(--ink-soft);border:1px solid var(--rule)}
+.rythme b{font-weight:600}
+.pastilles{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
+.pastille{font-family:var(--f-mono);font-size:.82rem;padding:.15rem .45rem;border-radius:5px;
+  background:var(--surface);border:1px solid var(--rule)}
+.pastille.abs{background:#FBE6E6;border-color:#F0C9C9;color:#963232}
+.pastille.pre{background:#DEF3E6;border-color:#C2E6D2;color:#1B6B42}
+.jalon{display:flex;align-items:center;gap:.5rem;font-size:.88rem;padding:.12rem 0}
+.jalon-n{font-family:var(--f-mono);flex:0 0 3.6rem;color:var(--ink-soft)}
+.jalon-b{height:.55rem;border-radius:99px;background:var(--accent);opacity:.75;min-width:2px}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -417,6 +443,13 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="avatars" id="grille-avatars"></div>
   </div>
 
+  <div class="card" id="bloc-appel" hidden>
+    <h2 id="appel-titre">Question du jour</h2>
+    <p class="hint">Répondez avant de rejoindre vos projets : c'est ce qui marque votre présence.</p>
+    <div id="err-appel"></div>
+    <div class="appel-choix" id="appel-choix"></div>
+  </div>
+
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
 </section>
@@ -435,6 +468,12 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <tbody></tbody>
     </table></div>
   </div>
+  <div class="card" id="carte-appel" hidden>
+    <h2>Appel du jour</h2>
+    <p class="hint" id="appel-intitule"></p>
+    <div id="appel-resume"></div>
+  </div>
+
   <div class="card">
     <h2>Suivi d'une séance</h2>
     <p class="hint">Choisissez la classe puis la séance. Les chiffres se rafraîchissent seuls toutes les huit secondes.</p>
@@ -443,8 +482,22 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <select id="pk-classe" aria-label="Classe"></select>
       <select id="pk-seance" aria-label="Séance"></select>
     </div>
+    <div id="prevol" class="prevol" hidden>
+      <div class="prevol-tete">
+        <h3 class="sous-titre" style="margin:0">Avant de commencer</h3>
+        <span class="prevol-etat" id="prevol-etat"></span>
+      </div>
+      <ul class="prevol-liste" id="prevol-liste"></ul>
+      <div class="pick">
+        <button class="btn" id="b-demarrer" type="button">Démarrer la séance</button>
+        <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
+      </div>
+      <div id="err-prevol"></div>
+    </div>
+
     <div id="stats-zone" hidden>
       <div class="msg" id="stats-guide" hidden></div>
+      <div class="rythme" id="rythme" hidden></div>
       <div class="tuiles" id="tuiles"></div>
       <div class="pick">
         <button class="btn" id="b-ecran" type="button">Afficher au tableau</button>
@@ -583,6 +636,73 @@ function afficherProjets(conteneur, liste){
   liste.forEach(function(p){ c.appendChild(carte(p)); });
 }
 
+// ── Appel — la question du jour ────────────────────────────────────────────
+// L'appel n'est pas un mécanisme à part : c'est la séance numéro 0 de la
+// classe, avec une question par date. Y répondre, c'est être présent, et la
+// réponse suit le même chemin que toutes les autres — donc le tableau de bord
+// enseignant la voit sans rien connaître de l'appel.
+function proposerAppel(){
+  var bloc = $("bloc-appel");
+  bloc.hidden = true;
+  erreur("err-appel", "");
+
+  sb.rpc("appel_du_jour").then(function(r){
+    // Fonction pas encore déployée, ou pas d'appel aujourd'hui : on n'affiche
+    // rien. L'espace étudiant reste utilisable, c'est le comportement d'avant.
+    if (!r || r.error || !r.data) return;
+    var a = r.data;
+
+    bloc.hidden = false;
+    $("appel-titre").textContent = a.intitule || "Question du jour";
+
+    if (a.repondu) { appelRepondu(a.ma_reponse, null); return; }
+
+    var choix = $("appel-choix");
+    choix.innerHTML = "";
+    ["A","B","C","D"].forEach(function(lettre, i){
+      // Sans libellés en base, on s'en tient aux lettres : la question est
+      // alors projetée au tableau, et l'écran ne sert qu'à répondre.
+      var opt = (a.options && a.options[i]) ? lettre + ". " + a.options[i] : lettre;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn btn-sec appel-opt";
+      b.textContent = opt;
+      b.addEventListener("click", function(){ repondreAppel(a, lettre); });
+      choix.appendChild(b);
+    });
+  });
+}
+
+function repondreAppel(a, lettre){
+  var boutons = $("appel-choix").querySelectorAll("button");
+  Array.prototype.forEach.call(boutons, function(b){ b.disabled = true; });
+  erreur("err-appel", "");
+
+  sb.rpc("repondre", {
+    p_seance_id: a.seance_id,
+    p_question:  a.question,
+    p_reponse:   lettre
+  }).then(function(r){
+    if (r.error) {
+      erreur("err-appel", "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+      Array.prototype.forEach.call(boutons, function(b){ b.disabled = false; });
+      return;
+    }
+    appelRepondu(lettre, r.data);
+  });
+}
+
+function appelRepondu(lettre, retour){
+  $("appel-choix").innerHTML = "";
+  var texte = "Présence enregistrée" + (lettre ? " — vous avez répondu " + lettre + "." : ".");
+  if (retour && typeof retour.correct === "boolean") {
+    texte += retour.correct
+      ? " ✅ Bonne réponse."
+      : " ❌ La bonne réponse était " + retour.bonne_reponse + ".";
+  }
+  erreur("err-appel", texte, true);
+}
+
 // ── Choix de l'avatar ──────────────────────────────────────────────────────
 var AVATARS = ["🦊","🐢","🦉","🐙","🦁","🐺","🦄","🐝","🐬","🦋",
                "🐧","🦔","🐳","🦅","🐨","🦝","🐸","🦖","🦩","🐍",
@@ -629,6 +749,7 @@ function ouvrirEspaceEtudiant(moi){
   montrer("espace-etu");
 
   if (!moi.avatar) proposerAvatar(moi);
+  proposerAppel();
 
   sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", moi.classe_id).order("ordre")
@@ -831,6 +952,8 @@ function rendreSuivi(s){
     tuile(s.reponses, "réponses") +
     tuile(s.avancement + " %", "avancement moyen") +
     tuile(s.reussite === null ? "—" : s.reussite + " %", "de réussite");
+
+  rendreRythme(s);
 
   // ── Réussite par question ──
   var q = $("liste-questions");
@@ -1349,6 +1472,289 @@ function rotationAuto(){
   }, 22000);
 }
 
+// ── L'appel du jour — présents et absents, à part du reste ────────────────
+// L'appel répond à « qui est là ? », le tableau de bord à « où en sont-ils ? ».
+// Deux questions différentes : deux blocs, pour qu'on ne lise pas l'une en
+// croyant lire l'autre.
+function chargerAppelClasse(classeId){
+  var carte = $("carte-appel");
+  if (!classeId) { carte.hidden = true; return Promise.resolve(); }
+  return sb.rpc("appel_classe", { p_classe_id: Number(classeId) }).then(function(r){
+    if (!r || r.error || !r.data || !r.data.ok) { carte.hidden = true; return; }
+    var a = r.data;
+    carte.hidden = false;
+
+    if (!a.pose) {
+      $("appel-intitule").textContent =
+        "Aucune question d'appel pour aujourd'hui : exécutez la section 3 d'APPEL.sql.";
+      $("appel-resume").innerHTML = "";
+      return;
+    }
+    $("appel-intitule").textContent = a.intitule || "";
+    var pre = a.presents || [], abs = a.absents || [];
+    var z = $("appel-resume");
+    z.innerHTML = '<p><b>' + pre.length + ' présents</b> · ' + abs.length + ' absents</p>' +
+                  '<div class="pastilles" id="ap-pre"></div>' +
+                  (abs.length ? '<div class="pastilles" id="ap-abs"></div>' : "");
+    pastilles("ap-pre", pre, "pre", function(x){ return x.numero + " " + (x.avatar || "") + " " + x.heure; });
+    if (abs.length) pastilles("ap-abs", abs, "abs", function(x){ return x.numero + " " + (x.avatar || ""); });
+  });
+}
+
+function pastilles(id, liste, classe, texte){
+  var z = $(id);
+  if (!z) return;
+  z.innerHTML = "";
+  liste.forEach(function(x){
+    var s = document.createElement("span");
+    s.className = "pastille " + classe;
+    s.textContent = texte(x);
+    z.appendChild(s);
+  });
+}
+
+// ── Séance de projet — une autre lecture ──────────────────────────────────
+// Sur un projet, personne n'est « en retard sur l'horloge » : chacun avance à
+// sa vitesse. Ce qui alerte, c'est l'ARRÊT et l'écart à l'échéance.
+function chargerProjet(){
+  return sb.rpc("suivi_projet", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    suivi.projet = (r && !r.error && r.data && r.data.ok) ? r.data : null;
+    if (suivi.stats) rendreRythme(suivi.stats);
+  });
+}
+
+function rendreProjet(zone, p){
+  var pr = suivi.projet;
+  if (!pr) {
+    zone.className = "rythme mort";
+    zone.textContent = "Séance de projet — lecture de l'avancement en cours…";
+    return;
+  }
+  var alerte = (pr.arretes || []).length || (pr.en_risque || 0);
+  zone.className = "rythme " + (alerte ? "retard" : "ok");
+
+  var t = "<b>Séance de projet</b> — chacun à son rythme, pas de cadence horaire.";
+  if (pr.echeance) {
+    t += " Échéance dans <b>" + pr.jours_restants + " jours</b>";
+    if (pr.en_risque) t += ", <b>" + pr.en_risque + " au rythme actuel n'iront pas au bout</b>";
+    t += ".";
+  }
+  zone.innerHTML = t;
+
+  // Répartition : où se masse la classe le long des jalons.
+  var rep = pr.repartition || [];
+  if (rep.length) {
+    var maxE = rep.reduce(function(m, x){ return Math.max(m, x.eleves); }, 1);
+    var d = document.createElement("div");
+    d.style.marginTop = ".5rem";
+    rep.forEach(function(x){
+      var l = document.createElement("div");
+      l.className = "jalon";
+      l.innerHTML = '<span class="jalon-n"></span><span class="jalon-b"></span><span class="jalon-c"></span>';
+      l.querySelector(".jalon-n").textContent = x.faits + "/" + pr.jalons;
+      l.querySelector(".jalon-b").style.width = Math.round(x.eleves / maxE * 55) + "%";
+      l.querySelector(".jalon-c").textContent = x.eleves + (x.eleves > 1 ? " étudiants" : " étudiant");
+      d.appendChild(l);
+    });
+    zone.appendChild(d);
+  }
+
+  if (pr.jamais_commence) {
+    var j = document.createElement("div");
+    j.style.marginTop = ".4rem";
+    j.textContent = pr.jamais_commence + (pr.jamais_commence > 1
+      ? " étudiants n'ont rien rendu sur cette séance."
+      : " étudiant n'a rien rendu sur cette séance.");
+    zone.appendChild(j);
+  }
+
+  var arr = pr.arretes || [];
+  if (arr.length) {
+    var a = document.createElement("div");
+    a.style.marginTop = ".5rem";
+    a.innerHTML = "<b>À l'arrêt</b> — plus rien depuis une semaine ou plus :" +
+                  '<div class="pastilles" id="pj-arr"></div>';
+    zone.appendChild(a);
+    pastilles("pj-arr", arr, "abs", function(x){
+      return x.numero + " " + (x.avatar || "") + " · " + x.faits + "/" + pr.jalons + " · " + x.jours + " j";
+    });
+  }
+}
+
+// ── Avant de commencer — le contrôle d'avant-séance ────────────────────────
+// Quatre vérifications en une requête. Aucune ne devine : chacune dit ce qui
+// manque et ce qu'il faut faire, pour que le défaut se règle avant l'heure et
+// pas devant la classe.
+function chargerPrevol(){
+  var bloc = $("prevol");
+  if (!suivi.seanceId) { bloc.hidden = true; suivi.prevol = null; return Promise.resolve(); }
+  return sb.rpc("preflight_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    if (!r || r.error || !r.data || !r.data.ok) { bloc.hidden = true; suivi.prevol = null; return; }
+    suivi.prevol = r.data;
+    rendrePrevol(r.data);
+    suivi.projet = null;
+    if (r.data.nature === "projet") chargerProjet();
+  });
+}
+
+function rendrePrevol(p){
+  var bloc = $("prevol");
+  bloc.hidden = false;
+
+  var projet = p.nature === "projet";
+  var lignes = [];
+
+  if (projet) {
+    // Sur un projet, ce ne sont pas dix questions qu'on attend, mais des
+    // jalons déclarés et une échéance : sans eux, aucun avancement n'est lisible.
+    lignes.push(p.jalons
+      ? [true,  p.jalons + " jalons déclarés", ""]
+      : [false, "Aucun jalon déclaré", "l'avancement se calculera sur l'étudiant le plus avancé, faute de repère"]);
+    lignes.push(p.echeance
+      ? [true,  "Échéance au " + dateCourte(p.echeance), ""]
+      : [false, "Pas d'échéance", "impossible de dire qui n'ira pas au bout au rythme actuel"]);
+  } else {
+    // Le corrigé : sans lui, rien n'est évalué et la Répartition reste vide.
+    lignes.push(p.questions > 0
+      ? [true,  p.questions + " questions corrigées", ""]
+      : [false, "Aucun corrigé pour cette séance", "les réponses seront enregistrées mais jamais évaluées"]);
+  }
+  // L'appel : sans lui, pas de trace de présence pour la journée.
+  lignes.push(p.appel_du_jour
+    ? [true,  "Question d'appel posée pour aujourd'hui", ""]
+    : [false, "Pas de question d'appel aujourd'hui", "exécutez la section 3 d'APPEL.sql, sinon aucune présence ne sera enregistrée"]);
+  // L'état : une séance fermée refuse tout, en silence.
+  if (projet) {
+    lignes.push(p.ouverte
+      ? [true,  "Séance ouverte en permanence", ""]
+      : [false, "Séance fermée", "les étudiants ne peuvent plus rien valider sur ce projet"]);
+  } else {
+    lignes.push(p.ouverte
+      ? [true,  "Séance ouverte" + (p.demarree_le ? ", démarrée à " + heureCourte(p.demarree_le) : ", pas encore démarrée"), ""]
+      : [false, "Séance fermée", "personne ne peut répondre tant qu'elle n'est pas démarrée"]);
+  }
+  // Les accès : un étudiant sans PIN ne peut pas entrer.
+  var accesOk = p.eleves > 0 && p.avec_pin === p.eleves;
+  lignes.push(accesOk
+    ? [true,  p.eleves + " étudiants, tous avec un code PIN (" + p.deja_connectes + " déjà connectés)", ""]
+    : [false, p.avec_pin + " codes PIN pour " + p.eleves + " étudiants", "les étudiants sans PIN ne pourront pas s'identifier"]);
+
+  var ul = $("prevol-liste");
+  ul.innerHTML = "";
+  lignes.forEach(function(l){
+    var li = document.createElement("li");
+    li.innerHTML = '<span class="pv-i"></span><span><b></b><span class="pv-ko"></span></span>';
+    li.querySelector(".pv-i").textContent = l[0] ? "✅" : "⚠️";
+    li.querySelector("b").textContent = l[1];
+    li.querySelector(".pv-ko").textContent = l[2] ? " — " + l[2] : "";
+    ul.appendChild(li);
+  });
+
+  var manque = lignes.filter(function(l){ return !l[0]; }).length;
+  var etat = $("prevol-etat");
+  etat.textContent = manque ? (manque + (manque > 1 ? " points à régler" : " point à régler")) : "Tout est prêt";
+  etat.className = "prevol-etat " + (manque ? "ko" : "ok");
+
+  // Un projet reste ouvert : ni chrono à lancer, ni séance à clore chaque semaine.
+  $("b-demarrer").hidden = projet;
+  $("b-clore").hidden = projet;
+  $("b-demarrer").textContent = p.demarree_le && p.ouverte ? "Redémarrer le chrono" : "Démarrer la séance";
+  $("b-clore").disabled = !p.ouverte;
+}
+
+function dateCourte(iso){
+  var d = new Date(iso);
+  return isNaN(d) ? "?" : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function heureCourte(iso){
+  var d = new Date(iso);
+  return isNaN(d) ? "?" : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function pilotage(action, question){
+  if (!suivi.seanceId) return;
+  erreur("err-prevol", "");
+  $("b-demarrer").disabled = true; $("b-clore").disabled = true;
+  sb.rpc(action, { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    $("b-demarrer").disabled = false;
+    if (!r || r.error || !r.data || !r.data.ok) {
+      erreur("err-prevol", "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      $("b-clore").disabled = false;
+      return;
+    }
+    erreur("err-prevol", question, true);
+    // On relit l'état plutôt que de le supposer : la source de vérité est la base.
+    chargerPrevol().then(rafraichir);
+  });
+}
+
+// ── Le rythme — la classe suit-elle la cadence ? ───────────────────────────
+// Cadence déduite : durée de la séance divisée par le nombre de questions.
+// On ne compte que les étudiants actifs DEPUIS le démarrage : ceux qui ont une
+// ou deux séances d'avance travaillent ailleurs, ils ne sont ni en retard ni
+// à rattraper, et ils n'ont pas à tirer la moyenne.
+function rendreRythme(s){
+  var zone = $("rythme"), p = suivi.prevol;
+  if (!p) { zone.hidden = true; return; }
+  zone.hidden = false;
+
+  // Deux natures, deux lectures. Le reste de cette fonction ne vaut que
+  // pour une séance de cours, où la classe avance ensemble.
+  if (p.nature === "projet") return rendreProjet(zone, p);
+
+  if (!p.demarree_le || !p.ouverte) {
+    zone.className = "rythme mort";
+    zone.innerHTML = "Séance non démarrée : pas de repère de temps. " +
+                     "Le chrono part au clic sur <b>Démarrer la séance</b>.";
+    return zone.appendChild(noteAvance(p));
+  }
+  if (!p.questions) {
+    zone.className = "rythme mort";
+    zone.innerHTML = "Pas de corrigé : impossible de calculer une cadence.";
+    return zone.appendChild(noteAvance(p));
+  }
+
+  var debut = new Date(p.demarree_le).getTime();
+  var minutes = Math.max(0, (Date.now() - debut) / 60000);
+  var cadence = p.duree_min / p.questions;
+  // floor et non ceil : à la 22e minute avec une cadence de 5,5 min, quatre
+  // questions devraient être finies — pas cinq, dont l'intervalle vient de commencer.
+  var attendu = Math.min(p.questions, Math.floor(minutes / cadence));
+
+  // Les actifs du jour : ceux dont la dernière réponse est postérieure au top départ.
+  var actifs = (s.lignes || []).filter(function(l){
+    return l.maj && new Date(l.maj).getTime() >= debut;
+  });
+  var moyenne = actifs.length
+    ? actifs.reduce(function(a, l){ return a + l.n; }, 0) / actifs.length : 0;
+  var ecart = moyenne - attendu;
+
+  var etat = ecart >= 0.5 ? "avance" : (ecart >= -0.5 ? "ok" : "retard");
+  var mot  = etat === "avance" ? "en avance"
+           : (etat === "ok" ? "dans le rythme"
+           : (ecart >= -1.5 ? "léger retard" : "en retard"));
+
+  zone.className = "rythme " + etat;
+  zone.innerHTML =
+    "<b>" + Math.round(minutes) + " min</b> sur " + p.duree_min + " · " +
+    "attendu <b>question " + attendu + "</b> sur " + p.questions + " · " +
+    "classe à <b>" + moyenne.toFixed(1).replace(".", ",") + "</b> (" + actifs.length + " actifs) · " +
+    "<b>" + mot + "</b>";
+  zone.appendChild(noteAvance(p));
+}
+
+// Les étudiants qui travaillent au-delà de cette séance, comptés à part.
+function noteAvance(p){
+  var d = document.createElement("div");
+  if (!p || !p.en_avance) { d.hidden = true; return d; }
+  d.style.marginTop = ".35rem";
+  d.style.opacity = ".85";
+  d.textContent = p.en_avance + (p.en_avance > 1 ? " étudiants travaillent " : " étudiant travaille ") +
+    "au-delà de cette séance (séance " + p.seances_en_avance + ") — hors du calcul du rythme.";
+  return d;
+}
+
 // ── Sélecteurs classe et séance ────────────────────────────────────────────
 function activerSeance(){
   var sel = $("pk-seance");
@@ -1356,7 +1762,9 @@ function activerSeance(){
   if (!sel.value) {
     suivi.seanceId = null;
     suivi.stats = null;
+    suivi.prevol = null;
     arreterBoucle();
+    $("prevol").hidden = true;
     $("stats-zone").hidden = true;
     $("stats-attente").hidden = false;
     return;
@@ -1365,11 +1773,13 @@ function activerSeance(){
   suivi.titre = opt.dataset.titre || opt.textContent;
   suivi.ouverte = !!opt.dataset.ouverte;
   $("stats-attente").textContent = "Chargement…";
+  chargerPrevol();
   rafraichir().then(lancerBoucle);
 }
 
 function chargerSeancesDe(classeId){
   suivi.classeId = classeId;
+  chargerAppelClasse(classeId);
   suivi.seanceId = null;
   suivi.stats = null;
   arreterBoucle();
@@ -1504,6 +1914,12 @@ $("pk-classe").addEventListener("change", function(){
 });
 
 $("pk-seance").addEventListener("change", activerSeance);
+$("b-demarrer").addEventListener("click", function(){
+  pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");
+});
+$("b-clore").addEventListener("click", function(){
+  pilotage("clore_seance", "Séance close. Les réponses sont figées.");
+});
 
 $("b-rafraichir").addEventListener("click", rafraichir);
 $("pk-tri").addEventListener("change", function(){
