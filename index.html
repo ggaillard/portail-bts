@@ -157,6 +157,24 @@ tr:last-child td{border-bottom:0}
 .cn-sig ul{margin:0;padding-left:1.1rem;font-size:.88rem;color:#8A5A16}
 .cn-sig li{margin:.15rem 0}
 .cn-sig b{font-weight:600}
+.st-q{padding:.6rem 0;border-top:1px solid var(--rule)}
+.st-q:first-of-type{border-top:0}
+.st-opts{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.35rem}
+.st-opt{font-size:.86rem;padding:.3rem .6rem;border-radius:7px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--rule);color:var(--ink);text-align:left}
+.st-opt:hover{border-color:var(--accent)}
+.st-opt.pris{background:#DEF3E6;border-color:#1B6B42;color:#1B6B42;font-weight:600}
+.st-opt:disabled{opacity:.55;cursor:default}
+.st-maj{font-size:.8rem;color:var(--ink-soft)}
+.et-etape{margin:.55rem 0}
+.et-tete{display:flex;align-items:baseline;gap:.5rem;font-size:.88rem}
+.et-tete b{font-weight:600}
+.et-nums{font-family:var(--f-mono);font-size:1.05rem;letter-spacing:.05em;margin-left:.1rem}
+.et-0 .et-tete b,.et-0 .et-nums{color:#963232}
+.et-1 .et-tete b,.et-1 .et-nums{color:#8A5A16}
+.et-2 .et-tete b,.et-2 .et-nums{color:#24507F}
+.et-3 .et-tete b,.et-3 .et-nums{color:#1B6B42}
+.et-x .et-tete b,.et-x .et-nums{color:var(--ink-soft)}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -502,6 +520,15 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="appel-choix" id="conn-choix"></div>
   </div>
 
+  <div class="card" id="bloc-stage" hidden>
+    <h2>Votre recherche de stage</h2>
+    <p class="hint">Un point d'étape, à remettre à jour dès que quelque chose bouge :
+      vous pouvez changer vos réponses autant de fois que nécessaire.
+      <span class="st-maj" id="stage-maj"></span></p>
+    <div id="err-stage"></div>
+    <div id="stage-questions"></div>
+  </div>
+
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
 </section>
@@ -548,6 +575,13 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <p class="hint">Le questionnaire de rentrée. Aucune réponse n'est juste ou fausse :
       ce sont des faits sur le groupe, pas une note.</p>
     <div id="conn-classes"></div>
+  </div>
+
+  <div class="card" id="carte-stage" hidden>
+    <h2>Recherche de stage</h2>
+    <p class="hint">Où en est chacun, d'après ce qu'il a déclaré lui-même. Une réponse
+      ancienne ne dit plus rien de vrai : la date de mise à jour est à côté du numéro.</p>
+    <div id="stage-classes"></div>
   </div>
 
   <div class="card">
@@ -812,6 +846,72 @@ function rendreConnaissance(d){
   });
 }
 
+// ── La recherche de stage — un point d'étape, pas un questionnaire ─────────
+// Six questions toujours visibles, toujours modifiables. Contrairement au
+// questionnaire de rentrée, ici la bonne réponse d'hier est fausse demain :
+// c'est justement l'évolution qu'on veut lire. On affiche donc les six d'un
+// coup, avec la réponse en cours mise en évidence, et un clic la remplace.
+function proposerStage(){
+  $("bloc-stage").hidden = true;
+  sb.rpc("stage").then(function(r){
+    if (!r || r.error || !r.data || !r.data.questions || !r.data.questions.length) return;
+    rendreStage(r.data);
+  });
+}
+
+function rendreStage(d){
+  $("bloc-stage").hidden = false;
+  erreur("err-stage", "");
+  $("stage-maj").textContent = d.faites
+    ? "Vous avez répondu à " + d.faites + " question" + (d.faites > 1 ? "s" : "") +
+      " sur " + d.total + "."
+    : "";
+
+  var z = $("stage-questions");
+  z.innerHTML = "";
+  d.questions.forEach(function(q){
+    var bloc = document.createElement("div");
+    bloc.className = "st-q";
+    var t = document.createElement("span");
+    t.className = "cn-int";
+    t.textContent = q.intitule || q.question;
+    bloc.appendChild(t);
+
+    var opts = document.createElement("div");
+    opts.className = "st-opts";
+    ["A","B","C","D"].forEach(function(lettre, i){
+      if (!q.options || !q.options[i]) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "st-opt" + (q.ma_reponse === lettre ? " pris" : "");
+      b.textContent = q.options[i];
+      b.addEventListener("click", function(){
+        if (q.ma_reponse === lettre) return;      // déjà dit : rien à réécrire
+        var tous = opts.querySelectorAll("button");
+        Array.prototype.forEach.call(tous, function(x){ x.disabled = true; });
+        sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
+                             p_reponse: lettre }).then(function(rr){
+          Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
+          if (rr.error) { erreur("err-stage", "L'enregistrement n'a pas abouti. Réessayez."); return; }
+          var neuf = !q.ma_reponse;
+          q.ma_reponse = lettre;
+          if (neuf) d.faites = (d.faites || 0) + 1;
+          Array.prototype.forEach.call(tous, function(x){ x.className = "st-opt"; });
+          b.className = "st-opt pris";
+          $("stage-maj").textContent = "Vous avez répondu à " + d.faites +
+            " question" + (d.faites > 1 ? "s" : "") + " sur " + d.total + ".";
+          erreur("err-stage", d.faites >= d.total
+            ? "C'est à jour. Revenez le modifier dès que la situation change."
+            : "Enregistré.", true);
+        });
+      });
+      opts.appendChild(b);
+    });
+    bloc.appendChild(opts);
+    z.appendChild(bloc);
+  });
+}
+
 // ── L'humeur du jour ───────────────────────────────────────────────────────
 // Posée après la question du jour, jamais notée. Elle dit dans quel état la
 // classe démarre, et elle laisse dire « je suis perdu » à ceux qui ne
@@ -935,6 +1035,7 @@ function ouvrirEspaceEtudiant(moi){
   if (!moi.avatar) proposerAvatar(moi);
   proposerAppel();
   proposerConnaissance();
+  proposerStage();
 
   sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", moi.classe_id).order("ordre")
@@ -1982,6 +2083,87 @@ function rendreSignaux(c, d){
   return z;
 }
 
+// ── La recherche de stage, côté enseignant ─────────────────────────────────
+// La première chose à voir n'est pas une statistique mais une liste de
+// numéros par étape, du moins avancé au plus avancé : ceux qui n'ont pas
+// commencé sont en haut, en rouge, parce que ce sont eux qu'il faut appeler.
+function chargerStage(classes){
+  var carte = $("carte-stage"), z = $("stage-classes");
+  z.innerHTML = "";
+  carte.hidden = true;
+  if (!classes || !classes.length) return;
+
+  var restant = classes.length, affiches = 0;
+  classes.forEach(function(c){
+    var bloc = document.createElement("div");
+    bloc.className = "appel-classe";
+    bloc.hidden = true;
+    z.appendChild(bloc);
+
+    sb.rpc("stage_classe", { p_classe_id: Number(c.id) }).then(function(r){
+      restant--;
+      var d = (r && !r.error && r.data && r.data.ok) ? r.data : null;
+      if (d) { remplirStageClasse(bloc, c, d); bloc.hidden = false; affiches++; }
+      if (restant === 0) carte.hidden = affiches === 0;
+    });
+  });
+}
+
+function remplirStageClasse(bloc, c, d){
+  bloc.innerHTML = "";
+  var h = document.createElement("h3");
+  h.textContent = c.nom || c.code;
+  bloc.appendChild(h);
+
+  var compte = document.createElement("p");
+  compte.className = "ac-compte";
+  compte.innerHTML = "<b></b> · <span class=\"hint\"></span>";
+  compte.querySelector("b").textContent =
+    (d.repondu || 0) + " / " + (d.inscrits || 0) + " ont fait leur point";
+  compte.querySelector("span").textContent = d.maj
+    ? "dernière mise à jour le " + dateCourte(d.maj) : "aucune réponse pour l'instant";
+  bloc.appendChild(compte);
+
+  // Les quatre étapes, plus ceux qui n'ont rien dit — qui comptent double,
+  // puisqu'on ne sait même pas s'ils cherchent.
+  var etapes = d.etapes || ["Pas commencé", "En préparation", "Candidatures envoyées", "Trouvé"];
+  var lettres = ["A","B","C","D"], etats = d.etats || [];
+  lettres.forEach(function(l, i){
+    var gens = etats.filter(function(e){ return e.ou === l; });
+    bloc.appendChild(ligneEtape(c, "et-" + i, etapes[i] || l, gens));
+  });
+  var muets = etats.filter(function(e){ return !e.ou; });
+  bloc.appendChild(ligneEtape(c, "et-x", "N'a rien déclaré", muets));
+
+  (d.questions || []).forEach(function(q){
+    if (q.question === "stage-01") return;   // déjà lue en haut, autrement
+    bloc.appendChild(rendreQuestionConnaissance(c, q));
+  });
+}
+
+function ligneEtape(c, classe, libelle, gens){
+  var z = document.createElement("div");
+  z.className = "et-etape " + classe;
+  var t = document.createElement("div");
+  t.className = "et-tete";
+  var b = document.createElement("b");
+  b.textContent = gens.length + " · " + libelle;
+  t.appendChild(b);
+  z.appendChild(t);
+  if (!gens.length) return z;
+
+  var nums = document.createElement("div");
+  nums.className = "et-nums";
+  // Le numéro d'abord, le nom s'il est connu, la fraîcheur ensuite : on lit
+  // « 07 — 12/09 » comme « ce point date d'il y a trois semaines ».
+  nums.textContent = gens.map(function(e){
+    var nom = nomDe(c.code, e.numero);
+    return e.numero + (nom ? " " + nom : "") + (e.maj ? " (" + e.maj + ")" : "");
+  }).join("   ");
+  z.appendChild(nums);
+  return z;
+}
+
 // Combien de chaque humeur, dans l'ordre des options. Une barre par smiley :
 // on lit l'état du groupe sans avoir à compter.
 function rendreHumeurClasse(z, a){
@@ -2186,7 +2368,7 @@ function rendrePrevol(p){
   // L'appel : sans lui, pas de trace de présence pour la journée.
   lignes.push(p.appel_du_jour
     ? [true,  "Question d'appel posée pour aujourd'hui", ""]
-    : [false, "Pas de question d'appel aujourd'hui", "exécutez la section 3 d'APPEL.sql, sinon aucune présence ne sera enregistrée"]);
+    : [null,  "Question d'appel pas encore créée", "elle se crée d'elle-même à la première connexion d'un étudiant, rien à faire"]);
   // L'état : une séance fermée refuse tout, en silence.
   if (projet) {
     lignes.push(p.ouverte
@@ -2208,13 +2390,15 @@ function rendrePrevol(p){
   lignes.forEach(function(l){
     var li = document.createElement("li");
     li.innerHTML = '<span class="pv-i"></span><span><b></b><span class="pv-ko"></span></span>';
-    li.querySelector(".pv-i").textContent = l[0] ? "✅" : "⚠️";
+    li.querySelector(".pv-i").textContent = l[0] === true ? "✅" : (l[0] === null ? "ℹ️" : "⚠️");
     li.querySelector("b").textContent = l[1];
     li.querySelector(".pv-ko").textContent = l[2] ? " — " + l[2] : "";
     ul.appendChild(li);
   });
 
-  var manque = lignes.filter(function(l){ return !l[0]; }).length;
+  // Seul un vrai blocage compte : une ligne d'information (null) n'est pas
+  // un point à régler, sinon le pré-vol crie au loup tous les matins.
+  var manque = lignes.filter(function(l){ return l[0] === false; }).length;
   var etat = $("prevol-etat");
   etat.textContent = manque ? (manque + (manque > 1 ? " points à régler" : " point à régler")) : "Tout est prêt";
   etat.className = "prevol-etat " + (manque ? "ko" : "ok");
@@ -2447,6 +2631,7 @@ function ouvrirEspaceEnseignant(){
     suivi.classesConnues = classes;
     chargerAppelToutesClasses(classes);
     chargerConnaissance(classes);
+    chargerStage(classes);
     if (classes.length) chargerSeancesDe(classes[0].id);
 
     classes.forEach(function(c){
@@ -2557,6 +2742,7 @@ $("b-noms-ok").addEventListener("click", function(){
          (r.ignores ? ", " + r.ignores + " lignes ignorées (format attendu : CLASSE;numéro;nom)" : "") + ".", true);
   chargerAppelToutesClasses(suivi.classesConnues || []);
   chargerConnaissance(suivi.classesConnues || []);
+  chargerStage(suivi.classesConnues || []);
 });
 $("b-noms-vider").addEventListener("click", function(){
   try { localStorage.removeItem(NOMS_CLE); } catch (e) {}
@@ -2564,6 +2750,7 @@ $("b-noms-vider").addEventListener("click", function(){
   erreur("err-noms", "Noms effacés de ce navigateur.", true);
   chargerAppelToutesClasses(suivi.classesConnues || []);
   chargerConnaissance(suivi.classesConnues || []);
+  chargerStage(suivi.classesConnues || []);
 });
 $("b-demarrer").addEventListener("click", function(){
   pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");
