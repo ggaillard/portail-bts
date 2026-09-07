@@ -136,6 +136,16 @@ tr:last-child td{border-bottom:0}
 .appel-classe h3{font-size:1rem;margin:0 0 .1rem}
 .appel-classe .ac-q{font-size:.9rem;color:var(--ink-soft);margin:0 0 .5rem}
 .appel-classe .ac-compte{margin:0 0 .35rem;font-size:.95rem}
+.ac-nums{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.15rem 0 .5rem;
+  padding:.45rem .7rem;border-radius:8px;background:#FBE6E6;border:1px solid #F0C9C9}
+.ac-nums .lbl{font-size:.82rem;color:#963232;flex:0 0 auto}
+.ac-nums .nums{font-family:var(--f-mono);font-size:1.45rem;font-weight:600;color:#963232;
+  letter-spacing:.06em;line-height:1.25}
+.ac-nums .btn-mini{margin-left:auto;font-size:.78rem;padding:.2rem .5rem;border-radius:6px;
+  border:1px solid #F0C9C9;background:#fff;color:#963232;cursor:pointer;flex:0 0 auto}
+.ac-nums.vide{background:#DEF3E6;border-color:#C2E6D2}
+.ac-nums.vide .lbl,.ac-nums.vide .nums{color:#1B6B42}
+.ac-nums.vide .nums{font-size:1rem;font-weight:500;letter-spacing:0}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -494,7 +504,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <p class="hint">Toutes vos classes, sans changer de sélection.</p>
     <div id="appel-classes"></div>
     <div class="pick" style="margin-top:.8rem">
-      <button class="btn btn-sec" id="b-copier-abs" type="button">Copier les absents</button>
+      <button class="btn btn-sec" id="b-copier-abs" type="button">Copier tous les absents</button>
       <button class="btn btn-sec" id="b-noms" type="button">Noms des étudiants…</button>
     </div>
     <details id="bloc-noms" class="corriges" style="margin-top:.7rem" hidden>
@@ -1669,6 +1679,7 @@ function remplirAppelClasse(bloc, c, a){
   compte.querySelector("b").textContent = pre.length + (pre.length > 1 ? " présents" : " présent");
   compte.querySelector("span").textContent = abs.length + (abs.length > 1 ? " absents" : " absent");
   bloc.appendChild(compte);
+  bloc.appendChild(ligneNumeros(c, abs));
 
   var zp = document.createElement("div");
   zp.className = "pastilles";
@@ -1691,6 +1702,56 @@ function remplirAppelClasse(bloc, c, a){
   var zh = document.createElement("div");
   bloc.appendChild(zh);
   rendreHumeurClasse(zh, a);
+}
+
+// Les numéros seuls, gros et espacés : à l'appel on lit des numéros, pas des
+// noms. Les noms restent en dessous, sur les pastilles, pour lever un doute.
+function numerosAbsents(abs){
+  return (abs || []).map(function(x){ return String(x.numero || "").trim(); })
+                    .filter(Boolean)
+                    .sort(function(a, b){ return Number(a) - Number(b); });
+}
+
+function ligneNumeros(c, abs){
+  var nums = numerosAbsents(abs);
+  var d = document.createElement("div");
+  d.className = "ac-nums" + (nums.length ? "" : " vide");
+  var lbl = document.createElement("span");
+  lbl.className = "lbl";
+  lbl.textContent = nums.length ? "Absents" : "Appel";
+  var v = document.createElement("span");
+  v.className = "nums";
+  v.textContent = nums.length ? nums.join("  ") : "Personne ne manque.";
+  d.appendChild(lbl);
+  d.appendChild(v);
+  if (nums.length) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn-mini";
+    b.textContent = "Copier";
+    b.addEventListener("click", function(){
+      copierTexte(nums.join(", "), b);
+    });
+    d.appendChild(b);
+  }
+  return d;
+}
+
+// Une seule mécanique de copie, pour le bouton de classe comme pour le global.
+function copierTexte(texte, bouton){
+  var dit = function(ok){
+    if (bouton) {
+      var avant = bouton.textContent;
+      bouton.textContent = ok ? "Copié" : "Échec";
+      setTimeout(function(){ bouton.textContent = avant; }, 1600);
+    }
+    return ok;
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(texte).then(function(){ return dit(true); },
+                                                     function(){ return dit(false); });
+  }
+  return Promise.resolve(dit(false));
 }
 
 // Combien de chaque humeur, dans l'ordre des options. Une barre par smiley :
@@ -1733,24 +1794,25 @@ function copierAbsents(){
   var sortie = [];
   Array.prototype.forEach.call(blocs, function(b){
     if (!b.__absents) return;
-    var noms = b.__absents.map(function(x){
-      var n = nomDe(b.dataset.code, x.numero);
-      return n ? n + " (n° " + x.numero + ")" : "n° " + x.numero;
+    var nums = numerosAbsents(b.__absents);
+    if (!nums.length) { sortie.push(b.dataset.nom + " — aucun absent"); return; }
+    // Les numéros d'abord, en clair : c'est la ligne qu'on recopie sur le
+    // cahier d'appel. Les noms suivent, entre parenthèses, pour vérifier.
+    var noms = nums.map(function(n){
+      var nom = nomDe(b.dataset.code, n);
+      return nom ? n + " " + nom : n;
     });
-    sortie.push(b.dataset.nom + " — " + (noms.length ? noms.length + " absents : " + noms.join(", ")
-                                                     : "aucun absent"));
+    sortie.push(b.dataset.nom + " — absents : " + nums.join(", ") +
+                "\n  " + noms.join(" · "));
   });
   var texte = sortie.join("\n");
   if (!texte) { erreur("err-noms", "Rien à copier : l'appel n'est pas encore chargé."); return; }
 
-  var fini = function(ok){
+  copierTexte(texte).then(function(ok){
     erreur("err-noms", ok ? "Liste copiée." : "Copie refusée par le navigateur — la voici :\n" + texte, ok);
     $("bloc-noms").hidden = false;
     if (!ok) $("bloc-noms").open = true;
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(texte).then(function(){ fini(true); }, function(){ fini(false); });
-  } else { fini(false); }
+  });
 }
 
 function pastilles(id, liste, classe, texte){
