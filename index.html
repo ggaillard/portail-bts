@@ -1134,9 +1134,14 @@ function chargerStats(){
       var e = par[r.eleve_id] ||
               (par[r.eleve_id] = { n: 0, ev: 0, ok: 0, ok_mission: 0, maj: null, serie: 0, liste: [] });
       e.n++;
-      // « ok » désigne aussi bien une mission validée qu'une question de quiz
-      // réussie : c'est la clé qui tranche. tp2-m1 est un jalon, q-3-2 non.
-      if (r.reponse === "ok" && /^tp\d+-m\d+$/.test(r.question || "")) {
+      // Un jalon franchi, c'est une case cochée sur le tableau de bord
+      // PlaylistApp : une clé qui commence par « tp », dont la réponse vaut
+      // « true ». Le quiz, lui, s'enregistre en « ok » / « ko » sous une clé
+      // « q-… » — il compte dans le taux de réussite, pas dans l'avancement.
+      // Ne pas restreindre aux clés « -m » : les 29 items du parcours
+      // comprennent aussi tp0-1 à tp0-3, les fiches concept « -c0 » et les
+      // mises en route « -s1 » / « -s2 ».
+      if (/^tp/.test(r.question || "") && (r.reponse === "true" || r.reponse === "ok")) {
         e.ok_mission = (e.ok_mission || 0) + 1;
       }
       if (estEvaluee(r)) { e.ev++; if (estJuste(r)) e.ok++; }

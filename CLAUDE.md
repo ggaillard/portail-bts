@@ -149,6 +149,27 @@ séance sélectionnée, puis alimente Progression, Classement et Répartition.
 
 Ne pas réécrire cette distinction : une mission cochée n'est pas une bonne réponse.
 
+### Ce que le BTS2 écrit vraiment en base
+
+Vérifié dans `playlist-csharp/docs/assets/suivi.js` et écrit noir sur blanc dans
+son `SUIVI_SUPABASE.md` :
+
+| Clé | Valeur enregistrée | Ce que c'est |
+|---|---|---|
+| `tp2-m1`, `tp1-c0`, `tp2-s1`, `tp0-1` | `true` / `false` | une case cochée du parcours — **un jalon** |
+| `q-3-2` | `ok` / `ko` | une question de quiz — compte dans la réussite |
+| `q-3-2-pick` | `0` à `3` | l'option choisie — jamais un jalon |
+
+**Un jalon franchi = une clé qui commence par `tp` et dont la réponse vaut
+`true`.** Deux erreurs faites et corrigées, à ne pas refaire :
+
+- compter toutes les lignes → « 15/5 », les quiz comptés comme des jalons ;
+- compter `reponse = 'ok'` sur `tp%-m%` → zéro partout, car aucune mission ne
+  vaut `ok`, et parce que les 29 items ne sont pas tous des `-m` : le TP0 n'en
+  a aucun, et chaque TP a sa fiche concept `-c0` et ses mises en route `-s`.
+
+Les 29 items se répartissent en 3 · 5 · 8 · 7 · 6, ce que déclare `PROJET.sql`.
+
 ### La carte « Appel du jour »
 
 Toutes les classes à la fois, sans changer de sélection. Chaque classe affiche,
