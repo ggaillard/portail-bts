@@ -42,16 +42,29 @@ end; $$;
 
 grant execute on function public.questions_seance(bigint) to authenticated;
 
--- ─── 2. Une mission n'est pas une question de quiz ─────────────────────────
---  Constat sur le tableau de bord : la répartition affichait « 15/5 », soit
---  plus de jalons franchis qu'il n'en existe. Le site PlaylistApp enregistre
---  les DEUX sous la forme « ok » / « ko » — les missions comme les questions
---  de quiz. Compter « ok » revenait donc à compter les quiz comme des jalons.
+-- ─── 2. Ce qui compte comme jalon franchi ──────────────────────────────────
+--  Vérifié dans le dépôt playlist-csharp (docs/assets/suivi.js et
+--  SUIVI_SUPABASE.md, qui l'écrit noir sur blanc) : le tableau de bord
+--  n'enregistre PAS les missions comme les quiz.
 --
---  On distingue par la clé, qui est stable dans le parcours :
---    tp2-m1   → une mission        (c'est un jalon)
---    q-3-2    → une question de quiz (ce n'en est pas un)
---    jalon-…  → une question jalon   (ce n'en est pas un non plus)
+--    tp2-m1   → « true » / « false »   une mission cochée ou décochée
+--    tp1-c0   → « true » / « false »   une fiche concept lue — même statut
+--    tp2-s1   → « true » / « false »   une mise en route — même statut
+--    q-3-2    → « ok » / « ko »        une question de quiz
+--    q-3-2-pick → « 0 » à « 3 »        l'option choisie, jamais un jalon
+--    jalon-…  → question d'avancement, corrigée, jamais un jalon
+--
+--  Deux erreurs successives à ne pas refaire :
+--   · compter toutes les lignes → la répartition affichait « 15/5 », plus de
+--     jalons franchis qu'il n'en existe, parce que les quiz étaient comptés ;
+--   · compter « reponse = ''ok'' » sur « tp%-m% » → zéro pour tout le monde,
+--     car aucune mission ne vaut « ok », et parce que les 29 items du parcours
+--     ne sont pas tous des « -m » : le TP0 n'en a aucun (tp0-1 à tp0-3), et
+--     chaque TP a sa fiche concept « -c0 » et ses mises en route « -s1/-s2 ».
+--
+--  La règle juste tient en une ligne : une clé qui commence par « tp », dont
+--  la réponse vaut « true ». Elle donne bien 3, 5, 8, 7 et 6 jalons par TP,
+--  ce que déclare PROJET.sql.
 create or replace function public.suivi_projet(p_seance_id bigint, p_jours_arret int default 7)
 returns jsonb language plpgsql stable security definer set search_path = public as $$
 declare
@@ -67,13 +80,14 @@ begin
   if not found then return jsonb_build_object('ok', false, 'motif', 'inconnue'); end if;
 
   select coalesce(v_s.jalons, nullif(max(c.faits), 0), 1) into v_jalons
-    from (select count(*) filter (where reponse = 'ok' and question like 'tp%-m%') as faits
+    from (select count(*) filter (where reponse in ('true', 'ok')
+                                    and question like 'tp%') as faits
             from public.reponses where seance_id = v_s.id group by eleve_id) c;
 
   with avance as (
     select e.id, e.numero, e.avatar,
-           count(r.id) filter (where r.reponse = 'ok'
-                                and r.question like 'tp%-m%')      as faits,
+           count(r.id) filter (where r.reponse in ('true', 'ok')
+                                and r.question like 'tp%')          as faits,
            count(r.id) filter (where r.question like 'jalon-%')     as questions,
            count(r.id) filter (where r.question like 'jalon-%'
                                 and r.correct)                      as questions_ok,
