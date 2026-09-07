@@ -450,6 +450,13 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="appel-choix" id="appel-choix"></div>
   </div>
 
+  <div class="card" id="bloc-humeur" hidden>
+    <h2 id="humeur-titre">Et aujourd'hui, comment ça va ?</h2>
+    <p class="hint">Cette réponse ne compte pas dans vos résultats. Elle me dit juste dans quel état vous démarrez.</p>
+    <div id="err-humeur"></div>
+    <div class="appel-choix" id="humeur-choix"></div>
+  </div>
+
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
 </section>
@@ -472,6 +479,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <h2>Appel du jour</h2>
     <p class="hint" id="appel-intitule"></p>
     <div id="appel-resume"></div>
+    <div id="appel-humeur"></div>
   </div>
 
   <div class="card">
@@ -649,11 +657,12 @@ function proposerAppel(){
   sb.rpc("appel_du_jour").then(function(r){
     // Fonction pas encore déployée, ou pas d'appel aujourd'hui : on n'affiche
     // rien. L'espace étudiant reste utilisable, c'est le comportement d'avant.
-    if (!r || r.error || !r.data) return;
+    if (!r || r.error || !r.data) { $("bloc-humeur").hidden = true; return; }
     var a = r.data;
 
     bloc.hidden = false;
     $("appel-titre").textContent = a.intitule || "Question du jour";
+    proposerHumeur(a.humeur, a.seance_id);
 
     if (a.repondu) { appelRepondu(a.ma_reponse, null); return; }
 
@@ -671,6 +680,51 @@ function proposerAppel(){
       choix.appendChild(b);
     });
   });
+}
+
+// ── L'humeur du jour ───────────────────────────────────────────────────────
+// Posée après la question du jour, jamais notée. Elle dit dans quel état la
+// classe démarre, et elle laisse dire « je suis perdu » à ceux qui ne
+// lèveraient pas la main.
+function proposerHumeur(h, seanceId){
+  var bloc = $("bloc-humeur");
+  if (!h) { bloc.hidden = true; return; }
+  bloc.hidden = false;
+  erreur("err-humeur", "");
+  $("humeur-titre").textContent = h.intitule || "Et aujourd'hui, comment ça va ?";
+
+  if (h.repondu) return humeurRepondue(h.ma_reponse, h.options);
+
+  var choix = $("humeur-choix");
+  choix.innerHTML = "";
+  ["A","B","C","D"].forEach(function(lettre, i){
+    if (!h.options || !h.options[i]) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec appel-opt";
+    b.textContent = h.options[i];
+    b.addEventListener("click", function(){
+      var boutons = choix.querySelectorAll("button");
+      Array.prototype.forEach.call(boutons, function(x){ x.disabled = true; });
+      sb.rpc("repondre", { p_seance_id: seanceId, p_question: h.question, p_reponse: lettre })
+        .then(function(r){
+          if (r.error) {
+            erreur("err-humeur", "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+            Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
+            return;
+          }
+          humeurRepondue(lettre, h.options);
+        });
+    });
+    choix.appendChild(b);
+  });
+}
+
+function humeurRepondue(lettre, options){
+  $("humeur-choix").innerHTML = "";
+  var i = ["A","B","C","D"].indexOf(lettre);
+  var dit = (options && i >= 0 && options[i]) ? " — " + options[i] : "";
+  erreur("err-humeur", "C'est noté, merci" + dit + ".", true);
 }
 
 function repondreAppel(a, lettre){
@@ -818,6 +872,8 @@ function confettis(){
 // Une réponse « évaluée » est celle qui a un corrigé : on ne calcule le taux
 // de réussite que sur celles-là. Une mission cochée n'est pas une bonne réponse.
 function estEvaluee(r){
+  // L'humeur se répond, elle ne se réussit pas : elle n'entre dans aucun taux.
+  if (r.question && r.question.indexOf("humeur-") === 0) return false;
   return r.correct === true || r.correct === false || r.reponse === "ok" || r.reponse === "ko";
 }
 function estJuste(r){
@@ -827,7 +883,8 @@ function estJuste(r){
 function chargerStats(){
   if (!suivi.classeId || !suivi.seanceId) return Promise.resolve(null);
   return Promise.all([
-    sb.from("eleves").select("id,numero,avatar,auth_id").eq("classe_id", suivi.classeId).order("numero"),
+    sb.from("eleves").select("id,numero,avatar,auth_id").eq("classe_id", suivi.classeId)
+      .neq("numero", "99").order("numero"),
     sb.from("reponses").select("eleve_id,question,correct,reponse,updated_at")
       .eq("seance_id", suivi.seanceId),
     // La colonne « intitule » est facultative : si elle n'existe pas, on relit sans.
@@ -843,8 +900,9 @@ function chargerStats(){
     var par = {};
     reps.forEach(function(r){
       var e = par[r.eleve_id] ||
-              (par[r.eleve_id] = { n: 0, ev: 0, ok: 0, maj: null, serie: 0, liste: [] });
+              (par[r.eleve_id] = { n: 0, ev: 0, ok: 0, ok_mission: 0, maj: null, serie: 0, liste: [] });
       e.n++;
+      if (r.reponse === "ok") e.ok_mission = (e.ok_mission || 0) + 1;
       if (estEvaluee(r)) { e.ev++; if (estJuste(r)) e.ok++; }
       if (!e.maj || r.updated_at > e.maj) e.maj = r.updated_at;
       e.liste.push(r);
@@ -862,12 +920,21 @@ function chargerStats(){
       par[k].serie = s;
     });
 
+    // Sur une séance de projet, l'avancement se mesure en MISSIONS VALIDÉES
+    // sur le nombre de jalons déclarés — pas en nombre de lignes reçues. Sans
+    // cela le BTS2 comptait aussi les questions de jalon et les missions en
+    // échec, et le pourcentage n'avait plus de sens.
+    var projet = suivi.nature === "projet";
+    if (projet) {
+      Object.keys(par).forEach(function(k){ par[k].n = par[k].ok_mission || 0; });
+    }
     var maxN = 0;
     Object.keys(par).forEach(function(k){ if (par[k].n > maxN) maxN = par[k].n; });
-    var total = Math.max(cor.length, maxN, 1);
+    var total = projet ? Math.max(Number(suivi.jalons) || maxN, 1)
+                       : Math.max(cor.length, maxN, 1);
 
     var lignes = eleves.map(function(el){
-      var p = par[el.id] || { n: 0, ev: 0, ok: 0, maj: null, serie: 0 };
+      var p = par[el.id] || { n: 0, ev: 0, ok: 0, ok_mission: 0, maj: null, serie: 0 };
       return {
         id: el.id, numero: el.numero, avatar: el.avatar || "•",
         connecte: !!el.auth_id, n: p.n, ev: p.ev, ok: p.ok, maj: p.maj, serie: p.serie,
@@ -1498,6 +1565,42 @@ function chargerAppelClasse(classeId){
                   (abs.length ? '<div class="pastilles" id="ap-abs"></div>' : "");
     pastilles("ap-pre", pre, "pre", function(x){ return x.numero + " " + (x.avatar || "") + " " + x.heure; });
     if (abs.length) pastilles("ap-abs", abs, "abs", function(x){ return x.numero + " " + (x.avatar || ""); });
+
+    rendreHumeurClasse(a);
+  });
+}
+
+// Combien de chaque humeur, dans l'ordre des options. Une barre par smiley :
+// on lit l'état du groupe sans avoir à compter.
+function rendreHumeurClasse(a){
+  var z = $("appel-humeur");
+  z.innerHTML = "";
+  var opts = a.humeur_options, compte = a.humeur || {};
+  if (!opts || !opts.length) return;
+
+  var lettres = ["A","B","C","D"];
+  var total = lettres.reduce(function(s, l){ return s + (compte[l] || 0); }, 0);
+  if (!total) {
+    z.innerHTML = '<p class="hint" style="margin:.6rem 0 0">Personne n\'a encore dit son humeur.</p>';
+    return;
+  }
+
+  var titre = document.createElement("p");
+  titre.className = "hint";
+  titre.style.margin = ".9rem 0 .3rem";
+  titre.textContent = "Humeur du groupe — " + total + (total > 1 ? " réponses" : " réponse");
+  z.appendChild(titre);
+
+  opts.forEach(function(libelle, i){
+    var n = compte[lettres[i]] || 0;
+    var l = document.createElement("div");
+    l.className = "jalon";
+    l.innerHTML = '<span class="jalon-n"></span><span class="jalon-b"></span><span></span>';
+    l.querySelector(".jalon-n").textContent = libelle.slice(0, 2);
+    l.querySelector(".jalon-b").style.width = Math.round(n / total * 55) + "%";
+    l.querySelector("span:last-child").textContent =
+      n + " · " + libelle.replace(/^\S+\s*/, "");
+    z.appendChild(l);
   });
 }
 
@@ -1772,6 +1875,8 @@ function activerSeance(){
   suivi.seanceId = sel.value;
   suivi.titre = opt.dataset.titre || opt.textContent;
   suivi.ouverte = !!opt.dataset.ouverte;
+  suivi.nature  = opt.dataset.nature || "cours";
+  suivi.jalons  = opt.dataset.jalons || null;
   $("stats-attente").textContent = "Chargement…";
   chargerPrevol();
   rafraichir().then(lancerBoucle);
@@ -1787,7 +1892,7 @@ function chargerSeancesDe(classeId){
   $("stats-attente").hidden = false;
   $("stats-attente").textContent = "Sélectionnez une séance pour voir le détail élève par élève.";
 
-  return sb.from("seances").select("id,numero,titre,ouverte,notee")
+  return sb.from("seances").select("id,numero,titre,ouverte,notee,nature,jalons")
     .eq("classe_id", classeId).order("numero").then(function(r){
       var sel = $("pk-seance");
       sel.innerHTML = '<option value="">Choisir une séance…</option>';
@@ -1798,6 +1903,8 @@ function chargerSeancesDe(classeId){
           (s.ouverte ? " · ouverte" : " · fermée") + (s.notee ? " · notée" : "");
         o.dataset.titre = s.numero + " — " + s.titre;
         o.dataset.ouverte = s.ouverte ? "1" : "";
+        o.dataset.nature  = s.nature || "cours";
+        if (s.jalons) o.dataset.jalons = s.jalons;
         sel.appendChild(o);
       });
       // Une séance est chargée d'office : le panneau n'est jamais vide à l'arrivée.
