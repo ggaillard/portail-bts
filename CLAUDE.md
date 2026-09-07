@@ -97,6 +97,23 @@ séance sélectionnée, puis alimente Progression, Classement et Répartition.
 
 Ne pas réécrire cette distinction : une mission cochée n'est pas une bonne réponse.
 
+### La carte « Appel du jour »
+
+Toutes les classes à la fois, sans changer de sélection. Chaque classe affiche,
+juste sous le compte, **la ligne des numéros absents en gros** (`.ac-nums`) :
+c'est ce qu'on lit à voix haute pour le cahier d'appel, donc rien ne doit
+passer devant. Les noms restent en dessous, sur les pastilles, pour lever un
+doute — jamais à la place des numéros.
+
+`numerosAbsents()` trie numériquement (`7` avant `14`), le bouton « Copier » de
+la classe copie `02, 07, 14`, et « Copier tous les absents » copie, par classe,
+la ligne de numéros puis la ligne nommée en dessous.
+
+La correspondance numéro → nom vit dans `localStorage` (`tdc-noms`), saisie à la
+main dans le panneau « Noms des étudiants… ». **Elle ne part jamais vers la
+base** : la table `eleves` reste sans nom. Ne pas proposer de la mettre dans
+`config.js` — le dépôt est public.
+
 ---
 
 ## Points de vigilance
