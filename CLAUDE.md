@@ -208,6 +208,27 @@ base** : la table `eleves` reste sans nom. Ne pas proposer de la mettre dans
 
 ---
 
+## Les séances de cours du BTS1
+
+`BTS1_SEANCES.sql` crée les séances 1 et 2 et leurs dix corrigés chacune.
+**Sans séance en base, rien n'est enregistré** : le site du cours appelle
+`repondre(seance_id, 'q1', 'B')`, et l'appel échoue en silence.
+
+Les clés `q1` à `q10` ne sont pas choisies ici : `docs/assets/suivi.js` du dépôt
+`BTS1_S1_B1_DEV` les fabrique en lisant la numérotation du bloc « Réviser après la
+séance ». **La page fait foi pour l'énoncé et l'ordre des options ; la base fait foi
+pour la bonne réponse.** Changer l'un oblige à changer l'autre — l'un ne se déduit
+pas de l'autre.
+
+Séances créées **fermées** : c'est « Démarrer la séance » qui ouvre et lance le
+chrono. Une séance ouverte d'avance, c'est une classe qui répond la veille.
+
+Le script sait aussi rattraper un corrigé déjà présent mais vide d'intitulé et
+d'options — cas d'une séance créée à la main. Il ne réécrit une `bonne_reponse`
+que si la ligne n'avait jamais été renseignée.
+
+---
+
 ## Points de vigilance
 
 - **`index.html` est autonome et unique.** Ne pas le découper en modules ni le
