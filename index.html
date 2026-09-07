@@ -493,6 +493,23 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <h2>Appel du jour</h2>
     <p class="hint">Toutes vos classes, sans changer de sélection.</p>
     <div id="appel-classes"></div>
+    <div class="pick" style="margin-top:.8rem">
+      <button class="btn btn-sec" id="b-copier-abs" type="button">Copier les absents</button>
+      <button class="btn btn-sec" id="b-noms" type="button">Noms des étudiants…</button>
+    </div>
+    <details id="bloc-noms" class="corriges" style="margin-top:.7rem" hidden>
+      <summary>Correspondance numéro → nom</summary>
+      <p class="hint" style="margin:.5rem 0">Une ligne par étudiant : <code>CLASSE;numéro;nom</code>.
+        <b>Ces noms ne quittent pas ce navigateur</b> — ils ne sont ni envoyés ni enregistrés dans la base,
+        qui ne contient toujours que des numéros.</p>
+      <textarea id="noms-saisie" rows="6" style="width:100%;font-family:var(--f-mono);font-size:.85rem"
+        placeholder="BTS1-DEV-2026;01;ABBES Armand&#10;BTS1-DEV-2026;02;AISSANI Marwan"></textarea>
+      <div class="pick" style="margin-top:.5rem">
+        <button class="btn" id="b-noms-ok" type="button">Enregistrer</button>
+        <button class="btn btn-sec" id="b-noms-vider" type="button">Oublier ces noms</button>
+      </div>
+      <div id="err-noms"></div>
+    </details>
   </div>
 
   <div class="card">
@@ -1561,6 +1578,38 @@ function rotationAuto(){
   }, 22000);
 }
 
+// ── Les noms, dans CE navigateur et nulle part ailleurs ───────────────────
+// La base ne contient que des numéros, et c'est une règle qu'on ne casse pas.
+// Mais devant la classe il faut des noms. On les garde donc côté enseignant,
+// dans le stockage local du navigateur : rien ne part vers Supabase.
+var NOMS_CLE = "tdc-noms";
+
+function lireNoms(){
+  try { return JSON.parse(localStorage.getItem(NOMS_CLE) || "{}"); }
+  catch (e) { return {}; }
+}
+
+function nomDe(codeClasse, numero){
+  var m = lireNoms()[codeClasse];
+  if (!m) return "";
+  var n = String(numero || "").trim();
+  return m[n] || m[n.replace(/^0+/, "")] || m[("0" + n).slice(-2)] || "";
+}
+
+function enregistrerNoms(texte){
+  var map = lireNoms(), lus = 0, ignores = 0;
+  String(texte || "").split(/\r?\n/).forEach(function(ligne){
+    if (!ligne.trim()) return;
+    var p = ligne.split(/[;\t]/).map(function(x){ return x.trim(); });
+    if (p.length < 3 || !p[0] || !p[1] || !p[2]) { ignores++; return; }
+    (map[p[0]] = map[p[0]] || {})[p[1]] = p[2];
+    lus++;
+  });
+  try { localStorage.setItem(NOMS_CLE, JSON.stringify(map)); }
+  catch (e) { return { erreur: true }; }
+  return { lus: lus, ignores: ignores };
+}
+
 // ── L'appel du jour — présents et absents, à part du reste ────────────────
 // L'appel répond à « qui est là ? », le tableau de bord à « où en sont-ils ? ».
 // Deux questions différentes : deux blocs, pour qu'on ne lise pas l'une en
@@ -1595,6 +1644,9 @@ function chargerAppelToutesClasses(classes){
 
 function remplirAppelClasse(bloc, c, a){
   bloc.innerHTML = "";
+  bloc.dataset.code = c.code || "";
+  bloc.dataset.nom  = c.nom || c.code || "";
+  bloc.__absents = a.pose ? (a.absents || []) : null;
   var h = document.createElement("h3");
   h.textContent = c.nom || c.code;
   bloc.appendChild(h);
@@ -1621,13 +1673,19 @@ function remplirAppelClasse(bloc, c, a){
   var zp = document.createElement("div");
   zp.className = "pastilles";
   bloc.appendChild(zp);
-  pastilles(zp, pre, "pre", function(x){ return x.numero + " " + (x.avatar || "") + " " + x.heure; });
+  pastilles(zp, pre, "pre", function(x){
+    var n = nomDe(c.code, x.numero);
+    return x.numero + " " + (x.avatar || "") + " " + x.heure + (n ? " · " + n : "");
+  });
 
   if (abs.length) {
     var za = document.createElement("div");
     za.className = "pastilles";
     bloc.appendChild(za);
-    pastilles(za, abs, "abs", function(x){ return x.numero + " " + (x.avatar || ""); });
+    pastilles(za, abs, "abs", function(x){
+      var n = nomDe(c.code, x.numero);
+      return x.numero + " " + (x.avatar || "") + (n ? " · " + n : "");
+    });
   }
 
   var zh = document.createElement("div");
@@ -1666,6 +1724,33 @@ function rendreHumeurClasse(z, a){
       n + " · " + libelle.replace(/^\S+\s*/, "");
     z.appendChild(l);
   });
+}
+
+// Le geste du matin : la liste des absents, nommée, prête à coller dans le
+// cahier d'appel. Les numéros sans nom connu restent des numéros.
+function copierAbsents(){
+  var blocs = $("appel-classes").querySelectorAll(".appel-classe");
+  var sortie = [];
+  Array.prototype.forEach.call(blocs, function(b){
+    if (!b.__absents) return;
+    var noms = b.__absents.map(function(x){
+      var n = nomDe(b.dataset.code, x.numero);
+      return n ? n + " (n° " + x.numero + ")" : "n° " + x.numero;
+    });
+    sortie.push(b.dataset.nom + " — " + (noms.length ? noms.length + " absents : " + noms.join(", ")
+                                                     : "aucun absent"));
+  });
+  var texte = sortie.join("\n");
+  if (!texte) { erreur("err-noms", "Rien à copier : l'appel n'est pas encore chargé."); return; }
+
+  var fini = function(ok){
+    erreur("err-noms", ok ? "Liste copiée." : "Copie refusée par le navigateur — la voici :\n" + texte, ok);
+    $("bloc-noms").hidden = false;
+    if (!ok) $("bloc-noms").open = true;
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texte).then(function(){ fini(true); }, function(){ fini(false); });
+  } else { fini(false); }
 }
 
 function pastilles(id, liste, classe, texte){
@@ -2069,6 +2154,7 @@ function ouvrirEspaceEnseignant(){
       o.textContent = c.nom;
       pk.appendChild(o);
     });
+    suivi.classesConnues = classes;
     chargerAppelToutesClasses(classes);
     if (classes.length) chargerSeancesDe(classes[0].id);
 
@@ -2158,6 +2244,34 @@ $("pk-classe").addEventListener("change", function(){
 });
 
 $("pk-seance").addEventListener("change", activerSeance);
+$("b-copier-abs").addEventListener("click", copierAbsents);
+$("b-noms").addEventListener("click", function(){
+  var d = $("bloc-noms");
+  d.hidden = false; d.open = !d.open;
+  if (d.open && !$("noms-saisie").value) {
+    // On repart de ce qui est deja connu, pour completer plutot que resaisir.
+    var map = lireNoms(), lignes = [];
+    Object.keys(map).forEach(function(code){
+      Object.keys(map[code]).sort().forEach(function(num){
+        lignes.push(code + ";" + num + ";" + map[code][num]);
+      });
+    });
+    $("noms-saisie").value = lignes.join("\n");
+  }
+});
+$("b-noms-ok").addEventListener("click", function(){
+  var r = enregistrerNoms($("noms-saisie").value);
+  if (r.erreur) { erreur("err-noms", "Le navigateur refuse d'enregistrer (navigation privée ?)."); return; }
+  erreur("err-noms", r.lus + " noms enregistrés dans ce navigateur" +
+         (r.ignores ? ", " + r.ignores + " lignes ignorées (format attendu : CLASSE;numéro;nom)" : "") + ".", true);
+  chargerAppelToutesClasses(suivi.classesConnues || []);
+});
+$("b-noms-vider").addEventListener("click", function(){
+  try { localStorage.removeItem(NOMS_CLE); } catch (e) {}
+  $("noms-saisie").value = "";
+  erreur("err-noms", "Noms effacés de ce navigateur.", true);
+  chargerAppelToutesClasses(suivi.classesConnues || []);
+});
 $("b-demarrer").addEventListener("click", function(){
   pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");
 });
