@@ -36,10 +36,30 @@ update public.seances s
    and c.code = 'BTS2-SLAM-2026'
    and s.numero = v.numero;
 
---  Échéance du projet, à ajuster :
---    update public.seances s set echeance = date '2027-03-15'
---      from public.classes c where c.id = s.classe_id
---       and c.code = 'BTS2-SLAM-2026' and s.nature = 'projet';
+--  L'échéance du projet. Sans elle, « jours restants » et « en risque »
+--  restent vides et le pré-vol annonce « impossible de dire qui n'ira pas au
+--  bout au rythme actuel » : c'est tout l'indicateur de rythme qui ne peut
+--  pas fonctionner. Elle est donc posée, pas commentée.
+--
+--  Une seule date pour les cinq TP : c'est la date à laquelle le projet doit
+--  être terminé, alignée sur les épreuves E5/E6.
+update public.seances s
+   set echeance = date '2027-03-15'          -- <<< À MODIFIER
+  from public.classes c
+ where c.id = s.classe_id
+   and c.code = 'BTS2-SLAM-2026'
+   and s.nature = 'projet'
+   and s.echeance is distinct from date '2027-03-15';
+
+--  Pour échelonner TP par TP plutôt qu'une seule date de fin, remplacer le
+--  bloc ci-dessus par celui-ci, avec vos dates :
+--    update public.seances s set echeance = v.jour
+--      from public.classes c,
+--           (values (0, date '2026-09-15'), (1, date '2026-11-10'),
+--                   (2, date '2027-01-12'), (3, date '2027-02-09'),
+--                   (4, date '2027-03-15')) as v(numero, jour)
+--     where c.id = s.classe_id and c.code = 'BTS2-SLAM-2026'
+--       and s.numero = v.numero;
 
 -- ─── 3. Le suivi d'une séance de projet ────────────────────────────────────
 --  Trois lectures, une seule requête : où se masse la classe, qui s'est
@@ -58,15 +78,22 @@ begin
   select * into v_s from public.seances where id = p_seance_id;
   if not found then return jsonb_build_object('ok', false, 'motif', 'inconnue'); end if;
 
-  -- À défaut de jalons déclarés, on prend le plus avancé comme référence :
-  -- imparfait, mais préférable à un pourcentage calculé sur zéro.
+  -- Un jalon franchi, c'est une case cochée du parcours : une clé qui
+  -- commence par « tp », dont la réponse vaut « true ». Le quiz s'enregistre
+  -- en « ok »/« ko » sous une clé « q-… » et son option choisie en « 0 » à
+  -- « 3 » sous « q-…-pick » : ni l'un ni l'autre n'est un jalon. Compter
+  -- toutes les lignes donnait « 15/5 ». Voir CLAUDE.md, section « Ce que le
+  -- BTS2 écrit vraiment en base ». QUESTIONS.sql redéfinit cette fonction à
+  -- l'identique : garder les deux versions d'accord.
   select coalesce(v_s.jalons, nullif(max(c.faits), 0), 1) into v_jalons
-    from (select count(*) as faits from public.reponses
-           where seance_id = v_s.id group by eleve_id) c;
+    from (select count(*) filter (where reponse in ('true', 'ok')
+                                    and question like 'tp%') as faits
+            from public.reponses where seance_id = v_s.id group by eleve_id) c;
 
   with avance as (
     select e.id, e.numero, e.avatar,
-           count(r.id)                                   as faits,
+           count(r.id) filter (where r.reponse in ('true', 'ok')
+                                and r.question like 'tp%')  as faits,
            max(r.updated_at)                             as dernier,
            min(r.updated_at)                             as premier
       from public.eleves e

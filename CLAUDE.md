@@ -170,6 +170,25 @@ son `SUIVI_SUPABASE.md` :
 
 Les 29 items se répartissent en 3 · 5 · 8 · 7 · 6, ce que déclare `PROJET.sql`.
 
+`suivi_projet()` est définie **deux fois** — dans `PROJET.sql` et redéfinie à
+l'identique dans `QUESTIONS.sql`. Les deux doivent rester d'accord : rejouer
+`PROJET.sql` après `QUESTIONS.sql` écraserait l'autre sinon.
+
+### Le quiz BTS2 : sept blocs pour cinq TP
+
+La clé est `q-<indice du bloc>-<question>`, et l'indice du bloc **n'est pas**
+le numéro du TP — le TP1 et le TP2 ont deux blocs chacun :
+
+| bloc | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|---|
+| TP | 0 | 1 | 1 | 2 | 2 | 3 | 4 |
+
+`QUIZ_ENONCES.sql` copie les 35 énoncés en base à leur bonne séance, pour que
+la « Réussite par question » montre la question et non la clé. Leur
+`bonne_reponse` porte la lettre juste **pour la relecture seulement** : le
+tableau de bord corrige lui-même et envoie `ok`/`ko`, donc `correct` reste à
+false sur ces lignes. C'est normal, ne pas chercher à le « réparer ».
+
 ### La carte « Appel du jour »
 
 Toutes les classes à la fois, sans changer de sélection. Chaque classe affiche,
