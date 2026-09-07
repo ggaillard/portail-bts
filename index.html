@@ -131,6 +131,11 @@ tr:last-child td{border-bottom:0}
 .cq-opt{display:block;font-size:.9rem;padding:.08rem 0;color:var(--ink-soft)}
 .cq-opt.juste{color:#1B6B42;font-weight:600}
 .cq-exp{display:block;margin-top:.25rem;font-size:.85rem;color:var(--ink-soft);font-style:italic}
+.appel-classe{padding:.75rem 0;border-top:1px solid var(--rule)}
+.appel-classe:first-child{border-top:0;padding-top:.2rem}
+.appel-classe h3{font-size:1rem;margin:0 0 .1rem}
+.appel-classe .ac-q{font-size:.9rem;color:var(--ink-soft);margin:0 0 .5rem}
+.appel-classe .ac-compte{margin:0 0 .35rem;font-size:.95rem}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -486,9 +491,8 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   </div>
   <div class="card" id="carte-appel" hidden>
     <h2>Appel du jour</h2>
-    <p class="hint" id="appel-intitule"></p>
-    <div id="appel-resume"></div>
-    <div id="appel-humeur"></div>
+    <p class="hint">Toutes vos classes, sans changer de sélection.</p>
+    <div id="appel-classes"></div>
   </div>
 
   <div class="card">
@@ -1561,38 +1565,80 @@ function rotationAuto(){
 // ── L'appel du jour — présents et absents, à part du reste ────────────────
 // L'appel répond à « qui est là ? », le tableau de bord à « où en sont-ils ? ».
 // Deux questions différentes : deux blocs, pour qu'on ne lise pas l'une en
-// croyant lire l'autre.
-function chargerAppelClasse(classeId){
-  var carte = $("carte-appel");
-  if (!classeId) { carte.hidden = true; return Promise.resolve(); }
-  return sb.rpc("appel_classe", { p_classe_id: Number(classeId) }).then(function(r){
-    if (!r || r.error || !r.data || !r.data.ok) { carte.hidden = true; return; }
-    var a = r.data;
-    carte.hidden = false;
+// croyant lire l'autre. Et toutes les classes ensemble : l'appel ne dépend pas
+// de la séance qu'on est en train de regarder plus bas.
+function chargerAppelToutesClasses(classes){
+  var carte = $("carte-appel"), z = $("appel-classes");
+  z.innerHTML = "";
+  carte.hidden = true;
+  if (!classes || !classes.length) return;
 
-    if (!a.pose) {
-      $("appel-intitule").textContent =
-        "Aucune question d'appel pour aujourd'hui : exécutez la section 3 d'APPEL.sql.";
-      $("appel-resume").innerHTML = "";
-      return;
-    }
-    $("appel-intitule").textContent = a.intitule || "";
-    var pre = a.presents || [], abs = a.absents || [];
-    var z = $("appel-resume");
-    z.innerHTML = '<p><b>' + pre.length + ' présents</b> · ' + abs.length + ' absents</p>' +
-                  '<div class="pastilles" id="ap-pre"></div>' +
-                  (abs.length ? '<div class="pastilles" id="ap-abs"></div>' : "");
-    pastilles("ap-pre", pre, "pre", function(x){ return x.numero + " " + (x.avatar || "") + " " + x.heure; });
-    if (abs.length) pastilles("ap-abs", abs, "abs", function(x){ return x.numero + " " + (x.avatar || ""); });
+  var restant = classes.length, affiches = 0;
 
-    rendreHumeurClasse(a);
+  // Les blocs sont créés dans l'ordre des classes puis remplis à l'arrivée
+  // des réponses : l'ordre à l'écran ne dépend pas de la vitesse du réseau.
+  classes.forEach(function(c){
+    var bloc = document.createElement("div");
+    bloc.className = "appel-classe";
+    bloc.hidden = true;
+    z.appendChild(bloc);
+
+    sb.rpc("appel_classe", { p_classe_id: Number(c.id) }).then(function(r){
+      restant--;
+      var a = (r && !r.error && r.data && r.data.ok) ? r.data : null;
+      // Une classe sans séance d'appel — les classes de démonstration — est
+      // simplement absente de la carte plutôt que d'y occuper une ligne vide.
+      if (a) { remplirAppelClasse(bloc, c, a); bloc.hidden = false; affiches++; }
+      if (restant === 0) carte.hidden = affiches === 0;
+    });
   });
+}
+
+function remplirAppelClasse(bloc, c, a){
+  bloc.innerHTML = "";
+  var h = document.createElement("h3");
+  h.textContent = c.nom || c.code;
+  bloc.appendChild(h);
+
+  var q = document.createElement("p");
+  q.className = "ac-q";
+  bloc.appendChild(q);
+
+  if (!a.pose) {
+    q.textContent = "Aucune question posée aujourd'hui — le premier étudiant qui " +
+                    "se connectera déclenchera la question de présence.";
+    return;
+  }
+  q.textContent = a.intitule || "";
+
+  var pre = a.presents || [], abs = a.absents || [];
+  var compte = document.createElement("p");
+  compte.className = "ac-compte";
+  compte.innerHTML = "<b></b> · <span></span>";
+  compte.querySelector("b").textContent = pre.length + (pre.length > 1 ? " présents" : " présent");
+  compte.querySelector("span").textContent = abs.length + (abs.length > 1 ? " absents" : " absent");
+  bloc.appendChild(compte);
+
+  var zp = document.createElement("div");
+  zp.className = "pastilles";
+  bloc.appendChild(zp);
+  pastilles(zp, pre, "pre", function(x){ return x.numero + " " + (x.avatar || "") + " " + x.heure; });
+
+  if (abs.length) {
+    var za = document.createElement("div");
+    za.className = "pastilles";
+    bloc.appendChild(za);
+    pastilles(za, abs, "abs", function(x){ return x.numero + " " + (x.avatar || ""); });
+  }
+
+  var zh = document.createElement("div");
+  bloc.appendChild(zh);
+  rendreHumeurClasse(zh, a);
 }
 
 // Combien de chaque humeur, dans l'ordre des options. Une barre par smiley :
 // on lit l'état du groupe sans avoir à compter.
-function rendreHumeurClasse(a){
-  var z = $("appel-humeur");
+function rendreHumeurClasse(z, a){
   z.innerHTML = "";
   var opts = a.humeur_options, compte = a.humeur || {};
   if (!opts || !opts.length) return;
@@ -1600,13 +1646,13 @@ function rendreHumeurClasse(a){
   var lettres = ["A","B","C","D"];
   var total = lettres.reduce(function(s, l){ return s + (compte[l] || 0); }, 0);
   if (!total) {
-    z.innerHTML = '<p class="hint" style="margin:.6rem 0 0">Personne n\'a encore dit son humeur.</p>';
+    z.innerHTML = '<p class="hint" style="margin:.5rem 0 0">Personne n\'a encore dit son humeur.</p>';
     return;
   }
 
   var titre = document.createElement("p");
   titre.className = "hint";
-  titre.style.margin = ".9rem 0 .3rem";
+  titre.style.margin = ".7rem 0 .25rem";
   titre.textContent = "Humeur du groupe — " + total + (total > 1 ? " réponses" : " réponse");
   z.appendChild(titre);
 
@@ -1624,7 +1670,7 @@ function rendreHumeurClasse(a){
 }
 
 function pastilles(id, liste, classe, texte){
-  var z = $(id);
+  var z = (typeof id === "string") ? $(id) : id;
   if (!z) return;
   z.innerHTML = "";
   liste.forEach(function(x){
@@ -1952,7 +1998,6 @@ function activerSeance(){
 
 function chargerSeancesDe(classeId){
   suivi.classeId = classeId;
-  chargerAppelClasse(classeId);
   suivi.seanceId = null;
   suivi.stats = null;
   arreterBoucle();
@@ -2001,6 +2046,7 @@ function ouvrirEspaceEnseignant(){
       o.textContent = c.nom;
       pk.appendChild(o);
     });
+    chargerAppelToutesClasses(classes);
     if (classes.length) chargerSeancesDe(classes[0].id);
 
     classes.forEach(function(c){
