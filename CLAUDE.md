@@ -83,6 +83,33 @@ et tout ce qui passe par `reponses` alimente déjà le tableau de bord.
 
 ---
 
+## Le questionnaire de rentrée — « Faisons connaissance »
+
+Séance **98** (99 = l'appel, 98 = la connaissance : deux numéros hauts, hors
+progression). Douze questions posées **une seule fois dans l'année**, clés
+`conn-01` à `conn-12`, `bonne_reponse = 'Z'` — aucune réponse n'est juste,
+donc rien ne pollue le taux de réussite. Script : `CONNAISSANCE.sql`.
+
+Quatre thèmes, trois questions chacun : parcours et niveau en informatique,
+conditions de travail, objectifs et projection, façon d'apprendre.
+
+- `connaissance()` — côté étudiant : renvoie les douze questions et là où il en
+  est. Le portail en affiche **une à la fois** ; la carte disparaît d'elle-même
+  quand tout est répondu.
+- `connaissance_classe(p_classe_id)` — côté enseignant : la répartition par
+  question **et `qui`**, la liste des numéros par réponse. C'est `qui` qui rend
+  le chiffre utilisable : savoir que trois étudiants n'ont pas d'ordinateur ne
+  sert à rien si on ignore lesquels.
+
+Le bloc « À prendre en compte » se pilote par la table `SIGNAUX` dans
+`index.html` : une ligne `{ q, lettres, quoi }` par réponse qui appelle une
+décision pédagogique. Ajouter une ligne suffit à faire remonter un signal.
+
+Ne pas ajouter de question à bonne réponse dans la séance 98 : elle n'est pas
+une évaluation, et le portail la présente comme telle aux étudiants.
+
+---
+
 ## L'espace enseignant
 
 `chargerStats()` charge en parallèle `eleves`, `reponses` et `corriges` pour la
