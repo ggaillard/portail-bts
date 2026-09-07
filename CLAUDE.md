@@ -208,6 +208,29 @@ base** : la table `eleves` reste sans nom. Ne pas proposer de la mettre dans
 
 ---
 
+## Migration depuis l'ancienne base D1
+
+Relevé du 07/09/2026, avant suppression du Worker `suivi` et de la base D1
+`tour-de-controle` :
+
+| Table D1 | Lignes | Sort |
+|---|---|---|
+| `progression` | 14 | **migrée** — les 14 séances du semestre, `MIGRATION_D1.sql` |
+| `eleves` | 30 | non migrée — prénoms seuls, `email` et `mdp` vides |
+| `reponses` | 1 | non migrée — la ligne de test « ESSAI Alice » |
+| `jetons`, `pl_eleves`, `pl_jalons`, `pl_tp`, `pl_accueil`, `pl_jetons` | 0 | vides |
+
+**Aucun travail d'étudiant n'existait dans D1.** Le BTS2 est passé directement
+à Supabase, les tables `pl_*` n'ont jamais servi.
+
+Deux raisons de ne pas réutiliser les prénoms de D1, et pas seulement la
+première : la table `eleves` de Supabase ne porte aucun nom, et surtout **la
+numérotation de D1 n'est pas celle d'aujourd'hui** — l'export d'août s'arrêtait
+à 18, le n° 3 y désigne quelqu'un d'autre que le n° 3 actuel. S'en servir pour
+l'appel donnerait une liste fausse.
+
+---
+
 ## Les séances de cours du BTS1
 
 `BTS1_SEANCES.sql` crée les séances 1 et 2 et leurs dix corrigés chacune.
