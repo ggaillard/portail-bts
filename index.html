@@ -122,6 +122,15 @@ tr:last-child td{border-bottom:0}
 .jalon{display:flex;align-items:center;gap:.5rem;font-size:.88rem;padding:.12rem 0}
 .jalon-n{font-family:var(--f-mono);flex:0 0 3.6rem;color:var(--ink-soft)}
 .jalon-b{height:.55rem;border-radius:99px;background:var(--accent);opacity:.75;min-width:2px}
+.corriges{border:1px solid var(--rule);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.1rem}
+.corriges summary{cursor:pointer;font-weight:600;font-size:.95rem}
+.cq{padding:.6rem 0;border-top:1px solid var(--rule)}
+.cq:first-child{border-top:0}
+.cq-cle{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft)}
+.cq-txt{display:block;margin:.15rem 0 .35rem;font-size:.95rem}
+.cq-opt{display:block;font-size:.9rem;padding:.08rem 0;color:var(--ink-soft)}
+.cq-opt.juste{color:#1B6B42;font-weight:600}
+.cq-exp{display:block;margin-top:.25rem;font-size:.85rem;color:var(--ink-soft);font-style:italic}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -517,6 +526,11 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
         </select>
       </div>
 
+      <details id="bloc-corriges" class="corriges">
+        <summary id="corriges-titre">Les questions de cette séance</summary>
+        <div id="liste-corriges"></div>
+      </details>
+
       <h3 class="sous-titre">Réussite par question</h3>
       <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
       <div class="questions" id="liste-questions"></div>
@@ -888,7 +902,7 @@ function chargerStats(){
     sb.from("reponses").select("eleve_id,question,correct,reponse,updated_at")
       .eq("seance_id", suivi.seanceId),
     // La colonne « intitule » est facultative : si elle n'existe pas, on relit sans.
-    sb.from("corriges").select("question,bonne_reponse,intitule").eq("seance_id", suivi.seanceId)
+    sb.from("corriges").select("question,bonne_reponse,intitule,options,explication").eq("seance_id", suivi.seanceId)
       .then(function(r){
         return r.error
           ? sb.from("corriges").select("question,bonne_reponse").eq("seance_id", suivi.seanceId)
@@ -979,6 +993,9 @@ function chargerStats(){
       lignes: lignes, total: total, questions: questions,
       inscrits: lignes.length,
       actifs: actifs.length,
+      // Toutes les questions de la séance, répondues ou non : c'est ce qui
+      // permet de relire l'énoncé AVANT le cours, quand rien n'est encore posé.
+      corriges: cor.slice().sort(function(a, b){ return a.question < b.question ? -1 : 1; }),
       reponses: lignes.reduce(function(s, l){ return s + l.n; }, 0),
       reussite: totalEv ? Math.round(totalOk / totalEv * 100) : null,
       avancement: lignes.length ? Math.round(
@@ -1021,6 +1038,8 @@ function rendreSuivi(s){
     tuile(s.reussite === null ? "—" : s.reussite + " %", "de réussite");
 
   rendreRythme(s);
+
+  rendreCorriges(s);
 
   // ── Réussite par question ──
   var q = $("liste-questions");
@@ -1768,6 +1787,55 @@ function rendrePrevol(p){
 function dateCourte(iso){
   var d = new Date(iso);
   return isNaN(d) ? "?" : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+// Les énoncés de la séance, tels qu'ils sont en base. Répondus ou non : c'est
+// la relecture d'avant-cours, celle qui permet de voir qu'une question ne colle
+// pas au TP ou qu'un intitulé manque, pendant qu'il est encore temps.
+function rendreCorriges(s){
+  var bloc = $("bloc-corriges"), z = $("liste-corriges");
+  var cor = (s && s.corriges) || [];
+  z.innerHTML = "";
+
+  if (!cor.length) {
+    bloc.hidden = false;
+    $("corriges-titre").textContent = "Les questions de cette séance — aucune";
+    z.innerHTML = '<p class="sous-hint" style="margin:.5rem 0 0">Aucun corrigé en base pour cette séance. ' +
+                  'Les réponses seraient enregistrées mais jamais évaluées.</p>';
+    return;
+  }
+  bloc.hidden = false;
+  $("corriges-titre").textContent =
+    "Les questions de cette séance — " + cor.length + (cor.length > 1 ? " questions" : " question");
+
+  var lettres = ["A", "B", "C", "D"];
+  cor.forEach(function(c){
+    var d = document.createElement("div");
+    d.className = "cq";
+    d.innerHTML = '<span class="cq-cle"></span><span class="cq-txt"></span>' +
+                  '<span class="cq-opts"></span><span class="cq-exp"></span>';
+    d.querySelector(".cq-cle").textContent = c.question;
+    d.querySelector(".cq-txt").textContent = c.intitule || "(pas d'intitulé — l'écran affichera « Question N »)";
+
+    var zo = d.querySelector(".cq-opts");
+    if (c.options && c.options.length) {
+      c.options.forEach(function(o, i){
+        var juste = lettres[i] === c.bonne_reponse;
+        var l = document.createElement("span");
+        l.className = "cq-opt" + (juste ? " juste" : "");
+        l.textContent = lettres[i] + ". " + o + (juste ? "  ✓" : "");
+        zo.appendChild(l);
+      });
+    } else {
+      var l = document.createElement("span");
+      l.className = "cq-opt juste";
+      l.textContent = "Bonne réponse : " + (c.bonne_reponse || "?") +
+                      "  — options non déclarées, l'énoncé est projeté au tableau.";
+      zo.appendChild(l);
+    }
+    if (c.explication) d.querySelector(".cq-exp").textContent = c.explication;
+    z.appendChild(d);
+  });
 }
 
 function heureCourte(iso){
