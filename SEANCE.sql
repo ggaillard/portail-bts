@@ -84,10 +84,15 @@ begin
        and co.question = 'appel-' || to_char(current_date, 'YYYY-MM-DD')
   ) into v_appel;
 
+  -- Le compte d'essai n° 99 n'est pas un étudiant : le tableau de bord
+  -- l'exclut déjà de ses effectifs (chargerStats fait .neq("numero","99")).
+  -- Le pré-vol doit dire le même nombre, sinon il annonce 32 étudiants à un
+  -- enseignant qui en a 31 et fait douter du reste de la liste.
   select count(*), count(*) filter (where pin is not null),
          count(*) filter (where auth_id is not null)
     into v_eleves, v_pin, v_connect
-    from public.eleves where classe_id = v_s.classe_id;
+    from public.eleves
+   where classe_id = v_s.classe_id and numero <> '99';
 
   -- Les étudiants qui travaillent déjà au-delà de cette séance. On les compte
   -- à part : ils ne sont ni absents ni en retard, ils sont ailleurs.
