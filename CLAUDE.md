@@ -110,6 +110,31 @@ une évaluation, et le portail la présente comme telle aux étudiants.
 
 ---
 
+## Le suivi de stage — BTS2
+
+Séance **97** (99 l'appel, 98 la connaissance, 97 le stage). Six questions,
+clés `stage-01` à `stage-06`, `bonne_reponse = 'Z'`. Script : `STAGE.sql`.
+
+Différence de fond avec la séance 98 : **celle-ci se révise**. La bonne réponse
+d'hier est fausse demain, et c'est l'évolution qu'on veut lire. Le portail
+affiche donc les six questions ensemble, réponse en cours en évidence, et un
+clic la remplace — pas de « une question à la fois » ici.
+
+L'ordre des options va toujours **du moins avancé au plus avancé** : c'est ce
+qui permet de lire la colonne A comme « ceux qu'il faut aider ». Ne pas
+réordonner les options sans réordonner la lecture qui en dépend.
+
+`stage_classe()` renvoie `etats` — chaque étudiant rangé sous sa réponse à
+`stage-01`, avec la date de sa dernière mise à jour. Une promotion « à jour »
+depuis six semaines ne dit plus rien de vrai : la date est affichée à côté de
+chaque numéro pour cette raison.
+
+Ceux qui n'ont rien déclaré forment une cinquième ligne, après les quatre
+étapes : on ne sait même pas s'ils cherchent, ce qui est pire que d'être en
+retard.
+
+---
+
 ## L'espace enseignant
 
 `chargerStats()` charge en parallèle `eleves`, `reponses` et `corriges` pour la
