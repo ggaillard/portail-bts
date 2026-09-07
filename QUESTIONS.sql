@@ -1,0 +1,131 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+--  RELIRE LES QUESTIONS D'UNE SÉANCE — sans dépendre de la RLS
+--
+--  Le portail lisait la table corriges directement pour afficher les énoncés.
+--  Si la RLS interdit cette lecture — ce qui est souhaitable, un étudiant ne
+--  doit jamais lire les bonnes réponses — le panneau reste vide sans dire
+--  pourquoi. On passe donc par une fonction, comme tout le reste du portail.
+--
+--  À coller dans Supabase → SQL Editor → Run.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+create or replace function public.questions_seance(p_seance_id bigint)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare
+  v_s   public.seances;
+  v_res jsonb;
+begin
+  if not public.est_enseignant() then
+    return jsonb_build_object('ok', false, 'motif', 'refus');
+  end if;
+
+  select * into v_s from public.seances where id = p_seance_id;
+  if not found then return jsonb_build_object('ok', false, 'motif', 'inconnue'); end if;
+
+  select jsonb_build_object(
+    'ok', true,
+    'seance', v_s.numero,
+    'titre',  v_s.titre,
+    'questions', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'question',      question,
+               'intitule',      intitule,
+               'options',       to_jsonb(options),
+               'bonne_reponse', bonne_reponse,
+               'explication',   explication)
+             order by question)
+        from public.corriges where seance_id = p_seance_id), '[]'::jsonb))
+  into v_res;
+
+  return v_res;
+end; $$;
+
+grant execute on function public.questions_seance(bigint) to authenticated;
+
+-- ─── 2. Une mission n'est pas une question de quiz ─────────────────────────
+--  Constat sur le tableau de bord : la répartition affichait « 15/5 », soit
+--  plus de jalons franchis qu'il n'en existe. Le site PlaylistApp enregistre
+--  les DEUX sous la forme « ok » / « ko » — les missions comme les questions
+--  de quiz. Compter « ok » revenait donc à compter les quiz comme des jalons.
+--
+--  On distingue par la clé, qui est stable dans le parcours :
+--    tp2-m1   → une mission        (c'est un jalon)
+--    q-3-2    → une question de quiz (ce n'en est pas un)
+--    jalon-…  → une question jalon   (ce n'en est pas un non plus)
+create or replace function public.suivi_projet(p_seance_id bigint, p_jours_arret int default 7)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare
+  v_s      public.seances;
+  v_jalons int;
+  v_res    jsonb;
+begin
+  if not public.est_enseignant() then
+    return jsonb_build_object('ok', false, 'motif', 'refus');
+  end if;
+
+  select * into v_s from public.seances where id = p_seance_id;
+  if not found then return jsonb_build_object('ok', false, 'motif', 'inconnue'); end if;
+
+  select coalesce(v_s.jalons, nullif(max(c.faits), 0), 1) into v_jalons
+    from (select count(*) filter (where reponse = 'ok' and question like 'tp%-m%') as faits
+            from public.reponses where seance_id = v_s.id group by eleve_id) c;
+
+  with avance as (
+    select e.id, e.numero, e.avatar,
+           count(r.id) filter (where r.reponse = 'ok'
+                                and r.question like 'tp%-m%')      as faits,
+           count(r.id) filter (where r.question like 'jalon-%')     as questions,
+           count(r.id) filter (where r.question like 'jalon-%'
+                                and r.correct)                      as questions_ok,
+           max(r.updated_at)                                        as dernier,
+           min(r.updated_at)                                        as premier
+      from public.eleves e
+      left join public.reponses r on r.eleve_id = e.id and r.seance_id = v_s.id
+     where e.classe_id = v_s.classe_id
+     group by e.id, e.numero, e.avatar
+  ),
+  calcul as (
+    select a.*,
+           case when a.dernier is null then null
+                else floor(extract(epoch from (now() - a.dernier)) / 86400)::int end as jours_sans,
+           case when a.premier is null or a.faits = 0 then null
+                else a.faits / greatest(
+                       extract(epoch from (now() - a.premier)) / 86400, 1) end        as par_jour
+      from avance a
+  )
+  select jsonb_build_object(
+    'ok', true, 'nature', v_s.nature, 'jalons', v_jalons, 'echeance', v_s.echeance,
+    'jours_restants', case when v_s.echeance is null then null
+                           else (v_s.echeance - current_date) end,
+    'repartition', coalesce((
+       select jsonb_agg(jsonb_build_object('faits', faits, 'eleves', n) order by faits)
+         from (select faits, count(*) as n from calcul group by faits) t), '[]'::jsonb),
+    'arretes', coalesce((
+       select jsonb_agg(jsonb_build_object(
+                'numero', numero, 'avatar', avatar,
+                'faits', faits, 'jours', jours_sans) order by jours_sans desc)
+         from calcul where jours_sans is not null and jours_sans >= p_jours_arret), '[]'::jsonb),
+    'jamais_commence', (select count(*) from calcul where faits = 0 and questions = 0),
+    'termine', (select count(*) from calcul where faits >= v_jalons),
+    'question_fin_repondue', (select count(*) from calcul where questions >= 3),
+    'en_risque', case when v_s.echeance is null then null else (
+       select count(*) from calcul
+        where faits > 0 and faits < v_jalons
+          and coalesce(par_jour, 0) * greatest(v_s.echeance - current_date, 0)
+              + faits < v_jalons) end,
+    'eleves', (select count(*) from calcul)
+  ) into v_res;
+
+  return v_res;
+end; $$;
+
+grant execute on function public.suivi_projet(bigint, int) to authenticated;
+
+-- Contrôle : le compte de questions par séance, toutes classes réelles.
+select c.code, s.numero, s.titre, count(co.id) as questions
+  from public.classes c
+  join public.seances s on s.classe_id = c.id
+  left join public.corriges co on co.seance_id = s.id
+ where c.code not like 'DEMO%'
+ group by c.code, s.numero, s.titre
+ order by c.code, s.numero;

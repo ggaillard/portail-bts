@@ -516,6 +516,11 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <div id="err-prevol"></div>
     </div>
 
+    <details id="bloc-corriges" class="corriges" open hidden>
+      <summary id="corriges-titre">Les questions de cette séance</summary>
+      <div id="liste-corriges"></div>
+    </details>
+
     <div id="stats-zone" hidden>
       <div class="msg" id="stats-guide" hidden></div>
       <div class="rythme" id="rythme" hidden></div>
@@ -529,11 +534,6 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
           <option value="reussite">Les plus en difficulté d'abord</option>
         </select>
       </div>
-
-      <details id="bloc-corriges" class="corriges">
-        <summary id="corriges-titre">Les questions de cette séance</summary>
-        <div id="liste-corriges"></div>
-      </details>
 
       <h3 class="sous-titre">Réussite par question</h3>
       <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
@@ -920,7 +920,11 @@ function chargerStats(){
       var e = par[r.eleve_id] ||
               (par[r.eleve_id] = { n: 0, ev: 0, ok: 0, ok_mission: 0, maj: null, serie: 0, liste: [] });
       e.n++;
-      if (r.reponse === "ok") e.ok_mission = (e.ok_mission || 0) + 1;
+      // « ok » désigne aussi bien une mission validée qu'une question de quiz
+      // réussie : c'est la clé qui tranche. tp2-m1 est un jalon, q-3-2 non.
+      if (r.reponse === "ok" && /^tp\d+-m\d+$/.test(r.question || "")) {
+        e.ok_mission = (e.ok_mission || 0) + 1;
+      }
       if (estEvaluee(r)) { e.ev++; if (estJuste(r)) e.ok++; }
       if (!e.maj || r.updated_at > e.maj) e.maj = r.updated_at;
       e.liste.push(r);
@@ -997,9 +1001,6 @@ function chargerStats(){
       lignes: lignes, total: total, questions: questions,
       inscrits: lignes.length,
       actifs: actifs.length,
-      // Toutes les questions de la séance, répondues ou non : c'est ce qui
-      // permet de relire l'énoncé AVANT le cours, quand rien n'est encore posé.
-      corriges: cor.slice().sort(function(a, b){ return a.question < b.question ? -1 : 1; }),
       reponses: lignes.reduce(function(s, l){ return s + l.n; }, 0),
       reussite: totalEv ? Math.round(totalOk / totalEv * 100) : null,
       avancement: lignes.length ? Math.round(
@@ -1042,8 +1043,6 @@ function rendreSuivi(s){
     tuile(s.reussite === null ? "—" : s.reussite + " %", "de réussite");
 
   rendreRythme(s);
-
-  rendreCorriges(s);
 
   // ── Réussite par question ──
   var q = $("liste-questions");
@@ -1753,6 +1752,28 @@ function rendreProjet(zone, p){
 // Quatre vérifications en une requête. Aucune ne devine : chacune dit ce qui
 // manque et ce qu'il faut faire, pour que le défaut se règle avant l'heure et
 // pas devant la classe.
+// Les énoncés passent par une fonction plutôt que par une lecture directe de
+// corriges : la RLS protège cette table — un étudiant ne doit jamais y lire
+// les bonnes réponses — et la lecture directe revenait vide, sans le dire.
+function chargerQuestionsSeance(){
+  var bloc = $("bloc-corriges");
+  if (!suivi.seanceId) { bloc.hidden = true; return Promise.resolve(); }
+
+  return sb.rpc("questions_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    if (r && !r.error && r.data && r.data.ok) return r.data.questions || [];
+    // Fonction pas encore déployée : on retente la lecture directe, qui
+    // marchera si la RLS l'autorise. Sinon le panneau le dira franchement.
+    return sb.from("corriges")
+      .select("question,bonne_reponse,intitule,options,explication")
+      .eq("seance_id", suivi.seanceId)
+      .then(function(rc){ return (rc && rc.data) || []; });
+  }).then(function(liste){
+    rendreCorriges(liste.slice().sort(function(a, b){
+      return a.question < b.question ? -1 : 1;
+    }));
+  });
+}
+
 function chargerPrevol(){
   var bloc = $("prevol");
   if (!suivi.seanceId) { bloc.hidden = true; suivi.prevol = null; return Promise.resolve(); }
@@ -1838,19 +1859,19 @@ function dateCourte(iso){
 // Les énoncés de la séance, tels qu'ils sont en base. Répondus ou non : c'est
 // la relecture d'avant-cours, celle qui permet de voir qu'une question ne colle
 // pas au TP ou qu'un intitulé manque, pendant qu'il est encore temps.
-function rendreCorriges(s){
+function rendreCorriges(cor){
   var bloc = $("bloc-corriges"), z = $("liste-corriges");
-  var cor = (s && s.corriges) || [];
+  cor = cor || [];
   z.innerHTML = "";
+  bloc.hidden = false;
 
   if (!cor.length) {
-    bloc.hidden = false;
     $("corriges-titre").textContent = "Les questions de cette séance — aucune";
-    z.innerHTML = '<p class="sous-hint" style="margin:.5rem 0 0">Aucun corrigé en base pour cette séance. ' +
-                  'Les réponses seraient enregistrées mais jamais évaluées.</p>';
+    z.innerHTML = '<p class="sous-hint" style="margin:.5rem 0 0">Aucun énoncé lisible pour cette séance. ' +
+                  'Soit la séance n\'a pas de corrigé, soit la fonction <code>questions_seance()</code> ' +
+                  'n\'est pas déployée et la RLS interdit la lecture directe : jouez QUESTIONS.sql.</p>';
     return;
   }
-  bloc.hidden = false;
   $("corriges-titre").textContent =
     "Les questions de cette séance — " + cor.length + (cor.length > 1 ? " questions" : " question");
 
@@ -1982,6 +2003,7 @@ function activerSeance(){
     suivi.prevol = null;
     arreterBoucle();
     $("prevol").hidden = true;
+    $("bloc-corriges").hidden = true;
     $("stats-zone").hidden = true;
     $("stats-attente").hidden = false;
     return;
@@ -1993,6 +2015,7 @@ function activerSeance(){
   suivi.jalons  = opt.dataset.jalons || null;
   $("stats-attente").textContent = "Chargement…";
   chargerPrevol();
+  chargerQuestionsSeance();
   rafraichir().then(lancerBoucle);
 }
 
