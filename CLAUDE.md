@@ -26,6 +26,15 @@ Ancienne plateforme : `suivi.gaillard42.workers.dev` (Cloudflare Worker, base D1
 
 ---
 
+## Où en est la base, et ce qui a changé
+
+**[`JOURNAL.md`](JOURNAL.md)** — l'état de chaque script SQL (commité ≠ exécuté),
+ce qui a changé dans le code, et la requête de lecture seule qui vérifie tout
+cela soi-même en trente secondes. À relire avant de conclure qu'un correctif est
+en service : un script poussé sur GitHub n'est pas un script joué sur Supabase.
+
+---
+
 ## Base de données — Supabase, région Francfort
 
 | Table | Contenu |
