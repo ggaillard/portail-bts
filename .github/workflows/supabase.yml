@@ -113,6 +113,21 @@ jobs:
             select count(*) into n from seances s join classes c on c.id=s.classe_id
              where c.code='BTS1-DEV-2026' and s.numero between 1 and 14;
             if n <> 14 then raise exception 'seances BTS1 1-14 = %, attendu 14', n; end if;
+
+            -- Le pré-vol doit annoncer 31 étudiants, pas 32 : le compte
+            -- d'essai n° 99 n'en est pas un. preflight_seance() est définie
+            -- DEUX fois — seance.sql puis projet.sql — et la seconde écrasait
+            -- le filtre de la première sans que rien ne le dise. Ce contrôle
+            -- existe pour que cela ne puisse plus arriver en silence.
+            select (preflight_seance(s.id)->>'eleves')::int into n
+              from seances s join classes c on c.id=s.classe_id
+             where c.code='BTS1-DEV-2026' and s.numero=1;
+            if n <> 31 then raise exception 'effectif du pre-vol BTS1 = %, attendu 31 (le compte n° 99 est-il compte ?)', n; end if;
+
+            -- Et « À faire » doit se taire sur une base saine : si elle crie
+            -- alors que tout va bien, on cessera de la lire.
+            select ((a_faire()->>'bloquants')::int + (a_faire()->>'attentions')::int) into n;
+            if n <> 0 then raise exception 'a_faire() signale % point(s) sur une base saine', n; end if;
           end \$\$;"
           echo "Chaîne rejouable, effectifs conformes."
 

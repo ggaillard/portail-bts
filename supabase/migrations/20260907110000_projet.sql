@@ -98,7 +98,7 @@ begin
            min(r.updated_at)                             as premier
       from public.eleves e
       left join public.reponses r on r.eleve_id = e.id and r.seance_id = v_s.id
-     where e.classe_id = v_s.classe_id
+     where e.classe_id = v_s.classe_id and e.numero <> '99'
      group by e.id, e.numero, e.avatar
   ),
   calcul as (
@@ -173,10 +173,16 @@ begin
        and co.question = 'appel-' || to_char(current_date, 'YYYY-MM-DD')
   ) into v_appel;
 
+  -- Le compte d'essai n° 99 n'est pas un étudiant. Ce filtre existe aussi
+  -- dans 20260907100000_seance.sql, qui définit la MÊME fonction : comme ce
+  -- fichier passe après, c'est cette version-ci qui gagne. Les deux doivent
+  -- rester d'accord, sinon le correctif de l'une est écrasé par l'autre sans
+  -- que rien ne le signale. C'est exactement ce qui s'est produit le 8/09.
   select count(*), count(*) filter (where pin is not null),
          count(*) filter (where auth_id is not null)
     into v_eleves, v_pin, v_connect
-    from public.eleves where classe_id = v_s.classe_id;
+    from public.eleves
+   where classe_id = v_s.classe_id and numero <> '99';
 
   select count(distinct r.eleve_id),
          string_agg(distinct sa.numero::text, ', ' order by sa.numero::text)
