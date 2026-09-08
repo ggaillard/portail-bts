@@ -52,11 +52,43 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
   du rythme. Rejouer la section 2 de `PROJET.sql`.
 - La **séance 99 du BTS2 est fermée**. Une séance fermée refuse les réponses :
   aucun étudiant de deuxième année ne peut pointer sa présence. La rouvrir depuis
-  le portail (« Démarrer la séance ») ou en SQL.
+  le portail (« Démarrer la séance »). **Corrigé à la source** par
+  `20260908100000_appel_permanent.sql` — voir plus bas ; en attendant que la
+  migration soit poussée, le clic reste la façon de débloquer la classe.
 
 ---
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
+
+### L'appel du BTS2 était fermé, et le message disait de réessayer
+
+Un étudiant qui répondait à la question du jour voyait « L'enregistrement n'a
+pas abouti. Réessayez dans un instant. » Réessayer ne pouvait rien donner : la
+séance 99 du BTS2 avait été close la veille, et `repondre()` refuse toute
+réponse sur une séance fermée — `Seance fermee`, HTTP 400. Reproduit avec le
+compte d'essai n° 99 du BTS2, refus identique.
+
+Trois défauts se sont additionnés, et chacun est corrigé :
+
+1. **Le bouton « Clore la séance » s'appliquait à la séance 99.** Or la 99
+   n'est pas une séance : c'est le registre d'appel, décrit dès `APPEL.sql`
+   comme « ouverte en permanence ». La clore coupe le pointage **et** la
+   question d'humeur de toute une classe. Le bouton disparaît maintenant sur la
+   99, `clore_seance()` refuse avec le motif `appel`, et un déclencheur
+   `appel_reste_ouvert` rouvre la ligne quelle que soit la voie employée —
+   portail, SQL Editor, script.
+2. **`appel_du_jour()` fabriquait la question du jour même sur une séance
+   fermée.** L'étudiant voyait donc une question, y répondait, et se faisait
+   refuser sans rien comprendre. Le verrou ci-dessus rend l'état impossible.
+3. **Le message côté étudiant mentait.** Il dit désormais « L'appel est fermé
+   pour cette classe. Prévenez votre enseignant : votre présence n'est pas
+   enregistrée. » — un message qui dit quoi faire, au lieu d'un message qui
+   fait perdre cinq minutes. Même correction sur la question d'humeur.
+
+Quatre assertions sont ajoutées au workflow : aucune séance 99 fermée après la
+chaîne, un `update` direct ne la ferme pas, `clore_seance(99)` rend `appel`, et
+— pour que le verrou ne déborde pas — une séance ordinaire se ferme toujours.
+
 
 ### Le comptage de l'avancement BTS2 était faux, deux fois
 

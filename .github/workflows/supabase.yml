@@ -131,6 +131,43 @@ jobs:
           end \$\$;"
           echo "Chaîne rejouable, effectifs conformes."
 
+      - name: "📋 L'appel ne peut pas se fermer"
+        run: |
+          $PSQL -c "
+          do \$\$
+          declare n int; v_id bigint; v_ouverte boolean; v_motif text;
+          begin
+            -- Le 08/09, la séance 99 du BTS2 était fermée : aucun étudiant de
+            -- deuxième année ne pouvait marquer sa présence, et le message côté
+            -- étudiant disait « réessayez », ce qui n'y changeait rien. Trois
+            -- contrôles pour que cet état soit désormais inatteignable.
+            select count(*) into n from seances where numero = 99 and not ouverte;
+            if n <> 0 then raise exception '% seance(s) d''appel fermee(s) apres la chaine', n; end if;
+
+            select s.id into v_id from seances s join classes c on c.id=s.classe_id
+             where c.code='BTS2-SLAM-2026' and s.numero=99;
+
+            update seances set ouverte = false where id = v_id;
+            select ouverte into v_ouverte from seances where id = v_id;
+            if not v_ouverte then raise exception 'un update direct a pu fermer l''appel : le declencheur manque'; end if;
+
+            select clore_seance(v_id)->>'motif' into v_motif;
+            if v_motif is distinct from 'appel' then
+              raise exception 'clore_seance(99) rend motif=%, attendu appel', coalesce(v_motif,'ok');
+            end if;
+
+            -- Et le verrou ne doit pas déborder : une vraie séance se ferme.
+            select s.id into v_id from seances s join classes c on c.id=s.classe_id
+             where c.code='BTS1-DEV-2026' and s.numero=1;
+            perform demarrer_seance(v_id);
+            if (clore_seance(v_id)->>'ok')::boolean is not true then
+              raise exception 'clore_seance() refuse desormais une seance ordinaire';
+            end if;
+            select ouverte into v_ouverte from seances where id = v_id;
+            if v_ouverte then raise exception 'une seance ordinaire n''a pas ete fermee'; end if;
+          end \$\$;"
+          echo "Appel verrouillé ouvert, séances ordinaires closables."
+
   # ── 2. Appliquer sur la vraie base ──────────────────────────────────────
   appliquer:
     name: "🚀 Appliquer sur Supabase"

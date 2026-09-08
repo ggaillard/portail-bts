@@ -1015,7 +1015,10 @@ function proposerHumeur(h, seanceId){
       sb.rpc("repondre", { p_seance_id: seanceId, p_question: h.question, p_reponse: lettre })
         .then(function(r){
           if (r.error) {
-            erreur("err-humeur", "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+            var mh = (r.error && r.error.message) || "";
+            erreur("err-humeur", /ferm/i.test(mh)
+              ? "L'appel est fermé pour cette classe. Prévenez votre enseignant."
+              : "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
             Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
             return;
           }
@@ -1044,7 +1047,12 @@ function repondreAppel(a, lettre){
     p_reponse:   lettre
   }).then(function(r){
     if (r.error) {
-      erreur("err-appel", "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+      // Une séance fermée refuse les réponses. Réessayer n'y changera rien :
+      // il faut le dire, sinon l'étudiant s'acharne et l'enseignant ne sait pas.
+      var m = (r.error && r.error.message) || "";
+      erreur("err-appel", /ferm/i.test(m)
+        ? "L'appel est fermé pour cette classe. Prévenez votre enseignant : votre présence n'est pas enregistrée."
+        : "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
       Array.prototype.forEach.call(boutons, function(b){ b.disabled = false; });
       return;
     }
@@ -2648,8 +2656,11 @@ function rendrePrevol(p){
   etat.className = "prevol-etat " + (manque ? "ko" : "ok");
 
   // Un projet reste ouvert : ni chrono à lancer, ni séance à clore chaque semaine.
+  // La séance 99 est le registre d'appel : la clore couperait le pointage et
+  // l'humeur pour la classe entière. Le bouton disparaît, la base refuse aussi.
+  var appel = String(p.seance) === "99";
   $("b-demarrer").hidden = projet;
-  $("b-clore").hidden = projet;
+  $("b-clore").hidden = projet || appel;
   $("b-demarrer").textContent = p.demarree_le && p.ouverte ? "Redémarrer le chrono" : "Démarrer la séance";
   $("b-clore").disabled = !p.ouverte;
 }
@@ -2720,7 +2731,10 @@ function pilotage(action, question){
   sb.rpc(action, { p_seance_id: Number(suivi.seanceId) }).then(function(r){
     $("b-demarrer").disabled = false;
     if (!r || r.error || !r.data || !r.data.ok) {
-      erreur("err-prevol", "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      // « appel » n'est pas un refus de droits : c'est un refus de principe.
+      erreur("err-prevol", (r && r.data && r.data.motif === "appel")
+        ? "La séance d'appel reste ouverte toute l'année : la clore couperait le pointage de la classe."
+        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
       $("b-clore").disabled = false;
       return;
     }

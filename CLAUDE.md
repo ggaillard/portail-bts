@@ -123,6 +123,16 @@ ajoute chaque jour de cours **une** question nommée `appel-AAAA-MM-JJ`.
 Ne pas créer de table `presences` ni de RPC dédiée : le modèle existant suffit,
 et tout ce qui passe par `reponses` alimente déjà le tableau de bord.
 
+**La séance 99 ne se ferme pas, et c'est verrouillé en base.** Le 08/09 elle
+avait été close sur le BTS2 : `repondre()` renvoyait `Seance fermee` et aucun
+étudiant de deuxième année ne pouvait pointer — sans que l'écran dise pourquoi,
+puisque `appel_du_jour()` fabrique la question même sur une séance fermée.
+Depuis `20260908100000_appel_permanent.sql` : un déclencheur `appel_reste_ouvert`
+rouvre toute ligne `numero = 99` qu'on tenterait de fermer, `clore_seance()`
+refuse avec le motif `appel`, et le portail masque le bouton « Clore » sur la 99.
+**Ne pas ajouter de chemin qui écrive `ouverte = false` sur une séance 99** —
+et si un jour ce verrou gêne, le retirer explicitement, pas le contourner.
+
 ---
 
 ## Le questionnaire de rentrée — « Faisons connaissance »
