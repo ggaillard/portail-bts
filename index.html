@@ -943,7 +943,8 @@ function rendreConnaissance(d){
       sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question, p_reponse: lettre })
         .then(function(rr){
           if (rr.error) {
-            erreur("err-conn", "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+            erreur("err-conn", texteEnvoi(rr.error));
+            signalerSessionPerimee(rr.error);
             Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
             return;
           }
@@ -1007,7 +1008,11 @@ function rendreStage(d){
         sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
                              p_reponse: lettre }).then(function(rr){
           Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
-          if (rr.error) { erreur("err-stage", "L'enregistrement n'a pas abouti. Réessayez."); return; }
+          if (rr.error) {
+            erreur("err-stage", texteEnvoi(rr.error));
+            signalerSessionPerimee(rr.error);
+            return;
+          }
           var neuf = !q.ma_reponse;
           q.ma_reponse = lettre;
           if (neuf) d.faites = (d.faites || 0) + 1;
@@ -1054,10 +1059,8 @@ function proposerHumeur(h, seanceId){
       sb.rpc("repondre", { p_seance_id: seanceId, p_question: h.question, p_reponse: lettre })
         .then(function(r){
           if (r.error) {
-            var mh = (r.error && r.error.message) || "";
-            erreur("err-humeur", /ferm/i.test(mh)
-              ? "L'appel est fermé pour cette classe. Prévenez votre enseignant."
-              : "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+            erreur("err-humeur", texteEnvoi(r.error, "appel"));
+            signalerSessionPerimee(r.error);
             Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
             return;
           }
@@ -1075,6 +1078,45 @@ function humeurRepondue(lettre, options){
   erreur("err-humeur", "C'est noté, merci" + dit + ".", true);
 }
 
+// ── Pourquoi un envoi a échoué ────────────────────────────────────────────
+// « Réessayez dans un instant » était le seul message pour tout. Il est faux
+// dans les deux cas qui arrivent vraiment, et il fait perdre cinq minutes :
+//  · séance fermée — réessayer ne changera jamais rien ;
+//  · session reprise ailleurs — rejoindre() rattache le compte au dernier
+//    appareil identifié. Ouvrir le portail sur son téléphone déloge le poste
+//    de la salle, et le poste répond alors « Non identifie ». Il faut se
+//    réidentifier, pas patienter.
+function motifEnvoi(err){
+  var m = (err && err.message) || "";
+  if (/non identifie/i.test(m)) return "session";
+  if (/ferm/i.test(m))          return "fermee";
+  return "autre";
+}
+
+function texteEnvoi(err, quoi){
+  switch (motifEnvoi(err)) {
+    case "session":
+      return "Votre session a été reprise sur un autre appareil : rien n'a été " +
+             "enregistré. Cliquez « Ce n'est pas moi », puis identifiez-vous à nouveau.";
+    case "fermee":
+      return quoi === "appel"
+        ? "L'appel est fermé pour cette classe. Prévenez votre enseignant : " +
+          "votre présence n'est pas enregistrée."
+        : "Cette séance est fermée : les réponses n'y sont plus acceptées. " +
+          "Prévenez votre enseignant.";
+    default:
+      return "L'enregistrement n'a pas abouti. Réessayez dans un instant.";
+  }
+}
+
+// Une session périmée ne se rattrape pas toute seule : on met le bouton de
+// réidentification en évidence plutôt que de laisser chercher.
+function signalerSessionPerimee(err){
+  if (motifEnvoi(err) !== "session") return;
+  var b = $("b-sortie-etu");
+  if (b) { b.classList.add("btn"); b.classList.remove("btn-sec"); }
+}
+
 function repondreAppel(a, lettre){
   var boutons = $("appel-choix").querySelectorAll("button");
   Array.prototype.forEach.call(boutons, function(b){ b.disabled = true; });
@@ -1088,10 +1130,8 @@ function repondreAppel(a, lettre){
     if (r.error) {
       // Une séance fermée refuse les réponses. Réessayer n'y changera rien :
       // il faut le dire, sinon l'étudiant s'acharne et l'enseignant ne sait pas.
-      var m = (r.error && r.error.message) || "";
-      erreur("err-appel", /ferm/i.test(m)
-        ? "L'appel est fermé pour cette classe. Prévenez votre enseignant : votre présence n'est pas enregistrée."
-        : "L'enregistrement n'a pas abouti. Réessayez dans un instant.");
+      erreur("err-appel", texteEnvoi(r.error, "appel"));
+      signalerSessionPerimee(r.error);
       Array.prototype.forEach.call(boutons, function(b){ b.disabled = false; });
       return;
     }
