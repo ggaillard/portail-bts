@@ -189,6 +189,19 @@ son `SUIVI_SUPABASE.md` :
 
 Les 29 items se répartissent en 3 · 5 · 8 · 7 · 6, ce que déclare `PROJET.sql`.
 
+**Deux fonctions sont définies deux fois**, et c'est un piège qui a déjà mordu :
+
+| Fonction | Définie dans | Celle qui gagne |
+|---|---|---|
+| `preflight_seance()` | `…_seance.sql` puis `…_projet.sql` | **projet** (passe après) |
+| `suivi_projet()` | `…_projet.sql` puis `…_questions.sql` | **questions** (passe après) |
+
+Corriger la première version sans corriger la seconde ne sert à rien : la
+seconde écrase, en silence. C'est ce qui est arrivé au filtre du compte
+d'essai n° 99 — corrigé dans `seance.sql` le 7/09, réécrasé par `projet.sql`
+à chaque exécution jusqu'au 8/09. Le workflow contrôle maintenant l'effectif
+du pré-vol pour que la régression soit rouge.
+
 `suivi_projet()` est définie **deux fois** — dans `PROJET.sql` et redéfinie à
 l'identique dans `QUESTIONS.sql`. Les deux doivent rester d'accord : rejouer
 `PROJET.sql` après `QUESTIONS.sql` écraserait l'autre sinon.
