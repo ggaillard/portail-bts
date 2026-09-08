@@ -334,6 +334,71 @@ que si la ligne n'avait jamais été renseignée.
 
 ---
 
+## Activer un questionnaire, et le voir
+
+Un questionnaire est **une séance ouverte ou fermée**, rien d'autre :
+`connaissance()` filtre sur `numero = 98 and ouverte`, `stage()` sur
+`numero = 97 and ouverte`. C'était vrai depuis le début, et parfaitement
+invisible : pour savoir si « Faisons connaissance » était proposé aux BTS1, il
+fallait ouvrir le SQL Editor. La veille d'une rentrée, ce n'est pas un endroit
+où l'on veut aller.
+
+Depuis `20260908110000_questionnaires.sql`, deux fonctions l'exposent :
+
+| Fonction | Ce qu'elle fait |
+|---|---|
+| `questionnaires()` | Une ligne par classe × questionnaire réellement créé : ouvert ou non, nombre de questions, commencés, terminés. Les classes `DEMO%` en sont exclues, le compte d'essai n° 99 aussi. |
+| `ouvrir_questionnaire(classe_id, numero, ouvert)` | L'interrupteur. **N'accepte que 97 et 98.** |
+
+**Trois gestes distincts pour trois natures distinctes**, et il faut que cela
+le reste : `demarrer_seance()` / `clore_seance()` portent le chrono d'une
+séance de cours ; `ouvrir_questionnaire()` n'a pas de chrono ; la séance 99 ne
+se ferme pas du tout. Les fondre en une fonction unique ferait qu'un jour l'une
+fermerait l'autre — c'est exactement ce qui s'est produit avec
+`preflight_seance()` définie deux fois.
+
+Éteindre ne détruit rien : les réponses restent, rallumer remet la classe
+exactement où elle en était.
+
+Dans le portail : onglet **Questionnaires**, carte « Ce qui est proposé aux
+étudiants », un interrupteur par ligne.
+
+---
+
+## L'espace étudiant sur un téléphone
+
+La plupart des étudiants répondent au téléphone. Trois contraintes, vérifiées
+par `t_mobile.mjs` à 390 px :
+
+- **aucun débordement horizontal** — la page ne défile jamais latéralement ;
+- **aucune cible tactile sous 44 × 44 px**, interrupteurs compris ;
+- **la page raccourcit à mesure qu'on avance** : 2 256 px à l'arrivée, 1 769 px
+  une fois l'appel et l'humeur faits.
+
+Trois mécanismes, à ne pas défaire :
+
+1. **Une file d'attente.** Un bandeau collant en haut compte ce qui reste avant
+   « Vos projets », et propose un raccourci vers eux **une fois la présence
+   marquée seulement** — c'est la seule chose qui ne peut pas attendre. Pas
+   d'énumération dans le bandeau : à 390 px elle passait sur trois lignes.
+2. **Chaque carte porte son rang**, recalculé à l'affichage (`data-n`). Selon
+   la classe et le jour il y a deux cartes ou quatre : un numéro figé mentirait
+   une fois sur deux.
+3. **Une carte finie se replie** sur son titre et une ligne verte
+   (`data-fait="oui"`). Elle ne disparaît pas — « il était là tout à l'heure »
+   se lit comme un bogue.
+
+**Typographie : `typo()` avant tout intitulé affiché.** Elle pose une espace
+fine insécable (U+202F) devant `? ! ; :` et dans les guillemets français. Sans
+elle, « Dans « SI », que veut dire le I ? » se coupait en fin de ligne et
+laissait le « ? » seul sur la sienne.
+
+**Et le piège des `<span>` :** `.projet-t`, `.qa-t`, `.qa-d` sont des `<span>`.
+Sans `display:block`, leur marge basse n'agit pas et le titre se colle à sa
+description. Le défaut est passé deux fois — le vérifier en ajoutant un libellé.
+
+---
+
 ## Classes réelles et classes de démonstration
 
 **Un code de classe qui commence par `DEMO` désigne une démonstration.** La
