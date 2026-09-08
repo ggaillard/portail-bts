@@ -232,6 +232,40 @@ tr:last-child td{border-bottom:0}
 .etape[data-fait="oui"] > .appel-choix,
 .etape[data-fait="oui"] > #stage-questions{display:none}
 .etape[data-fait="oui"]{padding-top:.9rem;padding-bottom:.9rem}
+/* Un modèle et ses affectations : le titre, les classes en cases à cocher,
+   et pour chaque classe cochée un interrupteur. Deux niveaux, pas trois. */
+.qn-m{padding:.9rem 0;border-top:1px solid var(--rule-soft)}
+.qn-m:first-child{border-top:0;padding-top:.2rem}
+.qn-tete{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.qn-tt{font-weight:600;font-size:1rem}
+.qn-meta{font-size:.85rem;color:var(--ink-soft)}
+.qn-sup{margin-left:auto;appearance:none;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:.82rem;color:var(--ink-faint);padding:.4rem;text-decoration:underline}
+.qn-sup:hover{color:var(--signal)}
+.qn-cl{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
+.qn-c{display:flex;align-items:center;gap:.5rem;min-height:44px;
+  padding:.35rem .7rem;border:1px solid var(--rule);border-radius:10px;
+  background:var(--surface);font-size:.9rem}
+.qn-c input{width:1.1rem;height:1.1rem;accent-color:var(--accent);cursor:pointer}
+.qn-c.pose{border-color:var(--accent-soft);background:var(--accent-soft)}
+.qn-c .qn-cn{font-weight:600}
+.qn-c .qn-cd{color:var(--ink-soft);font-size:.82rem}
+
+.qn-rep{margin-top:.6rem;border:1px solid var(--rule-soft);border-radius:10px}
+.qn-rep > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.6rem .8rem;
+  color:var(--ink-soft)}
+.qn-rep[open] > summary{border-bottom:1px solid var(--rule-soft);color:var(--ink)}
+.qn-rep-corps{padding:.8rem}
+.qn-rep-corps h3{font-size:.95rem;margin-bottom:.3rem}
+
+/* Le formulaire de création, replié tant qu'on n'en a pas besoin. */
+.qn-neuf{margin-top:1rem;border-top:1px solid var(--rule-soft);padding-top:.8rem}
+.qn-neuf > summary{cursor:pointer;font-weight:600;font-size:.94rem;padding:.4rem 0}
+.qn-lbl{display:block;font-size:.85rem;color:var(--ink-soft);margin:.7rem 0 .25rem}
+#qn-titre,#qn-intro,#qn-mode,#qn-texte{width:100%;font:inherit;font-size:.95rem;
+  padding:.55rem .7rem;border:1px solid var(--rule);border-radius:9px;
+  background:var(--surface);color:var(--ink)}
+#qn-texte{font-family:var(--f-mono);font-size:.88rem;line-height:1.6;resize:vertical}
 .epingle{margin:1.2rem 0 .7rem}
 .epingle h2{margin:0;font-size:1.15rem}
 .epingle p{margin:.15rem 0 0;font-size:.87rem;color:var(--ink-soft)}
@@ -630,24 +664,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="appel-choix" id="humeur-choix"></div>
   </div>
 
-  <div class="card etape" id="bloc-connaissance" data-etape="Faisons connaissance" hidden>
-    <h2>Faisons connaissance</h2>
-    <p class="hint">Quelques questions posées une seule fois dans l'année. Il n'y a
-      pas de bonne réponse : elles me servent à adapter les cours à ce que vous êtes.
-      <b id="conn-avance"></b></p>
-    <div id="err-conn"></div>
-    <p class="cn-int" id="conn-titre"></p>
-    <div class="appel-choix" id="conn-choix"></div>
-  </div>
-
-  <div class="card etape" id="bloc-stage" data-etape="Recherche de stage" hidden>
-    <h2>Votre recherche de stage</h2>
-    <p class="hint">Un point d'étape, à remettre à jour dès que quelque chose bouge :
-      vous pouvez changer vos réponses autant de fois que nécessaire.
-      <span class="st-maj" id="stage-maj"></span></p>
-    <div id="err-stage"></div>
-    <div id="stage-questions"></div>
-  </div>
+  <div id="questionnaires-etu"></div>
 
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
@@ -737,12 +754,34 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
     <p class="volet-hint">Deux questionnaires ponctuels : la rentrée du BTS1, la recherche de stage du BTS2. On les ouvre quelques fois dans l'année, pas chaque semaine.</p>
   <div class="card" id="carte-qactifs" hidden>
-    <h2>Ce qui est proposé aux étudiants</h2>
-    <p class="hint">Un questionnaire éteint n'apparaît pas du tout dans l'espace
-      étudiant. Les réponses déjà données sont conservées : rallumer le remet
-      exactement où il en était.</p>
+    <h2>Vos questionnaires</h2>
+    <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une classe
+      ou à plusieurs. Chaque classe garde ses propres réponses. <b>Cocher une
+      classe prépare le questionnaire sans le montrer</b> — c'est l'interrupteur
+      qui le rend visible aux étudiants.</p>
     <div id="qa-liste"></div>
     <div id="err-qactifs"></div>
+    <details class="qn-neuf" id="qn-neuf">
+      <summary>Écrire un nouveau questionnaire</summary>
+      <p class="sous-hint">Une question par ligne : l'intitulé puis deux à quatre
+        options, séparés par « · ». Les lignes vides sont ignorées.</p>
+      <label class="qn-lbl" for="qn-titre">Titre</label>
+      <input id="qn-titre" type="text" placeholder="Bilan de mi-semestre" autocomplete="off">
+      <label class="qn-lbl" for="qn-intro">Phrase d'introduction (facultative)</label>
+      <input id="qn-intro" type="text" placeholder="Trois questions, deux minutes." autocomplete="off">
+      <label class="qn-lbl" for="qn-mode">Affichage</label>
+      <select id="qn-mode">
+        <option value="sequentiel">Une question à la fois — sans retour en arrière</option>
+        <option value="revisable">Tout à l'écran — modifiable à volonté</option>
+      </select>
+      <label class="qn-lbl" for="qn-texte">Les questions</label>
+      <textarea id="qn-texte" rows="7" spellcheck="true"
+        placeholder="Ce semestre, le rythme vous a paru : · Trop lent · Juste · Trop rapide · Intenable&#10;Ce qui vous a le plus aidé : · Les séances · Le quiz · Les corrigés · Le travail à deux"></textarea>
+      <div class="pick" style="margin-top:.7rem">
+        <button class="btn" id="b-qn-creer" type="button">Créer le questionnaire</button>
+      </div>
+      <div id="err-qn-neuf"></div>
+    </details>
   </div>
 
   <div class="card" id="carte-connaissance" hidden>
@@ -948,7 +987,12 @@ function typo(t){
 // Quatre cartes possibles avant « Vos projets ». Empilées, elles ne disent ni
 // combien il en reste, ni laquelle est faite. Chaque carte porte donc son rang
 // et son état, et le bandeau du haut compte ce qui reste.
-var ETAPES = ["bloc-appel", "bloc-humeur", "bloc-connaissance", "bloc-stage"];
+// Plus de liste figée : le nombre de questionnaires dépend de la classe et du
+// jour. On lit le DOM dans son ordre, ce qui est aussi l'ordre de lecture.
+function etapes(){
+  return Array.prototype.slice.call(
+    document.querySelectorAll("#espace-etu .etape"));
+}
 
 function marquerEtape(id, fait){
   var e = $(id);
@@ -957,7 +1001,7 @@ function marquerEtape(id, fait){
 }
 
 function majFile(){
-  var vus = ETAPES.map($).filter(function(e){ return e && !e.hidden; });
+  var vus = etapes().filter(function(e){ return e && !e.hidden; });
   // Le rang se recalcule à chaque fois : selon la classe et le jour, il peut
   // y avoir deux cartes ou quatre. Un « 3 » figé mentirait une fois sur deux.
   vus.forEach(function(e, i){
@@ -1015,151 +1059,41 @@ function proposerAppel(){
   });
 }
 
-// ── Faisons connaissance — le questionnaire de rentrée ─────────────────────
-// Douze questions posées une seule fois, une à la fois : sur un téléphone,
-// une liste de douze questions se referme, une question unique se répond.
-// La carte disparaît d'elle-même quand tout est fait, et ne revient plus.
-function proposerConnaissance(){
-  $("bloc-connaissance").hidden = true;
-  sb.rpc("connaissance").then(function(r){
-    // Fonction pas déployée, ou classe sans séance 98 : rien ne s'affiche,
-    // exactement comme pour l'appel.
-    if (!r || r.error || !r.data || !r.data.questions || !r.data.questions.length) return;
-    rendreConnaissance(r.data);
+// ── Répondre à l'appel et à l'humeur ─────────────────────────────────────
+function repondreAppel(a, lettre){
+  var boutons = $("appel-choix").querySelectorAll("button");
+  Array.prototype.forEach.call(boutons, function(b){ b.disabled = true; });
+  erreur("err-appel", "");
+
+  sb.rpc("repondre", {
+    p_seance_id: a.seance_id,
+    p_question:  a.question,
+    p_reponse:   lettre
+  }).then(function(r){
+    if (r.error) {
+      // Une séance fermée refuse les réponses. Réessayer n'y changera rien :
+      // il faut le dire, sinon l'étudiant s'acharne et l'enseignant ne sait pas.
+      erreur("err-appel", texteEnvoi(r.error, "appel"));
+      signalerSessionPerimee(r.error);
+      Array.prototype.forEach.call(boutons, function(b){ b.disabled = false; });
+      return;
+    }
+    appelRepondu(lettre, r.data);
   });
 }
 
-function rendreConnaissance(d){
-  var bloc = $("bloc-connaissance");
-  var reste = d.questions.filter(function(q){ return !q.ma_reponse; });
-  // Tout est répondu : la carte reste, repliée sur une ligne verte. La faire
-  // disparaître laissait croire à un bogue — « il était là tout à l'heure ».
-  bloc.hidden = false;
-  erreur("err-conn", "");
-  marquerEtape("bloc-connaissance", !reste.length);
-  if (!reste.length) {
-    $("conn-avance").textContent = "";
-    $("conn-titre").textContent = "";
-    $("conn-choix").innerHTML = "";
-    erreur("err-conn", "C'est fait, merci — les " + d.questions.length +
-                       " questions sont répondues.", true);
-    return;
+function appelRepondu(lettre, retour){
+  $("appel-choix").innerHTML = "";
+  marquerEtape("bloc-appel", true);
+  var texte = "Présence enregistrée" + (lettre ? " — vous avez répondu " + lettre + "." : ".");
+  if (retour && typeof retour.correct === "boolean") {
+    texte += retour.correct
+      ? " ✅ Bonne réponse."
+      : " ❌ La bonne réponse était " + retour.bonne_reponse + ".";
   }
-
-  var q = reste[0], faites = d.questions.length - reste.length;
-  $("conn-avance").textContent = "Question " + (faites + 1) + " sur " + d.questions.length + ".";
-  $("conn-titre").textContent = typo(q.intitule || q.question);
-
-  var choix = $("conn-choix");
-  choix.innerHTML = "";
-  ["A","B","C","D"].forEach(function(lettre, i){
-    if (!q.options || !q.options[i]) return;
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "btn btn-sec appel-opt";
-    b.textContent = q.options[i];
-    b.addEventListener("click", function(){
-      var boutons = choix.querySelectorAll("button");
-      Array.prototype.forEach.call(boutons, function(x){ x.disabled = true; });
-      sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question, p_reponse: lettre })
-        .then(function(rr){
-          if (rr.error) {
-            erreur("err-conn", texteEnvoi(rr.error));
-            signalerSessionPerimee(rr.error);
-            Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
-            return;
-          }
-          // On avance sur l'objet local : pas d'aller-retour entre deux questions.
-          q.ma_reponse = lettre;
-          if (d.questions.some(function(x){ return !x.ma_reponse; })) return rendreConnaissance(d);
-          $("conn-titre").textContent = "";
-          $("conn-avance").textContent = "";
-          choix.innerHTML = "";
-          erreur("err-conn", "Merci — c'est terminé. Ces réponses ne comptent pas " +
-                             "dans vos résultats.", true);
-        });
-    });
-    choix.appendChild(b);
-  });
+  erreur("err-appel", texte, true);
 }
 
-// ── La recherche de stage — un point d'étape, pas un questionnaire ─────────
-// Six questions toujours visibles, toujours modifiables. Contrairement au
-// questionnaire de rentrée, ici la bonne réponse d'hier est fausse demain :
-// c'est justement l'évolution qu'on veut lire. On affiche donc les six d'un
-// coup, avec la réponse en cours mise en évidence, et un clic la remplace.
-function proposerStage(){
-  $("bloc-stage").hidden = true;
-  sb.rpc("stage").then(function(r){
-    if (!r || r.error || !r.data || !r.data.questions || !r.data.questions.length) return;
-    rendreStage(r.data);
-  });
-}
-
-function rendreStage(d){
-  $("bloc-stage").hidden = false;
-  erreur("err-stage", "");
-  // Un point d'étape se révise : « à jour » n'est pas « terminé », mais du
-  // point de vue de la file c'est bien une chose de moins à faire aujourd'hui.
-  marquerEtape("bloc-stage", (d.faites || 0) >= d.total);
-  $("stage-maj").textContent = d.faites
-    ? "Vous avez répondu à " + d.faites + " question" + (d.faites > 1 ? "s" : "") +
-      " sur " + d.total + "."
-    : "";
-
-  var z = $("stage-questions");
-  z.innerHTML = "";
-  d.questions.forEach(function(q){
-    var bloc = document.createElement("div");
-    bloc.className = "st-q";
-    var t = document.createElement("span");
-    t.className = "cn-int";
-    t.textContent = typo(q.intitule || q.question);
-    bloc.appendChild(t);
-
-    var opts = document.createElement("div");
-    opts.className = "st-opts";
-    ["A","B","C","D"].forEach(function(lettre, i){
-      if (!q.options || !q.options[i]) return;
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "st-opt" + (q.ma_reponse === lettre ? " pris" : "");
-      b.textContent = q.options[i];
-      b.addEventListener("click", function(){
-        if (q.ma_reponse === lettre) return;      // déjà dit : rien à réécrire
-        var tous = opts.querySelectorAll("button");
-        Array.prototype.forEach.call(tous, function(x){ x.disabled = true; });
-        sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
-                             p_reponse: lettre }).then(function(rr){
-          Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
-          if (rr.error) {
-            erreur("err-stage", texteEnvoi(rr.error));
-            signalerSessionPerimee(rr.error);
-            return;
-          }
-          var neuf = !q.ma_reponse;
-          q.ma_reponse = lettre;
-          if (neuf) d.faites = (d.faites || 0) + 1;
-          Array.prototype.forEach.call(tous, function(x){ x.className = "st-opt"; });
-          b.className = "st-opt pris";
-          $("stage-maj").textContent = "Vous avez répondu à " + d.faites +
-            " question" + (d.faites > 1 ? "s" : "") + " sur " + d.total + ".";
-          erreur("err-stage", d.faites >= d.total
-            ? "C'est à jour. Revenez le modifier dès que la situation change."
-            : "Enregistré.", true);
-        });
-      });
-      opts.appendChild(b);
-    });
-    bloc.appendChild(opts);
-    z.appendChild(bloc);
-  });
-}
-
-// ── L'humeur du jour ───────────────────────────────────────────────────────
-// Posée après la question du jour, jamais notée. Elle dit dans quel état la
-// classe démarre, et elle laisse dire « je suis perdu » à ceux qui ne
-// lèveraient pas la main.
 function proposerHumeur(h, seanceId){
   var bloc = $("bloc-humeur");
   if (!h) { bloc.hidden = true; majFile(); return; }
@@ -1204,14 +1138,6 @@ function humeurRepondue(lettre, options){
   erreur("err-humeur", "C'est noté, merci" + dit + ".", true);
 }
 
-// ── Pourquoi un envoi a échoué ────────────────────────────────────────────
-// « Réessayez dans un instant » était le seul message pour tout. Il est faux
-// dans les deux cas qui arrivent vraiment, et il fait perdre cinq minutes :
-//  · séance fermée — réessayer ne changera jamais rien ;
-//  · session reprise ailleurs — rejoindre() rattache le compte au dernier
-//    appareil identifié. Ouvrir le portail sur son téléphone déloge le poste
-//    de la salle, et le poste répond alors « Non identifie ». Il faut se
-//    réidentifier, pas patienter.
 function motifEnvoi(err){
   var m = (err && err.message) || "";
   if (/non identifie/i.test(m)) return "session";
@@ -1235,46 +1161,203 @@ function texteEnvoi(err, quoi){
   }
 }
 
-// Une session périmée ne se rattrape pas toute seule : on met le bouton de
-// réidentification en évidence plutôt que de laisser chercher.
 function signalerSessionPerimee(err){
   if (motifEnvoi(err) !== "session") return;
   var b = $("b-sortie-etu");
   if (b) { b.classList.add("btn"); b.classList.remove("btn-sec"); }
 }
 
-function repondreAppel(a, lettre){
-  var boutons = $("appel-choix").querySelectorAll("button");
-  Array.prototype.forEach.call(boutons, function(b){ b.disabled = true; });
-  erreur("err-appel", "");
-
-  sb.rpc("repondre", {
-    p_seance_id: a.seance_id,
-    p_question:  a.question,
-    p_reponse:   lettre
-  }).then(function(r){
-    if (r.error) {
-      // Une séance fermée refuse les réponses. Réessayer n'y changera rien :
-      // il faut le dire, sinon l'étudiant s'acharne et l'enseignant ne sait pas.
-      erreur("err-appel", texteEnvoi(r.error, "appel"));
-      signalerSessionPerimee(r.error);
-      Array.prototype.forEach.call(boutons, function(b){ b.disabled = false; });
+// ── Les questionnaires de l'étudiant ──────────────────────────────────────
+// Un questionnaire n'est plus un numéro de séance écrit en dur : c'est une
+// séance de la bande 90-98 rattachée à un modèle. mes_questionnaires() les
+// renvoie tous, dans l'ordre où ils ont été donnés à la classe, et le portail
+// en fabrique une carte chacun.
+//
+// Deux modes d'affichage, portés par le modèle :
+//  · sequentiel — une question à la fois, sans retour en arrière. Douze
+//    questions d'un bloc se referment sur un téléphone ; une seule se répond.
+//  · revisable  — tout à l'écran, modifiable. Pour un point d'étape qui change
+//    en cours d'année.
+function chargerQuestionnairesEtu(){
+  $("questionnaires-etu").innerHTML = "";
+  sb.rpc("mes_questionnaires").then(function(r){
+    if (r && !r.error && r.data && r.data.ok) {
+      rendreQuestionnairesEtu(r.data.liste || []);
       return;
     }
-    appelRepondu(lettre, r.data);
+    // Repli : la migration de la bibliothèque n'est pas encore déployée. On
+    // rappelle les deux anciennes fonctions et on les met dans la même forme.
+    // Ce repli disparaîtra — il n'existe que pour qu'un déploiement en retard
+    // ne vide pas l'écran d'une classe en séance.
+    var liste = [];
+    var fini = 0;
+    var poser = function(){ if (++fini === 2) rendreQuestionnairesEtu(liste); };
+    sb.rpc("connaissance").then(function(rc){
+      var d = rc && !rc.error && rc.data;
+      if (d && d.questions && d.questions.length) {
+        liste.push({ seance_id: d.seance_id, numero: 98, titre: "Faisons connaissance",
+          intro: "Quelques questions posées une seule fois dans l'année. Il n'y a pas " +
+                 "de bonne réponse : elles me servent à adapter les cours à ce que vous êtes.",
+          mode: "sequentiel", total: d.total, faites: d.faites, questions: d.questions });
+      }
+      poser();
+    });
+    sb.rpc("stage").then(function(rs){
+      var d = rs && !rs.error && rs.data;
+      if (d && d.questions && d.questions.length) {
+        liste.push({ seance_id: d.seance_id, numero: 97, titre: "Votre recherche de stage",
+          intro: "Un point d'étape, à remettre à jour dès que quelque chose bouge : " +
+                 "vous pouvez changer vos réponses autant de fois que nécessaire.",
+          mode: "revisable", total: d.total, faites: d.faites, questions: d.questions });
+      }
+      poser();
+    });
   });
 }
 
-function appelRepondu(lettre, retour){
-  $("appel-choix").innerHTML = "";
-  marquerEtape("bloc-appel", true);
-  var texte = "Présence enregistrée" + (lettre ? " — vous avez répondu " + lettre + "." : ".");
-  if (retour && typeof retour.correct === "boolean") {
-    texte += retour.correct
-      ? " ✅ Bonne réponse."
-      : " ❌ La bonne réponse était " + retour.bonne_reponse + ".";
+function rendreQuestionnairesEtu(liste){
+  var z = $("questionnaires-etu");
+  z.innerHTML = "";
+  (liste || []).forEach(function(d){
+    if (!d.questions || !d.questions.length) return;
+    z.appendChild(carteQuestionnaire(d));
+    (d.mode === "revisable" ? rendreRevisable : rendreSequentiel)(d);
+  });
+  majFile();
+}
+
+// Une carte par questionnaire, bâtie sur le même gabarit que les autres
+// étapes : c'est ce qui lui donne son rang, son repli et sa place dans la file.
+function carteQuestionnaire(d){
+  var c = document.createElement("div");
+  c.className = "card etape";
+  c.id = "qn-" + d.seance_id;
+  c.setAttribute("data-etape", d.titre);
+  c.innerHTML = '<h2></h2><p class="hint"></p><div id="err-qn-' + d.seance_id + '"></div>' +
+                '<p class="cn-int"></p><div class="appel-choix"></div>';
+  c.querySelector("h2").textContent = d.titre;
+  var h = c.querySelector(".hint");
+  h.textContent = (d.intro || "") + " ";
+  var av = document.createElement("b");
+  av.className = "qn-av";
+  h.appendChild(av);
+  return c;
+}
+
+function zoneQ(d, sel){ return $("qn-" + d.seance_id).querySelector(sel); }
+
+// ── Mode séquentiel — une question à la fois ─────────────────────────────
+function rendreSequentiel(d){
+  var reste = d.questions.filter(function(q){ return !q.ma_reponse; });
+  var errId = "err-qn-" + d.seance_id;
+  marquerEtape("qn-" + d.seance_id, !reste.length);
+
+  if (!reste.length) {
+    // La carte reste, repliée. La faire disparaître se lit comme un bogue :
+    // « il était là tout à l'heure ».
+    zoneQ(d, ".qn-av").textContent = "";
+    zoneQ(d, ".cn-int").textContent = "";
+    zoneQ(d, ".appel-choix").innerHTML = "";
+    erreur(errId, "C'est fait, merci — les " + d.questions.length +
+                  " questions sont répondues.", true);
+    return;
   }
-  erreur("err-appel", texte, true);
+  erreur(errId, "");
+
+  var q = reste[0], faites = d.questions.length - reste.length;
+  zoneQ(d, ".qn-av").textContent = "Question " + (faites + 1) + " sur " + d.questions.length + ".";
+  zoneQ(d, ".cn-int").textContent = typo(q.intitule || q.question);
+
+  var choix = zoneQ(d, ".appel-choix");
+  choix.innerHTML = "";
+  ["A","B","C","D"].forEach(function(lettre, i){
+    if (!q.options || !q.options[i]) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec appel-opt";
+    b.textContent = q.options[i];
+    b.addEventListener("click", function(){
+      var boutons = choix.querySelectorAll("button");
+      Array.prototype.forEach.call(boutons, function(x){ x.disabled = true; });
+      sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
+                           p_reponse: lettre }).then(function(rr){
+        if (rr.error) {
+          erreur(errId, texteEnvoi(rr.error));
+          signalerSessionPerimee(rr.error);
+          Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
+          return;
+        }
+        // On avance sur l'objet local : pas d'aller-retour entre deux questions.
+        q.ma_reponse = lettre;
+        rendreSequentiel(d);
+      });
+    });
+    choix.appendChild(b);
+  });
+}
+
+// ── Mode révisable — tout à l'écran, modifiable ──────────────────────────
+function rendreRevisable(d){
+  var errId = "err-qn-" + d.seance_id;
+  erreur(errId, "");
+  marquerEtape("qn-" + d.seance_id, (d.faites || 0) >= d.total);
+  var av = zoneQ(d, ".qn-av");
+  var compter = function(){
+    av.textContent = d.faites
+      ? "Vous avez répondu à " + d.faites + " question" + (d.faites > 1 ? "s" : "") +
+        " sur " + d.total + "."
+      : "";
+  };
+  compter();
+
+  var z = zoneQ(d, ".appel-choix");
+  z.className = "";                       // pas la grille de l'appel : des blocs
+  z.innerHTML = "";
+  d.questions.forEach(function(q){
+    var bloc = document.createElement("div");
+    bloc.className = "st-q";
+    var t = document.createElement("span");
+    t.className = "cn-int";
+    t.textContent = typo(q.intitule || q.question);
+    bloc.appendChild(t);
+
+    var opts = document.createElement("div");
+    opts.className = "st-opts";
+    ["A","B","C","D"].forEach(function(lettre, i){
+      if (!q.options || !q.options[i]) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "st-opt" + (q.ma_reponse === lettre ? " pris" : "");
+      b.textContent = q.options[i];
+      b.addEventListener("click", function(){
+        if (q.ma_reponse === lettre) return;      // déjà dit : rien à réécrire
+        var tous = opts.querySelectorAll("button");
+        Array.prototype.forEach.call(tous, function(x){ x.disabled = true; });
+        sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
+                             p_reponse: lettre }).then(function(rr){
+          Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
+          if (rr.error) {
+            erreur(errId, texteEnvoi(rr.error));
+            signalerSessionPerimee(rr.error);
+            return;
+          }
+          var neuf = !q.ma_reponse;
+          q.ma_reponse = lettre;
+          if (neuf) d.faites = (d.faites || 0) + 1;
+          Array.prototype.forEach.call(tous, function(x){ x.className = "st-opt"; });
+          b.className = "st-opt pris";
+          compter();
+          marquerEtape("qn-" + d.seance_id, (d.faites || 0) >= d.total);
+          erreur(errId, d.faites >= d.total
+            ? "C'est à jour. Revenez le modifier dès que la situation change."
+            : "Enregistré.", true);
+        });
+      });
+      opts.appendChild(b);
+    });
+    bloc.appendChild(opts);
+    z.appendChild(bloc);
+  });
 }
 
 // ── Choix de l'avatar ──────────────────────────────────────────────────────
@@ -1324,8 +1407,7 @@ function ouvrirEspaceEtudiant(moi){
 
   if (!moi.avatar) proposerAvatar(moi);
   proposerAppel();
-  proposerConnaissance();
-  proposerStage();
+  chargerQuestionnairesEtu();
 
   sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", moi.classe_id).order("ordre")
@@ -3102,89 +3184,265 @@ function chargerSeancesDe(classeId){
     });
 }
 
-// ── Quels questionnaires sont proposés aux étudiants ──────────────────────
-// L'état existait déjà — connaissance() et stage() filtrent sur `ouverte` —
-// mais il n'était visible nulle part : pour savoir si « Faisons connaissance »
-// était actif, il fallait ouvrir le SQL Editor. Ici on le voit, et on le change.
-function chargerQuestionnaires(){
+// ── La bibliothèque de questionnaires ─────────────────────────────────────
+// Deux niveaux, et pas trois : un MODÈLE — le texte, écrit une fois — et ses
+// AFFECTATIONS — une séance par classe, avec ses réponses à elle. Cocher une
+// classe prépare le questionnaire ; l'interrupteur le montre aux étudiants.
+// Les deux gestes sont séparés à dessein : préparer et publier dans le même
+// clic ferait apparaître chez les étudiants ce qu'on venait d'écrire.
+var BIB = { classes: [] };
+
+// garder : ne pas effacer le message en cours. Sans cela, la confirmation
+// (« est préparé pour BTS SIO 1 ») et surtout le refus expliqué (« 9 réponses
+// ont déjà été enregistrées ») étaient balayés par le rechargement qui les
+// suit immédiatement — l'enseignant cliquait et rien ne se disait.
+function chargerQuestionnaires(garder){
   var carte = $("carte-qactifs");
   carte.hidden = true;
-  erreur("err-qactifs", "");
-  sb.rpc("questionnaires").then(function(r){
+  if (!garder) erreur("err-qactifs", "");
+  sb.rpc("bibliotheque").then(function(r){
     // Fonction pas encore déployée : la carte reste absente, comme les autres.
     if (!r || r.error || !r.data || !r.data.ok) return;
-    rendreQuestionnaires(r.data.lignes || []);
+    BIB.classes = r.data.classes || [];
+    rendreBibliotheque(r.data.modeles || []);
     carte.hidden = false;
   });
 }
 
-function rendreQuestionnaires(lignes){
+function rendreBibliotheque(modeles){
   var z = $("qa-liste");
   z.innerHTML = "";
-  if (!lignes.length) {
-    z.innerHTML = '<p class="hint" style="margin:0">Aucun questionnaire créé ' +
-      'pour vos classes.</p>';
+  if (!modeles.length) {
+    z.innerHTML = '<p class="hint" style="margin:0">Aucun questionnaire pour ' +
+      "l'instant. Écrivez le premier ci-dessous.</p>";
     return;
   }
-  lignes.forEach(function(l){ z.appendChild(ligneQuestionnaire(l)); });
+  modeles.forEach(function(m){ z.appendChild(ligneModele(m)); });
 }
 
-function ligneQuestionnaire(l){
+function ligneModele(m){
   var d = document.createElement("div");
-  d.className = "qa-l";
-  d.innerHTML = '<span class="qa-txt"><span class="qa-t"></span>' +
-                '<span class="qa-d"></span></span>' +
-                '<button class="qa-b" type="button"><span class="pt"></span>' +
-                '<span class="et"></span></button>';
-  d.querySelector(".qa-t").textContent = l.titre + " — " + l.nom;
+  d.className = "qn-m";
+  d.innerHTML = '<div class="qn-tete"><span class="qn-tt"></span>' +
+                '<span class="qn-meta"></span>' +
+                '<button class="qn-sup" type="button">Supprimer</button></div>' +
+                '<div class="qn-cl"></div>';
+  d.querySelector(".qn-tt").textContent = m.titre;
+  d.querySelector(".qn-meta").textContent =
+    m.questions + (m.questions > 1 ? " questions · " : " question · ") +
+    (m.mode === "revisable" ? "modifiable à volonté" : "une question à la fois");
 
-  // Ce qu'on veut savoir avant d'allumer : combien de questions, et si la
-  // classe l'a déjà fait. « 24 / 31 » se lit plus vite qu'une phrase.
-  var etat = l.questions + (l.questions > 1 ? " questions" : " question");
-  if (l.inscrits) {
-    etat += " · " + l.termines + " / " + l.inscrits + " terminé" +
-            (l.termines > 1 ? "s" : "");
-    if (l.commences > l.termines) {
-      etat += " · " + (l.commences - l.termines) + " en cours";
-    }
-  }
-  d.querySelector(".qa-d").textContent = etat;
+  var parClasse = {};
+  (m.affectations || []).forEach(function(a){ parClasse[a.classe_id] = a; });
 
-  var b = d.querySelector(".qa-b");
-  var poser = function(ouvert){
-    b.classList.toggle("on", !!ouvert);
-    b.querySelector(".et").textContent = ouvert ? "Proposé" : "Éteint";
-    b.setAttribute("aria-pressed", ouvert ? "true" : "false");
-    b.setAttribute("aria-label", (ouvert ? "Éteindre" : "Proposer") + " « " +
-                   l.titre + " » pour " + l.nom);
-  };
-  poser(l.ouvert);
+  var cl = d.querySelector(".qn-cl");
+  BIB.classes.forEach(function(c){
+    cl.appendChild(caseClasse(m, c, parClasse[c.classe_id]));
+  });
 
-  b.addEventListener("click", function(){
-    var vise = !b.classList.contains("on");
-    b.disabled = true;
-    erreur("err-qactifs", "");
-    sb.rpc("ouvrir_questionnaire", { p_classe_id: Number(l.classe_id),
-                                     p_numero: Number(l.numero),
-                                     p_ouvert: vise }).then(function(r){
-      b.disabled = false;
-      if (!r || r.error || !r.data || !r.data.ok) {
-        erreur("err-qactifs", "Action refusée. Vérifiez que vous êtes bien " +
-                              "connecté en enseignant.");
-        return;
-      }
-      poser(vise);
-      erreur("err-qactifs", "« " + l.titre + " » " +
-             (vise ? "est maintenant proposé à " : "n'est plus proposé à ") +
-             l.nom + ".", true);
-      // Les cartes de dépouillement suivent : éteindre un questionnaire, c'est
-      // aussi cesser d'en attendre des réponses.
-      chargerConnaissance(suivi.classesConnues || []);
-      chargerStage(suivi.classesConnues || []);
-    });
+  // Les réponses, sous le modèle qui les a produites. Un questionnaire qu'on
+  // peut poser et allumer mais dont on ne verrait jamais les réponses ne vaut
+  // pas la peine d'être écrit.
+  (m.affectations || []).forEach(function(a){
+    if (!a.commences) return;             // rien à montrer tant que rien n'arrive
+    d.appendChild(deplientReponses(m, a));
+  });
+
+  d.querySelector(".qn-sup").addEventListener("click", function(){
+    supprimerModele(m);
   });
   return d;
 }
+
+function deplientReponses(m, a){
+  var det = document.createElement("details");
+  det.className = "qn-rep";
+  var som = document.createElement("summary");
+  som.textContent = "Réponses — " + a.nom + " (" + a.termines + " / " + a.inscrits + ")";
+  det.appendChild(som);
+  var corps = document.createElement("div");
+  corps.className = "qn-rep-corps";
+  corps.innerHTML = '<p class="hint" style="margin:0">Chargement…</p>';
+  det.appendChild(corps);
+
+  // On ne charge qu'à l'ouverture : quatre modèles × deux classes feraient
+  // huit requêtes à l'affichage de l'onglet, pour des panneaux fermés.
+  var charge = false;
+  det.addEventListener("toggle", function(){
+    if (!det.open || charge) return;
+    charge = true;
+    sb.rpc("depouiller_questionnaire", { p_seance_id: Number(a.seance_id) })
+      .then(function(r){
+        if (!r || r.error || !r.data || !r.data.ok) {
+          corps.innerHTML = '<p class="hint" style="margin:0">Les réponses ne ' +
+            'sont pas lisibles pour ce questionnaire.</p>';
+          charge = false;
+          return;
+        }
+        // Même sortie que connaissance_classe() : on réutilise son rendu
+        // plutôt que d'en écrire un second qui divergerait.
+        remplirConnaissanceClasse(corps, { nom: a.nom, code: a.code }, r.data);
+      });
+  });
+  return det;
+}
+
+// Une case par classe. Cochée = le questionnaire y est posé ; l'interrupteur
+// n'apparaît qu'alors, parce qu'allumer ce qui n'est pas posé n'a pas de sens.
+function caseClasse(m, c, a){
+  var l = document.createElement("label");
+  l.className = "qn-c" + (a ? " pose" : "");
+  l.innerHTML = '<input type="checkbox"><span class="qn-cn"></span>' +
+                '<span class="qn-cd"></span>';
+  var boite = l.querySelector("input");
+  boite.checked = !!a;
+  l.querySelector(".qn-cn").textContent = c.nom;
+
+  if (a) {
+    var etat = a.ouvert ? "proposé" : "éteint";
+    if (a.inscrits) etat += " · " + a.termines + " / " + a.inscrits + " terminé" +
+                            (a.termines > 1 ? "s" : "");
+    l.querySelector(".qn-cd").textContent = etat;
+
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "qa-b" + (a.ouvert ? " on" : "");
+    b.innerHTML = '<span class="pt"></span><span class="et"></span>';
+    b.querySelector(".et").textContent = a.ouvert ? "Proposé" : "Éteint";
+    b.setAttribute("aria-pressed", a.ouvert ? "true" : "false");
+    b.setAttribute("aria-label", (a.ouvert ? "Éteindre" : "Proposer") + " « " +
+                   m.titre + " » pour " + c.nom);
+    b.addEventListener("click", function(e){
+      e.preventDefault();                 // sinon le label bascule la case
+      basculer(m, c, a, b);
+    });
+    l.appendChild(b);
+  } else {
+    l.querySelector(".qn-cd").textContent = "pas posé";
+  }
+
+  boite.addEventListener("change", function(){
+    boite.disabled = true;
+    if (boite.checked) affecter(m, c); else retirer(m, c, a, boite);
+  });
+  return l;
+}
+
+function basculer(m, c, a, b){
+  var vise = !b.classList.contains("on");
+  b.disabled = true;
+  erreur("err-qactifs", "");
+  sb.rpc("ouvrir_questionnaire", { p_classe_id: Number(c.classe_id),
+                                   p_numero: Number(a.numero),
+                                   p_ouvert: vise }).then(function(r){
+    b.disabled = false;
+    if (!r || r.error || !r.data || !r.data.ok) {
+      erreur("err-qactifs", "Action refusée. Vérifiez que vous êtes bien " +
+                            "connecté en enseignant.");
+      return;
+    }
+    erreur("err-qactifs", "« " + m.titre + " » " +
+           (vise ? "est maintenant proposé à " : "n'est plus proposé à ") + c.nom + ".", true);
+    rafraichirQuestionnaires();
+  });
+}
+
+function affecter(m, c){
+  erreur("err-qactifs", "");
+  sb.rpc("affecter_questionnaire", { p_modele_id: Number(m.id),
+                                     p_classe_id: Number(c.classe_id) }).then(function(r){
+    if (!r || r.error || !r.data || !r.data.ok) {
+      erreur("err-qactifs", (r && r.data && r.data.motif === "plein")
+        ? "Cette classe a déjà neuf questionnaires : retirez-en un d'abord."
+        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      rafraichirQuestionnaires();
+      return;
+    }
+    erreur("err-qactifs", "« " + m.titre + " » est préparé pour " + c.nom +
+           ". Il reste éteint : allumez-le quand vous voulez le proposer.", true);
+    rafraichirQuestionnaires();
+  });
+}
+
+// Retirer efface la séance et ses questions. La base refuse dès qu'une
+// réponse existe — et c'est bien : à ce moment-là on veut éteindre, pas
+// détruire. On le dit plutôt que de laisser un refus muet.
+function retirer(m, c, a, boite){
+  if (!a) { rafraichirQuestionnaires(); return; }
+  erreur("err-qactifs", "");
+  sb.rpc("retirer_questionnaire", { p_seance_id: Number(a.seance_id) }).then(function(r){
+    if (!r || r.error || !r.data || !r.data.ok) {
+      var d = r && r.data;
+      erreur("err-qactifs", (d && d.motif === "reponses")
+        ? "Impossible de retirer « " + m.titre + " » de " + c.nom + " : " +
+          d.nombre + " réponse" + (d.nombre > 1 ? "s ont" : " a") +
+          " déjà été enregistrée" + (d.nombre > 1 ? "s" : "") +
+          ". Éteignez-le : il disparaît de l'écran des étudiants sans rien perdre."
+        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      rafraichirQuestionnaires();
+      return;
+    }
+    erreur("err-qactifs", "« " + m.titre + " » a été retiré de " + c.nom + ".", true);
+    rafraichirQuestionnaires();
+  });
+}
+
+function supprimerModele(m){
+  erreur("err-qactifs", "");
+  sb.rpc("supprimer_modele", { p_modele_id: Number(m.id) }).then(function(r){
+    if (!r || r.error || !r.data || !r.data.ok) {
+      var d = r && r.data;
+      erreur("err-qactifs", (d && d.motif === "reponses")
+        ? "« " + m.titre + " » a déjà reçu " + d.nombre + " réponse" +
+          (d.nombre > 1 ? "s" : "") + " : il ne peut pas être supprimé. " +
+          "Décochez ses classes ou éteignez-le."
+        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      return;
+    }
+    erreur("err-qactifs", "« " + m.titre + " » a été supprimé.", true);
+    rafraichirQuestionnaires();
+  });
+}
+
+// Un seul point de rechargement : les cartes de dépouillement dépendent des
+// mêmes séances, et deux écrans qui se contredisent coûtent plus cher qu'un
+// aller-retour de plus.
+function rafraichirQuestionnaires(){
+  chargerQuestionnaires(true);
+  chargerConnaissance(suivi.classesConnues || []);
+  chargerStage(suivi.classesConnues || []);
+  chargerAFaire();
+}
+
+$("b-qn-creer").addEventListener("click", function(){
+  var titre = $("qn-titre").value, texte = $("qn-texte").value;
+  erreur("err-qn-neuf", "");
+  if (!titre.trim())  { erreur("err-qn-neuf", "Donnez-lui un titre."); return; }
+  if (!texte.trim())  { erreur("err-qn-neuf", "Collez au moins une question."); return; }
+
+  var b = $("b-qn-creer");
+  b.disabled = true;
+  sb.rpc("creer_modele", { p_titre: titre, p_intro: $("qn-intro").value,
+                           p_mode: $("qn-mode").value, p_texte: texte }).then(function(r){
+    b.disabled = false;
+    var d = r && r.data;
+    if (!r || r.error || !d || !d.ok) {
+      // La base refuse tout dès qu'une ligne est mal formée, et dit laquelle :
+      // un questionnaire amputé d'une question sans qu'on le sache serait pire.
+      erreur("err-qn-neuf", (d && d.motif === "ligne")
+        ? "Ligne " + d.rang + " : " + d.detail + " — « " + d.texte + " »"
+        : (d && d.motif === "vide")
+        ? "Aucune question lisible dans ce texte."
+        : "Création refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      return;
+    }
+    erreur("err-qn-neuf", "« " + titre + " » est créé, " + d.questions +
+           " questions. Cochez les classes à qui le donner.", true);
+    $("qn-titre").value = ""; $("qn-intro").value = ""; $("qn-texte").value = "";
+    $("qn-neuf").open = false;
+    chargerQuestionnaires();
+  });
+});
 
 // ── Classes réelles et classes de démonstration ───────────────────────────
 // Un code qui commence par DEMO désigne une classe de démonstration : elle

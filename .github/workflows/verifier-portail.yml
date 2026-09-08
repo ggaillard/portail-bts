@@ -52,6 +52,59 @@ jobs:
           print(len(utilises), "identifiants utilisés, tous présents.")
           PY
 
+      - name: "Toute fonction appelée existe-t-elle encore ?"
+        run: |
+          python3 - <<'PY'
+          # node --check ne voit pas une fonction disparue : la syntaxe reste
+          # valide et l'erreur n'arrive qu'au clic, en séance. Le 08/09, un
+          # découpage a emporté sept fonctions — repondreAppel, proposerHumeur,
+          # texteEnvoi… — sans qu'aucun contrôle ne s'en aperçoive.
+          import io, re, sys
+          s = io.open('index.html', encoding='utf-8').read()
+          js = max(re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', s, re.S), key=len)
+
+          def nettoyer(t):
+              """Retire commentaires et chaînes : sinon un nom de RPC entre
+              guillemets ou un mot français suivi d'une parenthèse passe pour
+              un appel."""
+              out, i, n = [], 0, len(t)
+              while i < n:
+                  c = t[i]
+                  if c == '/' and i + 1 < n and t[i+1] == '/':
+                      j = t.find('\n', i); i = n if j < 0 else j
+                  elif c == '/' and i + 1 < n and t[i+1] == '*':
+                      j = t.find('*/', i); i = n if j < 0 else j + 2
+                  elif c in '"\'`':
+                      j = i + 1
+                      while j < n and t[j] != c:
+                          j += 2 if t[j] == '\\' else 1
+                      out.append('""'); i = j + 1
+                  else:
+                      out.append(c); i += 1
+              return ''.join(out)
+
+          code = nettoyer(js)
+          definies = set(re.findall(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\(', code))
+          declarees = set(re.findall(r'\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)', code))
+          params = set()
+          for b in re.findall(r'function\s*[A-Za-z_$\w]*\s*\(([^)]*)\)', code):
+              params |= {x.strip() for x in b.split(',') if x.strip()}
+          natifs = set("""Array Object String Number Boolean Date Math JSON RegExp Error
+          Promise Set Map parseInt parseFloat isNaN encodeURIComponent decodeURIComponent
+          setTimeout clearTimeout setInterval clearInterval requestAnimationFrame fetch
+          console document window localStorage sessionStorage navigator location history
+          AudioContext webkitAudioContext if for while switch catch typeof return function
+          new delete void in of do else try finally throw case break continue
+          instanceof""".split())
+          appelees = set(re.findall(r'(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(', code))
+          manquantes = sorted(n for n in appelees if n not in definies
+                              and n not in declarees and n not in params and n not in natifs)
+          if manquantes:
+              sys.exit("Fonctions appelées mais absentes :\n  " + "\n  ".join(manquantes))
+          print(len(definies), "fonctions définies,", len(appelees),
+                "appels distincts, aucun dans le vide.")
+          PY
+
   coherence:
     name: "🔗 Les bonnes réponses collent-elles aux supports ?"
     runs-on: ubuntu-latest

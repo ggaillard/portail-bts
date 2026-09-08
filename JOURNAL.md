@@ -60,6 +60,45 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### Une bibliothèque de questionnaires, écrits depuis le portail
+
+L'interrupteur de la veille ne suffisait pas : il pilotait deux questionnaires
+dont les numéros étaient écrits dans le code. En ajouter un troisième
+demandait une migration, un numéro, une fonction côté étudiant et une fonction
+de dépouillement.
+
+Le modèle est maintenant à deux étages. Un **modèle** porte le texte, écrit une
+fois ; une **affectation** est une séance dans une classe, avec ses propres
+réponses. Écrire « Faisons connaissance » une fois et le donner à deux classes
+fait deux jeux de réponses et un seul texte à corriger.
+
+Dans l'onglet Questionnaires : chaque modèle, ses classes en cases à cocher,
+et pour chaque classe cochée un interrupteur. **Cocher prépare, l'interrupteur
+montre** — deux gestes séparés, sinon on publierait ce qu'on vient d'écrire.
+Sous chaque modèle, un dépliant par classe donne les réponses, chargé
+seulement à l'ouverture.
+
+Écrire un questionnaire, c'est coller un bloc de texte : une question par
+ligne, l'intitulé puis deux à quatre options séparés par « · ». Une ligne mal
+formée fait **échouer toute la création**, en disant laquelle et pourquoi —
+un questionnaire amputé d'une question sans qu'on le sache serait pire.
+
+Retirer un questionnaire d'une classe est refusé dès qu'une réponse existe, et
+le message dit quoi faire à la place : l'éteindre, ce qui le retire de l'écran
+des étudiants sans rien perdre.
+
+Côté étudiant, `mes_questionnaires()` remplace les deux fonctions figées : le
+portail fabrique une carte par questionnaire ouvert, dans l'ordre où ils ont
+été donnés, en mode « une question à la fois » ou « tout à l'écran » selon le
+modèle. Un repli sur les anciennes fonctions reste en place tant que la
+migration n'est pas déployée partout : un déploiement en retard ne doit pas
+vider l'écran d'une classe en séance.
+
+**Et un contrôle qui manquait.** Le découpage a emporté sept fonctions —
+`repondreAppel`, `proposerHumeur`, `texteEnvoi` — sans que rien ne le signale :
+`node --check` ne voit qu'une syntaxe valide, et l'erreur n'arrive qu'au clic.
+Le workflow vérifie désormais que toute fonction appelée est définie.
+
 ### Les questionnaires s'activent maintenant depuis le portail
 
 « Faisons connaissance » était déjà actif pour les BTS1 — 12 questions, séance
