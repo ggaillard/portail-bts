@@ -60,6 +60,30 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### L'espace enseignant tenait sur trois écrans de défilement
+
+Cinq cartes empilées : l'appel — le geste de trente secondes qu'on fait chaque
+heure — se trouvait au milieu, entre « Vos classes » et « Faisons
+connaissance ». En séance, on cherchait.
+
+L'espace est maintenant **une zone épinglée et quatre onglets** :
+
+- **Ce qui bloque** reste au-dessus, visible depuis n'importe quel onglet. Son
+  titre se masque avec sa carte : un intertitre au-dessus de rien se lit comme
+  une panne.
+- **Appel du jour**, ouvert par défaut — c'est le geste du début d'heure. Il
+  porte une pastille avec le nombre d'absents, toutes classes confondues, qui
+  disparaît quand il n'y a personne d'absent : un « 0 » rouge se lirait comme
+  un incident.
+- **Vue d'ensemble** : le semestre, vos classes, tous les projets.
+- **Questionnaires** : la rentrée du BTS1, la recherche de stage du BTS2 — deux
+  choses qu'on ouvre quelques fois dans l'année, pas chaque semaine.
+- **Suivi d'une séance** : le pré-vol, la cadence, la réussite par question.
+
+La barre d'onglets est collante, et changer d'onglet depuis le bas d'une longue
+carte ramène en haut — sinon on tombe au-delà du contenu et l'écran paraît vide.
+Flèches gauche/droite au clavier, un seul onglet dans l'ordre de tabulation.
+
 ### L'appel du BTS2 était fermé, et le message disait de réessayer
 
 Un étudiant qui répondait à la question du jour voyait « L'enregistrement n'a

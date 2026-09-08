@@ -26,21 +26,38 @@ Ancienne plateforme : `suivi.gaillard42.workers.dev` (Cloudflare Worker, base D1
 
 ---
 
-## L'espace enseignant, en trois étages
+## L'espace enseignant — une zone épinglée, quatre onglets
 
-L'ordre des cartes n'est pas décoratif : il va du geste au détail, et chaque
-étage répond à une question différente.
+Les cartes ont d'abord été empilées en trois étages sur une seule page. Cinq
+cartes plus tard, l'appel — le geste de trente secondes qu'on fait chaque
+heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
+08/09, une seule chose reste toujours à l'écran, le reste vit dans un onglet.
 
-| | Étage | La question | Ce qu'on y trouve |
-|---|---|---|---|
-| **1** | Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — huit règles, le geste à faire. Vert = fermer l'onglet. |
-| **2** | La vue d'ensemble | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Appel du jour, Faisons connaissance, Recherche de stage — **toutes classes à la fois, sans rien sélectionner**. |
-| **3** | Le détail d'une heure | *Que s'est-il passé à la S2 ?* | Pré-vol, cadence, réussite par question, élève par élève — **une séance choisie**. |
+| Zone | La question | Ce qu'on y trouve |
+|---|---|---|
+| **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — huit règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
+| Onglet **Appel du jour** | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
+| Onglet **Vue d'ensemble** | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
+| Onglet **Questionnaires** | *Que sais-je d'eux ?* | Faisons connaissance (BTS1), Recherche de stage (BTS2). Ponctuels : quelques fois dans l'année. |
+| Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | Pré-vol, cadence, réussite par question, élève par élève — **une séance choisie**. |
 
-**Ne pas ajouter une carte sans décider de son étage.** Une carte qui demande
-de sélectionner quelque chose appartient au 3. Une carte qui parle de toutes
-les classes appartient au 2. Le 1 ne contient qu'`a_faire()`, et doit le
-rester : c'est sa brièveté qui fait qu'on le lit.
+**Ne pas ajouter une carte sans décider de son onglet** — ou sans décider
+qu'elle est bloquante, auquel cas elle rejoint `a_faire()` plutôt que de
+devenir une carte de plus. La zone épinglée ne contient qu'`a_faire()`, et doit
+le rester : c'est sa brièveté qui fait qu'on la lit.
+
+Détails qui comptent, et qu'on retire par erreur en refactorant :
+
+- la barre d'onglets est **collante** (`position:sticky`) — la carte d'appel
+  est longue, et perdre le chemin du retour au milieu d'une liste d'absents est
+  exactement le problème qu'on essayait de régler ;
+- l'onglet Appel porte une **pastille** avec le nombre d'absents du jour, toutes
+  classes confondues. Elle disparaît à zéro absent : un « 0 » rouge se lirait
+  comme un incident ;
+- le titre « Ce qui bloque » se **masque avec sa carte** quand `a_faire()` n'est
+  pas déployée. Un intertitre au-dessus de rien se lit comme une panne ;
+- flèches gauche/droite entre les onglets, un seul dans l'ordre de tabulation
+  (`role="tablist"`, `aria-selected`, `tabindex`).
 
 `semestre()` calcule quatre états — **à produire** (aucun corrigé), **prête**
 (corrigés en place, personne n'a répondu), **en cours** (ouverte, des réponses
