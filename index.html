@@ -190,6 +190,34 @@ tr:last-child td{border-bottom:0}
 .af-g{margin:.2rem 0 0;font-size:.86rem}
 .af-g b{font-family:var(--f-mono);font-size:.82rem;background:var(--surface);
   border:1px solid var(--rule);border-radius:5px;padding:.1rem .4rem;font-weight:500}
+.etage{display:flex;align-items:baseline;gap:.6rem;margin:2.2rem 0 .7rem;flex-wrap:wrap}
+.etage:first-of-type{margin-top:1.2rem}
+.etage-n{font-family:var(--f-mono);font-size:.8rem;font-weight:600;color:#fff;
+  background:var(--accent);border-radius:99px;padding:.1rem .55rem;flex:0 0 auto}
+.etage h2{margin:0;font-size:1.15rem}
+.etage p{margin:0;font-size:.87rem;color:var(--ink-soft);flex:1 1 100%}
+.sem-c{padding:.8rem 0;border-top:1px solid var(--rule)}
+.sem-c:first-of-type{border-top:0;padding-top:.2rem}
+.sem-c h3{font-size:1rem;margin:0 0 .1rem}
+.sem-bilan{margin:0 0 .5rem;font-size:.88rem;color:var(--ink-soft)}
+.sem-bilan b{color:var(--ink);font-weight:600}
+.sem-l{display:flex;align-items:baseline;gap:.55rem;padding:.28rem 0;font-size:.9rem;
+  border-top:1px solid var(--rule)}
+.sem-l:first-of-type{border-top:0}
+.sem-n{font-family:var(--f-mono);font-size:.82rem;color:var(--ink-soft);flex:0 0 1.6rem}
+.sem-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sem-e{font-size:.76rem;font-weight:600;padding:.08rem .5rem;border-radius:99px;flex:0 0 auto}
+.sem-e.a_produire{background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft)}
+.sem-e.prete{background:#E4EDFA;color:#24507F}
+.sem-e.en_cours{background:#FDF0DC;color:#8A5A16}
+.sem-e.jouee{background:#DEF3E6;color:#1B6B42}
+.sem-x{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);flex:0 0 auto;
+  min-width:8.5rem;text-align:right}
+.sem-notee{font-size:.72rem;color:#8A5A16;flex:0 0 auto}
+@media (max-width:620px){
+  .sem-x{min-width:0;flex:1 1 100%;text-align:left;padding-left:2.15rem}
+  .sem-l{flex-wrap:wrap;padding:.45rem 0}
+}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -554,11 +582,31 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <span class="ident-txt">Connecté en <b>enseignant</b>. Vous voyez toutes les classes.</span>
     <button class="btn btn-sec" id="b-sortie-ens">Se déconnecter</button>
   </div>
+  <div class="etage">
+    <span class="etage-n">1</span>
+    <h2>Ce qui bloque</h2>
+    <p>Si cette carte est verte, vous pouvez fermer l'onglet.</p>
+  </div>
+
   <div class="card" id="carte-afaire" hidden>
     <h2 class="af-t">À faire <span class="af-pastille" id="af-etat"></span></h2>
     <p class="hint">Recalculé depuis la base à chaque affichage : rien n'y reste par oubli,
       et rien n'y manque. Ce qui est rouge empêchera quelque chose de marcher en séance.</p>
     <div id="af-liste"></div>
+  </div>
+
+  <div class="etage">
+    <span class="etage-n">2</span>
+    <h2>La vue d'ensemble</h2>
+    <p>Toutes les classes à la fois, sans rien sélectionner.</p>
+  </div>
+
+  <div class="card" id="carte-semestre" hidden>
+    <h2>Le semestre</h2>
+    <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »
+      signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
+      jamais être évaluées.</p>
+    <div id="sem-classes"></div>
   </div>
 
   <div class="card">
@@ -604,6 +652,12 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <p class="hint">Où en est chacun, d'après ce qu'il a déclaré lui-même. Une réponse
       ancienne ne dit plus rien de vrai : la date de mise à jour est à côté du numéro.</p>
     <div id="stage-classes"></div>
+  </div>
+
+  <div class="etage">
+    <span class="etage-n">3</span>
+    <h2>Le détail d'une heure</h2>
+    <p>Le pré-vol, la cadence, la réussite par question, élève par élève.</p>
   </div>
 
   <div class="card">
@@ -2110,6 +2164,110 @@ function rendreSignaux(c, d){
   return z;
 }
 
+// ── « Le semestre » — la question à laquelle aucune carte ne répondait ─────
+// Le portail savait tout dire d'UNE séance et rien de l'ensemble. Savoir si la
+// séance 7 avait son corrigé se lisait dans un tableau tenu à la main, donc
+// faux au bout de trois semaines. Ici l'état est calculé, il ne se décide pas.
+var SEM_ETAT = {
+  a_produire: "à produire",
+  prete:      "prête",
+  en_cours:   "en cours",
+  jouee:      "jouée"
+};
+
+function chargerSemestre(){
+  var carte = $("carte-semestre");
+  carte.hidden = true;
+  sb.rpc("semestre").then(function(r){
+    // Fonction pas déployée : la carte reste absente, comme les autres.
+    if (!r || r.error || !r.data || !r.data.ok) return;
+    rendreSemestre(r.data.classes || []);
+    carte.hidden = false;
+  });
+}
+
+function rendreSemestre(classes){
+  var z = $("sem-classes");
+  z.innerHTML = "";
+  if (!classes.length) {
+    z.innerHTML = '<p class="hint" style="margin:0">Aucune séance à afficher.</p>';
+    return;
+  }
+
+  classes.forEach(function(c){
+    var bloc = document.createElement("div");
+    bloc.className = "sem-c";
+
+    var h = document.createElement("h3");
+    h.textContent = c.nom || c.code;
+    bloc.appendChild(h);
+
+    var seances = c.seances || [];
+    var compte = { a_produire: 0, prete: 0, en_cours: 0, jouee: 0 };
+    seances.forEach(function(x){ compte[x.etat] = (compte[x.etat] || 0) + 1; });
+
+    // Le bilan d'abord : c'est lui qu'on lit en diagonale.
+    var bilan = document.createElement("p");
+    bilan.className = "sem-bilan";
+    var bouts = [];
+    if (compte.jouee)      bouts.push("<b>" + compte.jouee + "</b> jouée" + (compte.jouee > 1 ? "s" : ""));
+    if (compte.en_cours)   bouts.push("<b>" + compte.en_cours + "</b> en cours");
+    if (compte.prete)      bouts.push("<b>" + compte.prete + "</b> prête" + (compte.prete > 1 ? "s" : ""));
+    if (compte.a_produire) bouts.push("<b>" + compte.a_produire + "</b> à produire");
+    bilan.innerHTML = bouts.join(" · ") + " — " + seances.length + " séances, " +
+                      (c.inscrits || 0) + " étudiants";
+    bloc.appendChild(bilan);
+
+    seances.forEach(function(x){ bloc.appendChild(ligneSemestre(x)); });
+    z.appendChild(bloc);
+  });
+}
+
+function ligneSemestre(x){
+  var l = document.createElement("div");
+  l.className = "sem-l";
+
+  var n = document.createElement("span");
+  n.className = "sem-n";
+  n.textContent = ("0" + x.numero).slice(-2);
+  l.appendChild(n);
+
+  var t = document.createElement("span");
+  t.className = "sem-t";
+  t.textContent = x.titre || ("Séance " + x.numero);
+  t.title = x.titre || "";
+  l.appendChild(t);
+
+  if (x.notee) {
+    var no = document.createElement("span");
+    no.className = "sem-notee";
+    no.textContent = "notée";
+    l.appendChild(no);
+  }
+
+  var e = document.createElement("span");
+  e.className = "sem-e " + (x.etat || "");
+  e.textContent = SEM_ETAT[x.etat] || x.etat || "";
+  l.appendChild(e);
+
+  // Les chiffres, seulement quand ils veulent dire quelque chose. Un « 0/31 ·
+  // — % » sur une séance pas encore écrite n'apprend rien et fait du bruit.
+  var bouts = [];
+  if (x.etat === "a_produire") {
+    bouts.push("aucun corrigé");
+  } else {
+    if (x.repondants) bouts.push(x.repondants + "/" + (x.inscrits || "?"));
+    if (x.avancement !== null && x.avancement !== undefined) bouts.push(x.avancement + " % fait");
+    else if (x.reussite !== null && x.reussite !== undefined) bouts.push(x.reussite + " % juste");
+    if (x.dernier) bouts.push(x.dernier);
+  }
+  var v = document.createElement("span");
+  v.className = "sem-x";
+  v.textContent = bouts.join(" · ");
+  l.appendChild(v);
+  return l;
+}
+
 // ── « À faire » — la seule liste qui ne peut pas mentir ────────────────────
 // Elle n'est stockée nulle part : a_faire() la recalcule depuis l'état réel de
 // la base. On ne coche rien, on corrige, et la ligne disparaît d'elle-même.
@@ -2571,6 +2729,7 @@ function pilotage(action, question){
     chargerPrevol().then(rafraichir);
     // Ouvrir ou clore une séance change ce qui reste à faire : la carte suit.
     chargerAFaire();
+    chargerSemestre();
   });
 }
 
@@ -2721,6 +2880,7 @@ function ouvrirEspaceEnseignant(){
     chargerConnaissance(classes);
     chargerStage(classes);
     chargerAFaire();
+  chargerSemestre();
     if (classes.length) chargerSeancesDe(classes[0].id);
 
     classes.forEach(function(c){
@@ -2833,6 +2993,7 @@ $("b-noms-ok").addEventListener("click", function(){
   chargerConnaissance(suivi.classesConnues || []);
   chargerStage(suivi.classesConnues || []);
   chargerAFaire();
+  chargerSemestre();
 });
 $("b-noms-vider").addEventListener("click", function(){
   try { localStorage.removeItem(NOMS_CLE); } catch (e) {}
@@ -2842,6 +3003,7 @@ $("b-noms-vider").addEventListener("click", function(){
   chargerConnaissance(suivi.classesConnues || []);
   chargerStage(suivi.classesConnues || []);
   chargerAFaire();
+  chargerSemestre();
 });
 $("b-demarrer").addEventListener("click", function(){
   pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");

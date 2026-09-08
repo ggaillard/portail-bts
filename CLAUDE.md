@@ -26,6 +26,29 @@ Ancienne plateforme : `suivi.gaillard42.workers.dev` (Cloudflare Worker, base D1
 
 ---
 
+## L'espace enseignant, en trois étages
+
+L'ordre des cartes n'est pas décoratif : il va du geste au détail, et chaque
+étage répond à une question différente.
+
+| | Étage | La question | Ce qu'on y trouve |
+|---|---|---|---|
+| **1** | Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — huit règles, le geste à faire. Vert = fermer l'onglet. |
+| **2** | La vue d'ensemble | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Appel du jour, Faisons connaissance, Recherche de stage — **toutes classes à la fois, sans rien sélectionner**. |
+| **3** | Le détail d'une heure | *Que s'est-il passé à la S2 ?* | Pré-vol, cadence, réussite par question, élève par élève — **une séance choisie**. |
+
+**Ne pas ajouter une carte sans décider de son étage.** Une carte qui demande
+de sélectionner quelque chose appartient au 3. Une carte qui parle de toutes
+les classes appartient au 2. Le 1 ne contient qu'`a_faire()`, et doit le
+rester : c'est sa brièveté qui fait qu'on le lit.
+
+`semestre()` calcule quatre états — **à produire** (aucun corrigé), **prête**
+(corrigés en place, personne n'a répondu), **en cours** (ouverte, des réponses
+arrivent), **jouée**. Les séances 90 et au-delà en sont exclues : l'appel, la
+connaissance et le stage ne sont pas des séances du semestre.
+
+---
+
 ## Où en est la base, et ce qui a changé
 
 **[`supabase/LISEZ-MOI.md`](supabase/LISEZ-MOI.md)** — les migrations et leur
