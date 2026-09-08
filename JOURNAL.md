@@ -9,7 +9,20 @@ fin de fichier. Une date écrite à la main ment dès le lendemain.
 
 ---
 
-## État des scripts SQL au 8 septembre 2026
+## Depuis le 8 septembre : les migrations sont automatiques
+
+Le tableau ci-dessous décrit l'état **avant** la mise en place du CI/CD. Il
+reste ici comme point de départ, mais il n'a plus vocation à être tenu à la
+main : `supabase/migrations/` est désormais la source, et ce qui part sur
+`main` part sur Supabase. Voir **[`supabase/LISEZ-MOI.md`](supabase/LISEZ-MOI.md)**.
+
+Et pour ce qui reste à faire au quotidien, ce n'est plus un fichier non plus :
+c'est la carte **« À faire »**, en tête de l'espace enseignant du portail,
+recalculée depuis la base à chaque affichage.
+
+---
+
+## État des scripts SQL au 8 septembre 2026 — avant le CI/CD
 
 Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 

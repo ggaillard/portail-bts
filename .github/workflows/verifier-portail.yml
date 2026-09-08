@@ -1,0 +1,131 @@
+name: "Portail — contrôles"
+
+# Ce que ces contrôles attrapent, et qui est déjà arrivé :
+#  · une accolade oubliée dans index.html — la page ne s'affiche plus du tout,
+#    et on ne le voit qu'en ouvrant le portail ;
+#  · une option permutée dans un support sans changer la bonne réponse en base
+#    — le quiz note faux, et personne ne s'en aperçoit avant les résultats.
+
+on:
+  push:
+    branches: [main]
+    paths: ["index.html", "config.js", ".github/workflows/verifier-portail.yml"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  syntaxe:
+    name: "🧩 Le script du portail se charge-t-il ?"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+
+      - name: "Extraire le script en ligne et le vérifier"
+        run: |
+          python3 - <<'PY'
+          import io, re, sys
+          s = io.open('index.html', encoding='utf-8').read()
+          blocs = re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', s, re.S)
+          if not blocs:
+              sys.exit("Aucun script en ligne trouvé dans index.html")
+          io.open('/tmp/inline.js', 'w', encoding='utf-8').write(max(blocs, key=len))
+          print("script extrait :", len(max(blocs, key=len)), "octets")
+          PY
+          node --check /tmp/inline.js
+          echo "Syntaxe correcte."
+
+      - name: "Les identifiants référencés existent-ils dans la page ?"
+        run: |
+          python3 - <<'PY'
+          import io, re, sys
+          s = io.open('index.html', encoding='utf-8').read()
+          bloc = max(re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', s, re.S), key=len)
+          page = s.replace(bloc, '')
+          declares = set(re.findall(r'id="([^"]+)"', page))
+          # $("machin") : le raccourci du portail vers getElementById
+          utilises = set(re.findall(r'\$\("([^"]+)"\)', bloc))
+          manquants = sorted(u for u in utilises if u not in declares)
+          if manquants:
+              sys.exit("Identifiants utilisés mais absents de la page :\n  " + "\n  ".join(manquants))
+          print(len(utilises), "identifiants utilisés, tous présents.")
+          PY
+
+  coherence:
+    name: "🔗 Les bonnes réponses collent-elles aux supports ?"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Cloner les supports étudiants"
+        run: git clone --depth 1 https://github.com/ggaillard/BTS1_S1_B1_DEV.git /tmp/support
+
+      - name: "Comparer options de la page et bonne_reponse en base"
+        run: |
+          pip install --quiet markdown pymdown-extensions
+          python3 - <<'PY'
+          import io, re, glob, sys, unicodedata
+
+          def plat(t):
+              # NFKD et pas NFD : « 42ᵉ » dans un support et « 42e » dans le SQL
+              # désignent la même option. Sans cette normalisation, le contrôle
+              # reste rouge sur une différence typographique et on finit par ne
+              # plus le regarder — ce qui est pire que pas de contrôle du tout.
+              t = unicodedata.normalize('NFKD', t)
+              t = ''.join(c for c in t if unicodedata.category(c) != 'Mn')
+              return re.sub(r'[^a-z0-9]+', '', t.lower().replace('’', "'"))
+
+          # ── ce que dit la base ──
+          sql = io.open(glob.glob('supabase/migrations/*_bts1_seances.sql')[0],
+                        encoding='utf-8').read()
+          bloc = sql[sql.index('with q(numero'):sql.index('\n)\ninsert into public.corriges')]
+          base = {}
+          for m in re.finditer(
+                  r"\(\s*(\d+)(?:::int)?\s*,\s*'(q\d+)'\s*,\s*'([A-D])'\s*,\s*\n\s*'((?:[^']|'')*)'"
+                  r"\s*,\s*\n\s*array\[(.*?)\]\s*,", bloc, re.S):
+              opts = [o.replace("''", "'") for o in re.findall(r"'((?:[^']|'')*)'", m.group(5))]
+              base[(int(m.group(1)), m.group(2))] = (m.group(3), opts)
+
+          # ── ce que disent les supports ──
+          ecarts = []
+          for f in sorted(glob.glob('/tmp/support/docs/seances/seance-*.md')):
+              n = int(re.search(r'seance-(\d+)', f).group(1))
+              s = io.open(f, encoding='utf-8').read()
+              grille = re.search(r'\|\s*\*\*Rép\.\*\*\s*\|(.+?)\|\s*\n', s)
+              if not grille:
+                  continue
+              lettres = [x.strip() for x in grille.group(1).split('|') if x.strip()]
+              questions = re.findall(r'^\*\*(\d+)\.\*\* (.+?)\n(`.+)$', s, re.M)
+              if len(questions) != len(lettres):
+                  ecarts.append("séance %d : %d questions pour %d réponses dans la grille"
+                                % (n, len(questions), len(lettres)))
+                  continue
+              for i, (num, texte, ligne) in enumerate(questions):
+                  cle = (n, 'q' + num)
+                  if cle not in base:
+                      ecarts.append("séance %d %s : absente des migrations" % (n, 'q'+num))
+                      continue
+                  bonne, opts_sql = base[cle]
+                  if bonne != lettres[i]:
+                      ecarts.append("séance %d q%s : la page dit %s, la base dit %s"
+                                    % (n, num, lettres[i], bonne))
+                  opts_page = re.findall(r'`[A-D]`\s*([^·`]+)', ligne)
+                  if len(opts_page) != len(opts_sql):
+                      ecarts.append("séance %d q%s : %d options dans la page, %d en base"
+                                    % (n, num, len(opts_page), len(opts_sql)))
+                  else:
+                      for a, b in zip(opts_page, opts_sql):
+                          if plat(a) != plat(b):
+                              ecarts.append("séance %d q%s : « %s » dans la page, « %s » en base"
+                                            % (n, num, a.strip(), b))
+                  if '`' in texte:
+                      ecarts.append("séance %d q%s : du code dans l'énoncé — le parseur "
+                                    "prendrait le premier <code> pour le début des options"
+                                    % (n, num))
+
+          if ecarts:
+              print("\n".join("  ✗ " + e for e in ecarts))
+              sys.exit("%d écart(s) entre les supports et la base." % len(ecarts))
+          print("Supports et base d'accord :", len(base), "questions vérifiées.")
+          PY
