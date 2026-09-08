@@ -190,6 +190,35 @@ tr:last-child td{border-bottom:0}
 .af-g{margin:.2rem 0 0;font-size:.86rem}
 .af-g b{font-family:var(--f-mono);font-size:.82rem;background:var(--surface);
   border:1px solid var(--rule);border-radius:5px;padding:.1rem .4rem;font-weight:500}
+.epingle{margin:1.2rem 0 .7rem}
+.epingle h2{margin:0;font-size:1.15rem}
+.epingle p{margin:.15rem 0 0;font-size:.87rem;color:var(--ink-soft)}
+
+/* Les onglets. Un seul écran à la fois : en séance on ne cherche pas, on clique.
+   Ils collent en haut au défilement — la carte « Appel » est longue, et perdre
+   le chemin du retour au milieu d'une liste d'absents est exactement le
+   problème qu'on essaie de régler. */
+.onglets{display:flex;gap:.35rem;flex-wrap:wrap;margin:1.6rem 0 1.1rem;
+  padding:.3rem;border-radius:12px;background:var(--surface-alt);
+  position:sticky;top:0;z-index:20;
+  box-shadow:0 6px 10px -8px rgba(0,0,0,.18)}
+.onglet{appearance:none;border:0;cursor:pointer;font:inherit;font-size:.94rem;
+  padding:.55rem 1rem;border-radius:9px;background:transparent;color:var(--ink-soft);
+  display:inline-flex;align-items:center;gap:.45rem;transition:background .12s,color .12s}
+.onglet:hover{background:var(--rule-soft);color:var(--ink)}
+.onglet:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.onglet.actif{background:var(--surface);color:var(--ink);font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.10)}
+/* La pastille porte le nombre d'absents du jour, toutes classes confondues :
+   le seul chiffre qu'on veut voir sans ouvrir l'onglet. */
+.ong-p{font-family:var(--f-mono);font-size:.76rem;font-weight:600;
+  min-width:1.35rem;padding:.05rem .35rem;border-radius:999px;text-align:center;
+  background:#FBE6E6;color:#963232}
+.volet-hint{margin:0 0 .9rem;font-size:.87rem;color:var(--ink-soft)}
+@media (max-width:640px){
+  .onglets{gap:.25rem;padding:.25rem}
+  .onglet{padding:.5rem .7rem;font-size:.88rem}
+}
 .etage{display:flex;align-items:baseline;gap:.6rem;margin:2.2rem 0 .7rem;flex-wrap:wrap}
 .etage:first-of-type{margin-top:1.2rem}
 .etage-n{font-family:var(--f-mono);font-size:.8rem;font-weight:600;color:#fff;
@@ -582,10 +611,9 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <span class="ident-txt">Connecté en <b>enseignant</b>. Vous voyez toutes les classes.</span>
     <button class="btn btn-sec" id="b-sortie-ens">Se déconnecter</button>
   </div>
-  <div class="etage">
-    <span class="etage-n">1</span>
+    <div class="epingle">
     <h2>Ce qui bloque</h2>
-    <p>Si cette carte est verte, vous pouvez fermer l'onglet.</p>
+    <p>Toujours visible, quel que soit l'onglet. Si c'est vert, vous pouvez fermer l'onglet.</p>
   </div>
 
   <div class="card" id="carte-afaire" hidden>
@@ -595,28 +623,18 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div id="af-liste"></div>
   </div>
 
-  <div class="etage">
-    <span class="etage-n">2</span>
-    <h2>La vue d'ensemble</h2>
-    <p>Toutes les classes à la fois, sans rien sélectionner.</p>
-  </div>
+  <nav class="onglets" id="onglets-ens" role="tablist" aria-label="Espace enseignant">
+    <button class="onglet actif" type="button" role="tab" id="ong-appel" aria-controls="volet-appel"
+            aria-selected="true">Appel du jour<span class="ong-p" id="ong-appel-n" hidden></span></button>
+    <button class="onglet" type="button" role="tab" id="ong-ensemble" aria-controls="volet-ensemble"
+            aria-selected="false" tabindex="-1">Vue d'ensemble</button>
+    <button class="onglet" type="button" role="tab" id="ong-quest" aria-controls="volet-quest"
+            aria-selected="false" tabindex="-1">Questionnaires</button>
+    <button class="onglet" type="button" role="tab" id="ong-seance" aria-controls="volet-seance"
+            aria-selected="false" tabindex="-1">Suivi d'une séance</button>
+  </nav>
 
-  <div class="card" id="carte-semestre" hidden>
-    <h2>Le semestre</h2>
-    <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »
-      signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
-      jamais être évaluées.</p>
-    <div id="sem-classes"></div>
-  </div>
-
-  <div class="card">
-    <h2>Vos classes</h2>
-    <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
-    <div class="scroll"><table id="t-classes">
-      <thead><tr><th>Classe</th><th>Code</th><th>Étudiants</th><th>Connectés</th><th>Unités</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-  </div>
+  <div class="volet" id="volet-appel" role="tabpanel" aria-labelledby="ong-appel">
   <div class="card" id="carte-appel" hidden>
     <h2>Appel du jour</h2>
     <p class="hint">Toutes vos classes, sans changer de sélection.</p>
@@ -639,7 +657,33 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <div id="err-noms"></div>
     </details>
   </div>
+  </div>
 
+  <div class="volet" id="volet-ensemble" role="tabpanel" aria-labelledby="ong-ensemble" hidden>
+    <p class="volet-hint">Où en est le semestre, et qui s'est déjà connecté. Rien à faire ici en séance.</p>
+  <div class="card" id="carte-semestre" hidden>
+    <h2>Le semestre</h2>
+    <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »
+      signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
+      jamais être évaluées.</p>
+    <div id="sem-classes"></div>
+  </div>
+
+  <div class="card">
+    <h2>Vos classes</h2>
+    <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
+    <div class="scroll"><table id="t-classes">
+      <thead><tr><th>Classe</th><th>Code</th><th>Étudiants</th><th>Connectés</th><th>Unités</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <h2 style="margin-bottom:.9rem">Tous les projets</h2>
+  <div class="projets" id="tous-projets"></div>
+  </div>
+
+  <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
+    <p class="volet-hint">Deux questionnaires ponctuels : la rentrée du BTS1, la recherche de stage du BTS2. On les ouvre quelques fois dans l'année, pas chaque semaine.</p>
   <div class="card" id="carte-connaissance" hidden>
     <h2>Faisons connaissance</h2>
     <p class="hint">Le questionnaire de rentrée. Aucune réponse n'est juste ou fausse :
@@ -653,13 +697,9 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       ancienne ne dit plus rien de vrai : la date de mise à jour est à côté du numéro.</p>
     <div id="stage-classes"></div>
   </div>
-
-  <div class="etage">
-    <span class="etage-n">3</span>
-    <h2>Le détail d'une heure</h2>
-    <p>Le pré-vol, la cadence, la réussite par question, élève par élève.</p>
   </div>
 
+  <div class="volet" id="volet-seance" role="tabpanel" aria-labelledby="ong-seance" hidden>
   <div class="card">
     <h2>Suivi d'une séance</h2>
     <p class="hint">Choisissez la classe puis la séance. Les chiffres se rafraîchissent seuls toutes les huit secondes.</p>
@@ -709,9 +749,8 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     </div>
     <p class="hint" id="stats-attente">Sélectionnez une séance pour voir le détail élève par élève.</p>
   </div>
+  </div>
 
-  <h2 style="margin-bottom:.9rem">Tous les projets</h2>
-  <div class="projets" id="tous-projets"></div>
 </section>
 
 <footer>
@@ -1907,7 +1946,8 @@ function chargerAppelToutesClasses(classes){
   carte.hidden = true;
   if (!classes || !classes.length) return;
 
-  var restant = classes.length, affiches = 0;
+  var restant = classes.length, affiches = 0, absentsTotal = 0;
+  pastilleAppel(null);
 
   // Les blocs sont créés dans l'ordre des classes puis remplis à l'arrivée
   // des réponses : l'ordre à l'écran ne dépend pas de la vitesse du réseau.
@@ -1922,10 +1962,28 @@ function chargerAppelToutesClasses(classes){
       var a = (r && !r.error && r.data && r.data.ok) ? r.data : null;
       // Une classe sans séance d'appel — les classes de démonstration — est
       // simplement absente de la carte plutôt que d'y occuper une ligne vide.
-      if (a) { remplirAppelClasse(bloc, c, a); bloc.hidden = false; affiches++; }
-      if (restant === 0) carte.hidden = affiches === 0;
+      if (a) {
+        remplirAppelClasse(bloc, c, a); bloc.hidden = false; affiches++;
+        absentsTotal += (a.absents || []).length;
+      }
+      if (restant === 0) {
+        carte.hidden = affiches === 0;
+        // Le nombre d'absents s'affiche sur l'onglet : c'est le seul chiffre
+        // qu'on veut connaître sans avoir à ouvrir quoi que ce soit.
+        pastilleAppel(affiches === 0 ? null : absentsTotal);
+      }
     });
   });
+}
+
+// Aucun appel lisible : pas de pastille du tout. Zéro absent : pas de pastille
+// non plus — un « 0 » rouge à côté de « Appel du jour » se lirait comme un souci.
+function pastilleAppel(n){
+  var p = $("ong-appel-n");
+  if (!p) return;
+  p.hidden = !n;
+  p.textContent = n ? String(n) : "";
+  p.setAttribute("aria-label", n ? (n + " absents aujourd'hui") : "");
 }
 
 function remplirAppelClasse(bloc, c, a){
@@ -2282,13 +2340,17 @@ function ligneSemestre(x){
 // Une liste qu'on doit tenir à jour à la main finit toujours par être fausse,
 // et une liste fausse est pire que pas de liste.
 function chargerAFaire(){
-  var carte = $("carte-afaire");
+  var carte = $("carte-afaire"), titre = document.querySelector(".epingle");
   carte.hidden = true;
+  if (titre) titre.hidden = true;
   sb.rpc("a_faire").then(function(r){
     // Fonction pas encore déployée : la carte reste absente, comme avant.
+    // Le titre suit la carte — un intertitre au-dessus de rien se lit comme
+    // une panne, alors que c'est seulement une fonction non déployée.
     if (!r || r.error || !r.data || !r.data.ok) return;
     rendreAFaire(r.data);
     carte.hidden = false;
+    if (titre) titre.hidden = false;
   });
 }
 
@@ -3019,6 +3081,46 @@ $("b-noms-vider").addEventListener("click", function(){
   chargerAFaire();
   chargerSemestre();
 });
+// ── Les onglets de l'espace enseignant ────────────────────────────────────
+// « Ce qui bloque » reste épinglé au-dessus : c'est la seule carte qu'on ne
+// doit jamais avoir à aller chercher. Tout le reste vit dans un onglet, et
+// c'est l'appel qui est ouvert au départ — c'est le geste du début d'heure.
+var ONGLETS = ["appel", "ensemble", "quest", "seance"];
+
+function ouvrirOnglet(cle){
+  if (ONGLETS.indexOf(cle) < 0) cle = "appel";
+  ONGLETS.forEach(function(k){
+    var o = $("ong-" + k), v = $("volet-" + k);
+    var actif = (k === cle);
+    o.classList.toggle("actif", actif);
+    o.setAttribute("aria-selected", actif ? "true" : "false");
+    // Un seul onglet dans l'ordre de tabulation : les flèches font le reste.
+    o.tabIndex = actif ? 0 : -1;
+    v.hidden = !actif;
+  });
+}
+
+ONGLETS.forEach(function(cle, i){
+  var o = $("ong-" + cle);
+  o.addEventListener("click", function(){
+    ouvrirOnglet(cle);
+    // Sans cela, quitter un onglet long pour un onglet court laisse la page
+    // au-delà de son contenu : l'écran paraît vide et on croit à une panne.
+    var nav = $("onglets-ens");
+    if (nav && nav.getBoundingClientRect().top < 0) {
+      window.scrollTo({ top: nav.offsetTop, behavior: "instant" });
+    }
+  });
+  o.addEventListener("keydown", function(e){
+    var d = e.key === "ArrowRight" ? 1 : (e.key === "ArrowLeft" ? -1 : 0);
+    if (!d) return;
+    e.preventDefault();
+    var suivant = ONGLETS[(i + d + ONGLETS.length) % ONGLETS.length];
+    ouvrirOnglet(suivant);
+    $("ong-" + suivant).focus();
+  });
+});
+
 $("b-demarrer").addEventListener("click", function(){
   pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");
 });
