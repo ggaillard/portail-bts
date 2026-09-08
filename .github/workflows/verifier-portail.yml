@@ -18,7 +18,7 @@ jobs:
     name: "🧩 Le script du portail se charge-t-il ?"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
 
@@ -56,7 +56,7 @@ jobs:
     name: "🔗 Les bonnes réponses collent-elles aux supports ?"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: "Cloner les supports étudiants"
         run: git clone --depth 1 https://github.com/ggaillard/BTS1_S1_B1_DEV.git /tmp/support

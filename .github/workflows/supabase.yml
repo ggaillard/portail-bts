@@ -48,7 +48,7 @@ jobs:
       PSQL: "psql -h localhost -U postgres -d essai -v ON_ERROR_STOP=1 -q"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: "🏗️ Base d'essai — le socle historique, posé à la main"
         run: |
@@ -124,28 +124,55 @@ jobs:
     environment: production        # permet d'exiger une approbation manuelle
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      # ── Dire tout de suite ce qui manque ────────────────────────────────
+      #  Sans ce contrôle, un secret absent donne « Access token not provided »
+      #  au milieu d'une sortie de CLI, et un « -p "" » qu'il faut avoir l'œil
+      #  pour repérer. C'est exactement ce qui s'est passé au premier essai.
+      - name: "🔑 Les deux secrets sont-ils là ?"
+        env:
+          JETON: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          MDP:   ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          manque=""
+          [ -z "$JETON" ] && manque="$manque  · SUPABASE_ACCESS_TOKEN — Supabase → Account → Access Tokens\n"
+          [ -z "$MDP" ]   && manque="$manque  · SUPABASE_DB_PASSWORD — Settings → Database → Database password\n"
+          if [ -n "$manque" ]; then
+            echo "::error title=Secrets manquants::Le dépôt n'a pas les secrets nécessaires"
+            printf "\nSecret(s) absent(s) ou vide(s) :\n%b\n" "$manque"
+            echo "À créer dans Settings → Secrets and variables → Actions du dépôt,"
+            echo "puis relancer ce workflow (bouton « Run workflow »)."
+            exit 1
+          fi
+          echo "Les deux secrets sont présents."
 
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
+      # Le mot de passe passe par l'environnement et non par -p : il n'apparaît
+      # alors dans aucune ligne de commande, même tronquée, même en cas d'erreur.
       - name: "🔗 Lier le projet"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase link --project-ref pjuymnnblbydpjlpnoeh -p "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref pjuymnnblbydpjlpnoeh
 
       - name: "📋 Ce qui va être appliqué"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase migration list -p "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase migration list
 
       - name: "🚀 Appliquer"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase db push -p "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push
 
       - name: "✅ État après"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase migration list -p "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase migration list

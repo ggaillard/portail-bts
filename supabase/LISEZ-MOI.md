@@ -26,6 +26,15 @@ Deux secrets, dans **Settings → Secrets and variables → Actions** du dépôt
 La référence du projet (`pjuymnnblbydpjlpnoeh`) n'est pas un secret : elle est
 déjà dans `config.js`, servi publiquement.
 
+**Les secrets ne s'appliquent pas rétroactivement.** Une exécution lancée avant
+leur création les voit vides et échoue — c'est arrivé au premier essai, le
+8 septembre : la poussée a déclenché le workflow, les secrets ont été créés
+ensuite, et le run est resté rouge. Après avoir créé ou changé un secret, il
+faut **relancer** le workflow : bouton « Run workflow » sur la page du workflow,
+ou « Re-run jobs » sur l'exécution en échec. Le premier pas du job vérifie
+maintenant que les deux secrets existent et le dit en clair, plutôt que de
+laisser la CLI répondre « Access token not provided ».
+
 **Recommandé** : Settings → Environments → `production` → cocher *Required
 reviewers* et vous mettre en relecteur. Le workflow s'arrêtera alors avant
 d'écrire, et attendra un clic de votre part. Une migration qui part par erreur
