@@ -28,6 +28,16 @@ Ancienne plateforme : `suivi.gaillard42.workers.dev` (Cloudflare Worker, base D1
 
 ## Où en est la base, et ce qui a changé
 
+**[`supabase/LISEZ-MOI.md`](supabase/LISEZ-MOI.md)** — les migrations et leur
+déploiement automatique. Depuis le 8 septembre 2026, **le SQL ne se colle plus
+à la main** : une migration poussée sur `main` est vérifiée sur une base neuve
+puis appliquée à Supabase. Les scripts destructeurs ou à usage unique restent
+dans `supabase/operations/`, hors du circuit automatique.
+
+La carte **« À faire »** du portail (RPC `a_faire()`) remplace toute liste de
+tâches tenue à la main : elle est recalculée depuis l'état réel de la base, donc
+rien n'y reste par oubli.
+
 **[`JOURNAL.md`](JOURNAL.md)** — l'état de chaque script SQL (commité ≠ exécuté),
 ce qui a changé dans le code, et la requête de lecture seule qui vérifie tout
 cela soi-même en trente secondes. À relire avant de conclure qu'un correctif est

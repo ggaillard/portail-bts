@@ -175,6 +175,21 @@ tr:last-child td{border-bottom:0}
 .et-2 .et-tete b,.et-2 .et-nums{color:#24507F}
 .et-3 .et-tete b,.et-3 .et-nums{color:#1B6B42}
 .et-x .et-tete b,.et-x .et-nums{color:var(--ink-soft)}
+.af-t{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.2rem}
+.af-pastille{font-size:.82rem;font-weight:600;padding:.12rem .55rem;border-radius:99px}
+.af-pastille.rien{background:#DEF3E6;color:#1B6B42}
+.af-pastille.bloc{background:#FBE6E6;color:#963232}
+.af-pastille.att{background:#FDF0DC;color:#8A5A16}
+.af-l{display:flex;gap:.65rem;padding:.6rem 0;border-top:1px solid var(--rule)}
+.af-l:first-of-type{border-top:0}
+.af-i{flex:0 0 1.2rem;font-size:1rem;line-height:1.35}
+.af-c{flex:1;min-width:0}
+.af-q{font-size:.95rem;font-weight:600;margin:0}
+.af-q .af-cl{font-weight:400;color:var(--ink-soft);font-size:.85rem;margin-left:.4rem}
+.af-d{margin:.1rem 0 0;font-size:.88rem;color:var(--ink-soft)}
+.af-g{margin:.2rem 0 0;font-size:.86rem}
+.af-g b{font-family:var(--f-mono);font-size:.82rem;background:var(--surface);
+  border:1px solid var(--rule);border-radius:5px;padding:.1rem .4rem;font-weight:500}
 .av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
     border-radius:8px;padding:.45rem .5rem;cursor:pointer}
 .av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
@@ -539,6 +554,13 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <span class="ident-txt">Connecté en <b>enseignant</b>. Vous voyez toutes les classes.</span>
     <button class="btn btn-sec" id="b-sortie-ens">Se déconnecter</button>
   </div>
+  <div class="card" id="carte-afaire" hidden>
+    <h2 class="af-t">À faire <span class="af-pastille" id="af-etat"></span></h2>
+    <p class="hint">Recalculé depuis la base à chaque affichage : rien n'y reste par oubli,
+      et rien n'y manque. Ce qui est rouge empêchera quelque chose de marcher en séance.</p>
+    <div id="af-liste"></div>
+  </div>
+
   <div class="card">
     <h2>Vos classes</h2>
     <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
@@ -2088,6 +2110,65 @@ function rendreSignaux(c, d){
   return z;
 }
 
+// ── « À faire » — la seule liste qui ne peut pas mentir ────────────────────
+// Elle n'est stockée nulle part : a_faire() la recalcule depuis l'état réel de
+// la base. On ne coche rien, on corrige, et la ligne disparaît d'elle-même.
+// Une liste qu'on doit tenir à jour à la main finit toujours par être fausse,
+// et une liste fausse est pire que pas de liste.
+function chargerAFaire(){
+  var carte = $("carte-afaire");
+  carte.hidden = true;
+  sb.rpc("a_faire").then(function(r){
+    // Fonction pas encore déployée : la carte reste absente, comme avant.
+    if (!r || r.error || !r.data || !r.data.ok) return;
+    rendreAFaire(r.data);
+    carte.hidden = false;
+  });
+}
+
+var AF_ICONE = { bloquant: "⛔", attention: "⚠️", info: "ℹ️" };
+
+function rendreAFaire(d){
+  var b = Number(d.bloquants) || 0, a = Number(d.attentions) || 0;
+  var etat = $("af-etat");
+  if (b) {
+    etat.className = "af-pastille bloc";
+    etat.textContent = b + (b > 1 ? " points bloquants" : " point bloquant");
+  } else if (a) {
+    etat.className = "af-pastille att";
+    etat.textContent = a + (a > 1 ? " points de vigilance" : " point de vigilance");
+  } else {
+    etat.className = "af-pastille rien";
+    etat.textContent = "Rien à signaler";
+  }
+
+  var z = $("af-liste");
+  z.innerHTML = "";
+  var taches = d.taches || [];
+  if (!taches.length) {
+    z.innerHTML = '<p class="hint" style="margin:.3rem 0 0">Les séances sont ouvertes ' +
+                  'quand il faut, les corrigés sont là, tout le monde a un code.</p>';
+    return;
+  }
+
+  taches.forEach(function(t){
+    var l = document.createElement("div");
+    l.className = "af-l";
+    l.innerHTML = '<span class="af-i"></span><div class="af-c">' +
+                  '<p class="af-q"><span></span><span class="af-cl"></span></p>' +
+                  '<p class="af-d"></p><p class="af-g" hidden>Le geste : <b></b></p></div>';
+    l.querySelector(".af-i").textContent = AF_ICONE[t.gravite] || "•";
+    l.querySelector(".af-q span:first-child").textContent = t.quoi || "";
+    l.querySelector(".af-cl").textContent = t.classe || t.code || "";
+    l.querySelector(".af-d").textContent = t.detail || "";
+    if (t.geste) {
+      l.querySelector(".af-g b").textContent = t.geste;
+      l.querySelector(".af-g").hidden = false;
+    }
+    z.appendChild(l);
+  });
+}
+
 // ── La recherche de stage, côté enseignant ─────────────────────────────────
 // La première chose à voir n'est pas une statistique mais une liste de
 // numéros par étape, du moins avancé au plus avancé : ceux qui n'ont pas
@@ -2488,6 +2569,8 @@ function pilotage(action, question){
     erreur("err-prevol", question, true);
     // On relit l'état plutôt que de le supposer : la source de vérité est la base.
     chargerPrevol().then(rafraichir);
+    // Ouvrir ou clore une séance change ce qui reste à faire : la carte suit.
+    chargerAFaire();
   });
 }
 
@@ -2637,6 +2720,7 @@ function ouvrirEspaceEnseignant(){
     chargerAppelToutesClasses(classes);
     chargerConnaissance(classes);
     chargerStage(classes);
+    chargerAFaire();
     if (classes.length) chargerSeancesDe(classes[0].id);
 
     classes.forEach(function(c){
@@ -2748,6 +2832,7 @@ $("b-noms-ok").addEventListener("click", function(){
   chargerAppelToutesClasses(suivi.classesConnues || []);
   chargerConnaissance(suivi.classesConnues || []);
   chargerStage(suivi.classesConnues || []);
+  chargerAFaire();
 });
 $("b-noms-vider").addEventListener("click", function(){
   try { localStorage.removeItem(NOMS_CLE); } catch (e) {}
@@ -2756,6 +2841,7 @@ $("b-noms-vider").addEventListener("click", function(){
   chargerAppelToutesClasses(suivi.classesConnues || []);
   chargerConnaissance(suivi.classesConnues || []);
   chargerStage(suivi.classesConnues || []);
+  chargerAFaire();
 });
 $("b-demarrer").addEventListener("click", function(){
   pilotage("demarrer_seance", "Séance démarrée. Le chrono part maintenant.");

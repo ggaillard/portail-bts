@@ -1,0 +1,5 @@
+# Configuration du projet Supabase du portail.
+# La référence du projet n'est pas un secret : elle est déjà dans config.js,
+# qui est servi publiquement. Ce qui est secret, ce sont le jeton d'accès et
+# le mot de passe de la base — ils vivent dans les secrets GitHub, jamais ici.
+project_id = "pjuymnnblbydpjlpnoeh"
