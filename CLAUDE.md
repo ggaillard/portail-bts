@@ -334,6 +334,34 @@ que si la ligne n'avait jamais été renseignée.
 
 ---
 
+## Un compte ne vit que sur un appareil à la fois
+
+`rejoindre()` fait `update eleves set auth_id = auth.uid()`. **Le dernier
+appareil identifié gagne, et l'ancien est délogé sans le savoir** : sa page
+reste affichée comme si de rien n'était, et le premier envoi échoue avec
+`Non identifie`. C'est arrivé le 08/09 sur le compte d'essai n° 99 du BTS2,
+repris depuis un autre poste pendant qu'il était ouvert.
+
+Cas réel en TP : un étudiant ouvre le portail sur le poste de la salle, puis
+sur son téléphone ; de retour sur le poste, « ça ne marche plus ». Le remède
+est « Ce n'est pas moi » puis se réidentifier — pas d'attendre.
+
+Le portail traduit donc les échecs d'envoi en trois cas, dans `texteEnvoi()`,
+et **les quatre points d'envoi passent par là** (appel, humeur, connaissance,
+stage) :
+
+| Erreur de la base | Ce que voit l'étudiant |
+|---|---|
+| `Non identifie` | Session reprise sur un autre appareil, se réidentifier. Le bouton « Ce n'est pas moi » passe en bouton principal. |
+| `Seance fermee` | L'appel / la séance est fermée, prévenir l'enseignant. Réessayer n'y changerait rien. |
+| autre | « Réessayez dans un instant » — le seul cas où c'est vrai. |
+
+**Ne pas revenir à un message unique.** « Réessayez dans un instant » pour tout
+est ce qui a fait chercher pendant deux séances une panne qui se réglait en un
+clic.
+
+---
+
 ## Points de vigilance
 
 - **`index.html` est autonome et unique.** Ne pas le découper en modules ni le

@@ -60,6 +60,24 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### Un compte ouvert sur deux appareils : le second déloge le premier
+
+Après la réouverture de la séance 99, l'erreur persistait — mais ce n'était
+plus la même. `repondre()` renvoyait `Non identifie` : `rejoindre()` rattache
+le compte au **dernier appareil identifié**, et la page déjà ouverte sur le
+premier ne s'en aperçoit pas. Elle continue d'afficher « Vous êtes le numéro
+99 » et tous les envois échouent.
+
+Le message disait « Réessayez dans un instant » — faux, comme pour la séance
+fermée. Les quatre points d'envoi (appel, humeur, connaissance, stage) passent
+maintenant par une seule fonction `texteEnvoi()` qui distingue trois cas :
+session reprise ailleurs, séance fermée, et le reste. Dans le premier cas, le
+bouton « Ce n'est pas moi » passe en bouton principal : la sortie est là.
+
+Ce n'est pas un cas de laboratoire. Un étudiant qui ouvre le portail sur le
+poste de la salle puis sur son téléphone déloge le poste ; de retour dessus,
+« ça ne marche plus ».
+
 ### L'espace enseignant tenait sur trois écrans de défilement
 
 Cinq cartes empilées : l'appel — le geste de trente secondes qu'on fait chaque
