@@ -334,34 +334,68 @@ que si la ligne n'avait jamais été renseignée.
 
 ---
 
-## Activer un questionnaire, et le voir
+## Les questionnaires — une bibliothèque, pas des numéros en dur
 
-Un questionnaire est **une séance ouverte ou fermée**, rien d'autre :
-`connaissance()` filtre sur `numero = 98 and ouverte`, `stage()` sur
-`numero = 97 and ouverte`. C'était vrai depuis le début, et parfaitement
-invisible : pour savoir si « Faisons connaissance » était proposé aux BTS1, il
-fallait ouvrir le SQL Editor. La veille d'une rentrée, ce n'est pas un endroit
-où l'on veut aller.
+Un questionnaire était un numéro de séance écrit dans le code : 98 pour
+« Faisons connaissance », 97 pour « Recherche de stage ». En ajouter un
+troisième demandait une migration, un numéro, une fonction côté étudiant, une
+fonction de dépouillement — autrement dit : moi. Ce n'est pas tenable pour
+quelque chose qu'on écrit la veille d'un cours.
 
-Depuis `20260908110000_questionnaires.sql`, deux fonctions l'exposent :
+**Le modèle est à deux étages :**
+
+| | Ce que c'est | Ce qu'il porte |
+|---|---|---|
+| **Modèle** (`modeles`, `modele_questions`) | Le texte, écrit une fois | Titre, intro, mode d'affichage, les questions |
+| **Affectation** (une `seance`, `modele_id`) | Le questionnaire donné à une classe | Ses propres corrigés, ses propres réponses |
+
+Écrire « Faisons connaissance » une fois et l'affecter à deux classes donne
+deux séances, deux jeux de réponses, **un seul texte à corriger**.
+
+**La bande 90-98 est celle des questionnaires.** En dessous, les séances de
+cours. Au-dessus, 99, l'appel, qui ne se ferme pas. Les trois se pilotent avec
+trois gestes distincts, et cela doit le rester :
+
+| Nature | Le geste | Pourquoi il est à part |
+|---|---|---|
+| cours (< 90) | `demarrer_seance()` / `clore_seance()` | Elles portent un chrono |
+| questionnaire (90-98) | `ouvrir_questionnaire()` | Pas de chrono, pas de note |
+| appel (99) | aucun — verrouillé ouvert | Le fermer coupe le pointage |
+
+Les fondre en une fonction unique ferait qu'un jour l'une fermerait l'autre.
+C'est exactement ce qui s'est produit avec `preflight_seance()` définie deux
+fois.
+
+**Les fonctions :**
 
 | Fonction | Ce qu'elle fait |
 |---|---|
-| `questionnaires()` | Une ligne par classe × questionnaire réellement créé : ouvert ou non, nombre de questions, commencés, terminés. Les classes `DEMO%` en sont exclues, le compte d'essai n° 99 aussi. |
-| `ouvrir_questionnaire(classe_id, numero, ouvert)` | L'interrupteur. **N'accepte que 97 et 98.** |
+| `bibliotheque()` | Les modèles avec leurs affectations, **et** les classes avec ce qui y est posé. Deux lectures d'une même chose, calculées au même endroit. |
+| `creer_modele(titre, intro, mode, texte)` | Analyse un bloc collé : une question par ligne, intitulé puis 2 à 4 options séparés par « · » ou « \| ». |
+| `affecter_questionnaire(modele_id, classe_id)` | Crée la séance **fermée** et copie les questions en corrigés. |
+| `retirer_questionnaire(seance_id)` | Efface la séance — **refuse dès qu'une réponse existe**. |
+| `supprimer_modele(modele_id)` | Idem, sur tout le modèle. |
+| `mes_questionnaires()` | Côté étudiant : tous les questionnaires ouverts de sa classe, d'un coup. |
+| `depouiller_questionnaire(seance_id)` | Les réponses de n'importe lequel. Même sortie que `connaissance_classe()`, dont elle est calquée. |
 
-**Trois gestes distincts pour trois natures distinctes**, et il faut que cela
-le reste : `demarrer_seance()` / `clore_seance()` portent le chrono d'une
-séance de cours ; `ouvrir_questionnaire()` n'a pas de chrono ; la séance 99 ne
-se ferme pas du tout. Les fondre en une fonction unique ferait qu'un jour l'une
-fermerait l'autre — c'est exactement ce qui s'est produit avec
-`preflight_seance()` définie deux fois.
+**Règles qui ne se devinent pas :**
 
-Éteindre ne détruit rien : les réponses restent, rallumer remet la classe
-exactement où elle en était.
-
-Dans le portail : onglet **Questionnaires**, carte « Ce qui est proposé aux
-étudiants », un interrupteur par ligne.
+- **`creer_modele()` refuse tout dès qu'une ligne est mal formée, et dit
+  laquelle.** Ignorer la ligne en silence donnerait un questionnaire amputé
+  d'une question sans que personne ne le sache — pire qu'un refus.
+- **`bonne_reponse = 'Z'`** sur les corrigés d'un questionnaire : aucune option
+  n'existe sous cette lettre, donc rien n'est compté juste. C'est ce qui
+  distingue un questionnaire d'un quiz.
+- **L'affectation crée une séance fermée.** Préparer et publier d'un même clic
+  ferait apparaître chez les étudiants ce qu'on venait d'écrire.
+- **Retirer refuse dès qu'il y a des réponses ; éteindre, jamais.** Éteindre
+  retire le questionnaire de l'écran des étudiants sans rien perdre, et c'est
+  ce qu'on veut presque toujours. Le portail le dit dans le message de refus.
+- **Le mode appartient au modèle** : `sequentiel` (une question à la fois, sans
+  retour) ou `revisable` (tout à l'écran, modifiable).
+- `connaissance()` et `stage()` **restent** et ne sont pas modifiées : le
+  portail s'en sert en repli tant que la bibliothèque n'est pas déployée. Repli
+  à retirer une fois la migration passée partout.
 
 ---
 
@@ -392,6 +426,13 @@ Trois mécanismes, à ne pas défaire :
 fine insécable (U+202F) devant `? ! ; :` et dans les guillemets français. Sans
 elle, « Dans « SI », que veut dire le I ? » se coupait en fin de ligne et
 laissait le « ? » seul sur la sienne.
+
+**Le piège du découpage.** Le 08/09, une refonte de l'espace étudiant a
+emporté sept fonctions — `repondreAppel`, `proposerHumeur`, `texteEnvoi`… —
+sans qu'aucun contrôle ne bronche : `node --check` ne voit qu'une syntaxe
+valide, et l'erreur n'arrive qu'au clic, en séance. Le workflow vérifie
+désormais que **toute fonction appelée est définie**. Ne pas retirer ce
+contrôle.
 
 **Et le piège des `<span>` :** `.projet-t`, `.qa-t`, `.qa-d` sont des `<span>`.
 Sans `display:block`, leur marge basse n'agit pas et le titre se colle à sa
