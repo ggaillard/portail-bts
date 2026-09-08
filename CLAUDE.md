@@ -334,6 +334,37 @@ que si la ligne n'avait jamais été renseignée.
 
 ---
 
+## Classes réelles et classes de démonstration
+
+**Un code de classe qui commence par `DEMO` désigne une démonstration.** La
+convention existait déjà côté base — `a_faire()` écrit `code not like 'DEMO%'`
+— elle est maintenant la même dans le portail, avec `estDemo()` et
+`classesReelles()` comme seuls points de décision.
+
+Les démos sont écartées de **tout ce qui se lit en séance** : appel du jour,
+questionnaires, `semestre()`, tableau « Vos classes », dépôts. Elles restent
+dans les **deux sélecteurs de classe** — celui du suivi et celui de
+l'identification — rangées dans un `<optgroup>` « Démonstration », parce que
+c'est là qu'on va quand on veut justement faire la démo.
+
+Créer une démo = créer une classe dont le code commence par `DEMO`. La retirer
+de partout = renommer son code. Aucun autre geste, aucune liste à tenir.
+
+**Ne pas coder en dur `BTS1-DEV-2026` / `BTS2-SLAM-2026` dans le portail :** les
+codes changent chaque année, la convention non.
+
+---
+
+## Un projet appartient à une classe
+
+`projets.classe_id` : c'est ce qui décide de ce qu'un étudiant trouve dans
+« Vos projets » après s'être identifié. L'espace enseignant les affiche donc
+**groupés sous leur classe** (« Les dépôts, par classe »), et une classe sans
+projet le dit à sa place — ses étudiants s'identifieraient pour ne rien
+trouver. `a_faire()` le signale par ailleurs comme un point de vigilance.
+
+---
+
 ## Un compte ne vit que sur un appareil à la fois
 
 `rejoindre()` fait `update eleves set auth_id = auth.uid()`. **Le dernier

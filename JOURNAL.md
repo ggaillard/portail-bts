@@ -60,6 +60,30 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### Les classes de démonstration comptaient comme des vraies
+
+Quatre classes en base — BTS1, BTS2, et deux démos — et les quatre
+apparaissaient partout : sélecteurs, tableau « Vos classes », semestre, et un
+appel interrogé pour rien sur des classes sans séance 99.
+
+Règle posée : **un code qui commence par `DEMO` est une démonstration**. C'était
+déjà la convention de `a_faire()` en base ; c'est maintenant la même dans le
+portail. Les démos disparaissent de tout ce qui se lit en séance et restent
+dans les deux sélecteurs, dans un groupe « Démonstration » — la base n'est pas
+touchée, rien n'est supprimé.
+
+### Les dépôts sont rangés sous leur classe
+
+`projets.classe_id` décide de ce qu'un étudiant trouve après s'être identifié.
+L'écran enseignant affichait une liste à plat avec le code de classe collé
+devant la description. Il montre maintenant une section par classe, et dit
+explicitement quand une classe n'a aucun dépôt : ses étudiants s'identifieraient
+pour ne rien trouver.
+
+Au passage, un défaut d'affichage qui traînait des deux côtés : `.projet-t` est
+un `<span>`, sa marge basse n'agissait pas, et le titre du projet se collait à
+sa description. `display:block` sur les deux.
+
 ### Un compte ouvert sur deux appareils : le second déloge le premier
 
 Après la réouverture de la séance 99, l'erreur persistait — mais ce n'était

@@ -82,8 +82,11 @@ a.projet:hover{border-color:var(--accent);background:var(--accent-soft)}
   color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);
   border-radius:5px;padding:.3rem .45rem;flex:none;margin-top:.15rem}
 a.projet:hover .projet-ico{background:var(--surface)}
-.projet-t{font-weight:600;font-size:.98rem;margin-bottom:.15rem}
-.projet-d{font-size:.87rem;color:var(--ink-soft);line-height:1.45}
+/* display:block — sans lui ces deux <span> restent en ligne, la marge basse
+   du titre n'agit pas, et « Bloc 1 DEV » se colle à sa description. Le
+   défaut touchait aussi « Vos projets » côté étudiant. */
+.projet-t{display:block;font-weight:600;font-size:.98rem;margin-bottom:.15rem}
+.projet-d{display:block;font-size:.87rem;color:var(--ink-soft);line-height:1.45}
 
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th{text-align:left;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.09em;
@@ -678,8 +681,12 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     </table></div>
   </div>
 
-  <h2 style="margin-bottom:.9rem">Tous les projets</h2>
-  <div class="projets" id="tous-projets"></div>
+  <div class="card">
+    <h2>Les dépôts, par classe</h2>
+    <p class="hint">Chaque projet est rattaché à une classe : c'est ce que ses
+      étudiants trouvent dans « Vos projets » après s'être identifiés.</p>
+    <div id="tous-projets"></div>
+  </div>
   </div>
 
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
@@ -2287,7 +2294,9 @@ function chargerSemestre(){
   sb.rpc("semestre").then(function(r){
     // Fonction pas déployée : la carte reste absente, comme les autres.
     if (!r || r.error || !r.data || !r.data.ok) return;
-    rendreSemestre(r.data.classes || []);
+    // semestre() ne connaît pas la distinction : le tri se fait ici, comme
+    // partout ailleurs dans l'espace enseignant.
+    rendreSemestre(classesReelles(r.data.classes || []));
     carte.hidden = false;
   });
 }
@@ -2973,30 +2982,61 @@ function chargerSeancesDe(classeId){
     });
 }
 
+// ── Classes réelles et classes de démonstration ───────────────────────────
+// Un code qui commence par DEMO désigne une classe de démonstration : elle
+// sert à montrer le portail sans toucher aux vraies classes. C'est déjà la
+// convention de a_faire() côté base (`code not like 'DEMO%'`) — la même ici,
+// pour qu'un seul geste suffise à créer ou retirer une démo.
+//
+// Elles sont écartées de TOUT ce qui se lit en séance : appel, questionnaires,
+// vue d'ensemble, effectifs. Elles restent dans les deux sélecteurs, rangées
+// à part, parce que c'est là qu'on va justement quand on veut faire la démo.
+function estDemo(c){ return /^DEMO/i.test((c && c.code) || ""); }
+function classesReelles(l){ return (l || []).filter(function(c){ return !estDemo(c); }); }
+
+// Un sélecteur qui range les démos dans leur propre groupe : la liste du haut
+// ne contient que ce dont on se sert en cours.
+function remplirSelecteurClasses(sel, classes, valeur, texte){
+  sel.innerHTML = "";
+  var demos = [];
+  (classes || []).forEach(function(c){
+    var o = document.createElement("option");
+    o.value = valeur(c); o.textContent = texte(c);
+    if (estDemo(c)) demos.push(o); else sel.appendChild(o);
+  });
+  if (demos.length) {
+    var g = document.createElement("optgroup");
+    g.label = "Démonstration";
+    demos.forEach(function(o){ g.appendChild(o); });
+    sel.appendChild(g);
+  }
+  if (!sel.options.length) {
+    sel.innerHTML = '<option value="">Aucune classe disponible</option>';
+  }
+}
+
 // ── Espace enseignant ──────────────────────────────────────────────────────
 function ouvrirEspaceEnseignant(){
   montrer("espace-ens");
 
   sb.from("classes").select("id,code,nom").order("code").then(function(rc){
-    var classes = rc.data || [];
+    var toutes = rc.data || [];
+    // Les démos restent joignables par le sélecteur, mais elles ne comptent
+    // dans aucun chiffre et n'apparaissent dans aucune carte du jour.
+    var classes = classesReelles(toutes);
     var corps = $("t-classes").querySelector("tbody");
     corps.innerHTML = "";
 
     // Sélecteur de classe du panneau de suivi
-    var pk = $("pk-classe");
-    pk.innerHTML = "";
-    classes.forEach(function(c){
-      var o = document.createElement("option");
-      o.value = c.id;
-      o.textContent = c.nom;
-      pk.appendChild(o);
-    });
+    remplirSelecteurClasses($("pk-classe"), toutes,
+      function(c){ return c.id; }, function(c){ return c.nom; });
+
     suivi.classesConnues = classes;
     chargerAppelToutesClasses(classes);
     chargerConnaissance(classes);
     chargerStage(classes);
     chargerAFaire();
-  chargerSemestre();
+    chargerSemestre();
     if (classes.length) chargerSeancesDe(classes[0].id);
 
     classes.forEach(function(c){
@@ -3016,17 +3056,53 @@ function ouvrirEspaceEnseignant(){
       });
     });
 
+    // Un projet appartient à une classe : on l'affiche sous elle, et non dans
+    // une liste à plat où le code de classe était collé devant la description.
     sb.from("projets").select("titre,description,url,icone,ordre,classe_id")
       .order("classe_id").order("ordre")
       .then(function(rp){
-        var nomDe = {};
-        classes.forEach(function(c){ nomDe[c.id] = c.code; });
-        var liste = (rp.data || []).map(function(p){
-          return { titre: p.titre, url: p.url, icone: p.icone,
-                   description: (nomDe[p.classe_id] || "") + " — " + (p.description || "") };
-        });
-        afficherProjets("tous-projets", liste);
+        rendreProjetsParClasse(classes, rp.data || []);
       });
+  });
+}
+
+// Une classe sans projet n'est pas une erreur d'affichage : ses étudiants
+// s'identifient et ne trouvent rien à ouvrir. On le dit à sa place, sous son
+// nom — a_faire() le signale par ailleurs comme un point à régler.
+function rendreProjetsParClasse(classes, projets){
+  var z = $("tous-projets");
+  z.innerHTML = "";
+  if (!classes.length) {
+    z.innerHTML = '<p class="hint" style="margin:0">Aucune classe.</p>';
+    return;
+  }
+  classes.forEach(function(c){
+    var siens = projets.filter(function(p){ return p.classe_id === c.id; });
+    var h = document.createElement("h3");
+    h.className = "sous-titre";
+    h.textContent = c.nom;
+    z.appendChild(h);
+
+    var code = document.createElement("p");
+    code.className = "sous-hint";
+    // « 0 dépôt » ferait doublon avec la phrase juste en dessous.
+    code.textContent = siens.length
+      ? c.code + " — " + siens.length + (siens.length > 1 ? " dépôts" : " dépôt")
+      : c.code;
+    z.appendChild(code);
+
+    if (!siens.length) {
+      var vide = document.createElement("p");
+      vide.className = "hint";
+      vide.textContent = "Aucun projet associé : ses étudiants s'identifient " +
+        "puis ne trouvent aucun support à ouvrir.";
+      z.appendChild(vide);
+      return;
+    }
+    var grille = document.createElement("div");
+    grille.className = "projets";
+    siens.forEach(function(p){ grille.appendChild(carte(p)); });
+    z.appendChild(grille);
   });
 }
 
@@ -3192,17 +3268,8 @@ document.addEventListener("keydown", function(e){
 // ── Démarrage ──────────────────────────────────────────────────────────────
 function chargerClasses(){
   return sb.from("classes").select("code,nom").order("code").then(function(r){
-    var sel = $("classe");
-    sel.innerHTML = "";
-    (r.data || []).forEach(function(c){
-      var o = document.createElement("option");
-      o.value = c.code;
-      o.textContent = c.nom;
-      sel.appendChild(o);
-    });
-    if (!r.data || !r.data.length) {
-      sel.innerHTML = '<option value="">Aucune classe disponible</option>';
-    }
+    remplirSelecteurClasses($("classe"), r.data || [],
+      function(c){ return c.code; }, function(c){ return c.nom; });
   });
 }
 
