@@ -60,6 +60,38 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### Les questionnaires s'activent maintenant depuis le portail
+
+« Faisons connaissance » était déjà actif pour les BTS1 — 12 questions, séance
+98 ouverte — mais rien ne le disait : l'état vivait dans une colonne `ouverte`
+que seul le SQL Editor montrait. Deux fonctions l'exposent désormais,
+`questionnaires()` et `ouvrir_questionnaire()`, et l'onglet **Questionnaires**
+porte un interrupteur par classe, avec le nombre de questions et où en est la
+classe. Éteindre ne détruit rien : rallumer remet chacun où il en était.
+
+L'interrupteur n'accepte que les numéros 97 et 98. Une séance de cours se
+pilote avec son propre geste, qui porte le chrono ; la séance 99 ne se ferme
+pas. Trois natures, trois gestes — les fondre en un seul finirait comme
+`preflight_seance()` définie deux fois, où la seconde écrasait la première.
+
+### La vue étudiant sur un téléphone
+
+Rien ne débordait, aucune cible n'était trop petite — mais il fallait faire
+défiler 2 256 px de cartes empilées sans savoir combien il en restait ni où
+l'on allait.
+
+- **Une file d'attente** en haut : ce qui reste avant « Vos projets », et un
+  raccourci vers eux une fois la présence marquée — la seule chose qui ne peut
+  pas attendre. Sans énumération : à 390 px elle passait sur trois lignes.
+- **Chaque carte porte son rang**, recalculé à l'affichage : selon la classe et
+  le jour il y a deux cartes ou quatre.
+- **Une carte finie se replie** sur son titre et une ligne verte. La page passe
+  de 2 256 à 1 769 px quand l'appel et l'humeur sont faits. Elle ne disparaît
+  pas : « il était là tout à l'heure » se lit comme un bogue.
+- **Typographie française** : « Dans « SI », que veut dire le I ? » se coupait
+  avant le point d'interrogation, qui restait seul sur sa ligne. `typo()` pose
+  une espace fine insécable devant `? ! ; :` et dans les guillemets.
+
 ### Les classes de démonstration comptaient comme des vraies
 
 Quatre classes en base — BTS1, BTS2, et deux démos — et les quatre

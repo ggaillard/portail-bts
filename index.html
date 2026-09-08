@@ -193,6 +193,45 @@ tr:last-child td{border-bottom:0}
 .af-g{margin:.2rem 0 0;font-size:.86rem}
 .af-g b{font-family:var(--f-mono);font-size:.82rem;background:var(--surface);
   border:1px solid var(--rule);border-radius:5px;padding:.1rem .4rem;font-weight:500}
+/* Une ligne de pilotage par questionnaire : ce qu'il est, où en est la
+   classe, et l'interrupteur. Assez large pour le doigt (44 px de haut). */
+.qa-l{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+  padding:.75rem 0;border-top:1px solid var(--rule-soft)}
+.qa-l:first-child{border-top:0}
+.qa-txt{flex:1 1 12rem;min-width:0}
+.qa-t{display:block;font-weight:600;font-size:.98rem}
+.qa-d{display:block;font-size:.85rem;color:var(--ink-soft)}
+.qa-b{appearance:none;border:1px solid var(--rule);cursor:pointer;font:inherit;
+  font-size:.88rem;font-weight:600;min-height:44px;padding:.4rem 1rem;
+  border-radius:999px;display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--surface);color:var(--ink-soft);white-space:nowrap}
+.qa-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qa-b[disabled]{opacity:.55;cursor:progress}
+.qa-b .pt{width:.6rem;height:.6rem;border-radius:50%;background:var(--ink-faint)}
+.qa-b.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.qa-b.on .pt{background:var(--ok)}
+/* La file d'attente de l'étudiant. Sur un téléphone, trois cartes empilées
+   ne disent pas combien il en reste ni où l'on va : ce bandeau le dit en une
+   ligne, et il colle en haut pour rester vrai pendant le défilement. */
+.file{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  margin:0 0 1rem;padding:.6rem .8rem;border-radius:10px;
+  background:var(--accent-soft);position:sticky;top:0;z-index:20}
+.file-n{font-family:var(--f-mono);font-weight:600;font-size:1.05rem;color:var(--accent-ink)}
+.file-t{font-size:.9rem;color:var(--accent-ink);flex:1 1 8rem;min-width:0}
+.file-l{font-size:.88rem;font-weight:600;color:var(--accent-ink);
+  text-decoration:none;padding:.35rem .1rem}
+.file-l:hover{text-decoration:underline}
+
+/* Une carte finie se replie : son titre et une ligne verte, rien d'autre.
+   La page raccourcit à mesure qu'on avance, et ce qui reste à faire remonte. */
+.etape > h2::before{content:attr(data-n) " · ";font-family:var(--f-mono);
+  font-size:.8rem;font-weight:600;color:var(--ink-faint);vertical-align:.12em}
+.etape[data-fait="oui"] > h2{font-size:1rem;color:var(--ink-soft)}
+.etape[data-fait="oui"] > .hint,
+.etape[data-fait="oui"] > .cn-int,
+.etape[data-fait="oui"] > .appel-choix,
+.etape[data-fait="oui"] > #stage-questions{display:none}
+.etape[data-fait="oui"]{padding-top:.9rem;padding-bottom:.9rem}
 .epingle{margin:1.2rem 0 .7rem}
 .epingle h2{margin:0;font-size:1.15rem}
 .epingle p{margin:.15rem 0 0;font-size:.87rem;color:var(--ink-soft)}
@@ -571,21 +610,27 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="avatars" id="grille-avatars"></div>
   </div>
 
-  <div class="card" id="bloc-appel" hidden>
+  <div class="file" id="file-etu" hidden>
+    <span class="file-n" id="file-reste"></span>
+    <span class="file-t" id="file-txt"></span>
+    <a class="file-l" href="#mes-projets" id="file-saut" hidden>Mes projets ↓</a>
+  </div>
+
+  <div class="card etape" id="bloc-appel" data-etape="Présence" hidden>
     <h2 id="appel-titre">Question du jour</h2>
     <p class="hint">Répondez avant de rejoindre vos projets : c'est ce qui marque votre présence.</p>
     <div id="err-appel"></div>
     <div class="appel-choix" id="appel-choix"></div>
   </div>
 
-  <div class="card" id="bloc-humeur" hidden>
+  <div class="card etape" id="bloc-humeur" data-etape="Humeur" hidden>
     <h2 id="humeur-titre">Et aujourd'hui, comment ça va ?</h2>
     <p class="hint">Cette réponse ne compte pas dans vos résultats. Elle me dit juste dans quel état vous démarrez.</p>
     <div id="err-humeur"></div>
     <div class="appel-choix" id="humeur-choix"></div>
   </div>
 
-  <div class="card" id="bloc-connaissance" hidden>
+  <div class="card etape" id="bloc-connaissance" data-etape="Faisons connaissance" hidden>
     <h2>Faisons connaissance</h2>
     <p class="hint">Quelques questions posées une seule fois dans l'année. Il n'y a
       pas de bonne réponse : elles me servent à adapter les cours à ce que vous êtes.
@@ -595,7 +640,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="appel-choix" id="conn-choix"></div>
   </div>
 
-  <div class="card" id="bloc-stage" hidden>
+  <div class="card etape" id="bloc-stage" data-etape="Recherche de stage" hidden>
     <h2>Votre recherche de stage</h2>
     <p class="hint">Un point d'étape, à remettre à jour dès que quelque chose bouge :
       vous pouvez changer vos réponses autant de fois que nécessaire.
@@ -691,6 +736,15 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
 
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
     <p class="volet-hint">Deux questionnaires ponctuels : la rentrée du BTS1, la recherche de stage du BTS2. On les ouvre quelques fois dans l'année, pas chaque semaine.</p>
+  <div class="card" id="carte-qactifs" hidden>
+    <h2>Ce qui est proposé aux étudiants</h2>
+    <p class="hint">Un questionnaire éteint n'apparaît pas du tout dans l'espace
+      étudiant. Les réponses déjà données sont conservées : rallumer le remet
+      exactement où il en était.</p>
+    <div id="qa-liste"></div>
+    <div id="err-qactifs"></div>
+  </div>
+
   <div class="card" id="carte-connaissance" hidden>
     <h2>Faisons connaissance</h2>
     <p class="hint">Le questionnaire de rentrée. Aucune réponse n'est juste ou fausse :
@@ -878,6 +932,55 @@ function afficherProjets(conteneur, liste){
 // classe, avec une question par date. Y répondre, c'est être présent, et la
 // réponse suit le même chemin que toutes les autres — donc le tableau de bord
 // enseignant la voit sans rien connaître de l'appel.
+// ── Typographie française ─────────────────────────────────────────────────
+// « Dans « SI », que veut dire le I ? » se coupait avant le point
+// d'interrogation sur un écran de téléphone, laissant le « ? » seul sur sa
+// ligne. Une espace fine INSÉCABLE (U+202F) devant ? ! ; : et à l'intérieur
+// des guillemets français : la ponctuation ne quitte plus son mot.
+function typo(t){
+  return String(t == null ? "" : t)
+    .replace(/\s*([?!;:])/g, "\u202f$1")
+    .replace(/«\s*/g, "«\u202f")
+    .replace(/\s*»/g, "\u202f»");
+}
+
+// ── La file d'attente de l'étudiant ───────────────────────────────────────
+// Quatre cartes possibles avant « Vos projets ». Empilées, elles ne disent ni
+// combien il en reste, ni laquelle est faite. Chaque carte porte donc son rang
+// et son état, et le bandeau du haut compte ce qui reste.
+var ETAPES = ["bloc-appel", "bloc-humeur", "bloc-connaissance", "bloc-stage"];
+
+function marquerEtape(id, fait){
+  var e = $(id);
+  if (e) e.setAttribute("data-fait", fait ? "oui" : "non");
+  majFile();
+}
+
+function majFile(){
+  var vus = ETAPES.map($).filter(function(e){ return e && !e.hidden; });
+  // Le rang se recalcule à chaque fois : selon la classe et le jour, il peut
+  // y avoir deux cartes ou quatre. Un « 3 » figé mentirait une fois sur deux.
+  vus.forEach(function(e, i){
+    var h = e.querySelector("h2");
+    if (h) h.setAttribute("data-n", i + 1);
+  });
+
+  var reste = vus.filter(function(e){ return e.getAttribute("data-fait") !== "oui"; });
+  var f = $("file-etu");
+  if (!f) return;
+  f.hidden = !vus.length;
+  $("file-reste").textContent = reste.length ? String(reste.length) : "✓";
+  // Pas d'énumération : à 390 px elle passait sur trois lignes, et les cartes
+  // juste en dessous portent déjà leur numéro et leur nom.
+  $("file-txt").textContent = reste.length
+    ? (reste.length > 1 ? "choses à faire avant vos projets" : "chose à faire avant vos projets")
+    : "Tout est fait. Bonne séance.";
+  // Le raccourci n'apparaît qu'une fois la présence marquée : c'est elle qui
+  // ne peut pas attendre, le reste peut se faire après.
+  var appel = $("bloc-appel");
+  $("file-saut").hidden = !(appel && (appel.hidden || appel.getAttribute("data-fait") === "oui"));
+}
+
 function proposerAppel(){
   var bloc = $("bloc-appel");
   bloc.hidden = true;
@@ -886,11 +989,12 @@ function proposerAppel(){
   sb.rpc("appel_du_jour").then(function(r){
     // Fonction pas encore déployée, ou pas d'appel aujourd'hui : on n'affiche
     // rien. L'espace étudiant reste utilisable, c'est le comportement d'avant.
-    if (!r || r.error || !r.data) { $("bloc-humeur").hidden = true; return; }
+    if (!r || r.error || !r.data) { $("bloc-humeur").hidden = true; majFile(); return; }
     var a = r.data;
 
     bloc.hidden = false;
-    $("appel-titre").textContent = a.intitule || "Question du jour";
+    $("appel-titre").textContent = typo(a.intitule || "Question du jour");
+    marquerEtape("bloc-appel", false);
     proposerHumeur(a.humeur, a.seance_id);
 
     if (a.repondu) { appelRepondu(a.ma_reponse, null); return; }
@@ -928,13 +1032,23 @@ function proposerConnaissance(){
 function rendreConnaissance(d){
   var bloc = $("bloc-connaissance");
   var reste = d.questions.filter(function(q){ return !q.ma_reponse; });
-  if (!reste.length) { bloc.hidden = true; return; }
+  // Tout est répondu : la carte reste, repliée sur une ligne verte. La faire
+  // disparaître laissait croire à un bogue — « il était là tout à l'heure ».
   bloc.hidden = false;
   erreur("err-conn", "");
+  marquerEtape("bloc-connaissance", !reste.length);
+  if (!reste.length) {
+    $("conn-avance").textContent = "";
+    $("conn-titre").textContent = "";
+    $("conn-choix").innerHTML = "";
+    erreur("err-conn", "C'est fait, merci — les " + d.questions.length +
+                       " questions sont répondues.", true);
+    return;
+  }
 
   var q = reste[0], faites = d.questions.length - reste.length;
   $("conn-avance").textContent = "Question " + (faites + 1) + " sur " + d.questions.length + ".";
-  $("conn-titre").textContent = q.intitule || q.question;
+  $("conn-titre").textContent = typo(q.intitule || q.question);
 
   var choix = $("conn-choix");
   choix.innerHTML = "";
@@ -985,6 +1099,9 @@ function proposerStage(){
 function rendreStage(d){
   $("bloc-stage").hidden = false;
   erreur("err-stage", "");
+  // Un point d'étape se révise : « à jour » n'est pas « terminé », mais du
+  // point de vue de la file c'est bien une chose de moins à faire aujourd'hui.
+  marquerEtape("bloc-stage", (d.faites || 0) >= d.total);
   $("stage-maj").textContent = d.faites
     ? "Vous avez répondu à " + d.faites + " question" + (d.faites > 1 ? "s" : "") +
       " sur " + d.total + "."
@@ -997,7 +1114,7 @@ function rendreStage(d){
     bloc.className = "st-q";
     var t = document.createElement("span");
     t.className = "cn-int";
-    t.textContent = q.intitule || q.question;
+    t.textContent = typo(q.intitule || q.question);
     bloc.appendChild(t);
 
     var opts = document.createElement("div");
@@ -1045,10 +1162,11 @@ function rendreStage(d){
 // lèveraient pas la main.
 function proposerHumeur(h, seanceId){
   var bloc = $("bloc-humeur");
-  if (!h) { bloc.hidden = true; return; }
+  if (!h) { bloc.hidden = true; majFile(); return; }
   bloc.hidden = false;
   erreur("err-humeur", "");
-  $("humeur-titre").textContent = h.intitule || "Et aujourd'hui, comment ça va ?";
+  $("humeur-titre").textContent = typo(h.intitule || "Et aujourd'hui, comment ça va ?");
+  marquerEtape("bloc-humeur", false);
 
   if (h.repondu) return humeurRepondue(h.ma_reponse, h.options);
 
@@ -1080,6 +1198,7 @@ function proposerHumeur(h, seanceId){
 
 function humeurRepondue(lettre, options){
   $("humeur-choix").innerHTML = "";
+  marquerEtape("bloc-humeur", true);
   var i = ["A","B","C","D"].indexOf(lettre);
   var dit = (options && i >= 0 && options[i]) ? " — " + options[i] : "";
   erreur("err-humeur", "C'est noté, merci" + dit + ".", true);
@@ -1148,6 +1267,7 @@ function repondreAppel(a, lettre){
 
 function appelRepondu(lettre, retour){
   $("appel-choix").innerHTML = "";
+  marquerEtape("bloc-appel", true);
   var texte = "Présence enregistrée" + (lettre ? " — vous avez répondu " + lettre + "." : ".");
   if (retour && typeof retour.correct === "boolean") {
     texte += retour.correct
@@ -2206,7 +2326,7 @@ function rendreQuestionConnaissance(c, q){
   z.className = "cn-q";
   var t = document.createElement("span");
   t.className = "cn-int";
-  t.textContent = q.intitule || q.question;
+  t.textContent = typo(q.intitule || q.question);
   z.appendChild(t);
 
   var lettres = ["A","B","C","D"], compte = q.compte || {}, qui = q.qui || {};
@@ -2982,6 +3102,90 @@ function chargerSeancesDe(classeId){
     });
 }
 
+// ── Quels questionnaires sont proposés aux étudiants ──────────────────────
+// L'état existait déjà — connaissance() et stage() filtrent sur `ouverte` —
+// mais il n'était visible nulle part : pour savoir si « Faisons connaissance »
+// était actif, il fallait ouvrir le SQL Editor. Ici on le voit, et on le change.
+function chargerQuestionnaires(){
+  var carte = $("carte-qactifs");
+  carte.hidden = true;
+  erreur("err-qactifs", "");
+  sb.rpc("questionnaires").then(function(r){
+    // Fonction pas encore déployée : la carte reste absente, comme les autres.
+    if (!r || r.error || !r.data || !r.data.ok) return;
+    rendreQuestionnaires(r.data.lignes || []);
+    carte.hidden = false;
+  });
+}
+
+function rendreQuestionnaires(lignes){
+  var z = $("qa-liste");
+  z.innerHTML = "";
+  if (!lignes.length) {
+    z.innerHTML = '<p class="hint" style="margin:0">Aucun questionnaire créé ' +
+      'pour vos classes.</p>';
+    return;
+  }
+  lignes.forEach(function(l){ z.appendChild(ligneQuestionnaire(l)); });
+}
+
+function ligneQuestionnaire(l){
+  var d = document.createElement("div");
+  d.className = "qa-l";
+  d.innerHTML = '<span class="qa-txt"><span class="qa-t"></span>' +
+                '<span class="qa-d"></span></span>' +
+                '<button class="qa-b" type="button"><span class="pt"></span>' +
+                '<span class="et"></span></button>';
+  d.querySelector(".qa-t").textContent = l.titre + " — " + l.nom;
+
+  // Ce qu'on veut savoir avant d'allumer : combien de questions, et si la
+  // classe l'a déjà fait. « 24 / 31 » se lit plus vite qu'une phrase.
+  var etat = l.questions + (l.questions > 1 ? " questions" : " question");
+  if (l.inscrits) {
+    etat += " · " + l.termines + " / " + l.inscrits + " terminé" +
+            (l.termines > 1 ? "s" : "");
+    if (l.commences > l.termines) {
+      etat += " · " + (l.commences - l.termines) + " en cours";
+    }
+  }
+  d.querySelector(".qa-d").textContent = etat;
+
+  var b = d.querySelector(".qa-b");
+  var poser = function(ouvert){
+    b.classList.toggle("on", !!ouvert);
+    b.querySelector(".et").textContent = ouvert ? "Proposé" : "Éteint";
+    b.setAttribute("aria-pressed", ouvert ? "true" : "false");
+    b.setAttribute("aria-label", (ouvert ? "Éteindre" : "Proposer") + " « " +
+                   l.titre + " » pour " + l.nom);
+  };
+  poser(l.ouvert);
+
+  b.addEventListener("click", function(){
+    var vise = !b.classList.contains("on");
+    b.disabled = true;
+    erreur("err-qactifs", "");
+    sb.rpc("ouvrir_questionnaire", { p_classe_id: Number(l.classe_id),
+                                     p_numero: Number(l.numero),
+                                     p_ouvert: vise }).then(function(r){
+      b.disabled = false;
+      if (!r || r.error || !r.data || !r.data.ok) {
+        erreur("err-qactifs", "Action refusée. Vérifiez que vous êtes bien " +
+                              "connecté en enseignant.");
+        return;
+      }
+      poser(vise);
+      erreur("err-qactifs", "« " + l.titre + " » " +
+             (vise ? "est maintenant proposé à " : "n'est plus proposé à ") +
+             l.nom + ".", true);
+      // Les cartes de dépouillement suivent : éteindre un questionnaire, c'est
+      // aussi cesser d'en attendre des réponses.
+      chargerConnaissance(suivi.classesConnues || []);
+      chargerStage(suivi.classesConnues || []);
+    });
+  });
+  return d;
+}
+
 // ── Classes réelles et classes de démonstration ───────────────────────────
 // Un code qui commence par DEMO désigne une classe de démonstration : elle
 // sert à montrer le portail sans toucher aux vraies classes. C'est déjà la
@@ -3035,6 +3239,7 @@ function ouvrirEspaceEnseignant(){
     chargerAppelToutesClasses(classes);
     chargerConnaissance(classes);
     chargerStage(classes);
+    chargerQuestionnaires();
     chargerAFaire();
     chargerSemestre();
     if (classes.length) chargerSeancesDe(classes[0].id);
