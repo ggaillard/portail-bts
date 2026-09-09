@@ -334,6 +334,42 @@ que si la ligne n'avait jamais été renseignée.
 
 ---
 
+## L'appel — ce qu'il montre, et pourquoi
+
+Trois défauts corrigés le 09/09, tous visibles à l'écran :
+
+- **Le compte d'essai n° 99 comptait comme absent.** Tous les jours, pour
+  toutes les classes : « 8 absents » quand il y en avait 7, et un effectif de
+  32 pour 31 étudiants. Le filtre `numero <> '99'` existe partout ailleurs et
+  manquait dans `appel_classe()` seule. **Le vérifier en ajoutant toute
+  fonction qui compte des étudiants.**
+- **Aucun dénominateur.** « 24 présents » ne dit pas s'il en manque un ou
+  douze. `appel_classe()` rend `inscrits` ; la carte affiche « 24 / 31 ».
+- **Aucune mémoire.** Une absence isolée et une quatrième d'affilée demandent
+  deux gestes différents. La fonction rend maintenant, pour chaque absent,
+  `manquees` / `sur` (combien d'appels posés il n'a pas honorés) et `depuis`
+  (jours depuis sa dernière venue), ou `jamais`. La carte en tire un bloc
+  « Absences qui se répètent », à partir de deux absences.
+
+**Les prénoms.** Ils sont affichés **collés aux numéros** dans la ligne rouge,
+qui est celle qu'on lit à voix haute : elle doit se suffire. `prenomSeul()`
+prend le dernier mot qui n'est pas tout en majuscules — les listes collées
+viennent en « NOM Prénom » — et à défaut la chaîne entière. **Rien n'est
+inventé, et rien n'entre en base :** `appel_classe()` ne rend que des numéros.
+
+Conséquence directe de ce choix : les noms vivent dans le `localStorage` du
+navigateur, donc **chaque appareil a besoin de sa copie** — le poste de la
+salle, puis le téléphone. Le portail le dit lui-même quand une classe n'a pas
+de noms chargés, avec le bouton pour les coller. Sans ce message, on croyait la
+carte cassée plutôt qu'à une liste jamais collée.
+
+La rangée de pastilles d'absents a disparu : elle répétait mot pour mot la
+ligne rouge. Les arrivées, elles, sont **repliées sur un téléphone** et
+dépliées sur grand écran — vingt-quatre lignes à franchir avant d'atteindre ce
+qu'on cherche vraiment, qui manque.
+
+---
+
 ## Publiée, ouverte : deux choses différentes
 
 Le 09/09, la séance 1 faite avec le BTS1 — et la séance 2 déjà lisible sur le
@@ -373,6 +409,68 @@ il faut les deux :
 **La session anonyme est établie AVANT de lire les publications.** Sans elle la
 requête peut échouer, la liste revient vide, et rien n'est élagué : le défaut
 reviendrait à l'identique, en silence.
+
+---
+
+## Le contrôle d'acquis — avant la séance, pas après
+
+Avant chaque séance et chaque TP, les étudiants répondent sur les notions déjà
+vues. **Deux questions par notion**, et c'est l'écart entre les deux qui vaut
+le détour :
+
+| | Ce qu'elle mesure |
+|---|---|
+| `pre-NN` | Ce qu'ils **savent**. Quatre options, une bonne. |
+| `pre-NN-c` | Ce qu'ils **croient savoir**. « Je saurais l'expliquer » … « Je ne sais plus ». `bonne_reponse = 'Z'`. |
+
+Se tromper en étant sûr n'appelle pas le même geste que douter en ayant juste.
+Un chiffre unique confondrait les deux. Le tableau de bord affiche donc
+`surs_et_faux` **avec les numéros** : ceux-là ne poseront pas de question, ils
+ne savent pas qu'ils ont tort.
+
+**Le contrôle appartient à la séance qu'il précède** — ses questions sont des
+corrigés de cette séance. Pas un questionnaire de la bibliothèque : la bande
+90-98 n'aurait pas tenu quatorze séances, et rien n'aurait relié le contrôle à
+son heure.
+
+**Le préfixe `pre-` n'est pas décoratif.** C'est lui qui tient le contrôle hors
+des chiffres du quiz de fin. Quatre endroits font le tri, et il faut les
+quatre — trois en SQL, un dans le portail :
+
+| Où | Sinon |
+|---|---|
+| `semestre()` | « 83 % juste » mélangerait ce qu'ils savaient avant et ce qu'ils ont appris pendant |
+| `questions_seance()` | « Réussite par question » listerait vingt questions pour une séance qui en pose dix |
+| `preflight_seance()` | « 10 questions corrigées » en annoncerait vingt |
+| `chargerStats()` | Une progression de 20/10, et un taux de réussite faux |
+
+**Toute nouvelle fonction qui compte des questions ou des réponses de séance
+doit exclure `pre-%`.**
+
+**Trois états, trois interrupteurs**, et ils ne se déduisent pas l'un de
+l'autre : `controle_ouvert` (le contrôle est proposé — **avant** la séance),
+`publiee` (la trace écrite est lisible), `ouverte` (les réponses sont
+acceptées).
+
+Les fonctions : `creer_controle(seance_id, texte)` — une notion par ligne,
+options séparées par « · », **une étoile devant la bonne** ; `ouvrir_controle()` ;
+`mes_controles()` côté étudiant ; `controle_seance()` côté enseignant.
+
+Règles qui ne se devinent pas :
+
+- **Une ligne sans étoile, ou avec deux, fait échouer toute la création**, en
+  disant laquelle. Un contrôle dont une notion n'a pas de bonne réponse
+  compterait tout le monde faux sans que personne ne s'en aperçoive.
+- **Réécrire un contrôle est refusé dès qu'une réponse existe** — le réécrire
+  effacerait les réponses. Éteindre reste possible, et ne perd rien.
+- **Aucune correction n'est montrée à l'étudiant.** Dire « faux » avant la
+  séance transforme un point de départ en sanction, et fausse la question de
+  certitude qui suit immédiatement.
+- **Rien ne bloque.** La séance s'ouvre même sans le contrôle ; le tableau de
+  bord nomme ceux qui ne l'ont pas fait. Un blocage transformerait un oubli en
+  incident à gérer en début d'heure.
+- La carte passe **en tête de la file étudiante**, avant les questionnaires :
+  la proposer plus bas reviendrait à la proposer trop tard.
 
 ---
 

@@ -145,6 +145,66 @@ tr:last-child td{border-bottom:0}
 .ac-nums{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.15rem 0 .5rem;
   padding:.45rem .7rem;border-radius:8px;background:#FBE6E6;border:1px solid #F0C9C9}
 .ac-nums .lbl{font-size:.82rem;color:#963232;flex:0 0 auto}
+/* Chaque absent : le numéro en gros, le prénom collé dessous ou à côté. La
+   ligne se lit à voix haute — elle doit se suffire, sans aller chercher les
+   pastilles plus bas. */
+.ac-u{display:inline-flex;align-items:baseline;gap:.32rem;margin-right:1rem}
+.ac-u b{font-weight:600}
+.ac-pn{font-family:var(--f-sans);font-style:normal;font-size:.82rem;font-weight:500;
+  color:#7d3c3c;letter-spacing:0}
+
+/* Ceux dont l'absence se répète. Une absence isolée et une quatrième
+   d'affilée demandent deux gestes différents. */
+.ac-suivi{margin:.1rem 0 .6rem;padding:.6rem .8rem;border-radius:8px;
+  background:var(--signal-soft);border:1px solid rgba(180,83,9,.18)}
+.ac-suivi > b{display:block;font-size:.83rem;color:var(--signal);margin-bottom:.3rem}
+.ac-suivi ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.15rem}
+.ac-suivi li{font-size:.87rem;line-height:1.45}
+.ac-suivi li b{font-family:var(--f-mono);font-weight:600}
+.ac-suivi li span{color:var(--ink-soft)}
+
+/* Le contrôle d'entrée se distingue des questionnaires : il précède la
+   séance au lieu de l'accompagner, et il porte une bonne réponse. Un liseré
+   suffit à le dire ; une couleur d'alerte le ferait passer pour une note. */
+.ct-bloc{margin:1rem 0;padding:.9rem 1rem;border:1px solid var(--rule-soft);
+  border-radius:10px;background:var(--surface-alt)}
+.ct-tete{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:.3rem}
+.ct-tete .qa-b{margin-left:auto}
+.ct-l{padding:.55rem 0;border-top:1px solid var(--rule-soft)}
+.ct-l:first-child{border-top:0}
+.ct-i{font-size:.92rem;font-weight:600}
+.ct-b{display:flex;align-items:center;gap:.5rem;margin-top:.25rem;flex-wrap:wrap}
+.ct-jauge{flex:1 1 8rem;min-width:6rem;height:7px;border-radius:4px;
+  background:var(--rule-soft);overflow:hidden;display:flex}
+.ct-jauge i{display:block;height:100%}
+.ct-jauge .ok{background:var(--ok)}
+.ct-jauge .ko{background:#963232}
+.ct-c{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);flex:0 0 auto}
+/* Le seul chiffre qui décide par quoi commencer : ceux qui se trompent en
+   étant sûrs ne poseront pas de question, ils ne savent pas qu'ils ont tort. */
+.ct-alerte{display:block;margin-top:.2rem;font-size:.83rem;color:var(--signal)}
+.ct-alerte b{font-family:var(--f-mono)}
+#ct-texte{width:100%;font-family:var(--f-mono);font-size:.88rem;line-height:1.6;
+  padding:.55rem .7rem;border:1px solid var(--rule);border-radius:9px;
+  background:var(--surface);color:var(--ink);resize:vertical}
+#ct-neuf{margin-top:.8rem;border-top:1px solid var(--rule-soft);padding-top:.6rem}
+#ct-neuf > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.4rem 0;
+  min-height:44px;display:flex;align-items:center}
+
+.ct-carte{border-left:3px solid var(--accent)}
+.ct-av{font-weight:600}
+/* Les quatre degrés de certitude vont du plus sûr au moins sûr : la nuance de
+   gris suit la même pente, pour qu'on lise l'échelle sans la relire. */
+.appel-opt.ct-sur:nth-child(1){border-color:var(--ok)}
+.appel-opt.ct-sur:nth-child(2){border-color:var(--rule)}
+.appel-opt.ct-sur:nth-child(3){border-color:var(--signal)}
+.appel-opt.ct-sur:nth-child(4){border-color:#963232}
+
+.ac-pre{margin:.2rem 0 .5rem}
+.ac-pre > summary{cursor:pointer;font-size:.85rem;color:var(--ink-soft);
+  padding:.5rem 0;min-height:44px;display:flex;align-items:center}
+.ac-pre > summary::marker{color:var(--ink-faint)}
+
 .ac-nums .nums{font-family:var(--f-mono);font-size:1.45rem;font-weight:600;color:#963232;
   letter-spacing:.06em;line-height:1.25}
 .ac-nums .btn-mini{margin-left:auto;font-size:.78rem;padding:.2rem .5rem;border-radius:6px;
@@ -687,6 +747,8 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <div class="appel-choix" id="humeur-choix"></div>
   </div>
 
+  <div id="controles-etu"></div>
+
   <div id="questionnaires-etu"></div>
 
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
@@ -726,6 +788,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   <div class="card" id="carte-appel" hidden>
     <h2>Appel du jour</h2>
     <p class="hint">Toutes vos classes, sans changer de sélection.</p>
+    <div id="ac-sans-noms" hidden></div>
     <div id="appel-classes"></div>
     <div class="pick" style="margin-top:.8rem">
       <button class="btn btn-sec" id="b-copier-abs" type="button">Copier tous les absents</button>
@@ -843,6 +906,31 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
         <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
       </div>
       <div id="err-prevol"></div>
+    </div>
+
+    <!-- Le contrôle d'entrée se lit AVANT la séance : il vient donc juste
+         après le pré-vol, et non au milieu des chiffres de fin d'heure. -->
+    <div id="bloc-controle" class="ct-bloc" hidden>
+      <div class="ct-tete">
+        <h3 class="sous-titre" style="margin:0">Contrôle d'entrée</h3>
+        <button class="qa-b" id="b-controle" type="button">
+          <span class="pt"></span><span class="et"></span></button>
+      </div>
+      <p class="sous-hint" id="ct-resume"></p>
+      <div id="ct-lignes"></div>
+      <div id="err-controle"></div>
+      <details id="ct-neuf">
+        <summary>Écrire le contrôle de cette séance</summary>
+        <p class="sous-hint">Une notion par ligne : l'intitulé puis deux à quatre
+          options séparées par « · ». <b>Une étoile devant la bonne option.</b>
+          La question de certitude est ajoutée toute seule après chaque notion.</p>
+        <textarea id="ct-texte" rows="6" spellcheck="true"
+          placeholder="Que signifie un code 404 ? · la page a changé · *la ressource est introuvable · le serveur a planté · l'accès est refusé&#10;Qui parle en premier dans un échange HTTP ? · *le client · le serveur · les deux · aucun"></textarea>
+        <div class="pick" style="margin-top:.7rem">
+          <button class="btn" id="b-ct-creer" type="button">Enregistrer le contrôle</button>
+        </div>
+        <div id="err-ct-neuf"></div>
+      </details>
     </div>
 
     <div id="stats-zone" hidden>
@@ -1196,6 +1284,110 @@ function signalerSessionPerimee(err){
   if (b) { b.classList.add("btn"); b.classList.remove("btn-sec"); }
 }
 
+// ── Le contrôle d'acquis, avant la séance ─────────────────────────────────
+// Deux questions par notion, dans cet ordre : ce qu'ils savent, puis ce qu'ils
+// croient savoir. La seconde n'a de valeur que posée APRÈS la première — la
+// poser avant reviendrait à demander une note de confiance dans le vide.
+//
+// Il passe en tête de la file parce qu'il se fait avant la séance : le mettre
+// sous les questionnaires reviendrait à le proposer une fois qu'il est trop
+// tard.
+function chargerControlesEtu(){
+  $("controles-etu").innerHTML = "";
+  sb.rpc("mes_controles").then(function(r){
+    // Fonction pas déployée : rien ne s'affiche, comme avant qu'elle existe.
+    if (!r || r.error || !r.data || !r.data.ok) { majFile(); return; }
+    rendreControlesEtu(r.data.liste || []);
+  });
+}
+
+function rendreControlesEtu(liste){
+  var z = $("controles-etu");
+  z.innerHTML = "";
+  (liste || []).forEach(function(d){
+    if (!d.questions || !d.questions.length) return;
+    z.appendChild(carteControle(d));
+    rendreControle(d);
+  });
+  majFile();
+}
+
+function carteControle(d){
+  var c = document.createElement("div");
+  c.className = "card etape ct-carte";
+  c.id = "ct-" + d.seance_id;
+  c.setAttribute("data-etape", "Avant la séance " + d.numero);
+  c.innerHTML = '<h2></h2><p class="hint"></p><div id="err-ct-' + d.seance_id + '"></div>' +
+                '<p class="cn-int"></p><div class="appel-choix"></div>';
+  c.querySelector("h2").textContent = "Avant de commencer — séance " + d.numero;
+  var h = c.querySelector(".hint");
+  h.textContent = "Quelques notions déjà vues, à retrouver avant la séance. " +
+    "Répondez, puis dites si vous vous sentiez sûr : c'est l'écart entre les " +
+    "deux qui m'indique par où reprendre. ";
+  var av = document.createElement("b");
+  av.className = "ct-av";
+  h.appendChild(av);
+  return c;
+}
+
+function zoneCt(d, sel){ return $("ct-" + d.seance_id).querySelector(sel); }
+
+function rendreControle(d){
+  var errId = "err-ct-" + d.seance_id;
+  var reste = d.questions.filter(function(q){ return !q.ma_reponse; });
+  marquerEtape("ct-" + d.seance_id, !reste.length);
+
+  if (!reste.length) {
+    zoneCt(d, ".ct-av").textContent = "";
+    zoneCt(d, ".cn-int").textContent = "";
+    zoneCt(d, ".appel-choix").innerHTML = "";
+    erreur(errId, "C'est fait, merci. Rien de tout cela ne compte dans vos " +
+                  "résultats : c'est un point de départ, pas une note.", true);
+    return;
+  }
+  erreur(errId, "");
+
+  // Les questions arrivent dans l'ordre des clés : pre-01, pre-01-c, pre-02…
+  // La certitude suit donc toujours sa notion, sans qu'on ait à les apparier.
+  var q = reste[0];
+  var faites = d.questions.length - reste.length;
+  var notions = Math.round(d.questions.length / 2);
+  var rang = Math.floor(faites / 2) + 1;
+  var certitude = /-c$/.test(q.question || "");
+  zoneCt(d, ".ct-av").textContent = "Notion " + Math.min(rang, notions) + " sur " + notions +
+                                    (certitude ? " — votre ressenti." : ".");
+  zoneCt(d, ".cn-int").textContent = typo(q.intitule || q.question);
+
+  var choix = zoneCt(d, ".appel-choix");
+  choix.innerHTML = "";
+  ["A","B","C","D"].forEach(function(lettre, i){
+    if (!q.options || !q.options[i]) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec appel-opt" + (certitude ? " ct-sur" : "");
+    b.textContent = q.options[i];
+    b.addEventListener("click", function(){
+      var boutons = choix.querySelectorAll("button");
+      Array.prototype.forEach.call(boutons, function(x){ x.disabled = true; });
+      sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
+                           p_reponse: lettre }).then(function(rr){
+        if (rr.error) {
+          erreur(errId, texteEnvoi(rr.error));
+          signalerSessionPerimee(rr.error);
+          Array.prototype.forEach.call(boutons, function(x){ x.disabled = false; });
+          return;
+        }
+        // Aucune correction affichée, volontairement : dire « faux » avant la
+        // séance transforme un point de départ en sanction, et fausse la
+        // question de certitude qui suit.
+        q.ma_reponse = lettre;
+        rendreControle(d);
+      });
+    });
+    choix.appendChild(b);
+  });
+}
+
 // ── Les questionnaires de l'étudiant ──────────────────────────────────────
 // Un questionnaire n'est plus un numéro de séance écrit en dur : c'est une
 // séance de la bande 90-98 rattachée à un modèle. mes_questionnaires() les
@@ -1436,6 +1628,7 @@ function ouvrirEspaceEtudiant(moi){
 
   if (!moi.avatar) proposerAvatar(moi);
   proposerAppel();
+  chargerControlesEtu();
   chargerQuestionnairesEtu();
 
   sb.from("projets").select("titre,description,url,icone,ordre")
@@ -1528,7 +1721,14 @@ function chargerStats(){
           : r;
       })
   ]).then(function(res){
-    var eleves = res[0].data || [], reps = res[1].data || [], cor = res[2].data || [];
+    var eleves = res[0].data || [];
+    // Le contrôle d'entrée vit sur la même séance, sous des clés « pre- ».
+    // L'inclure ferait compter deux fois : une progression de 20/10, et un
+    // taux de réussite qui mélange ce qu'ils savaient avant et ce qu'ils ont
+    // appris pendant. Les fonctions SQL font le même tri de leur côté.
+    var horsControle = function(x){ return !/^pre-/.test(x.question || ""); };
+    var reps = (res[1].data || []).filter(horsControle);
+    var cor  = (res[2].data || []).filter(horsControle);
 
     var par = {};
     reps.forEach(function(r){
@@ -2246,12 +2446,53 @@ function chargerAppelToutesClasses(classes){
       }
       if (restant === 0) {
         carte.hidden = affiches === 0;
+        signalerNomsAbsents(classes);
         // Le nombre d'absents s'affiche sur l'onglet : c'est le seul chiffre
         // qu'on veut connaître sans avoir à ouvrir quoi que ce soit.
         pastilleAppel(affiches === 0 ? null : absentsTotal);
       }
     });
   });
+}
+
+// Les prénoms vivent dans le navigateur, jamais en base. Conséquence directe :
+// chaque appareil doit les recevoir une fois — le poste de la salle, puis le
+// téléphone. Sans eux, l'appel se fait au numéro et rien ne l'expliquait : on
+// croyait à une carte cassée plutôt qu'à une liste jamais collée.
+function signalerNomsAbsents(classes){
+  var z = $("ac-sans-noms");
+  if (!z) return;
+  var noms = lireNoms();
+  var sans = (classes || []).filter(function(c){
+    var m = noms[c.code];
+    return !m || !Object.keys(m).length;
+  });
+  z.innerHTML = "";
+  z.hidden = !sans.length;
+  if (!sans.length) return;
+
+  var d = document.createElement("div");
+  d.className = "msg";
+  d.textContent = (sans.length === 1
+    ? "Aucun nom chargé pour " + (sans[0].nom || sans[0].code) + " : "
+    : "Aucun nom chargé pour " + sans.length + " classes : ") +
+    "l'appel s'affiche au numéro seul. Les noms restent dans ce navigateur, " +
+    "donc chaque appareil a besoin de sa copie — le poste de la salle, puis le téléphone.";
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "btn btn-sec";
+  b.style.marginTop = ".5rem";
+  b.textContent = "Coller les noms maintenant";
+  b.addEventListener("click", function(){
+    var det = $("bloc-noms");
+    det.hidden = false;
+    det.open = true;
+    det.scrollIntoView({ block: "center" });
+    $("noms-saisie").focus();
+  });
+  d.appendChild(document.createElement("br"));
+  d.appendChild(b);
+  z.appendChild(d);
 }
 
 // Aucun appel lisible : pas de pastille du tout. Zéro absent : pas de pastille
@@ -2285,35 +2526,142 @@ function remplirAppelClasse(bloc, c, a){
   q.textContent = a.intitule || "";
 
   var pre = a.presents || [], abs = a.absents || [];
+
+  // « 24 / 31 » se lit sans réfléchir ; « 24 présents » ne dit pas s'il en
+  // manque un ou douze.
   var compte = document.createElement("p");
   compte.className = "ac-compte";
   compte.innerHTML = "<b></b> · <span></span>";
-  compte.querySelector("b").textContent = pre.length + (pre.length > 1 ? " présents" : " présent");
-  compte.querySelector("span").textContent = abs.length + (abs.length > 1 ? " absents" : " absent");
+  compte.querySelector("b").textContent = a.inscrits
+    ? pre.length + " / " + a.inscrits + " présents"
+    : pre.length + (pre.length > 1 ? " présents" : " présent");
+  compte.querySelector("span").textContent =
+    abs.length ? (abs.length + (abs.length > 1 ? " absents" : " absent")) : "personne ne manque";
   bloc.appendChild(compte);
-  bloc.appendChild(ligneNumeros(c, abs));
 
+  // Les numéros en gros, avec le prénom collé à chacun quand il est connu.
+  // C'est la ligne qu'on lit à voix haute : elle doit se suffire.
+  bloc.appendChild(ligneAbsents(c, abs));
+
+  // Ceux dont l'absence se répète. Une absence isolée et une quatrième
+  // d'affilée demandent deux gestes différents ; la carte les distinguait
+  // pas du tout.
+  var suivis = abs.filter(function(x){ return (Number(x.manquees) || 0) >= 2; });
+  if (suivis.length) bloc.appendChild(blocAssiduite(c, suivis, a));
+
+  // Les arrivées : une grille de six colonnes sur un écran large, une colonne
+  // de vingt-quatre lignes sur un téléphone. Repliées là, dépliées ici — ce
+  // qu'on cherche en séance, c'est qui manque, pas qui est venu.
+  var det = document.createElement("details");
+  det.className = "ac-pre";
+  det.open = window.matchMedia("(min-width: 40rem)").matches;
+  var som = document.createElement("summary");
+  som.textContent = pre.length + (pre.length > 1 ? " arrivées" : " arrivée") +
+                    (pre.length ? " — de " + pre[0].heure + " à " + pre[pre.length - 1].heure : "");
+  det.appendChild(som);
   var zp = document.createElement("div");
   zp.className = "pastilles";
-  bloc.appendChild(zp);
+  det.appendChild(zp);
+  bloc.appendChild(det);
   pastilles(zp, pre, "pre", function(x){
     var n = nomDe(c.code, x.numero);
     return x.numero + " " + (x.avatar || "") + " " + x.heure + (n ? " · " + n : "");
   });
 
-  if (abs.length) {
-    var za = document.createElement("div");
-    za.className = "pastilles";
-    bloc.appendChild(za);
-    pastilles(za, abs, "abs", function(x){
-      var n = nomDe(c.code, x.numero);
-      return x.numero + " " + (x.avatar || "") + (n ? " · " + n : "");
-    });
-  }
+  // La rangée de pastilles d'absents a disparu : elle répétait mot pour mot
+  // la ligne rouge du dessus, prénoms compris.
 
   var zh = document.createElement("div");
   bloc.appendChild(zh);
   rendreHumeurClasse(zh, a);
+}
+
+// « 04 Marwan   05 Sofia   07 Achille » — le numéro reste en gros, le prénom
+// se glisse à côté, plus petit. Sans noms chargés dans ce navigateur, on
+// retombe sur les numéros seuls et on dit comment y remédier.
+function ligneAbsents(c, abs, libelle, vide){
+  var nums = numerosAbsents(abs);
+  var d = document.createElement("div");
+  d.className = "ac-nums" + (nums.length ? "" : " vide");
+
+  var lbl = document.createElement("span");
+  lbl.className = "lbl";
+  lbl.textContent = nums.length ? (libelle || "Absents") : (libelle || "Appel");
+  d.appendChild(lbl);
+
+  var v = document.createElement("span");
+  v.className = "nums";
+  if (!nums.length) {
+    v.textContent = vide || "Personne ne manque.";
+  } else {
+    nums.forEach(function(n){
+      var u = document.createElement("span");
+      u.className = "ac-u";
+      var num = document.createElement("b");
+      num.textContent = n;
+      u.appendChild(num);
+      var nom = nomDe(c.code, n);
+      if (nom) {
+        var pn = document.createElement("i");
+        pn.className = "ac-pn";
+        pn.textContent = prenomSeul(nom);
+        u.appendChild(pn);
+      }
+      v.appendChild(u);
+    });
+  }
+  d.appendChild(v);
+
+  if (nums.length) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn-mini";
+    b.textContent = "Copier";
+    b.addEventListener("click", function(){ copierTexte(nums.join(", "), b); });
+    d.appendChild(b);
+  }
+  return d;
+}
+
+// Les listes collées viennent souvent en « NOM Prénom ». À l'oral on appelle
+// par le prénom : on prend le dernier mot qui n'est pas tout en majuscules,
+// et à défaut la chaîne entière — jamais rien d'inventé.
+function prenomSeul(nom){
+  var mots = String(nom || "").trim().split(/\s+/).filter(Boolean);
+  if (!mots.length) return "";
+  for (var i = mots.length - 1; i >= 0; i--) {
+    if (mots[i] !== mots[i].toUpperCase()) return mots[i];
+  }
+  return mots[mots.length - 1];
+}
+
+// « 04 Marwan — 3 absences sur 4, pas vu depuis 7 jours ». La phrase dit le
+// geste : trois absences sur quatre, ce n'est plus un oubli.
+function blocAssiduite(c, liste, a){
+  var d = document.createElement("div");
+  d.className = "ac-suivi";
+  var t = document.createElement("b");
+  t.textContent = "Absences qui se répètent";
+  d.appendChild(t);
+  var ul = document.createElement("ul");
+  liste.sort(function(x, y){ return (y.manquees || 0) - (x.manquees || 0); });
+  liste.forEach(function(x){
+    var li = document.createElement("li");
+    var nom = nomDe(c.code, x.numero);
+    var bouts = [x.manquees + " absences sur " + (x.sur || a.appels_poses || x.manquees)];
+    if (x.jamais) bouts.push("jamais venu");
+    else if (x.depuis !== null && x.depuis !== undefined) {
+      bouts.push(x.depuis === 0 ? "vu aujourd'hui"
+               : x.depuis === 1 ? "pas vu depuis hier"
+               : "pas vu depuis " + x.depuis + " jours");
+    }
+    li.innerHTML = "<b></b><span></span>";
+    li.querySelector("b").textContent = x.numero + (nom ? " " + prenomSeul(nom) : "");
+    li.querySelector("span").textContent = " — " + bouts.join(", ");
+    ul.appendChild(li);
+  });
+  d.appendChild(ul);
+  return d;
 }
 
 // Les numéros seuls, gros et espacés : à l'appel on lit des numéros, pas des
@@ -2974,8 +3322,179 @@ function chargerPrevol(){
     rendrePrevol(r.data);
     suivi.projet = null;
     if (r.data.nature === "projet") chargerProjet();
+    chargerControle();
   });
 }
+
+// Le code de la classe sélectionnée : c'est lui qui sert de clé aux prénoms
+// rangés dans ce navigateur.
+function codeClasseCourante(){
+  var l = (suivi.classesConnues || []).filter(function(c){
+    return String(c.id) === String(suivi.classeId);
+  });
+  return l.length ? l[0].code : "";
+}
+
+// ── Le contrôle d'entrée, côté enseignant ─────────────────────────────────
+// Il répond à une question que le pré-vol ne pose pas : « qu'est-ce qu'ils
+// ont gardé de la dernière fois ? ». On le lit avant de commencer, pas après.
+function chargerControle(){
+  var bloc = $("bloc-controle");
+  bloc.hidden = true;
+  if (!suivi.seanceId) return;
+  // Les questionnaires et l'appel n'ont pas de notions à réviser avant.
+  if (suivi.prevol && Number(suivi.prevol.seance) >= 90) return;
+
+  sb.rpc("controle_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    // Fonction pas déployée : le bloc reste absent, comme les autres cartes.
+    if (!r || r.error || !r.data || !r.data.ok) return;
+    suivi.controle = r.data;
+    rendreControleEns(r.data);
+    bloc.hidden = false;
+  });
+}
+
+function rendreControleEns(d){
+  var b = $("b-controle");
+  b.classList.toggle("on", !!d.ouvert);
+  b.querySelector(".et").textContent = d.ouvert ? "Proposé" : "Éteint";
+  b.setAttribute("aria-pressed", d.ouvert ? "true" : "false");
+  b.disabled = !d.notions;
+  b.title = d.notions ? "" : "Écrivez d'abord les notions à contrôler.";
+
+  var r = $("ct-resume");
+  if (!d.notions) {
+    r.textContent = "Aucune notion pour cette séance. Écrivez-les ci-dessous : " +
+      "les étudiants y répondront avant de venir.";
+    $("ct-lignes").innerHTML = "";
+    $("ct-neuf").open = true;
+    return;
+  }
+  var bouts = [d.notions + (d.notions > 1 ? " notions" : " notion"),
+               d.termines + " / " + d.inscrits + " ont répondu"];
+  r.textContent = bouts.join(" · ");
+  $("ct-neuf").open = false;
+
+  var z = $("ct-lignes");
+  z.innerHTML = "";
+  (d.lignes || []).forEach(function(l){ z.appendChild(ligneControle(l)); });
+
+  // Ceux qui ne l'ont pas fait : les numéros, comme pour l'appel. Rien ne les
+  // bloque, mais on ne peut pas s'appuyer sur un contrôle que le tiers de la
+  // classe n'a pas rempli.
+  var manquants = (d.a_relancer || []).map(function(n){ return { numero: n }; });
+  if (manquants.length) {
+    z.appendChild(ligneAbsents({ code: codeClasseCourante() },
+      manquants, "Pas encore fait", "Tout le monde l'a fait."));
+  }
+}
+
+// Une notion : ce qu'ils ont répondu, et ce qu'ils disaient savoir. Les moins
+// réussies d'abord — la fonction les rend déjà dans cet ordre.
+function ligneControle(l){
+  var d = document.createElement("div");
+  d.className = "ct-l";
+  var i = document.createElement("div");
+  i.className = "ct-i";
+  i.textContent = typo(l.intitule || l.cle);
+  d.appendChild(i);
+
+  var rep = Number(l.repondants) || 0, justes = Number(l.justes) || 0;
+  var pct = rep ? Math.round(justes * 100 / rep) : null;
+
+  var b = document.createElement("div");
+  b.className = "ct-b";
+  var j = document.createElement("span");
+  j.className = "ct-jauge";
+  if (rep) {
+    var ok = document.createElement("i");
+    ok.className = "ok";
+    ok.style.width = (justes * 100 / rep) + "%";
+    j.appendChild(ok);
+    var ko = document.createElement("i");
+    ko.className = "ko";
+    ko.style.width = ((rep - justes) * 100 / rep) + "%";
+    j.appendChild(ko);
+  }
+  b.appendChild(j);
+  var c = document.createElement("span");
+  c.className = "ct-c";
+  c.textContent = rep ? (justes + "/" + rep + " · " + pct + " %") : "aucune réponse";
+  b.appendChild(c);
+  d.appendChild(b);
+
+  // L'écart entre savoir et croire savoir. C'est lui qui dit par quoi
+  // commencer : se tromper en étant sûr n'appelle pas le même geste que
+  // douter en ayant juste.
+  var sf = Number(l.surs_et_faux) || 0, jd = Number(l.justes_mais_doutent) || 0;
+  if (sf || jd) {
+    var a = document.createElement("span");
+    a.className = "ct-alerte";
+    var bouts = [];
+    if (sf) {
+      var qui = (l.numeros_surs_et_faux || []).join(" ");
+      bouts.push("⚠️ " + sf + (sf > 1 ? " se trompent" : " se trompe") +
+                 " en étant sûr" + (sf > 1 ? "s" : "") + (qui ? " — " + qui : ""));
+    }
+    if (jd) bouts.push(jd + (jd > 1 ? " ont juste mais doutent" : " a juste mais doute"));
+    a.textContent = bouts.join(" · ");
+    d.appendChild(a);
+  }
+  return d;
+}
+
+$("b-controle").addEventListener("click", function(){
+  var b = $("b-controle");
+  var vise = !b.classList.contains("on");
+  b.disabled = true;
+  erreur("err-controle", "");
+  sb.rpc("ouvrir_controle", { p_seance_id: Number(suivi.seanceId),
+                              p_ouvert: vise }).then(function(r){
+    b.disabled = false;
+    if (!r || r.error || !r.data || !r.data.ok) {
+      erreur("err-controle", (r && r.data && r.data.motif === "vide")
+        ? "Écrivez d'abord les notions à contrôler."
+        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      return;
+    }
+    erreur("err-controle", vise
+      ? "Le contrôle est proposé aux étudiants. Il apparaît en tête de leur écran."
+      : "Le contrôle n'est plus proposé. Les réponses déjà données sont conservées.", true);
+    chargerControle();
+  });
+});
+
+$("b-ct-creer").addEventListener("click", function(){
+  var texte = $("ct-texte").value;
+  erreur("err-ct-neuf", "");
+  if (!texte.trim()) { erreur("err-ct-neuf", "Collez au moins une notion."); return; }
+  var b = $("b-ct-creer");
+  b.disabled = true;
+  sb.rpc("creer_controle", { p_seance_id: Number(suivi.seanceId),
+                             p_texte: texte }).then(function(r){
+    b.disabled = false;
+    var d = r && r.data;
+    if (!r || r.error || !d || !d.ok) {
+      // Comme pour les questionnaires : une ligne mal formée fait échouer tout,
+      // et la base dit laquelle. Un contrôle dont une notion n'a pas de bonne
+      // réponse compterait tout le monde faux sans que personne ne le voie.
+      erreur("err-ct-neuf",
+        (d && d.motif === "ligne") ? "Ligne " + d.rang + " : " + d.detail +
+                                     " — « " + d.texte + " »"
+      : (d && d.motif === "reponses") ? d.nombre + " réponse" +
+          (d.nombre > 1 ? "s ont" : " a") + " déjà été enregistrée" +
+          (d.nombre > 1 ? "s" : "") + " : le contrôle ne peut plus être réécrit. " +
+          "Éteignez-le si vous ne voulez plus le proposer."
+      : (d && d.motif === "vide") ? "Aucune notion lisible dans ce texte."
+      : "Enregistrement refusé. Vérifiez que vous êtes bien connecté en enseignant.");
+      return;
+    }
+    erreur("err-ct-neuf", d.notions + (d.notions > 1 ? " notions enregistrées" :
+           " notion enregistrée") + ". Allumez le contrôle pour le proposer.", true);
+    $("ct-texte").value = "";
+    chargerControle();
+  });
+});
 
 function rendrePrevol(p){
   var bloc = $("prevol");
