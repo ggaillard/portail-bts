@@ -60,6 +60,64 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### Un contrôle d'acquis avant chaque séance
+
+Deux questions par notion : ce qu'ils savent, puis ce qu'ils croient savoir.
+C'est l'écart qui sert. Se tromper en étant sûr n'appelle pas le même geste que
+douter en ayant juste, et un chiffre unique confondrait les deux — le tableau
+de bord nomme donc ceux qui se trompent en étant sûrs, puisque ceux-là ne
+poseront aucune question.
+
+Le contrôle appartient à la séance qu'il précède : ses questions sont des
+corrigés de cette séance, préfixés `pre-`. Pas un questionnaire de la
+bibliothèque — la bande 90-98 n'aurait pas tenu quatorze séances, et rien
+n'aurait relié le contrôle à son heure.
+
+Ce préfixe fait tout le travail d'isolement : sans lui, les réponses du
+contrôle se glisseraient dans « 83 % juste », dans « Réussite par question »,
+dans « 10 questions corrigées » et dans l'avancement élève par élève. Quatre
+endroits font le tri, trois en SQL et un dans le portail, et il faut les quatre.
+
+Vous l'écrivez en collant du texte, une notion par ligne, **une étoile devant
+la bonne option**. Une ligne sans étoile ou avec deux fait échouer toute la
+création en disant laquelle : un contrôle dont une notion n'a pas de bonne
+réponse compterait tout le monde faux sans que rien ne le signale.
+
+Rien ne bloque l'étudiant qui ne l'a pas fait — il est simplement nommé dans le
+tableau de bord, prénom compris. Et aucune correction ne lui est montrée :
+dire « faux » avant la séance transforme un point de départ en sanction, et
+fausserait la question de certitude qui suit.
+
+### L'appel comptait un absent qui n'existe pas
+
+Le compte d'essai n° 99 figurait parmi les absents. Tous les jours, pour toutes
+les classes : « 24 présents · 8 absents » quand il y en avait 7, et un effectif
+de 32 pour 31 étudiants. Le filtre `numero <> '99'` existe dans le pré-vol, le
+semestre, les questionnaires et le dépouillement — il manquait dans
+`appel_classe()`, et là seulement.
+
+Trois autres choses ont changé dans cette carte :
+
+- **« 24 / 31 présents »** au lieu de « 24 présents ». Le nombre seul ne dit
+  pas s'il en manque un ou douze.
+- **Les prénoms sont collés aux numéros** dans la ligne rouge, celle qu'on lit
+  à voix haute. `prenomSeul()` prend le dernier mot qui n'est pas en
+  majuscules, les listes venant en « NOM Prénom ». Rien n'entre en base : la
+  fonction ne rend que des numéros, les noms restent dans le navigateur.
+- **Un bloc « Absences qui se répètent »** : pour chaque absent, combien
+  d'appels il a manqués sur combien de posés, et depuis quand on ne l'a pas vu.
+  Une absence isolée et une quatrième d'affilée demandent deux gestes
+  différents ; la carte ne les distinguait pas du tout.
+
+La rangée de pastilles d'absents a disparu — elle répétait la ligne rouge mot
+pour mot. Et le portail dit désormais quand aucun nom n'est chargé dans ce
+navigateur, avec le bouton pour les coller : les noms ne quittant jamais le
+poste, chaque appareil a besoin de sa copie, et rien ne l'expliquait.
+
+Sur un téléphone, les vingt-quatre arrivées faisaient une colonne de
+vingt-quatre lignes avant d'atteindre le reste : elles sont repliées là,
+dépliées sur grand écran. **2 807 px de carte avant, 2 074 après.**
+
 ### La séance 2 était lisible le jour de la séance 1
 
 Constat du 09/09, après la première heure avec le BTS1. Le sommaire du site du
