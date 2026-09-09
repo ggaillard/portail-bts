@@ -60,6 +60,43 @@ Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.
 
 ## Ce qui a changé dans le code — 7 et 8 septembre 2026
 
+### La séance 2 était lisible le jour de la séance 1
+
+Constat du 09/09, après la première heure avec le BTS1. Le sommaire du site du
+cours liste les quatorze séances dès qu'elles sont écrites, et rien ne l'en
+empêchait : `ouverte` ne gouverne que l'enregistrement des réponses, pas la
+lecture.
+
+Deux notions qu'on confondait, désormais séparées : **`ouverte`** dit si la
+séance accepte des réponses — vraie pendant l'heure ; **`publiee`** dit si les
+étudiants ont le droit de la lire — vraie à partir du jour de la séance, et
+pour toujours, parce que la trace écrite sert à réviser et qu'un absent doit
+pouvoir rattraper. Clore ne dépublie pas.
+
+« Démarrer la séance » publie aussi : on ne démarre jamais une séance qu'on
+voulait cacher, et un geste de plus le jour J serait un geste oublié un jour
+sur deux. Le bouton **Visible / Cachée** de la carte « Le semestre » sert aux
+exceptions.
+
+Côté site du cours, deux gestes et il faut les deux : le **sommaire est élagué**
+sur toutes les pages — c'est dans le menu qu'on clique pour aller voir trop
+loin — et le **contenu d'une séance non publiée est masqué**, titre excepté.
+La session anonyme est établie avant la lecture des publications : sans elle la
+requête peut échouer, rien n'est élagué, et le défaut revient en silence.
+
+### Le portail sur le téléphone du prof
+
+Audit à 390 px : **4 651 px** à faire défiler pour atteindre la progression des
+élèves, et sept cibles sous 44 px. Les énoncés de la séance étaient dépliés par
+défaut et placés avant les chiffres — deux mille pixels avant la moindre
+information sur la classe.
+
+Ils sont maintenant repliés et placés après ; « Élève par élève » passe avant
+« Réussite par question » ; la barre d'onglets tient sur une ligne qui défile
+au lieu de deux, ce qui rendait 88 px en permanence puisqu'elle est collante ;
+`input`, `select` et `.btn` portent `min-height:44px`. **2 900 px, aucune cible
+trop petite.**
+
 ### Une bibliothèque de questionnaires, écrits depuis le portail
 
 L'interrupteur de la veille ne suffisait pas : il pilotait deux questionnaires
