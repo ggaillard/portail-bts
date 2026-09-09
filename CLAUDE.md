@@ -334,6 +334,48 @@ que si la ligne n'avait jamais été renseignée.
 
 ---
 
+## Publiée, ouverte : deux choses différentes
+
+Le 09/09, la séance 1 faite avec le BTS1 — et la séance 2 déjà lisible sur le
+site du cours. Rien ne l'empêchait : le sommaire de MkDocs liste les quatorze
+séances dès qu'elles sont écrites, et `ouverte` ne gouverne que
+l'enregistrement des réponses.
+
+| Colonne | Ce qu'elle décide | Quand elle est vraie |
+|---|---|---|
+| `ouverte` | La séance **accepte des réponses** | Pendant l'heure |
+| `publiee` | Les étudiants ont le droit de la **lire** | À partir du jour de la séance, **et pour toujours** |
+
+`publiee` ne redevient pas fausse toute seule : la trace écrite sert à réviser,
+et un absent doit pouvoir rattraper. **Clore une séance ne la dépublie pas** —
+un test le vérifie, parce que c'est le raccourci qu'on prendrait un jour.
+
+**« Démarrer la séance » publie aussi.** On ne démarre jamais une séance qu'on
+voulait cacher, et un geste de plus le jour J serait un geste oublié un jour
+sur deux. `publier_seance(seance_id, publiee)` sert aux exceptions : ouvrir en
+avance pour un absent, refermer un brouillon parti trop tôt. Elle refuse les
+numéros ≥ 90 — questionnaires et appel n'ont pas de trace écrite à dévoiler.
+
+Le portail montre l'état dans « Le semestre » : un bouton **Visible / Cachée**
+par séance. `semestre()` rend donc `seance_id` et `publiee` — sans le premier
+on ne peut pas basculer, sans le second on ne sait pas quoi basculer.
+
+**Côté site du cours** (`docs/assets/suivi.js`, dépôt étudiant), deux gestes, et
+il faut les deux :
+
+1. **Le sommaire est élagué** sur *toutes* les pages du site, pas seulement
+   celles de séance : c'est dans le menu qu'on clique pour aller voir trop loin.
+2. **Le contenu d'une séance non publiée est masqué**, titre excepté, remplacé
+   par « Cette séance n'a pas encore eu lieu ». Ne pas reprendre la formule de
+   la séance fermée — « le contenu ci-dessous reste consultable » — qui
+   dévoilerait exactement ce qu'on protège.
+
+**La session anonyme est établie AVANT de lire les publications.** Sans elle la
+requête peut échouer, la liste revient vide, et rien n'est élagué : le défaut
+reviendrait à l'identique, en silence.
+
+---
+
 ## Les questionnaires — une bibliothèque, pas des numéros en dur
 
 Un questionnaire était un numéro de séance écrit dans le code : 98 pour
@@ -396,6 +438,25 @@ fois.
 - `connaissance()` et `stage()` **restent** et ne sont pas modifiées : le
   portail s'en sert en repli tant que la bibliothèque n'est pas déployée. Repli
   à retirer une fois la migration passée partout.
+
+---
+
+## Le portail enseignant sur un téléphone
+
+Il se pilote au téléphone en séance, pas seulement à la souris au bureau.
+Vérifié par `t_ens_mob.mjs` à 390 px :
+
+- **aucune cible tactile sous 44 px** — onglets, sélecteurs, boutons,
+  interrupteurs. `input, select` et `.btn` portent `min-height:44px` ;
+- **la barre d'onglets tient sur une ligne** et défile latéralement. Quatre
+  onglets sur 390 px passaient sur deux lignes, soit 88 px perdus en
+  permanence puisqu'elle est collante ;
+- **« Élève par élève » passe avant « Réussite par question »** : sur un
+  téléphone, en séance, c'est la première chose qu'on veut voir ;
+- **les énoncés de la séance sont repliés et placés après les chiffres.**
+  Dépliés et placés avant, ils faisaient deux mille pixels à franchir avant
+  d'atteindre la moindre information sur la classe. **4 651 px de page avant,
+  2 900 après.**
 
 ---
 
