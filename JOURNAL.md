@@ -22,6 +22,85 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 14 septembre 2026 — les contrôles de séance existent enfin pour de bon
+
+Trois notes du projet décrivaient depuis le 10/09 un job `fiche` de douze points
+et un job `pedagogie` de huit contrôles. **Ni l'un ni l'autre n'était dans
+`verifier-portail.yml`** : le fichier n'avait que `syntaxe` et `coherence`. Une
+règle écrite quelque part et nulle part appliquée finit par être crue appliquée,
+ce qui est pire que pas de règle.
+
+Ils sont écrits, et ils vivent dans **`outils/`**, pas dans le YAML : on les
+rejoue chez soi avant de pousser, en trois commandes. Un contrôle qu'on ne peut
+pas rejouer chez soi est un contrôle qu'on finit par contourner.
+
+| Job | Ce qu'il regarde |
+|---|---|
+| `coherence` | la page et la base, question par question, **et les deux blocs de chaque migration entre eux** |
+| `fiche` | les douze points de forme d'une trace, dont la liste de concepts, identique en base |
+| `pedagogie` | durée de lecture, durée des actes, prérequis, vocabulaire, longueur des bonnes réponses, boucle narrative |
+| `essai` | casse quatorze fois, exprès, et vérifie que le défaut est **nommé** |
+
+### Ce que les contrôles ont trouvé en s'exécutant la première fois
+
+Six défauts réels, tous corrigés dans la foulée :
+
+1. **Le job `coherence` ne lisait qu'une seule migration** — `*_bts1_seances.sql`.
+   La séance 3, écrite dans son propre fichier, n'était vérifiée par personne.
+   Le glob est devenu `*_bts1_seance*.sql`, et toutes les séances à venir y
+   entrent d'elles-mêmes.
+2. **Sept questions sur dix divergeaient dans la migration de la séance 3** :
+   l'`insert` portait les distracteurs rallongés, le bloc de rattrapage les
+   anciens, courts. Au prochain rejeu, le rattrapage aurait remis les anciens.
+   Le bloc a été **régénéré depuis l'insert**, pas ressaisi.
+3. **Les séances 1 et 2 n'avaient aucune liste « Concepts à connaître »**, alors
+   que la migration de débriefing en écrivait cinq chacune en base. La source et
+   la copie ne se ressemblaient pas ; le portail projetait quelque chose dont la
+   trace écrite ne parlait pas.
+4. **Les concepts de la séance 3 ne portaient pas leurs numéros de question** :
+   la trace ne disait plus sur quoi chaque concept se mesure.
+5. **Les distracteurs de la séance 1 q9 et de la séance 2 q10 étaient restés
+   courts dans la page** alors que le SQL les avait rallongés. Un élève qui n'a
+   rien suivi cochait la plus longue.
+6. **La boucle du cold open ne se refermait ni en séance 1 ni en séance 2** : ni
+   « 03 h 47 » ni « à la seconde près » ne revenait après les actes. Une phrase
+   de clôture a été ajoutée à chacune.
+
+### Et deux contrôles qui étaient aveugles
+
+Trouvés parce que `essai.py` a essayé de les casser et n'y est pas arrivé :
+
+- **la boucle narrative** cherchait le titre de récit dans tout ce qui suit les
+  actes, **quiz compris** — or la dernière question porte justement sur le
+  retournement, donc le titre s'y trouve toujours. Le contrôle passait au vert
+  quoi qu'il arrive ;
+- **le vocabulaire du quiz** était comparé au corps entier de la trace, **lequel
+  contient le quiz**. Chaque terme s'y trouvait par construction.
+
+C'est la leçon de ce dépôt, rencontrée pour la troisième fois : **tout contrôle
+ajouté doit être testé en cassant ce qu'il prétend voir.** Le job `essai` le
+fait maintenant à chaque passage.
+
+### Une chose à savoir sur le seuil de vocabulaire
+
+Rendu bloquant au mot près, il sortait **vingt et une lignes rouges sur trois
+séances justes** — « souvent », « distingue », « entièrement » ne sont pas des
+notions. Il bloque désormais seulement quand un énoncé ou une bonne réponse
+compte au moins deux mots pleins et qu'**aucun** n'a été prononcé pendant
+l'heure ; le reste sort en remarque. Un contrôle qui crie pour des broutilles
+finit par n'être plus lu.
+
+### Ce qui reste à faire
+
+- **Pousser.** La VM n'a ni identifiants git ni `gh` : les deux dépôts sont à
+  jour sur le disque, pas sur GitHub.
+- La migration `20260910080000_debriefing.sql` **n'est toujours pas sur GitHub**,
+  donc pas appliquée : elle attend le même push.
+- La séance 4 — « Culture DevOps, cycle de vie & versioning Git » — est à écrire,
+  à partir de `GABARIT_SEANCE.md` du dépôt étudiant.
+
+---
+
 ## État des scripts SQL au 8 septembre 2026 — avant le CI/CD
 
 Relevé fait en lisant Supabase avec la clé `anon`, celle du portail.

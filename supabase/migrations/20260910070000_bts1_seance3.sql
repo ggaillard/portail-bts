@@ -48,12 +48,12 @@ with q (numero, cle, bonne, intitule, options, explication) as (values
 
   (3, 'q3', 'D',
    'Que garantit une transaction ?',
-   array['que la requete sera rapide', 'que les donnees seront compressees', 'que la base acceptera n''importe quelle forme', 'que l''operation se fait entierement, ou pas du tout'],
+   array['que la requete sera executee en moins d''une seconde', 'que les donnees seront compressees avant d''etre ecrites', 'que la base acceptera n''importe quelle forme de donnees', 'que l''operation se fait entierement, ou pas du tout'],
    'Tout ou rien. Un virement retire d''un compte ET ajoute a l''autre, jamais la moitie.'),
 
   (3, 'q4', 'B',
    'Quel est le principal atout d''une base documentaire par rapport au relationnel ?',
-   array['elle est toujours plus rapide', 'chaque fiche peut avoir sa propre forme', 'elle garantit mieux l''exactitude', 'elle occupe moins de place'],
+   array['elle repond toujours plus vite, quel que soit le volume', 'chaque fiche peut avoir sa propre forme', 'elle garantit mieux l''exactitude des donnees liees', 'elle occupe beaucoup moins de place sur le disque'],
    'Schema souple : chaque fiche peut avoir sa forme. C''est le troc du NoSQL — de la souplesse contre des garanties.'),
 
   (3, 'q5', 'C',
@@ -63,27 +63,27 @@ with q (numero, cle, bonne, intitule, options, explication) as (values
 
   (3, 'q6', 'B',
    'En quoi consiste la denormalisation ?',
-   array['supprimer les doublons pour gagner de la place', 'accepter de repeter une information pour eviter une jointure', 'chiffrer les donnees sensibles', 'repartir la base sur plusieurs machines'],
+   array['supprimer les doublons d''une table pour gagner de la place en base', 'accepter de repeter une information pour eviter une jointure', 'chiffrer les donnees sensibles avant de les enregistrer', 'repartir la base sur plusieurs machines pour tenir la charge'],
    'On accepte de repeter pour eviter la jointure. Le prix : si l''information change, il faut la changer partout.'),
 
   (3, 'q7', 'D',
    'Que contient un lac de donnees ?',
-   array['uniquement des tables nettoyees et rangees', 'seulement les donnees de moins d''un an', 'les chiffres valides par la direction', 'des donnees brutes, versees sans schema prealable'],
+   array['uniquement des tables nettoyees et deja rangees', 'seulement les donnees de l''annee en cours', 'les seuls chiffres valides par la direction', 'des donnees brutes, versees sans schema prealable'],
    'Brut, sans schema, sans tri : on verse au cas ou, sans savoir encore ce qu''on cherchera.'),
 
   (3, 'q8', 'A',
    'Qu''est-ce qui distingue un entrepot de donnees d''un lac ?',
-   array['on decide d''avance des questions et on range en consequence', 'il est toujours plus petit', 'il n''accepte que du JSON', 'il ne conserve rien plus de trois mois'],
+   array['on decide d''avance des questions et on range en consequence', 'il contient toujours beaucoup moins de donnees', 'il n''accepte que des fichiers au format JSON', 'il ne conserve jamais rien plus de trois mois'],
    'L''entrepot repond a des questions decidees d''avance ; le lac garde tout, y compris ce qu''on ne lira jamais.'),
 
   (3, 'q9', 'C',
    'Quel est le risque principal d''un lac mal tenu ?',
-   array['il devient trop rapide', 'il refuse les nouvelles donnees', 'il devient un marecage dont plus personne ne connait le contenu', 'il perd automatiquement les donnees anciennes'],
+   array['il oblige a recharger toutes les donnees a chaque requete', 'il finit par refuser les nouvelles donnees versees', 'il devient un marecage dont plus personne ne connait le contenu', 'il supprime automatiquement les donnees les plus anciennes'],
    'Un lac dans lequel personne ne range devient un marecage. Le risque est d''organisation, pas de technique.'),
 
   (3, 'q10', 'B',
    'Pourquoi 60, 47 et 72 peuvent-ils etre justes tous les trois ?',
-   array['parce que les trois systemes sont mal synchronises', 'parce qu''ils ne parlent ni du meme moment ni de la meme chose', 'parce que deux d''entre eux sont des estimations', 'parce que l''un des trois est arrondi'],
+   array['parce que les trois systemes sont mal synchronises', 'parce qu''ils ne parlent ni du meme moment ni de la meme chose', 'parce que deux d''entre eux ne sont que des estimations', 'parce que l''un des trois chiffres a ete arrondi'],
    'Un constat de maintenant, un constat consolide de dimanche, une prevision. Un chiffre se lit avec sa date et sa source.')
 
 )
@@ -106,14 +106,14 @@ update public.corriges co
   from (values
     ('q1', 'C', 'Dans une base relationnelle, comment s''appelle la colonne qui identifie une ligne sans doublon possible ?', array['la cle etrangere', 'la jointure', 'la cle primaire', 'l''index'], 'La cle primaire identifie la ligne. La cle etrangere, elle, pointe vers la cle primaire d''une autre table.'),
     ('q2', 'A', 'Comment s''appelle l''operation qui recolle deux tables reliees entre elles ?', array['une jointure', 'une transaction', 'une agregation', 'une migration'], 'La jointure suit la fleche entre deux tables et les presente comme une seule.'),
-    ('q3', 'D', 'Que garantit une transaction ?', array['que la requete sera rapide', 'que les donnees seront compressees', 'que la base acceptera n''importe quelle forme', 'que l''operation se fait entierement, ou pas du tout'], 'Tout ou rien. Un virement retire d''un compte ET ajoute a l''autre, jamais la moitie.'),
-    ('q4', 'B', 'Quel est le principal atout d''une base documentaire par rapport au relationnel ?', array['elle est toujours plus rapide', 'chaque fiche peut avoir sa propre forme', 'elle garantit mieux l''exactitude', 'elle occupe moins de place'], 'Schema souple : chaque fiche peut avoir sa forme. C''est le troc du NoSQL — de la souplesse contre des garanties.'),
+    ('q3', 'D', 'Que garantit une transaction ?', array['que la requete sera executee en moins d''une seconde', 'que les donnees seront compressees avant d''etre ecrites', 'que la base acceptera n''importe quelle forme de donnees', 'que l''operation se fait entierement, ou pas du tout'], 'Tout ou rien. Un virement retire d''un compte ET ajoute a l''autre, jamais la moitie.'),
+    ('q4', 'B', 'Quel est le principal atout d''une base documentaire par rapport au relationnel ?', array['elle repond toujours plus vite, quel que soit le volume', 'chaque fiche peut avoir sa propre forme', 'elle garantit mieux l''exactitude des donnees liees', 'elle occupe beaucoup moins de place sur le disque'], 'Schema souple : chaque fiche peut avoir sa forme. C''est le troc du NoSQL — de la souplesse contre des garanties.'),
     ('q5', 'C', 'Quelle famille NoSQL repond le mieux a « qui connait qui » dans un reseau ?', array['cle-valeur', 'document', 'graphe', 'colonnes'], 'La question porte sur les liens, pas sur les fiches. En relationnel, « les amis des amis des amis » demande trois jointures.'),
-    ('q6', 'B', 'En quoi consiste la denormalisation ?', array['supprimer les doublons pour gagner de la place', 'accepter de repeter une information pour eviter une jointure', 'chiffrer les donnees sensibles', 'repartir la base sur plusieurs machines'], 'On accepte de repeter pour eviter la jointure. Le prix : si l''information change, il faut la changer partout.'),
-    ('q7', 'D', 'Que contient un lac de donnees ?', array['uniquement des tables nettoyees et rangees', 'seulement les donnees de moins d''un an', 'les chiffres valides par la direction', 'des donnees brutes, versees sans schema prealable'], 'Brut, sans schema, sans tri : on verse au cas ou, sans savoir encore ce qu''on cherchera.'),
-    ('q8', 'A', 'Qu''est-ce qui distingue un entrepot de donnees d''un lac ?', array['on decide d''avance des questions et on range en consequence', 'il est toujours plus petit', 'il n''accepte que du JSON', 'il ne conserve rien plus de trois mois'], 'L''entrepot repond a des questions decidees d''avance ; le lac garde tout, y compris ce qu''on ne lira jamais.'),
-    ('q9', 'C', 'Quel est le risque principal d''un lac mal tenu ?', array['il devient trop rapide', 'il refuse les nouvelles donnees', 'il devient un marecage dont plus personne ne connait le contenu', 'il perd automatiquement les donnees anciennes'], 'Un lac dans lequel personne ne range devient un marecage. Le risque est d''organisation, pas de technique.'),
-    ('q10', 'B', 'Pourquoi 60, 47 et 72 peuvent-ils etre justes tous les trois ?', array['parce que les trois systemes sont mal synchronises', 'parce qu''ils ne parlent ni du meme moment ni de la meme chose', 'parce que deux d''entre eux sont des estimations', 'parce que l''un des trois est arrondi'], 'Un constat de maintenant, un constat consolide de dimanche, une prevision. Un chiffre se lit avec sa date et sa source.')
+    ('q6', 'B', 'En quoi consiste la denormalisation ?', array['supprimer les doublons d''une table pour gagner de la place en base', 'accepter de repeter une information pour eviter une jointure', 'chiffrer les donnees sensibles avant de les enregistrer', 'repartir la base sur plusieurs machines pour tenir la charge'], 'On accepte de repeter pour eviter la jointure. Le prix : si l''information change, il faut la changer partout.'),
+    ('q7', 'D', 'Que contient un lac de donnees ?', array['uniquement des tables nettoyees et deja rangees', 'seulement les donnees de l''annee en cours', 'les seuls chiffres valides par la direction', 'des donnees brutes, versees sans schema prealable'], 'Brut, sans schema, sans tri : on verse au cas ou, sans savoir encore ce qu''on cherchera.'),
+    ('q8', 'A', 'Qu''est-ce qui distingue un entrepot de donnees d''un lac ?', array['on decide d''avance des questions et on range en consequence', 'il contient toujours beaucoup moins de donnees', 'il n''accepte que des fichiers au format JSON', 'il ne conserve jamais rien plus de trois mois'], 'L''entrepot repond a des questions decidees d''avance ; le lac garde tout, y compris ce qu''on ne lira jamais.'),
+    ('q9', 'C', 'Quel est le risque principal d''un lac mal tenu ?', array['il oblige a recharger toutes les donnees a chaque requete', 'il finit par refuser les nouvelles donnees versees', 'il devient un marecage dont plus personne ne connait le contenu', 'il supprime automatiquement les donnees les plus anciennes'], 'Un lac dans lequel personne ne range devient un marecage. Le risque est d''organisation, pas de technique.'),
+    ('q10', 'B', 'Pourquoi 60, 47 et 72 peuvent-ils etre justes tous les trois ?', array['parce que les trois systemes sont mal synchronises', 'parce qu''ils ne parlent ni du meme moment ni de la meme chose', 'parce que deux d''entre eux ne sont que des estimations', 'parce que l''un des trois chiffres a ete arrondi'], '')
        ) as q(cle, bonne, intitule, options, explication),
        public.classes c,
        public.seances s

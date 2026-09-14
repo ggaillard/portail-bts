@@ -89,7 +89,7 @@ with q(numero, cle, bonne, intitule, options, explication) as (values
 
   (1, 'q9', 'C',
    'Dans l''enquete DevSecure, quelle etait la cause premiere de la panne ?',
-   array['une attaque', 'un serveur defectueux', 'une ligne de code ecrite sans vision systeme', 'une erreur de la base'],
+   array['une attaque informatique venue de l''exterieur', 'un serveur tombe en panne dans la nuit', 'une ligne de code ecrite sans vision systeme', 'une erreur de saisie dans la base de donnees'],
    'La panne a commence onze semaines plus tot, avec un log ecrit a chaque action. Le code marchait ; il ne voyait pas le reste du systeme.'),
 
   (1, 'q10', 'B',
@@ -146,7 +146,7 @@ with q(numero, cle, bonne, intitule, options, explication) as (values
 
   (2, 'q10', 'C',
    'Pourquoi les 9 400 utilisateurs de DevSecure ont-ils vu la panne a la meme seconde ?',
-   array['ils rechargeaient tous la page au meme moment', 'le serveur leur a envoye un mail', 'chacun avait une connexion ouverte en permanence, coupee d''un coup', 'c''est une coincidence'],
+   array['Ils rechargeaient tous la page exactement au meme moment', 'Le serveur a envoye un message d''alerte a chacun d''eux', 'Chacun avait une connexion ouverte en permanence, coupee d''un coup', 'C''est une coincidence que rien n''explique vraiment'],
    'Le temps reel qui fait la qualite de l''application est exactement ce qui a rendu la panne instantanee et totale.')
 
 )
@@ -213,7 +213,7 @@ with q(numero, cle, bonne, intitule, options, explication) as (values
 
   (1, 'q9', 'C',
    'Dans l''enquete DevSecure, quelle etait la cause premiere de la panne ?',
-   array['une attaque', 'un serveur defectueux', 'une ligne de code ecrite sans vision systeme', 'une erreur de la base'],
+   array['une attaque informatique venue de l''exterieur', 'un serveur tombe en panne dans la nuit', 'une ligne de code ecrite sans vision systeme', 'une erreur de saisie dans la base de donnees'],
    'La panne a commence onze semaines plus tot, avec un log ecrit a chaque action. Le code marchait ; il ne voyait pas le reste du systeme.'),
 
   (1, 'q10', 'B',
@@ -270,7 +270,7 @@ with q(numero, cle, bonne, intitule, options, explication) as (values
 
   (2, 'q10', 'C',
    'Pourquoi les 9 400 utilisateurs de DevSecure ont-ils vu la panne a la meme seconde ?',
-   array['ils rechargeaient tous la page au meme moment', 'le serveur leur a envoye un mail', 'chacun avait une connexion ouverte en permanence, coupee d''un coup', 'c''est une coincidence'],
+   array['Ils rechargeaient tous la page exactement au meme moment', 'Le serveur a envoye un message d''alerte a chacun d''eux', 'Chacun avait une connexion ouverte en permanence, coupee d''un coup', 'C''est une coincidence que rien n''explique vraiment'],
    'Le temps reel qui fait la qualite de l''application est exactement ce qui a rendu la panne instantanee et totale.')
 )
 update public.corriges co

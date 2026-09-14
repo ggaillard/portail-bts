@@ -191,6 +191,29 @@ tr:last-child td{border-bottom:0}
 #ct-neuf > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.4rem 0;
   min-height:44px;display:flex;align-items:center}
 
+/* ── Le débriefing de fin d'heure, côté enseignant ────────────────────────
+   Même mise en page que le contrôle d'entrée : les deux répondent à la même
+   question, l'une avant l'heure et l'autre après. */
+.db-l{padding:.55rem 0;border-top:1px solid var(--rule-soft);display:flex;
+  align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.db-l:first-child{border-top:0}
+.db-r{font-family:var(--f-mono);font-size:.8rem;color:var(--ink-faint);flex:none;width:1.4rem}
+.db-i{font-size:.92rem;font-weight:600;flex:1 1 10rem}
+.db-v{font-family:var(--f-mono);font-size:.78rem;font-weight:600;flex:none;
+  padding:.12rem .5rem;border-radius:99px;white-space:nowrap}
+.db-v.acquis{background:var(--ok-soft);color:var(--ok)}
+.db-v.fragile{background:var(--signal-soft,#F7EEDC);color:var(--signal)}
+.db-v.a_revoir{background:#F6E2E2;color:#963232}
+.db-v.sans_mesure{background:var(--surface-2,#EEF1F4);color:var(--ink-faint)}
+.db-d{flex:1 1 100%;font-size:.85rem;color:var(--ink-soft);line-height:1.5}
+.db-q{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-faint)}
+#db-texte{width:100%;font-family:var(--f-mono);font-size:.88rem;line-height:1.6;
+  padding:.55rem .7rem;border:1px solid var(--rule);border-radius:9px;
+  background:var(--surface);color:var(--ink);resize:vertical}
+#db-neuf{margin-top:.8rem;border-top:1px solid var(--rule-soft);padding-top:.6rem}
+#db-neuf > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.4rem 0;
+  min-height:44px;display:flex;align-items:center}
+
 .ct-carte{border-left:3px solid var(--accent)}
 .ct-av{font-weight:600}
 /* Les quatre degrés de certitude vont du plus sûr au moins sûr : la nuance de
@@ -581,6 +604,37 @@ tr:last-child td{border-bottom:0}
           width:4.2em;flex:none;font-variant-numeric:tabular-nums}
 .ce-rep-l.juste .ce-rep-n{color:#4FD1A5}
 
+/* ── Le débriefing projeté : l'écran des cinq dernières minutes ───────────
+   Volontairement calme — pas de podium, pas de confettis, pas d'avatar. On
+   parle de notions, plus de personnes. */
+.ce-deb{flex:1;display:flex;flex-direction:column;gap:1.1vmin;justify-content:center;
+        padding:0 4vmin}
+.ce-deb[hidden]{display:none!important}
+.ce-deb-r{font-family:var(--f-mono);font-size:clamp(.7rem,1.6vmin,1rem);letter-spacing:.06em;
+          text-transform:uppercase;color:#7B8FA1;text-align:center;margin-bottom:1.2vmin}
+.ce-deb-l{display:flex;align-items:center;gap:1.8vmin}
+.ce-deb-k{font-family:var(--f-mono);font-size:clamp(1rem,3vmin,2.1rem);font-weight:600;
+          width:1.9em;text-align:center;border-radius:10px;padding:.4vmin 0;flex:none;
+          background:#22303D;color:#8CA3B5}
+.ce-deb-i{flex:1 1 auto;font-size:clamp(.95rem,2.7vmin,1.9rem);color:#EAF2F8;line-height:1.25}
+.ce-deb-i small{display:block;font-size:.62em;color:#8CA3B5;margin-top:.35vmin;line-height:1.35}
+.ce-deb-b{flex:0 0 26%;height:clamp(14px,3.1vmin,34px);background:#141C26;
+          border-radius:9px;overflow:hidden}
+.ce-deb-f{display:block;height:100%;border-radius:9px;background:#3E5265;
+          transition:width 1.8s cubic-bezier(.2,.75,.25,1)}
+.ce-deb-n{font-family:var(--f-mono);font-size:clamp(.85rem,2.3vmin,1.6rem);color:#8CA3B5;
+          width:3.4em;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.ce-deb-l.acquis   .ce-deb-f{background:linear-gradient(90deg,#1F7A5A,#4FD1A5)}
+.ce-deb-l.acquis   .ce-deb-n,.ce-deb-l.acquis .ce-deb-k{color:#4FD1A5}
+.ce-deb-l.fragile  .ce-deb-f{background:linear-gradient(90deg,#8A6A1E,#E0B34C)}
+.ce-deb-l.fragile  .ce-deb-n,.ce-deb-l.fragile .ce-deb-k{color:#E0B34C}
+.ce-deb-l.a_revoir .ce-deb-f{background:linear-gradient(90deg,#8C2F3E,#E2576B)}
+.ce-deb-l.a_revoir .ce-deb-n,.ce-deb-l.a_revoir .ce-deb-k{color:#E2576B}
+.ce-deb-l.sans_mesure .ce-deb-n{color:#57697A}
+.ce-deb-p{text-align:center;color:#8CA3B5;font-size:clamp(.8rem,1.9vmin,1.25rem);
+          margin-top:1.6vmin;line-height:1.4}
+.ce-deb-p b{color:#EAF2F8}
+
 /* Podium révélé en cascade, le premier en dernier */
 @keyframes tdcMonte{
   from { opacity:0; transform:translateY(2.6vmin) scale(.92); }
@@ -933,6 +987,32 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       </details>
     </div>
 
+    <!-- Le débriefing : les cinq dernières minutes. Le contrôle d'entrée dit
+         ce qu'ils avaient gardé ; celui-ci dit ce qu'ils emportent. -->
+    <div id="bloc-debrief" class="ct-bloc" hidden>
+      <div class="ct-tete">
+        <h3 class="sous-titre" style="margin:0">Débriefing de fin d'heure</h3>
+        <button class="btn btn-sec" id="b-db-ecran" type="button"
+          style="margin-left:auto">Projeter</button>
+      </div>
+      <p class="sous-hint" id="db-resume"></p>
+      <div id="db-lignes"></div>
+      <div id="err-debrief"></div>
+      <details id="db-neuf">
+        <summary>Écrire les concepts de cette séance</summary>
+        <p class="sous-hint">Un concept par ligne : l'intitulé, un tiret, puis ce
+          qu'il faut pouvoir en dire. Entre crochets à la fin, <b>les numéros des
+          questions du quiz</b> qui le mesurent — c'est ce qui donne son chiffre au
+          concept. Recopiez la section « Concepts à connaître » de la trace écrite.</p>
+        <textarea id="db-texte" rows="6" spellcheck="true"
+          placeholder="Client et serveur — le client demande toujours en premier, le serveur répond. [1 2]&#10;Les codes de statut — 4xx le client s'est trompé, 5xx le serveur a échoué. [3 4 5]"></textarea>
+        <div class="pick" style="margin-top:.7rem">
+          <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
+        </div>
+        <div id="err-db-neuf"></div>
+      </details>
+    </div>
+
     <div id="stats-zone" hidden>
       <div class="msg" id="stats-guide" hidden></div>
       <div class="rythme" id="rythme" hidden></div>
@@ -997,6 +1077,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
 
   <div class="ce-grille" id="ce-grille"></div>
   <div class="ce-rep" id="ce-rep" hidden></div>
+  <div class="ce-deb" id="ce-deb" hidden></div>
   <p class="ce-vide" id="ce-vide" hidden>
     Personne n'a encore répondu. Les avatars apparaîtront ici dès les premières réponses.
   </p>
@@ -1008,6 +1089,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <button class="ce-btn on" id="ce-prog" type="button">Progression</button>
     <button class="ce-btn" id="ce-clas" type="button">Classement</button>
     <button class="ce-btn" id="ce-rep-b" type="button">Répartition</button>
+    <button class="ce-btn" id="ce-deb-b" type="button">Débriefing</button>
     <button class="ce-btn" id="ce-auto" type="button">Rotation auto</button>
     <button class="ce-btn" id="ce-min" type="button">Minuteur</button>
     <button class="ce-btn" id="ce-son" type="button">Son</button>
@@ -2015,10 +2097,33 @@ function rendreEcran(s){
     banniere("👋 <b>" + demarrent.length + " élèves</b> viennent de se lancer.");
   }
 
-  // ── Vue « Répartition » : quel choix a fait la classe ? ──
+  // Les vues qui remplacent la grille se rendent chacune dans sa zone, puis
+  // sortent : « trans » leur dit s'il s'agit d'un changement de vue (à animer)
+  // ou du simple rafraîchissement périodique (à ne pas animer, sans quoi
+  // l'écran clignote toutes les cinq secondes devant la classe).
   var trans = !!suivi.transition;
   suivi.transition = false;
 
+  // ── Vue « Débriefing » : ce qu'on projette pour conclure ──
+  var zoneDeb = $("ce-deb");
+  if (suivi.vue === "deb") {
+    $("ce-grille").hidden = true;
+    $("ce-podium").hidden = true;
+    $("ce-rep").hidden = true;
+    // Le mobilier de l'heure en cours n'a plus rien à dire une fois l'heure
+    // finie : « personne n'a encore répondu » sous un débriefing se lit comme
+    // une contradiction, et le défi du moment n'a plus de moment.
+    $("ce-vide").hidden = true;
+    $("ce-defi").hidden = true;
+    zoneDeb.hidden = false;
+    rendreDebriefEcran(zoneDeb, trans);
+    if (trans) entree(zoneDeb);
+    majPied(s, actifs, nouveaux);
+    return;
+  }
+  zoneDeb.hidden = true;
+
+  // ── Vue « Répartition » : quel choix a fait la classe ? ──
   var zoneRep = $("ce-rep");
   if (suivi.vue === "rep") {
     $("ce-grille").hidden = true;
@@ -2225,6 +2330,76 @@ function banniere(html){
   suivi.banTimer = setTimeout(function(){ b.classList.remove("on"); }, 5000);
 }
 
+// ── Vue « Débriefing » : les concepts de l'heure, et ce qu'ils ont donné ────
+// C'est l'écran des cinq dernières minutes. Il ne montre ni avatar ni nom :
+// un concept « à revoir » désigne un point du cours, jamais quelqu'un. On le
+// projette, et on reprend à voix haute les lignes rouges.
+function rendreDebriefEcran(zone, trans){
+  var d = suivi.debrief;
+
+  if (!d) {
+    zone.innerHTML = '<p class="ce-vide">Débriefing en cours de chargement…</p>';
+    chargerDebrief(function(){ if (suivi.vue === "deb") rendreDebriefEcran(zone, false); });
+    return;
+  }
+  if (!(d.concepts || []).length) {
+    zone.innerHTML = '<p class="ce-vide">Aucun concept écrit pour cette séance. ' +
+      'Recopiez la section « Concepts à connaître » de la trace écrite depuis ' +
+      'le suivi de la séance.</p>';
+    return;
+  }
+
+  zone.innerHTML = "";
+
+  var repere = document.createElement("p");
+  repere.className = "ce-deb-r";
+  repere.textContent = "Ce qu'on emporte de la séance " + d.numero +
+    (d.reussite === null ? "" : "  ·  " + d.reussite + " % de réussite au quiz") +
+    "  ·  " + d.repondants + " / " + d.inscrits + " ont répondu";
+  zone.appendChild(repere);
+
+  var MOTS = { acquis: "acquis", fragile: "fragile",
+               a_revoir: "à revoir", sans_mesure: "—" };
+
+  d.concepts.forEach(function(c){
+    var l = document.createElement("div");
+    l.className = "ce-deb-l " + c.verdict;
+    l.innerHTML = '<span class="ce-deb-k"></span>' +
+                  '<span class="ce-deb-i"><b></b><small></small></span>' +
+                  '<span class="ce-deb-b"><span class="ce-deb-f"></span></span>' +
+                  '<span class="ce-deb-n"></span>';
+    l.querySelector(".ce-deb-k").textContent = c.rang;
+    l.querySelector(".ce-deb-i b").textContent = typo(c.intitule);
+    l.querySelector(".ce-deb-i small").textContent = typo(c.detail || "");
+    l.querySelector(".ce-deb-n").textContent =
+      c.taux === null ? MOTS.sans_mesure : c.taux + " %";
+    zone.appendChild(l);
+    // Sans mesure, la barre reste vide : mieux vaut un blanc qu'un zéro, qui
+    // se lirait « personne n'a réussi » au lieu de « on n'a pas mesuré ».
+    var f = l.querySelector(".ce-deb-f");
+    if (c.taux === null) f.style.width = "0%";
+    else pousse(f, c.taux + "%", trans);
+  });
+
+  // La phrase de conclusion : elle nomme ce par quoi on recommence la
+  // prochaine fois. Sans elle, l'écran ne dit rien à faire.
+  var faibles = d.concepts.filter(function(c){ return c.verdict === "a_revoir"; });
+  var moyens  = d.concepts.filter(function(c){ return c.verdict === "fragile"; });
+  var p = document.createElement("p");
+  p.className = "ce-deb-p";
+  if (faibles.length) {
+    p.innerHTML = "On reprend la prochaine fois par <b>" +
+      faibles.map(function(c){ return "le " + c.rang; }).join(" et ") + "</b>.";
+  } else if (moyens.length) {
+    p.innerHTML = "Rien de perdu, mais <b>" +
+      moyens.map(function(c){ return "le " + c.rang; }).join(" et ") +
+      "</b> mérite" + (moyens.length > 1 ? "nt" : "") + " une relecture.";
+  } else {
+    p.innerHTML = "<b>Tout est acquis.</b> On passe à la suite.";
+  }
+  zone.appendChild(p);
+}
+
 // ── Vue « Répartition » : ce que la classe a répondu, question par question ──
 function rendreRepartition(s, zone, trans){
   if (!s.questions.length) {
@@ -2361,6 +2536,7 @@ function modeEcran(v){
   $("ce-prog").classList.toggle("on", v === "prog");
   $("ce-clas").classList.toggle("on", v === "clas");
   $("ce-rep-b").classList.toggle("on", v === "rep");
+  $("ce-deb-b").classList.toggle("on", v === "deb");
   if (suivi.stats) rendreEcran(suivi.stats);
 }
 
@@ -2373,6 +2549,8 @@ function rotationAuto(){
     return;
   }
   $("ce-auto").classList.add("on");
+  // Le débriefing n'entre pas dans la rotation : il conclut l'heure, il ne
+  // tourne pas pendant. On l'appelle à la main, quand on a décidé d'arrêter.
   var ordre = ["prog", "clas", "rep"], i = 0;
   suivi.auto = setInterval(function(){
     i = (i + 1) % ordre.length;
@@ -3323,6 +3501,8 @@ function chargerPrevol(){
     suivi.projet = null;
     if (r.data.nature === "projet") chargerProjet();
     chargerControle();
+    suivi.debrief = null;
+    chargerDebrief();
   });
 }
 
@@ -3387,6 +3567,111 @@ function rendreControleEns(d){
     z.appendChild(ligneAbsents({ code: codeClasseCourante() },
       manquants, "Pas encore fait", "Tout le monde l'a fait."));
   }
+}
+
+// ── Le débriefing, côté enseignant ────────────────────────────────────────
+// La même donnée que l'écran projeté, en version téléphone : on la lit pour
+// savoir quoi dire, puis on projette.
+function chargerDebrief(apres){
+  var bloc = $("bloc-debrief");
+  if (!suivi.seanceId) { bloc.hidden = true; suivi.debrief = null; return; }
+  // Ni l'appel ni les questionnaires ne se débriefent : rien à y conclure.
+  if (suivi.prevol && Number(suivi.prevol.seance) >= 90) { bloc.hidden = true; return; }
+
+  sb.rpc("debriefing", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    // Fonction pas encore déployée : la carte reste absente, comme les autres.
+    if (!r || r.error || !r.data || !r.data.ok) { bloc.hidden = true; return; }
+    suivi.debrief = r.data;
+    rendreDebriefEns(r.data);
+    bloc.hidden = false;
+    if (typeof apres === "function") apres();
+  });
+}
+
+function rendreDebriefEns(d){
+  var liste = d.concepts || [];
+  var r = $("db-resume");
+
+  if (!liste.length) {
+    r.textContent = "Aucun concept écrit pour cette séance. Recopiez ci-dessous la " +
+      "section « Concepts à connaître » de la trace écrite : c'est elle qu'on projette " +
+      "en fin d'heure.";
+    $("db-lignes").innerHTML = "";
+    $("db-neuf").open = true;
+    $("b-db-ecran").disabled = true;
+    return;
+  }
+  $("db-neuf").open = false;
+  $("b-db-ecran").disabled = false;
+
+  var faibles = liste.filter(function(c){ return c.verdict === "a_revoir"; });
+  var bouts = [liste.length + (liste.length > 1 ? " concepts" : " concept"),
+               d.repondants + " / " + d.inscrits + " ont répondu au quiz"];
+  if (d.reussite !== null) bouts.push(d.reussite + " % de réussite");
+  r.textContent = bouts.join(" · ") +
+    (faibles.length ? " — on reprend par le " +
+       faibles.map(function(c){ return c.rang; }).join(" et le ") + "." : "");
+
+  var z = $("db-lignes");
+  z.innerHTML = "";
+  liste.forEach(function(c){ z.appendChild(ligneConcept(c)); });
+}
+
+// Un concept : son rang (c'est par ce numéro qu'on le désignera à l'oral),
+// son intitulé, et le chiffre que la classe vient de lui donner.
+function ligneConcept(c){
+  var MOTS = { acquis: "acquis", fragile: "fragile",
+               a_revoir: "à revoir", sans_mesure: "sans mesure" };
+  var d = document.createElement("div");
+  d.className = "db-l";
+  d.innerHTML = '<span class="db-r"></span><span class="db-i"></span>' +
+                '<span class="db-v"></span><span class="db-d"></span>';
+  d.querySelector(".db-r").textContent = c.rang + ".";
+  d.querySelector(".db-i").textContent = typo(c.intitule);
+
+  var v = d.querySelector(".db-v");
+  v.classList.add(c.verdict);
+  v.textContent = (c.taux === null ? "" : c.taux + " % · ") + MOTS[c.verdict];
+
+  var det = d.querySelector(".db-d");
+  det.textContent = typo(c.detail || "");
+  if ((c.questions || []).length) {
+    var q = document.createElement("span");
+    q.className = "db-q";
+    q.textContent = "  mesuré sur " +
+      (c.questions.length > 1 ? "les questions " : "la question ") +
+      c.questions.join(", ");
+    det.appendChild(q);
+  }
+  return d;
+}
+
+function enregistrerConcepts(){
+  var texte = $("db-texte").value;
+  erreur("err-db-neuf", "");
+  if (!texte.trim()) { erreur("err-db-neuf", "Collez au moins un concept."); return; }
+  var b = $("b-db-creer");
+  b.disabled = true;
+  sb.rpc("definir_concepts", { p_seance_id: Number(suivi.seanceId),
+                               p_texte: texte }).then(function(r){
+    b.disabled = false;
+    var d = r && r.data;
+    if (!r || r.error || !d || !d.ok) {
+      // La base nomme la ligne fautive et le numéro en cause : on la répète
+      // telle quelle plutôt que de dire « format invalide », ce qui obligerait
+      // à tout relire pour trouver la ligne.
+      erreur("err-db-neuf",
+        (d && d.texte) ? d.texte
+      : (d && d.motif === "numero")
+          ? "L'appel et les questionnaires n'ont pas de concepts à débriefer."
+      : "Enregistrement refusé. Vérifiez que vous êtes bien connecté en enseignant.");
+      return;
+    }
+    erreur("err-db-neuf", d.concepts + (d.concepts > 1 ? " concepts enregistrés."
+                                                       : " concept enregistré."), true);
+    $("db-texte").value = "";
+    chargerDebrief();
+  });
 }
 
 // Une notion : ce qu'ils ont répondu, et ce qu'ils disaient savoir. Les moins
@@ -3462,6 +3747,14 @@ $("b-controle").addEventListener("click", function(){
       : "Le contrôle n'est plus proposé. Les réponses déjà données sont conservées.", true);
     chargerControle();
   });
+});
+
+$("b-db-creer").addEventListener("click", enregistrerConcepts);
+$("b-db-ecran").addEventListener("click", function(){
+  // Projeter depuis la carte : on ouvre l'écran ET on l'amène directement
+  // sur le débriefing, sans passer par la vue de progression.
+  ouvrirEcran();
+  modeEcran("deb");
 });
 
 $("b-ct-creer").addEventListener("click", function(){
@@ -4307,6 +4600,12 @@ $("ce-clas").addEventListener("click", function(){ modeEcran("clas"); });
 $("ce-rep-b").addEventListener("click", function(){
   if (suivi.vue === "rep") suivi.repIndex++;   // reclic : question suivante
   modeEcran("rep");
+});
+$("ce-deb-b").addEventListener("click", function(){
+  // Passer au débriefing arrête la rotation : on ne veut pas que l'écran
+  // reparte sur le classement au milieu de la conclusion.
+  if (suivi.auto) rotationAuto();
+  modeEcran("deb");
 });
 $("ce-auto").addEventListener("click", rotationAuto);
 $("ce-min").addEventListener("click", minuteur);
