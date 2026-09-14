@@ -447,6 +447,8 @@ quatre — trois en SQL, un dans le portail :
 **Toute nouvelle fonction qui compte des questions ou des réponses de séance
 doit exclure `pre-%`.**
 
+`debriefing()` suit la même règle : elle ne lit que les clés `^q[0-9]+$`.
+
 **Trois états, trois interrupteurs**, et ils ne se déduisent pas l'un de
 l'autre : `controle_ouvert` (le contrôle est proposé — **avant** la séance),
 `publiee` (la trace écrite est lisible), `ouverte` (les réponses sont
@@ -471,6 +473,83 @@ Règles qui ne se devinent pas :
   incident à gérer en début d'heure.
 - La carte passe **en tête de la file étudiante**, avant les questionnaires :
   la proposer plus bas reviendrait à la proposer trop tard.
+
+---
+
+## Le débriefing — après la séance, et projeté
+
+Le contrôle d'acquis dit ce qu'ils avaient gardé de la dernière fois ; le
+débriefing dit **ce qu'ils emportent de celle-ci**. Même carte, même écran, aux
+deux bouts de l'heure.
+
+Jusqu'ici l'heure se terminait sur « Réussite par question » : un tableau juste,
+mais qui parle de questions. Un élève lit « q7 : 41 % » et n'en fait rien. Le
+débriefing renverse la lecture — on projette les **concepts**, et chacun porte la
+mesure de ce que la classe vient d'en montrer.
+
+```
+Concept 2 — Les codes de statut        ▓▓▓▓▓▓░░░░  62 %   fragile
+            mesuré sur les questions 3, 4 et 5
+```
+
+### D'où viennent les concepts
+
+**Le support est la source.** Chaque trace écrite porte une section « Concepts à
+connaître » (voir le `CLAUDE.md` du dépôt de cours). Mais le portail ne lit pas le
+markdown, et c'est le portail qui projette : la liste est donc **recopiée en base**
+par une migration, et le workflow `fiche` vérifie que les deux disent la même
+chose — même discipline que pour les corrigés.
+
+| | |
+|---|---|
+| `concepts` | table : `seance_id`, `rang`, `intitule`, `detail`, `questions int[]` |
+| `definir_concepts(seance_id, texte)` | un concept par ligne : `Intitulé — le détail. [3 4 5]` |
+| `debriefing(seance_id)` | les indicateurs de l'heure **et** les concepts mesurés |
+
+`questions` est ce qui transforme un taux de réussite en phrase utilisable :
+sans lui, le concept s'affiche « sans mesure » — il est projeté quand même, sans
+chiffre. Mieux vaut un blanc qu'un zéro, qui se lirait « personne n'a réussi »
+au lieu de « on n'a pas mesuré ».
+
+### Les seuils
+
+`acquis ≥ 75 %` · `fragile 45–74 %` · `à revoir < 45 %`. Arbitraires, et c'est
+assumé : ce qui compte est qu'ils soient **les mêmes d'une séance à l'autre**,
+sinon deux concepts ne se comparent plus. Ils vivent dans `debriefing()`, à un
+seul endroit.
+
+Le taux d'un concept se calcule sur **l'ensemble de ses questions réunies**, pas
+comme la moyenne de leurs taux : deux questions inégalement répondues ne pèsent
+pas pareil, et la moyenne des taux le cacherait.
+
+### L'écran projeté
+
+Quatrième vue du mode classe, à côté de Progression / Classement / Répartition —
+bouton **Débriefing**, ou **Projeter** depuis la carte du suivi, qui ouvre l'écran
+directement dessus.
+
+Règles qui ne se devinent pas :
+
+- **Il n'entre pas dans la rotation automatique.** Il conclut l'heure, il ne
+  tourne pas pendant. Cliquer « Débriefing » arrête d'ailleurs la rotation : on
+  ne veut pas que l'écran reparte sur le classement au milieu de la conclusion.
+- **Aucun avatar, aucun nom, aucun podium.** Un concept « à revoir » désigne un
+  point du cours, jamais quelqu'un. C'est la différence de nature avec les trois
+  autres vues, et c'est pour ça que l'écran est volontairement calme.
+- **Le mobilier de l'heure en cours est masqué** : « personne n'a encore
+  répondu » sous un débriefing se lit comme une contradiction.
+- **Une phrase de conclusion nomme ce par quoi on recommence** — « On reprend la
+  prochaine fois par le 3. » Sans elle, l'écran ne dit rien à faire.
+- **Un numéro de question inexistant fait échouer toute l'écriture**, en le
+  nommant : un concept mesuré sur une question qui n'existe pas afficherait
+  « 0 % » sans que personne ne comprenne pourquoi.
+- **Réécrire est libre** — aucune réponse d'élève n'est attachée à un concept.
+  C'est ce qui distingue `definir_concepts()` de `creer_controle()`.
+- **L'appel et les questionnaires (n° ≥ 90) n'ont pas de concepts.** Rien à y
+  conclure.
+
+Et la boucle : **les concepts d'une séance sont exactement ce que teste le
+contrôle d'entrée de la suivante.** Écrire les uns, c'est écrire l'autre.
 
 ---
 
@@ -675,3 +754,33 @@ clic.
 
 Le dépôt est **public** et publié par GitHub Pages. Demander confirmation avant
 tout `git push`.
+
+Trois contrôles tournent sur chaque poussée, et ils répondent à trois questions
+différentes :
+
+| Workflow | Question |
+|---|---|
+| `verifier-portail.yml` · **syntaxe** | `index.html` s'affiche-t-il encore ? Syntaxe JS, `$("id")` existants, et **toute fonction appelée est-elle définie** |
+| `verifier-portail.yml` · **coherence** | Les bonnes réponses de la base collent-elles aux supports ? |
+| `verifier-portail.yml` · **fiche** | **Cette séance est-elle prête ?** Douze points, appliqués à chaque `docs/seances/seance-*.md` trouvée |
+| `supabase.yml` · **verifier** | La chaîne de migrations se rejoue-t-elle deux fois sur une base vierge, et les invariants tiennent-ils ? |
+
+### La fiche — pourquoi elle ne connaît aucun numéro de séance
+
+Elle découvre les traces écrites par `glob`, et passe la même fiche à chacune.
+Ajouter la séance 4 ne demande donc rien : elle est contrôlée dès qu'elle
+existe. **Une checklist qu'on doit penser à étendre finit toujours par oublier
+la séance du jour** — c'est la seule raison de ce choix.
+
+Les douze points : le front-matter et le nom de fichier concordent · titre de
+récit entre guillemets · cold open · au moins trois actes · au moins deux
+indices repliés · l'adresse du portail présente et aucune adresse
+décommissionnée · dix questions à quatre options non vides, sans code dans un
+énoncé · une grille « Rép. » complète, en A–D, sans lettre bonne plus de quatre
+fois · présente au sommaire de `mkdocs.yml` · un corrigé en base par question ·
+un teaser · un bloc « À retenir » · **une liste « Concepts à connaître »
+identique à celle de la base, dont les numéros de questions existent**.
+
+Le dernier point est celui qui a motivé la fiche : sans lui, deux listes
+divergent en silence et on débriefe sur des concepts que la trace écrite ne
+nomme pas.
