@@ -35,10 +35,10 @@ heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
 
 | Zone | La question | Ce qu'on y trouve |
 |---|---|---|
-| **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — huit règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
+| **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — neuf règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
 | Onglet **Appel du jour** | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
 | Onglet **Vue d'ensemble** | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
-| Onglet **Questionnaires** | *Que sais-je d'eux ?* | Faisons connaissance (BTS1), Recherche de stage (BTS2). Ponctuels : quelques fois dans l'année. |
+| Onglet **Questionnaires** | *Que leur ai-je posé, hors quiz de séance ?* | **Contrôles d'entrée** (tous, avec leur classe et leur interrupteur), puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. |
 | Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | Pré-vol, cadence, réussite par question, élève par élève — **une séance choisie**. |
 
 **Ne pas ajouter une carte sans décider de son onglet** — ou sans décider
@@ -550,6 +550,32 @@ Règles qui ne se devinent pas :
 
 Et la boucle : **les concepts d'une séance sont exactement ce que teste le
 contrôle d'entrée de la suivante.** Écrire les uns, c'est écrire l'autre.
+
+### Où on le voit — et pourquoi ce n'est pas là qu'on l'écrit
+
+Un contrôle appartient à sa séance, donc il s'écrit sous **Suivi d'une séance**,
+derrière deux sélecteurs. Le 15/09, huit notions posées sur le TP2 du BTS2 y ont
+été cherchées dans **Questionnaires**, où elles n'étaient pas : écrites,
+appliquées en base, et introuvables. Le modèle était bon ; **c'est la lecture qui
+manquait.**
+
+`controles()` rend la liste de tout ce qui est écrit — classe, séance, nombre de
+notions, allumé ou non, combien y ont répondu — et la carte « Contrôles
+d'entrée » de l'onglet Questionnaires l'affiche, avec l'interrupteur et un
+bouton qui ouvre la séance concernée dans l'onglet du suivi.
+
+**Cette carte ne sait pas écrire un contrôle, et c'est volontaire.** Un contrôle
+s'écrit en regardant la séance qu'il prépare ; deux endroits pour le même geste,
+c'est la garantie que l'un des deux divergera. Elle répond à trois questions et
+pas une de plus : qu'est-ce qui existe, pour quelle classe, les étudiants le
+voient-ils.
+
+`a_faire()` porte la neuvième règle correspondante — **contrôle écrit mais
+éteint, sur une séance pas encore démarrée**. Après le démarrage, éteint est
+l'état normal et la règle se tait. ⚠️ `a_faire()` est **réécrite en entier** dans
+`20260915120000_controles_visibles.sql`, et c'est cette définition qui gagne :
+corriger `20260908080000_a_faire.sql` sans corriger celle-ci ne changerait
+rien — le piège de `preflight_seance()`, une troisième fois.
 
 ---
 
