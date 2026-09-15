@@ -321,6 +321,12 @@ tr:last-child td{border-bottom:0}
 /* Un modèle et ses affectations : le titre, les classes en cases à cocher,
    et pour chaque classe cochée un interrupteur. Deux niveaux, pas trois. */
 .qn-m{padding:.9rem 0;border-top:1px solid var(--rule-soft)}
+/* Une ligne de contrôle : où il est posé à gauche, les deux gestes à droite.
+   `flex-wrap` et non une grille : à 390 px la ligne passe à deux étages
+   d'elle-même, sans cible tactile rétrécie. */
+.ctl-bas{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem}
+.ctl-ou{font-size:.9rem;color:var(--ink-soft);margin-right:auto}
+.ctl-voir{padding:.45rem .8rem;font-size:.9rem}
 .qn-m:first-child{border-top:0;padding-top:.2rem}
 .qn-tete{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
 .qn-tt{font-weight:600;font-size:1rem}
@@ -893,7 +899,21 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   </div>
 
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
-    <p class="volet-hint">Deux questionnaires ponctuels : la rentrée du BTS1, la recherche de stage du BTS2. On les ouvre quelques fois dans l'année, pas chaque semaine.</p>
+    <p class="volet-hint">Tout ce que vous posez aux étudiants en dehors du quiz de séance : les contrôles d'entrée, notion par notion, avant une séance ; les questionnaires ponctuels, quelques fois dans l'année.</p>
+
+  <!-- Les contrôles d'entrée s'écrivent dans « Suivi d'une séance », parce
+       qu'ils appartiennent à la séance qu'ils précèdent. Mais on les cherche
+       ici : c'est l'onglet des questions qu'on pose à une classe. D'où cette
+       carte, qui montre et allume sans dupliquer la rédaction. -->
+  <div class="card" id="carte-controles" hidden>
+    <h2>Contrôles d'entrée</h2>
+    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
+      qu'ils en avaient gardé. Un contrôle appartient à la séance qu'il précède :
+      il s'écrit là-bas, il s'allume ici. <b>Éteint, aucun étudiant ne le voit.</b></p>
+    <div id="ctl-liste"></div>
+    <div id="err-controles"></div>
+  </div>
+
   <div class="card" id="carte-qactifs" hidden>
     <h2>Vos questionnaires</h2>
     <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une classe
@@ -3746,6 +3766,7 @@ $("b-controle").addEventListener("click", function(){
       ? "Le contrôle est proposé aux étudiants. Il apparaît en tête de leur écran."
       : "Le contrôle n'est plus proposé. Les réponses déjà données sont conservées.", true);
     chargerControle();
+    chargerControles();
   });
 });
 
@@ -4065,6 +4086,129 @@ function chargerSeancesDe(classeId){
     });
 }
 
+// ── Les contrôles d'entrée, vus de l'onglet Questionnaires ────────────────
+// Un contrôle vit sur la séance qu'il précède, derrière deux sélecteurs. Le
+// 15/09, huit notions posées sur le TP2 du BTS2 ont été cherchées ici, où
+// elles n'étaient pas. Le modèle reste le bon — c'est la lecture qui manquait.
+//
+// Cette carte ne sait pas écrire un contrôle, et c'est volontaire : un
+// contrôle s'écrit en regardant la séance qu'il prépare. Elle répond à trois
+// questions et pas une de plus : qu'est-ce qui existe, pour quelle classe,
+// et les étudiants le voient-ils ?
+function chargerControles(){
+  var carte = $("carte-controles");
+  carte.hidden = true;
+  sb.rpc("controles").then(function(r){
+    // Fonction pas encore déployée : la carte reste absente, comme les autres.
+    if (!r || r.error || !r.data || !r.data.ok) return;
+    rendreControles(r.data.liste || []);
+    carte.hidden = false;
+  });
+}
+
+function rendreControles(liste){
+  var z = $("ctl-liste");
+  z.innerHTML = "";
+  if (!liste.length) {
+    // Le vide se dit avec le chemin pour en sortir, sinon il se lit comme une
+    // panne — c'est ce qui s'est passé le 15/09, dans l'autre sens.
+    z.innerHTML = '<p class="hint" style="margin:0">Aucun contrôle écrit pour ' +
+      "l'instant. Ils s'écrivent dans <b>Suivi d'une séance</b> : choisissez la " +
+      'classe et la séance, puis « Écrire le contrôle de cette séance ».</p>';
+    return;
+  }
+  liste.forEach(function(c){ z.appendChild(ligneControleGlobal(c)); });
+}
+
+function ligneControleGlobal(c){
+  var d = document.createElement("div");
+  d.className = "qn-m";
+  d.innerHTML = '<div class="qn-tete"><span class="qn-tt"></span>' +
+                '<span class="qn-meta"></span></div>' +
+                '<div class="ctl-bas"><span class="ctl-ou"></span></div>';
+
+  // La classe d'abord, et en toutes lettres : la question posée est « est-ce
+  // bien affecté au BTS2 ? ». Un code de classe seul n'y répond pas.
+  d.querySelector(".qn-tt").textContent = c.classe;
+  d.querySelector(".qn-meta").textContent =
+    c.notions + (c.notions > 1 ? " notions" : " notion") +
+    (c.inscrits ? " · " + c.repondu + " / " + c.inscrits + " y ont répondu" : "");
+
+  var ou = d.querySelector(".ctl-ou");
+  ou.textContent = "Séance " + c.numero + " — " + c.titre +
+    (c.demarree ? " · déjà démarrée" : "");
+
+  var bas = d.querySelector(".ctl-bas");
+
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "qa-b" + (c.ouvert ? " on" : "");
+  b.innerHTML = '<span class="pt"></span><span class="et"></span>';
+  b.querySelector(".et").textContent = c.ouvert ? "Proposé" : "Éteint";
+  b.setAttribute("aria-pressed", c.ouvert ? "true" : "false");
+  b.setAttribute("aria-label", (c.ouvert ? "Éteindre" : "Proposer") +
+    " le contrôle de la séance " + c.numero + " pour " + c.classe);
+  b.addEventListener("click", function(){ basculerControle(c, b); });
+  bas.appendChild(b);
+
+  var v = document.createElement("button");
+  v.type = "button";
+  v.className = "btn btn-sec ctl-voir";
+  v.textContent = "Voir le détail";
+  v.setAttribute("aria-label", "Ouvrir la séance " + c.numero + " de " +
+    c.classe + " dans le suivi");
+  v.addEventListener("click", function(){ allerAuControle(c); });
+  bas.appendChild(v);
+
+  return d;
+}
+
+function basculerControle(c, b){
+  var vise = !b.classList.contains("on");
+  b.disabled = true;
+  erreur("err-controles", "");
+  sb.rpc("ouvrir_controle", { p_seance_id: Number(c.seance_id),
+                              p_ouvert: vise }).then(function(r){
+    b.disabled = false;
+    if (!r || r.error || !r.data || !r.data.ok) {
+      erreur("err-controles", (r && r.data && r.data.motif === "vide")
+        ? "Ce contrôle n'a aucune notion : rien à proposer."
+        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      return;
+    }
+    erreur("err-controles", vise
+      ? "Proposé à " + c.classe + ". Il apparaît en tête de l'écran des étudiants."
+      : "Éteint pour " + c.classe + ". Les réponses déjà données sont conservées.", true);
+    chargerControles();
+    // La carte du suivi montre la même chose : si elle est ouverte sur cette
+    // séance, elle mentirait jusqu'au prochain rafraîchissement.
+    if (suivi && String(suivi.seanceId) === String(c.seance_id)) chargerControle();
+  });
+}
+
+// « Voir le détail » : l'onglet du suivi, la bonne classe, la bonne séance.
+// Sans cela, on lit « séance 2 du BTS2 » et on doit refaire soi-même deux
+// sélections — c'est la moitié du problème qu'on vient de régler.
+function allerAuControle(c){
+  ouvrirOnglet("seance");
+  var sc = $("pk-classe");
+  if (String(sc.value) !== String(c.classe_id)) {
+    sc.value = String(c.classe_id);
+  }
+  chargerSeancesDe(sc.value).then(function(){
+    var ss = $("pk-seance");
+    for (var i = 0; i < ss.options.length; i++) {
+      if (String(ss.options[i].value) === String(c.seance_id)) {
+        ss.selectedIndex = i;
+        activerSeance();
+        break;
+      }
+    }
+    var b = $("bloc-controle");
+    if (b) b.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 // ── La bibliothèque de questionnaires ─────────────────────────────────────
 // Deux niveaux, et pas trois : un MODÈLE — le texte, écrit une fois — et ses
 // AFFECTATIONS — une séance par classe, avec ses réponses à elle. Cocher une
@@ -4379,6 +4523,7 @@ function ouvrirEspaceEnseignant(){
     chargerConnaissance(classes);
     chargerStage(classes);
     chargerQuestionnaires();
+    chargerControles();
     chargerAFaire();
     chargerSemestre();
     if (classes.length) chargerSeancesDe(classes[0].id);
