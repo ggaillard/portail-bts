@@ -137,8 +137,23 @@ tr:last-child td{border-bottom:0}
 .cq-opt{display:block;font-size:.9rem;padding:.08rem 0;color:var(--ink-soft)}
 .cq-opt.juste{color:#1B6B42;font-weight:600}
 .cq-exp{display:block;margin-top:.25rem;font-size:.85rem;color:var(--ink-soft);font-style:italic}
-.appel-classe{padding:.75rem 0;border-top:1px solid var(--rule)}
+/* Deux classes l'une sous l'autre, c'est deux écrans de téléphone à franchir
+   pour arriver à la seconde. Dès qu'il y a la largeur, elles passent côte à
+   côte : la carte cesse de s'allonger avec le nombre de classes. En dessous de
+   58 rem la grille redevient une colonne — deux colonnes de 200 px couperaient
+   la ligne des numéros absents en deux, et c'est celle qu'on lit à voix haute. */
+#appel-classes{display:grid;gap:0}
+@media (min-width: 58rem){
+  #appel-classes{grid-template-columns:1fr 1fr;gap:0 1.6rem}
+  #appel-classes > .appel-classe:nth-child(2){border-top:0;padding-top:.2rem}
+}
+.appel-classe{padding:.75rem 0;border-top:1px solid var(--rule);min-width:0}
 .appel-classe:first-child{border-top:0;padding-top:.2rem}
+/* L'humeur : repliée, son résumé porte déjà le chiffre et ce qui domine. */
+.ac-hum{margin-top:.5rem}
+.ac-hum > summary{cursor:pointer;font-size:.85rem;color:var(--ink-soft);
+  padding:.35rem 0;min-height:44px;display:flex;align-items:center}
+.ac-hum > summary::marker{color:var(--ink-faint)}
 .appel-classe h3{font-size:1rem;margin:0 0 .1rem}
 .appel-classe .ac-q{font-size:.9rem;color:var(--ink-soft);margin:0 0 .5rem}
 .appel-classe .ac-compte{margin:0 0 .35rem;font-size:.95rem}
@@ -162,6 +177,51 @@ tr:last-child td{border-bottom:0}
 .ac-suivi li{font-size:.87rem;line-height:1.45}
 .ac-suivi li b{font-family:var(--f-mono);font-weight:600}
 .ac-suivi li span{color:var(--ink-soft)}
+
+/* ── Le parcours de l'heure ────────────────────────────────────────────────
+   Quatre étapes, quatre barres. L'entonnoir d'abord — où ça coince pour le
+   groupe — puis la liste repliée, où l'on va chercher qui.
+   Les barres partagent la même largeur de libellé : sans cela, « Appel » et
+   « Le quiz de la séance » décalent leurs jauges de trois centimètres et on
+   ne peut plus comparer deux lignes d'un coup d'œil, ce qui est tout
+   l'intérêt d'un entonnoir. */
+.pa-bloc{margin:1rem 0;padding:.9rem 1rem;border:1px solid var(--rule-soft);
+  border-radius:10px;background:var(--surface-alt)}
+.pa-e{display:flex;align-items:center;gap:.6rem;padding:.3rem 0;font-size:.9rem}
+.pa-e-n{flex:0 0 9.5rem;color:var(--ink-soft)}
+.pa-e-j{flex:1 1 auto;min-width:3rem;height:.6rem;border-radius:99px;
+  background:var(--rule-soft);overflow:hidden}
+.pa-e-j > span{display:block;height:100%;background:var(--accent);
+  transition:width .5s ease}
+.pa-e-c{flex:0 0 auto;font-family:var(--f-mono);font-size:.85rem;font-weight:600}
+.pa-e-p{flex-basis:100%;margin:0 0 .2rem 10.1rem;font-size:.8rem;color:var(--ink-faint)}
+.pa-e.pas-pose .pa-e-c{font-weight:500;color:var(--ink-faint);font-family:var(--f-sans);
+  font-size:.82rem}
+.pa-e.pas-pose .pa-e-j{opacity:.35}
+@media (max-width: 30rem){
+  .pa-e{flex-wrap:wrap}
+  .pa-e-n{flex-basis:100%}
+  .pa-e-p{margin-left:0}
+}
+/* Une ligne par étudiant : le numéro, puis quatre pastilles dans l'ordre des
+   étapes. On lit une colonne pour voir qui manque à l'appel, une ligne pour
+   voir où quelqu'un s'est arrêté. */
+.pa-l{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;
+  border-top:1px solid var(--rule-soft);font-size:.88rem}
+.pa-l:first-child{border-top:0}
+.pa-num{font-family:var(--f-mono);font-weight:600;flex:0 0 2.2rem}
+.pa-pts{display:flex;gap:.3rem;flex:0 0 auto}
+.pa-pt{width:1.6rem;height:1.6rem;border-radius:6px;display:flex;
+  align-items:center;justify-content:center;font-size:.7rem;font-weight:600;
+  background:var(--rule-soft);color:var(--ink-faint)}
+.pa-pt.fait{background:var(--ok-soft);color:var(--ok)}
+.pa-pt.entame{background:var(--signal-soft);color:var(--signal)}
+.pa-pt.absent{background:transparent;border:1px dashed var(--rule);color:var(--ink-faint)}
+.pa-ou{color:var(--ink-soft);font-size:.83rem;margin-left:auto;text-align:right}
+.pa-l.fini .pa-ou{color:var(--ok)}
+#pa-detail > summary{cursor:pointer;font-size:.9rem;font-weight:600;
+  padding:.5rem 0;min-height:44px;display:flex;align-items:center}
+#pa-lignes{margin-top:.3rem}
 
 /* Le contrôle d'entrée se distingue des questionnaires : il précède la
    séance au lieu de l'accompagner, et il porte une bonne réponse. Un liseré
@@ -230,8 +290,17 @@ tr:last-child td{border-bottom:0}
 
 .ac-nums .nums{font-family:var(--f-mono);font-size:1.45rem;font-weight:600;color:#963232;
   letter-spacing:.06em;line-height:1.25}
+/* « Copier » fait 22 px de haut, et doit le rester : l'agrandir pousserait la
+   ligne des numéros — celle qu'on lit à voix haute — vers le bas, à chaque
+   classe. On étend donc la zone tactile SANS toucher au gabarit : un
+   pseudo-élément déborde de 11 px en haut et en bas, soit 44 px sous le doigt
+   pour 22 px à l'écran. Le bouton restait sous la règle des 44 px depuis le
+   début, et aucun contrôle ne le voyait — celui qui devait le voir
+   (`t_ens_mob.mjs`) n'a jamais été déposé dans le dépôt. */
 .ac-nums .btn-mini{margin-left:auto;font-size:.78rem;padding:.2rem .5rem;border-radius:6px;
-  border:1px solid #F0C9C9;background:#fff;color:#963232;cursor:pointer;flex:0 0 auto}
+  border:1px solid #F0C9C9;background:#fff;color:#963232;cursor:pointer;flex:0 0 auto;
+  position:relative}
+.ac-nums .btn-mini::after{content:"";position:absolute;left:0;right:0;top:-11px;bottom:-11px}
 .ac-nums.vide{background:#DEF3E6;border-color:#C2E6D2}
 .ac-nums.vide .lbl,.ac-nums.vide .nums{color:#1B6B42}
 .ac-nums.vide .nums{font-size:1rem;font-weight:500;letter-spacing:0}
@@ -255,6 +324,20 @@ tr:last-child td{border-bottom:0}
 .st-opt.pris{background:#DEF3E6;border-color:#1B6B42;color:#1B6B42;font-weight:600}
 .st-opt:disabled{opacity:.55;cursor:default}
 .st-maj{font-size:.8rem;color:var(--ink-soft)}
+/* Mode révision — la seule carte étudiante qui dise « faux ».
+   Le contrôle d'entrée, lui, ne corrige jamais : il mesure un point de
+   départ, et « faux » avant la séance se lit comme une sanction. Ici on
+   révise une interro : ne pas dire où est l'erreur enlèverait tout l'objet.
+   La bonne réponse est donc teinte, la mauvaise soulignée en signal, et
+   l'explication passe en dessous — c'est elle qu'on est venu chercher. */
+.rv-opt.juste{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:600}
+.rv-opt.rate{background:var(--signal-soft);border-color:var(--signal);color:var(--signal)}
+.rv-verdict{margin-top:.7rem;font-weight:600;font-size:.95rem}
+.rv-verdict.juste{color:var(--ok)}
+.rv-verdict.rate{color:var(--signal)}
+.rv-expl{margin-top:.35rem;font-size:.9rem;color:var(--ink-soft);line-height:1.55}
+.rv-suite{margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.rv-score{font-size:.85rem;color:var(--ink-soft)}
 .et-etape{margin:.55rem 0}
 .et-tete{display:flex;align-items:baseline;gap:.5rem;font-size:.88rem}
 .et-tete b{font-weight:600}
@@ -656,6 +739,39 @@ tr:last-child td{border-bottom:0}
           margin-top:1.6vmin;line-height:1.4}
 .ce-deb-p b{color:#EAF2F8}
 
+/* ── Vue projetée « Parcours » ─────────────────────────────────────────────
+   Quatre étapes, quatre barres, et AUCUN numéro — c'est la différence de
+   nature avec Progression et Classement. Projeter « il manque le 07 à
+   l'appel » devant la classe désigne quelqu'un ; « il en manque trois »
+   fait exactement le même travail — chacun sait s'il a pointé — sans mettre
+   personne au tableau. Le détail par étudiant reste sur l'écran de
+   l'enseignant, qui est le seul à le regarder. */
+.ce-par{flex:1;display:flex;flex-direction:column;gap:1.4vmin;justify-content:center;
+        padding:0 6vmin}
+.ce-par[hidden]{display:none!important}
+.ce-par-r{font-family:var(--f-mono);font-size:clamp(.7rem,1.6vmin,1rem);letter-spacing:.06em;
+          text-transform:uppercase;color:#7B8FA1;text-align:center;margin-bottom:1.4vmin}
+.ce-par-l{display:flex;align-items:center;gap:2vmin}
+.ce-par-i{flex:0 0 30%;font-size:clamp(.95rem,2.9vmin,2rem);color:#EAF2F8}
+.ce-par-b{flex:1 1 auto;height:clamp(16px,4vmin,44px);background:#141C26;
+          border-radius:10px;overflow:hidden;position:relative}
+.ce-par-f{display:block;height:100%;border-radius:10px;
+          background:linear-gradient(90deg,#1F7A5A,#4FD1A5);
+          transition:width 1.4s cubic-bezier(.2,.75,.25,1)}
+/* Les entamés, derrière les finis : on voit d'un coup ceux qui sont dedans
+   sans être au bout. Sans cette nuance, « 0 / 31 » sur le quiz donnerait
+   l'impression que personne n'a commencé alors que neuf sont dessus. */
+.ce-par-e{position:absolute;inset:0;height:100%;border-radius:10px;
+          background:#2C4A44;z-index:0;transition:width 1.4s cubic-bezier(.2,.75,.25,1)}
+.ce-par-f{position:relative;z-index:1}
+.ce-par-n{font-family:var(--f-mono);font-size:clamp(.9rem,2.6vmin,1.8rem);color:#EAF2F8;
+          width:4.6em;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.ce-par-l.pas-pose .ce-par-i,.ce-par-l.pas-pose .ce-par-n{color:#57697A}
+.ce-par-l.pas-pose .ce-par-n{font-family:var(--f-sans);font-size:clamp(.75rem,1.9vmin,1.2rem)}
+.ce-par-p{text-align:center;color:#8CA3B5;font-size:clamp(.8rem,1.9vmin,1.25rem);
+          margin-top:2vmin;line-height:1.4}
+.ce-par-p b{color:#EAF2F8}
+
 /* Podium révélé en cascade, le premier en dernier */
 @keyframes tdcMonte{
   from { opacity:0; transform:translateY(2.6vmin) scale(.92); }
@@ -863,6 +979,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   <div class="card" id="carte-appel" hidden>
     <h2>Appel du jour</h2>
     <p class="hint">Toutes vos classes, sans changer de sélection.</p>
+    <p class="hint" id="ac-question" hidden></p>
     <div id="ac-sans-noms" hidden></div>
     <div id="appel-classes"></div>
     <div class="pick" style="margin-top:.8rem">
@@ -954,7 +1071,14 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
       <select id="qn-mode">
         <option value="sequentiel">Une question à la fois — sans retour en arrière</option>
         <option value="revisable">Tout à l'écran — modifiable à volonté</option>
+        <option value="revision">Révision — la correction s'affiche après chaque réponse</option>
       </select>
+      <p class="sous-hint" id="qn-aide-revision" hidden>En révision, chaque ligne
+        porte une <b>étoile devant la bonne option</b> et, après une flèche
+        « → », l'explication que l'étudiant lit une fois qu'il a répondu. Une
+        ligne sans étoile fait échouer la création, en disant laquelle : un
+        questionnaire de révision dont une question n'a pas de bonne réponse
+        compterait la classe entière fausse sans que personne ne le voie.</p>
       <label class="qn-lbl" for="qn-texte">Les questions</label>
       <textarea id="qn-texte" rows="7" spellcheck="true"
         placeholder="Ce semestre, le rythme vous a paru : · Trop lent · Juste · Trop rapide · Intenable&#10;Ce qui vous a le plus aidé : · Les séances · Le quiz · Les corrigés · Le travail à deux"></textarea>
@@ -1000,6 +1124,25 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
         <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
       </div>
       <div id="err-prevol"></div>
+    </div>
+
+    <!-- Le parcours de l'heure. Le pré-vol dit « cette séance est-elle
+         prête » ; celui-ci dit « où en est chacun ». Il vient juste après,
+         parce que c'est la question suivante, et avant le contrôle d'entrée
+         qui n'est qu'une de ses quatre étapes. -->
+    <div id="bloc-parcours" class="pa-bloc" hidden>
+      <div class="ct-tete">
+        <h3>Le parcours de l'heure</h3>
+        <button class="btn btn-sec" id="b-pa-ecran" type="button"
+          title="Projeter l'avancement au tableau">Projeter</button>
+      </div>
+      <div id="pa-entonnoir"></div>
+      <p class="sous-hint" id="pa-bloques"></p>
+      <details id="pa-detail">
+        <summary>Étudiant par étudiant</summary>
+        <div id="pa-lignes"></div>
+      </details>
+      <div id="err-parcours"></div>
     </div>
 
     <!-- Le contrôle d'entrée se lit AVANT la séance : il vient donc juste
@@ -1118,6 +1261,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
   <div class="ce-grille" id="ce-grille"></div>
   <div class="ce-rep" id="ce-rep" hidden></div>
   <div class="ce-deb" id="ce-deb" hidden></div>
+  <div class="ce-par" id="ce-par" hidden></div>
   <p class="ce-vide" id="ce-vide" hidden>
     Personne n'a encore répondu. Les avatars apparaîtront ici dès les premières réponses.
   </p>
@@ -1129,6 +1273,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
     <button class="ce-btn on" id="ce-prog" type="button">Progression</button>
     <button class="ce-btn" id="ce-clas" type="button">Classement</button>
     <button class="ce-btn" id="ce-rep-b" type="button">Répartition</button>
+    <button class="ce-btn" id="ce-par-b" type="button">Parcours</button>
     <button class="ce-btn" id="ce-deb-b" type="button">Débriefing</button>
     <button class="ce-btn" id="ce-auto" type="button">Rotation auto</button>
     <button class="ce-btn" id="ce-min" type="button">Minuteur</button>
@@ -1564,7 +1709,8 @@ function rendreQuestionnairesEtu(liste){
   (liste || []).forEach(function(d){
     if (!d.questions || !d.questions.length) return;
     z.appendChild(carteQuestionnaire(d));
-    (d.mode === "revisable" ? rendreRevisable : rendreSequentiel)(d);
+    (d.mode === "revision" ? rendreRevision
+      : d.mode === "revisable" ? rendreRevisable : rendreSequentiel)(d);
   });
   majFile();
 }
@@ -1700,6 +1846,158 @@ function rendreRevisable(d){
     });
     bloc.appendChild(opts);
     z.appendChild(bloc);
+  });
+}
+
+// ── Mode révision — une question à la fois, et la correction après ───────
+// La troisième carte étudiante, et la seule qui corrige. Elle existe parce
+// qu'aucune des deux autres ne pouvait servir à réviser une interro :
+//   · le contrôle d'entrée ne montre jamais la correction — c'est voulu, il
+//     mesure un point de départ, et « faux » avant la séance est une sanction ;
+//   · le questionnaire ordinaire porte bonne_reponse = 'Z' : rien n'est juste,
+//     donc il n'y a rien à corriger.
+// Réviser, c'est l'inverse : répondre, se tromper, voir pourquoi, recommencer.
+//
+// La base ne livre `bonne` et `explication` que sur les questions DÉJÀ
+// répondues — mes_questionnaires() s'en charge, et c'est elle qui tient la
+// règle, pas cet écran : la fonction est appelée avec la clé publique, un
+// étudiant curieux lirait sinon la grille entière avant de commencer.
+//
+// La carte ne se replie pas quand tout est répondu, contrairement aux deux
+// autres : un questionnaire de révision se refait, et le refermer sur un
+// « c'est fait » enlèverait exactement ce qu'on vient d'y mettre.
+function rendreRevision(d){
+  var errId = "err-qn-" + d.seance_id;
+  erreur(errId, "");
+
+  // On reprend là où l'étudiant s'est arrêté, pas au début : revenir sur ce
+  // qu'il a déjà fait pour atteindre la suite est ce qui fait abandonner.
+  if (d._i === undefined) {
+    var i = 0;
+    while (i < d.questions.length && d.questions[i].ma_reponse) i++;
+    d._i = i < d.questions.length ? i : 0;
+  }
+  if (d._i >= d.questions.length) d._i = 0;
+
+  var q = d.questions[d._i];
+  var justes = d.questions.filter(function(x){ return x.juste === true; }).length;
+  var faites = d.questions.filter(function(x){ return x.ma_reponse; }).length;
+
+  var av = zoneQ(d, ".qn-av");
+  av.textContent = "Question " + (d._i + 1) + " sur " + d.questions.length +
+    (faites ? " — " + justes + " juste" + (justes > 1 ? "s" : "") +
+              " sur " + faites + " répondue" + (faites > 1 ? "s" : "") + "." : ".");
+
+  zoneQ(d, ".cn-int").textContent = typo(q.intitule || q.question);
+
+  var choix = zoneQ(d, ".appel-choix");
+  choix.className = "appel-choix";
+  choix.innerHTML = "";
+
+  var repondu = !!q.ma_reponse;
+  ["A","B","C","D"].forEach(function(lettre, i){
+    if (!q.options || !q.options[i]) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec appel-opt rv-opt";
+    b.textContent = q.options[i];
+    if (repondu) {
+      b.disabled = true;
+      if (q.bonne === lettre) b.className += " juste";
+      else if (q.ma_reponse === lettre) b.className += " rate";
+    } else {
+      b.addEventListener("click", function(){
+        var tous = choix.querySelectorAll("button");
+        Array.prototype.forEach.call(tous, function(x){ x.disabled = true; });
+        sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
+                             p_reponse: lettre }).then(function(rr){
+          if (rr.error) {
+            erreur(errId, texteEnvoi(rr.error));
+            signalerSessionPerimee(rr.error);
+            Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
+            return;
+          }
+          // La correction ne s'invente pas ici : on redemande la liste, et la
+          // base décide de ce qu'elle livre. Deviner la bonne réponse côté
+          // page voudrait dire l'y avoir envoyée — donc l'avoir publiée.
+          rafraichirRevision(d);
+        });
+      });
+    }
+    choix.appendChild(b);
+  });
+
+  // Un seul bloc après les options, vidé à chaque rendu. Insérer verdict,
+  // explication et boutons directement dans la carte les y empilerait : douze
+  // questions plus tard, la carte porterait douze corrections.
+  var apres = $("qn-" + d.seance_id).querySelector(".rv-apres");
+  if (!apres) {
+    apres = document.createElement("div");
+    apres.className = "rv-apres";
+    choix.parentNode.appendChild(apres);
+  }
+  apres.innerHTML = "";
+
+  var suite = document.createElement("div");
+  suite.className = "rv-suite";
+
+  if (repondu) {
+    var v = document.createElement("p");
+    v.className = "rv-verdict " + (q.juste ? "juste" : "rate");
+    v.textContent = q.juste ? "Juste." : "Ce n'était pas ça.";
+    apres.appendChild(v);
+    if (q.explication) {
+      var e = document.createElement("p");
+      e.className = "rv-expl";
+      e.textContent = typo(q.explication);
+      apres.appendChild(e);
+    }
+
+    var dernier = d._i >= d.questions.length - 1;
+    var b1 = document.createElement("button");
+    b1.type = "button";
+    b1.className = "btn";
+    b1.textContent = dernier ? "Revenir à la première" : "Question suivante";
+    b1.addEventListener("click", function(){
+      d._i = dernier ? 0 : d._i + 1;
+      rendreRevision(d);
+    });
+    suite.appendChild(b1);
+
+    if (faites >= d.questions.length) {
+      var s = document.createElement("span");
+      s.className = "rv-score";
+      s.textContent = justes + " sur " + d.questions.length +
+        ". Vous pouvez tout refaire : rien n'est noté ici.";
+      suite.appendChild(s);
+    }
+  }
+
+  apres.appendChild(suite);
+
+  // La file d'attente ne compte pas la révision : elle n'a pas de fin, et un
+  // bandeau qui réclame indéfiniment une carte qu'on peut refaire à volonté
+  // se lirait comme un reproche.
+  marquerEtape("qn-" + d.seance_id, true);
+}
+
+// Une seule question a changé, mais on relit la liste entière : c'est la base
+// qui décide quelle correction sort, et la refabriquer ici demanderait de
+// l'avoir. Un appel de plus par réponse, sur un questionnaire qu'on fait chez
+// soi — le coût est nul comparé à publier la grille.
+function rafraichirRevision(d){
+  sb.rpc("mes_questionnaires").then(function(r){
+    var frais = null;
+    if (r && !r.error && r.data && r.data.ok) {
+      (r.data.liste || []).forEach(function(x){
+        if (x.seance_id === d.seance_id) frais = x;
+      });
+    }
+    if (!frais) { erreur("err-qn-" + d.seance_id, "Réessayez dans un instant."); return; }
+    d.questions = frais.questions;
+    d.faites = frais.faites;
+    d.justes = frais.justes;
+    rendreRevision(d);
   });
 }
 
@@ -2163,6 +2461,23 @@ function rendreEcran(s){
   }
   zoneDeb.hidden = true;
 
+  // ── Vue « Parcours » : où en est la classe dans les quatre étapes ? ──
+  // Elle se projette pendant l'heure, contrairement au débriefing qui la
+  // conclut — mais elle ne montre aucun numéro : voir <rendreParcoursEcran>.
+  var zonePar = $("ce-par");
+  if (suivi.vue === "par") {
+    $("ce-grille").hidden = true;
+    $("ce-podium").hidden = true;
+    $("ce-rep").hidden = true;
+    $("ce-vide").hidden = true;
+    zonePar.hidden = false;
+    rendreParcoursEcran(zonePar, trans);
+    if (trans) entree(zonePar);
+    majPied(s, actifs, nouveaux);
+    return;
+  }
+  zonePar.hidden = true;
+
   // ── Vue « Répartition » : quel choix a fait la classe ? ──
   var zoneRep = $("ce-rep");
   if (suivi.vue === "rep") {
@@ -2576,6 +2891,7 @@ function modeEcran(v){
   $("ce-prog").classList.toggle("on", v === "prog");
   $("ce-clas").classList.toggle("on", v === "clas");
   $("ce-rep-b").classList.toggle("on", v === "rep");
+  $("ce-par-b").classList.toggle("on", v === "par");
   $("ce-deb-b").classList.toggle("on", v === "deb");
   if (suivi.stats) rendreEcran(suivi.stats);
 }
@@ -2591,7 +2907,11 @@ function rotationAuto(){
   $("ce-auto").classList.add("on");
   // Le débriefing n'entre pas dans la rotation : il conclut l'heure, il ne
   // tourne pas pendant. On l'appelle à la main, quand on a décidé d'arrêter.
-  var ordre = ["prog", "clas", "rep"], i = 0;
+  // Le parcours entre dans la rotation, et il y entre EN PREMIER après la
+  // progression : au début de l'heure, « il manque trois personnes à l'appel »
+  // est plus utile que le classement, et il cesse de l'être tout seul dès que
+  // les quatre barres sont pleines.
+  var ordre = ["prog", "par", "clas", "rep"], i = 0;
   suivi.auto = setInterval(function(){
     i = (i + 1) % ordre.length;
     if (ordre[i] === "rep") suivi.repIndex = (suivi.repIndex || 0) + 1;
@@ -2664,6 +2984,7 @@ function chargerAppelToutesClasses(classes){
       }
       if (restant === 0) {
         carte.hidden = affiches === 0;
+        hisserQuestion();
         signalerNomsAbsents(classes);
         // Le nombre d'absents s'affiche sur l'onglet : c'est le seul chiffre
         // qu'on veut connaître sans avoir à ouvrir quoi que ce soit.
@@ -2711,6 +3032,30 @@ function signalerNomsAbsents(classes){
   d.appendChild(document.createElement("br"));
   d.appendChild(b);
   z.appendChild(d);
+}
+
+// La question du jour est la même pour toutes les classes la plupart du temps :
+// c'est la question de repli, « Vous êtes là ? … », que appel_du_jour() fabrique
+// quand aucune question de la banque n'a été posée. Répétée sous chaque titre de
+// classe, elle coûtait deux lignes par classe — 46 px sur un téléphone, deux
+// fois — pour dire deux fois la même chose, et elle poussait vers le bas le seul
+// bloc qu'on vient chercher : les numéros absents.
+//
+// Elle monte donc en tête de carte, une seule fois, QUAND ELLE EST IDENTIQUE
+// partout. Dès que deux classes n'ont pas la même — une question de la banque
+// posée sur l'une seulement — chacune reprend la sienne : à ce moment-là, la
+// différence est précisément l'information.
+function hisserQuestion(){
+  var z = $("ac-question");
+  if (!z) return;
+  var blocs = $("appel-classes").querySelectorAll(".appel-classe:not([hidden]) .ac-q");
+  var textes = Array.prototype.map.call(blocs, function(p){ return p.textContent; });
+  var toutes = textes.length > 1 && textes.every(function(t){
+    return t && t === textes[0];
+  });
+  z.hidden = !toutes;
+  z.textContent = toutes ? typo(textes[0]) : "";
+  Array.prototype.forEach.call(blocs, function(p){ p.hidden = toutes; });
 }
 
 // Aucun appel lisible : pas de pastille du tout. Zéro absent : pas de pastille
@@ -2866,15 +3211,18 @@ function blocAssiduite(c, liste, a){
   liste.forEach(function(x){
     var li = document.createElement("li");
     var nom = nomDe(c.code, x.numero);
-    var bouts = [x.manquees + " absences sur " + (x.sur || a.appels_poses || x.manquees)];
+    var bouts = [x.manquees + "/" + (x.sur || a.appels_poses || x.manquees) + " absences"];
     if (x.jamais) bouts.push("jamais venu");
     else if (x.depuis !== null && x.depuis !== undefined) {
       bouts.push(x.depuis === 0 ? "vu aujourd'hui"
                : x.depuis === 1 ? "pas vu depuis hier"
-               : "pas vu depuis " + x.depuis + " jours");
+               : "pas vu depuis " + x.depuis + " j");
     }
     li.innerHTML = "<b></b><span></span>";
     li.querySelector("b").textContent = x.numero + (nom ? " " + prenomSeul(nom) : "");
+    // « 3/6 absences, pas vu depuis 7 j » plutôt que la phrase complète : sur
+    // un téléphone, « 3 absences sur 6 » passait à la ligne et doublait la
+    // hauteur du bloc. Le chiffre reste entier, c'est la formulation qui maigrit.
     li.querySelector("span").textContent = " — " + bouts.join(", ");
     ul.appendChild(li);
   });
@@ -3366,6 +3714,18 @@ function ligneEtape(c, classe, libelle, gens){
 
 // Combien de chaque humeur, dans l'ordre des options. Une barre par smiley :
 // on lit l'état du groupe sans avoir à compter.
+// L'humeur se replie, et son résumé porte déjà la réponse.
+//
+// Quatre barres par classe faisaient 133 px chacune — 266 px pour deux classes,
+// soit plus que le compte et les numéros absents réunis. Or l'humeur ne se lit
+// pas au même moment que l'appel : l'appel est le geste de trente secondes du
+// début d'heure, l'humeur est ce qu'on regarde une fois assis. La pousser sous
+// un repli ne la perd pas — le résumé dit combien ont répondu et ce qui domine,
+// donc l'essentiel tient sur la ligne fermée.
+//
+// Un total à zéro n'affiche plus rien du tout : « personne n'a encore dit son
+// humeur » occupait une ligne pour ne rien apprendre sur une carte dont le
+// sujet est qui est là.
 function rendreHumeurClasse(z, a){
   z.innerHTML = "";
   var opts = a.humeur_options, compte = a.humeur || {};
@@ -3373,16 +3733,18 @@ function rendreHumeurClasse(z, a){
 
   var lettres = ["A","B","C","D"];
   var total = lettres.reduce(function(s, l){ return s + (compte[l] || 0); }, 0);
-  if (!total) {
-    z.innerHTML = '<p class="hint" style="margin:.5rem 0 0">Personne n\'a encore dit son humeur.</p>';
-    return;
-  }
+  if (!total) return;
 
-  var titre = document.createElement("p");
-  titre.className = "hint";
-  titre.style.margin = ".7rem 0 .25rem";
-  titre.textContent = "Humeur du groupe — " + total + (total > 1 ? " réponses" : " réponse");
-  z.appendChild(titre);
+  // Ce qui domine, nommé : « 9 · Ça va » en dit plus que « 22 réponses ».
+  var fort = 0;
+  lettres.forEach(function(l, i){ if ((compte[l] || 0) > (compte[lettres[fort]] || 0)) fort = i; });
+
+  var det = document.createElement("details");
+  det.className = "ac-hum";
+  var som = document.createElement("summary");
+  som.textContent = "Humeur — " + total + (total > 1 ? " réponses" : " réponse") +
+    (opts[fort] ? ", surtout « " + opts[fort].replace(/^\S+\s*/, "") + " »" : "");
+  det.appendChild(som);
 
   opts.forEach(function(libelle, i){
     var n = compte[lettres[i]] || 0;
@@ -3393,8 +3755,9 @@ function rendreHumeurClasse(z, a){
     l.querySelector(".jalon-b").style.width = Math.round(n / total * 55) + "%";
     l.querySelector("span:last-child").textContent =
       n + " · " + libelle.replace(/^\S+\s*/, "");
-    z.appendChild(l);
+    det.appendChild(l);
   });
+  z.appendChild(det);
 }
 
 // Le geste du matin : la liste des absents, nommée, prête à coller dans le
@@ -3543,7 +3906,233 @@ function chargerPrevol(){
     chargerControle();
     suivi.debrief = null;
     chargerDebrief();
+    suivi.parcours = null;
+    chargerParcours();
   });
+}
+
+// ── Le parcours de l'heure ────────────────────────────────────────────────
+// Chaque heure commence par la même suite, et jusqu'ici elle n'était lisible
+// nulle part d'un seul tenant : l'appel dans son onglet, l'humeur sous la
+// classe, le contrôle d'entrée derrière deux sélecteurs, le quiz dans les
+// tuiles. Quatre écrans pour une question qu'on se pose debout, une fois par
+// heure : qui n'a pas démarré ?
+//
+// Deux lectures, dans cet ordre, parce qu'elles ne servent pas au même
+// moment : l'entonnoir dit où ça coince pour le groupe, la liste repliée dit
+// chez qui. On ouvre la seconde quand la première a montré qu'il y avait une
+// raison de l'ouvrir.
+function chargerParcours(apres){
+  var bloc = $("bloc-parcours");
+  bloc.hidden = true;
+  if (!suivi.seanceId) return;
+  // L'appel et les questionnaires n'ont pas de parcours : ils SONT des étapes
+  // du parcours d'une séance de cours.
+  if (suivi.prevol && Number(suivi.prevol.seance) >= 90) return;
+
+  sb.rpc("parcours_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    var d = r && !r.error && r.data;
+    // La RPC peut manquer si la migration n'est pas déployée : on masque la
+    // carte plutôt que d'afficher une erreur en séance, comme partout ailleurs.
+    if (!d || !d.ok) { suivi.parcours = null; if (apres) apres(); return; }
+    suivi.parcours = d;
+    bloc.hidden = false;
+    rendreParcours(d);
+    if (apres) apres();
+  });
+}
+
+// Le nom vient de la base, pas d'une table écrite ici : la quatrième étape
+// s'appelle « Le quiz de la séance » au BTS1 et « Le TP » au BTS2, et deux
+// noms différents pour la même chose dans deux endroits de l'écran est
+// exactement ce qui fait douter de ce qu'on lit. Le repli ne sert qu'au cas
+// où la RPC ne serait pas déployée.
+function nomEtape(cle, d){
+  var e = ((d || suivi.parcours || {}).etapes || []).filter(function(x){
+    return x.cle === cle;
+  });
+  if (e.length && e[0].nom) return e[0].nom;
+  return { appel: "Appel", humeur: "Comment ça va",
+           controle: "Contrôle d'entrée", quiz: "Le quiz" }[cle] || cle;
+}
+
+// Le second chiffre d'une étape n'est pas un nombre d'étudiants : ce sont ses
+// items. Les nommer évite de lire « 4 sur 4 » comme « tout le monde ».
+function motItems(e){
+  if (e.cle === "controle") return "notions";
+  return e.jalons ? "étapes" : "questions";
+}
+
+// L'ordre du parcours, et donc l'ordre de l'urgence : quelqu'un qui n'a pas
+// pointé est plus loin en arrière que quelqu'un qui n'a pas fini le quiz.
+// C'est cet ordre qui trie la liste et la phrase de synthèse.
+var ETAPES_ORDRE = ["appel", "humeur", "controle", "quiz"];
+function rangEtape(cle){
+  var i = ETAPES_ORDRE.indexOf(cle);
+  return i < 0 ? ETAPES_ORDRE.length : i;
+}
+
+function rendreParcours(d){
+  var z = $("pa-entonnoir");
+  z.innerHTML = "";
+
+  (d.etapes || []).forEach(function(e){
+    var l = document.createElement("div");
+    l.className = "pa-e" + (e.pose ? "" : " pas-pose");
+
+    var n = document.createElement("span");
+    n.className = "pa-e-n";
+    n.textContent = e.nom;
+    l.appendChild(n);
+
+    var j = document.createElement("span");
+    j.className = "pa-e-j";
+    var f = document.createElement("span");
+    f.style.width = (e.pose && e.total ? Math.round(e.fait / e.total * 100) : 0) + "%";
+    j.appendChild(f);
+    l.appendChild(j);
+
+    var c = document.createElement("span");
+    c.className = "pa-e-c";
+    // Une étape non posée n'est pas une étape à zéro. « 0 / 13 » se lirait
+    // « personne ne l'a fait » au lieu de « il n'existe pas » — même choix
+    // que le débriefing, qui préfère un blanc à un zéro.
+    c.textContent = e.pose ? (e.fait + " / " + e.total) : "pas posé";
+    l.appendChild(c);
+    z.appendChild(l);
+
+    // Ceux qui sont dedans sans être au bout : sans cette ligne, « 0 / 31 »
+    // sur le quiz laisse croire que personne n'a commencé.
+    if (e.pose && e.entames && e.entames > e.fait) {
+      var p = document.createElement("p");
+      p.className = "pa-e-p";
+      var n = e.entames - e.fait;
+      // « 4 sans aller au bout (sur 4) » se lisait « 4 sur 4 », c'est-à-dire
+      // tout le monde. Le second chiffre n'est pas un effectif, c'est le
+      // nombre d'items de l'étape : on le nomme.
+      p.textContent = n + (n > 1 ? " sont dedans" : " est dedans") +
+        (e.sur > 1 ? " sans avoir fini les " + e.sur + " " + motItems(e) : " sans avoir fini") + ".";
+      z.appendChild(p);
+    }
+  });
+
+  // La phrase qui nomme le geste. Sans elle, l'entonnoir informe sans rien
+  // demander — et c'est exactement ce qu'on reprochait à « Réussite par
+  // question ».
+  var eleves = d.eleves || [];
+  var bloques = eleves.filter(function(x){ return x.bloque; });
+  var par = {};
+  bloques.forEach(function(x){ par[x.bloque] = (par[x.bloque] || 0) + 1; });
+  // Dans l'ordre du parcours, pas dans celui où les clés sont tombées : on
+  // annonce d'abord ceux qui sont le plus en arrière, parce que ce sont eux
+  // qu'on va voir en premier.
+  var bouts = ETAPES_ORDRE.filter(function(k){ return par[k]; }).map(function(k){
+    return par[k] + " à « " + nomEtape(k, d) + " »";
+  });
+  $("pa-bloques").textContent = bloques.length
+    ? bloques.length + " étudiant" + (bloques.length > 1 ? "s n'ont" : " n'a") +
+      " pas fini : " + bouts.join(", ") + "."
+    : "Tout le monde est allé au bout de ce qui est posé.";
+
+  var zl = $("pa-lignes");
+  zl.innerHTML = "";
+  // Les plus en arrière d'abord, pas les bloqués en vrac : celui qui n'a pas
+  // pointé passe avant celui qui n'a pas fini le quiz. Trier par numéro
+  // mettrait le 02 qui a tout fini au-dessus du 30 qui n'est pas là ; trier
+  // par « bloqué ou non » remontait ceux qu'on cherche le moins.
+  eleves.slice().sort(function(a, b){
+    var ra = a.bloque ? rangEtape(a.bloque) : 99;
+    var rb = b.bloque ? rangEtape(b.bloque) : 99;
+    if (ra !== rb) return ra - rb;
+    return a.numero < b.numero ? -1 : 1;
+  }).forEach(function(x){ zl.appendChild(ligneParcours(d, x)); });
+}
+
+function ligneParcours(d, x){
+  var l = document.createElement("div");
+  l.className = "pa-l" + (x.bloque ? "" : " fini");
+
+  var n = document.createElement("span");
+  n.className = "pa-num";
+  n.textContent = x.numero;
+  l.appendChild(n);
+
+  var pts = document.createElement("span");
+  pts.className = "pa-pts";
+  // Quatre pastilles dans l'ordre des étapes, toujours les quatre : on lit une
+  // colonne pour voir qui manque à l'appel, une ligne pour voir où quelqu'un
+  // s'est arrêté. En sauter une décalerait les colonnes d'une ligne à l'autre.
+  [["appel", x.appel ? 1 : 0, 1],
+   ["humeur", x.humeur ? 1 : 0, 1],
+   ["controle", x.controle, d.controle_sur],
+   ["quiz", x.quiz, d.quiz_sur]].forEach(function(e){
+    var p = document.createElement("span");
+    var fait = e[1], sur = e[2];
+    p.className = "pa-pt " + (!sur ? "absent" : fait >= sur ? "fait" : fait > 0 ? "entame" : "");
+    p.textContent = !sur ? "·" : sur === 1 ? (fait ? "✓" : "") : String(fait);
+    p.title = nomEtape(e[0], d) + (sur > 1 ? " — " + fait + " sur " + sur
+                                        : !sur ? " — pas posé" : fait ? " — fait" : " — pas fait");
+    pts.appendChild(p);
+  });
+  l.appendChild(pts);
+
+  var ou = document.createElement("span");
+  ou.className = "pa-ou";
+  var nom = nomDe(d.code, x.numero);
+  ou.textContent = (nom ? prenomSeul(nom) + " — " : "") +
+    (x.bloque ? nomEtape(x.bloque, d) : "au bout");
+  l.appendChild(ou);
+  return l;
+}
+
+// La vue projetée : les quatre barres, et AUCUN numéro. Projeter « il manque
+// le 07 à l'appel » désigne quelqu'un devant la classe ; « il en manque
+// trois » fait le même travail — chacun sait s'il a pointé — sans mettre
+// personne au tableau. Le détail par étudiant reste sur l'écran de
+// l'enseignant, qui est le seul à le regarder.
+function rendreParcoursEcran(zone, trans){
+  var d = suivi.parcours;
+  if (!d) {
+    zone.innerHTML = '<p class="ce-par-p">Le parcours de cette séance n\'est pas disponible.</p>';
+    chargerParcours(function(){ if (suivi.vue === "par") rendreParcoursEcran(zone, false); });
+    return;
+  }
+  zone.innerHTML = "";
+
+  var r = document.createElement("div");
+  r.className = "ce-par-r";
+  r.textContent = "Où en est la classe";
+  zone.appendChild(r);
+
+  (d.etapes || []).forEach(function(e){
+    var l = document.createElement("div");
+    l.className = "ce-par-l" + (e.pose ? "" : " pas-pose");
+    l.innerHTML = '<span class="ce-par-i"></span>' +
+                  '<span class="ce-par-b"><span class="ce-par-e"></span>' +
+                  '<span class="ce-par-f"></span></span>' +
+                  '<span class="ce-par-n"></span>';
+    l.querySelector(".ce-par-i").textContent = e.nom;
+    var pct   = e.pose && e.total ? Math.round(e.fait / e.total * 100) : 0;
+    var pctE  = e.pose && e.total ? Math.round((e.entames || e.fait) / e.total * 100) : 0;
+    pousse(l.querySelector(".ce-par-e"), pctE + "%", trans);
+    pousse(l.querySelector(".ce-par-f"), pct + "%", trans);
+    l.querySelector(".ce-par-n").textContent =
+      e.pose ? (e.fait + " / " + e.total) : "pas posé";
+    zone.appendChild(l);
+  });
+
+  // Une phrase, et une seule : ce qui manque pour que l'heure démarre.
+  var et = (d.etapes || []).filter(function(e){ return e.pose && e.fait < e.total; });
+  var p = document.createElement("p");
+  p.className = "ce-par-p";
+  if (!et.length) {
+    p.innerHTML = "<b>Tout le monde est au bout.</b> On peut avancer.";
+  } else {
+    var e = et[0];
+    p.innerHTML = "Il manque <b>" + (e.total - e.fait) + "</b> " +
+      (e.total - e.fait > 1 ? "personnes" : "personne") + " sur « " + e.nom + " ».";
+  }
+  zone.appendChild(p);
 }
 
 // Le code de la classe sélectionnée : c'est lui qui sert de clé aux prénoms
@@ -3791,6 +4380,11 @@ $("b-controle").addEventListener("click", function(){
 });
 
 $("b-db-creer").addEventListener("click", enregistrerConcepts);
+$("b-pa-ecran").addEventListener("click", function(){
+  ouvrirEcran();
+  modeEcran("par");
+});
+
 $("b-db-ecran").addEventListener("click", function(){
   // Projeter depuis la carte : on ouvre l'écran ET on l'amène directement
   // sur le débriefing, sans passer par la vue de progression.
@@ -4273,9 +4867,15 @@ function ligneModele(m){
                 '<button class="qn-sup" type="button">Supprimer</button></div>' +
                 '<div class="qn-cl"></div>';
   d.querySelector(".qn-tt").textContent = m.titre;
+  // Le mode se lit ici, et pas ailleurs : c'est la seule chose qui distingue
+  // deux modèles autrement identiques, et celle qui décide si les étudiants
+  // voient une correction. Se tromper de mode en donnant un questionnaire de
+  // révision à une classe, c'est leur donner un quiz muet.
   d.querySelector(".qn-meta").textContent =
     m.questions + (m.questions > 1 ? " questions · " : " question · ") +
-    (m.mode === "revisable" ? "modifiable à volonté" : "une question à la fois");
+    (m.mode === "revision"  ? "révision — la correction s'affiche"
+     : m.mode === "revisable" ? "modifiable à volonté"
+     : "une question à la fois");
 
   var parClasse = {};
   (m.affectations || []).forEach(function(a){ parClasse[a.classe_id] = a; });
@@ -4565,6 +5165,16 @@ function rafraichirQuestionnaires(){
   chargerAFaire();
 }
 
+// L'aide du mode révision n'apparaît que sur ce mode : l'étoile et la flèche
+// n'ont aucun sens dans les deux autres, où elles sont d'ailleurs refusées.
+$("qn-mode").addEventListener("change", function(){
+  $("qn-aide-revision").hidden = $("qn-mode").value !== "revision";
+  $("qn-texte").placeholder = $("qn-mode").value === "revision"
+    ? "Un objet, c'est : · le modèle écrit une fois · *l'exemplaire fabriqué "
+      + "· une méthode → La classe est le moule, l'objet le gâteau."
+    : "Ce semestre, le rythme vous a paru : · Trop lent · Juste · Trop rapide · Intenable";
+});
+
 $("b-qn-creer").addEventListener("click", function(){
   var titre = $("qn-titre").value, texte = $("qn-texte").value;
   erreur("err-qn-neuf", "");
@@ -4580,7 +5190,12 @@ $("b-qn-creer").addEventListener("click", function(){
     if (!r || r.error || !d || !d.ok) {
       // La base refuse tout dès qu'une ligne est mal formée, et dit laquelle :
       // un questionnaire amputé d'une question sans qu'on le sache serait pire.
-      erreur("err-qn-neuf", (d && d.motif === "ligne")
+      // Les refus qui nomment une ligne se disent tous de la même façon : le
+      // rang, la raison, et la ligne. C'est ce qui permet de corriger sans
+      // relire les vingt autres.
+      var parLigne = { ligne: 1, sans_etoile: 1, deux_etoiles: 1,
+                       etoile_inutile: 1, explication_inutile: 1 };
+      erreur("err-qn-neuf", (d && parLigne[d.motif])
         ? "Ligne " + d.rang + " : " + d.detail + " — « " + d.texte + " »"
         : (d && d.motif === "vide")
         ? "Aucune question lisible dans ce texte."
@@ -4872,6 +5487,10 @@ $("ce-rep-b").addEventListener("click", function(){
   if (suivi.vue === "rep") suivi.repIndex++;   // reclic : question suivante
   modeEcran("rep");
 });
+// Le parcours reste dans la rotation, lui : il se regarde PENDANT l'heure, et
+// c'est même sa raison d'être — voir en passant qu'il manque trois personnes
+// au contrôle. Le débriefing, qui conclut, l'arrête.
+$("ce-par-b").addEventListener("click", function(){ modeEcran("par"); });
 $("ce-deb-b").addEventListener("click", function(){
   // Passer au débriefing arrête la rotation : on ne veut pas que l'écran
   // reparte sur le classement au milieu de la conclusion.
