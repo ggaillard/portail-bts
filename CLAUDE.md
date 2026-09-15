@@ -635,12 +635,75 @@ fois.
   ferait apparaître chez les étudiants ce qu'on venait d'écrire.
 - **Retirer refuse dès qu'il y a des réponses ; éteindre, jamais.** Éteindre
   retire le questionnaire de l'écran des étudiants sans rien perdre, et c'est
-  ce qu'on veut presque toujours. Le portail le dit dans le message de refus.
+  ce qu'on veut presque toujours. Le portail **le dit avant le clic** : dès que
+  `commences > 0`, le bouton « Retirer de la classe » est désactivé et une
+  ligne explique pourquoi. Le message de refus reste, en second rideau.
 - **Le mode appartient au modèle** : `sequentiel` (une question à la fois, sans
   retour) ou `revisable` (tout à l'écran, modifiable).
 - `connaissance()` et `stage()` **restent** et ne sont pas modifiées : le
   portail s'en sert en repli tant que la bibliothèque n'est pas déployée. Repli
   à retirer une fois la migration passée partout.
+
+### Deux gestes, deux boutons — et pas une case à cocher
+
+Une ligne de classe portait **une case à cocher** (l'affectation) et **une
+pastille** (l'interrupteur), le tout dans un `<label>` cliquable de bout en
+bout. Décocher appelait `retirer_questionnaire()`, qui **efface la séance**.
+Autrement dit : vouloir arrêter un questionnaire et cliquer à côté de la
+pastille supprimait l'affectation — et cliquer sur le texte « 19 / 31 terminés »
+aussi, puisque le label entier basculait la case.
+
+Depuis le 15/09, la ligne porte **deux boutons nommés** et aucune zone cliquable
+par accident :
+
+| | Le geste | Ce qu'il fait | Réversible ? |
+|---|---|---|---|
+| Affectation | **Donner à cette classe** / **Retirer de la classe** | Crée ou efface la séance de cette classe | Retirer devient **impossible** dès la première réponse |
+| Visibilité | **Proposé / Éteint** | Décide si les étudiants le voient | Toujours, autant de fois qu'on veut |
+
+L'interrupteur est placé **avant** le retrait : c'est le geste courant, celui
+qu'on refait. Retirer est rare et destructeur, il vient après — et il est
+**désactivé avec sa raison écrite** dès que `commences > 0`, plutôt que de
+laisser partir un clic qui échouera de toute façon.
+
+### « Avec la séance… » — un questionnaire rattaché à un moment du semestre
+
+Un questionnaire était donné à une **classe**, et rien ne disait à quel moment
+il allait. On l'allumait à la main le jour dit, on l'éteignait le lendemain
+quand on y repensait.
+
+`seances.rattachee_a` porte désormais le lien : *ce questionnaire accompagne la
+séance N*. **Le modèle ne change pas** — le questionnaire reste une séance
+90-98 avec ses corrigés et ses réponses, et les trois natures gardent leurs
+trois gestes. On ajoute une colonne, pas une fusion.
+
+| | |
+|---|---|
+| `rattacher_questionnaire(seance_id, cible)` | attache ; `cible` à null détache |
+| déclencheur `rattachement_coherent` | refuse : un cours qui se rattache, une cible ≥ 90, une cible d'une autre classe |
+| déclencheur `questionnaire_suit` | le questionnaire **suit `ouverte`** de sa séance |
+
+**Un déclencheur sur la colonne, pas une retouche de `demarrer_seance()` et
+`clore_seance()`** : toutes les routes qui ouvrent une séance passent par
+`ouverte`, aucune par une seule fonction. Retoucher les deux fonctions aurait
+laissé passer les chemins qu'on oublie, et il aurait fallu les réécrire en
+entier — avec le risque d'écrasement qu'on connaît. Pas de récursion : le
+déclencheur ne s'arme que sur `numero < 90` et n'écrit que sur des 90-98.
+
+Règles qui ne se devinent pas :
+
+- **Rattacher à une séance déjà en cours l'allume tout de suite.** « La séance
+  du jour » n'aurait aucun sens si elle n'allumait rien.
+- **Détacher n'éteint pas.** Un questionnaire visible qui disparaîtrait de
+  l'écran des étudiants parce qu'on a changé son rangement serait une surprise.
+  L'interrupteur reste le seul geste qui décide de ce qu'ils voient.
+- **La cible supprimée détache le lien** (`on delete set null`) : un
+  rattachement vers une séance disparue allumerait ou n'allumerait rien, au
+  hasard.
+- ⚠️ `bibliotheque()` est **réécrite en entier** dans
+  `20260916060000_questionnaire_rattache.sql` — elle y gagne le rattachement de
+  chaque affectation et la liste `seances` des cibles possibles, `en_cours`
+  marquant la séance du jour. C'est cette définition qui gagne.
 
 ---
 

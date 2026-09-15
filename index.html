@@ -334,14 +334,29 @@ tr:last-child td{border-bottom:0}
 .qn-sup{margin-left:auto;appearance:none;border:0;background:none;cursor:pointer;
   font:inherit;font-size:.82rem;color:var(--ink-faint);padding:.4rem;text-decoration:underline}
 .qn-sup:hover{color:var(--signal)}
-.qn-cl{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
-.qn-c{display:flex;align-items:center;gap:.5rem;min-height:44px;
-  padding:.35rem .7rem;border:1px solid var(--rule);border-radius:10px;
+/* Une classe, deux gestes qui ne se confondent pas : l'AFFECTATION (le
+   questionnaire est-il donné à cette classe ?) et l'INTERRUPTEUR (les
+   étudiants le voient-ils ?). Ils étaient portés par une même ligne
+   cliquable dont la case à cocher RETIRAIT l'affectation : vouloir arrêter
+   un questionnaire et cliquer au mauvais endroit effaçait la séance. D'où
+   deux boutons nommés, et plus aucune zone cliquable par accident. */
+.qn-cl{display:flex;flex-direction:column;gap:.5rem;margin-top:.6rem}
+.qn-c{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;min-height:44px;
+  padding:.5rem .7rem;border:1px solid var(--rule);border-radius:10px;
   background:var(--surface);font-size:.9rem}
-.qn-c input{width:1.1rem;height:1.1rem;accent-color:var(--accent);cursor:pointer}
 .qn-c.pose{border-color:var(--accent-soft);background:var(--accent-soft)}
 .qn-c .qn-cn{font-weight:600}
-.qn-c .qn-cd{color:var(--ink-soft);font-size:.82rem}
+.qn-c .qn-cd{color:var(--ink-soft);font-size:.82rem;margin-right:auto}
+.qn-actes{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.qn-aff{padding:.45rem .8rem;font-size:.86rem}
+.qn-aff[disabled]{opacity:.55;cursor:not-allowed}
+.qn-pourquoi{flex-basis:100%;margin:0;font-size:.8rem;color:var(--ink-faint)}
+/* Le rattachement : sa propre ligne sous la classe, pour que le sélecteur
+   garde ses 44 px sans écraser les deux boutons à côté. */
+.qn-rat{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;
+  gap:.35rem .5rem;min-width:0;max-width:100%;font-size:.83rem;color:var(--ink-soft)}
+.qn-rat select{width:auto;flex:1 1 12rem;min-width:0;max-width:100%;
+  font-size:.86rem;padding:.4rem .5rem}
 
 .qn-rep{margin-top:.6rem;border:1px solid var(--rule-soft);border-radius:10px}
 .qn-rep > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.6rem .8rem;
@@ -916,10 +931,15 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
 
   <div class="card" id="carte-qactifs" hidden>
     <h2>Vos questionnaires</h2>
-    <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une classe
-      ou à plusieurs. Chaque classe garde ses propres réponses. <b>Cocher une
-      classe prépare le questionnaire sans le montrer</b> — c'est l'interrupteur
-      qui le rend visible aux étudiants.</p>
+    <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une ou
+      plusieurs classes. Chaque classe garde ses propres réponses. Deux gestes,
+      à ne pas confondre : <b>« Donner à cette classe »</b> le prépare sans le
+      montrer, <b>l'interrupteur Proposé / Éteint</b> décide si les étudiants le
+      voient. Éteindre n'efface rien et se refait autant de fois qu'on veut ;
+      <b>retirer</b> supprime l'affectation, et devient impossible dès qu'une
+      réponse existe. Enfin, <b>« Avec la séance… »</b> le rattache à un moment du
+      semestre : il s'allume alors quand cette séance démarre, et s'éteint quand
+      elle se clot.</p>
     <div id="qa-liste"></div>
     <div id="err-qactifs"></div>
     <details class="qn-neuf" id="qn-neuf">
@@ -4312,45 +4332,151 @@ function deplientReponses(m, a){
   return det;
 }
 
-// Une case par classe. Cochée = le questionnaire y est posé ; l'interrupteur
-// n'apparaît qu'alors, parce qu'allumer ce qui n'est pas posé n'a pas de sens.
+// Une ligne par classe, et deux gestes distincts, chacun nommé :
+//   · l'AFFECTATION — « Donner à cette classe » / « Retirer de la classe » ;
+//   · l'INTERRUPTEUR — Proposé / Éteint, ce que voient les étudiants.
+// C'était une case à cocher et une pastille sur une même ligne cliquable.
+// Décocher appelait retirer_questionnaire(), qui efface la séance : le geste
+// « j'arrête ce questionnaire » tombait sur le bouton destructeur, et le geste
+// sans risque — éteindre — n'était visible que si on savait déjà qu'il existait.
 function caseClasse(m, c, a){
-  var l = document.createElement("label");
+  var l = document.createElement("div");
   l.className = "qn-c" + (a ? " pose" : "");
-  l.innerHTML = '<input type="checkbox"><span class="qn-cn"></span>' +
-                '<span class="qn-cd"></span>';
-  var boite = l.querySelector("input");
-  boite.checked = !!a;
+  l.innerHTML = '<span class="qn-cn"></span><span class="qn-cd"></span>' +
+                '<span class="qn-actes"></span>';
   l.querySelector(".qn-cn").textContent = c.nom;
+  var etat = l.querySelector(".qn-cd");
+  var actes = l.querySelector(".qn-actes");
 
-  if (a) {
-    var etat = a.ouvert ? "proposé" : "éteint";
-    if (a.inscrits) etat += " · " + a.termines + " / " + a.inscrits + " terminé" +
-                            (a.termines > 1 ? "s" : "");
-    l.querySelector(".qn-cd").textContent = etat;
-
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "qa-b" + (a.ouvert ? " on" : "");
-    b.innerHTML = '<span class="pt"></span><span class="et"></span>';
-    b.querySelector(".et").textContent = a.ouvert ? "Proposé" : "Éteint";
-    b.setAttribute("aria-pressed", a.ouvert ? "true" : "false");
-    b.setAttribute("aria-label", (a.ouvert ? "Éteindre" : "Proposer") + " « " +
-                   m.titre + " » pour " + c.nom);
-    b.addEventListener("click", function(e){
-      e.preventDefault();                 // sinon le label bascule la case
-      basculer(m, c, a, b);
-    });
-    l.appendChild(b);
-  } else {
-    l.querySelector(".qn-cd").textContent = "pas posé";
+  if (!a) {
+    etat.textContent = "pas donné à cette classe";
+    var don = document.createElement("button");
+    don.type = "button";
+    don.className = "btn btn-sec qn-aff";
+    don.textContent = "Donner à cette classe";
+    don.setAttribute("aria-label", "Donner « " + m.titre + " » à " + c.nom);
+    don.addEventListener("click", function(){ don.disabled = true; affecter(m, c); });
+    actes.appendChild(don);
+    return l;
   }
 
-  boite.addEventListener("change", function(){
-    boite.disabled = true;
-    if (boite.checked) affecter(m, c); else retirer(m, c, a, boite);
-  });
+  // Donné. L'interrupteur d'abord : c'est le geste courant, celui qu'on refait.
+  // Retirer est rare et destructeur, il vient après.
+  var bouts = [a.ouvert ? "visible par les étudiants" : "préparé, pas encore visible"];
+  if (a.rattachee_a) bouts.push("suit la séance " + a.rattachee_numero);
+  if (a.inscrits) {
+    bouts.push(a.termines + " / " + a.inscrits + " terminé" + (a.termines > 1 ? "s" : ""));
+  }
+  etat.textContent = bouts.join(" · ");
+
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "qa-b" + (a.ouvert ? " on" : "");
+  b.innerHTML = '<span class="pt"></span><span class="et"></span>';
+  b.querySelector(".et").textContent = a.ouvert ? "Proposé" : "Éteint";
+  b.setAttribute("aria-pressed", a.ouvert ? "true" : "false");
+  b.setAttribute("aria-label", (a.ouvert ? "Éteindre" : "Proposer") + " « " +
+                 m.titre + " » pour " + c.nom);
+  b.addEventListener("click", function(){ basculer(m, c, a, b); });
+  actes.appendChild(b);
+
+  var ret = document.createElement("button");
+  ret.type = "button";
+  ret.className = "btn btn-sec qn-aff";
+  ret.textContent = "Retirer de la classe";
+  ret.setAttribute("aria-label", "Retirer « " + m.titre + " » de " + c.nom);
+
+  // Une seule réponse suffit à rendre le retrait impossible — la base refuse,
+  // et c'est voulu : retirer efface la séance et son travail avec. Autant le
+  // dire AVANT le clic plutôt que de laisser partir un geste qui échouera.
+  if (a.commences) {
+    ret.disabled = true;
+    ret.title = "Des réponses existent : le retrait effacerait leur travail.";
+    var pq = document.createElement("p");
+    pq.className = "qn-pourquoi";
+    pq.textContent = "Retrait impossible : " + a.commences + " étudiant" +
+      (a.commences > 1 ? "s ont" : " a") + " déjà répondu. " +
+      "Éteindre le retire de leur écran sans rien perdre.";
+    l.appendChild(pq);
+  } else {
+    ret.addEventListener("click", function(){ ret.disabled = true; retirer(m, c, a, ret); });
+  }
+  actes.appendChild(ret);
+
+  // Le rattachement : à quelle séance ce questionnaire appartient. Rattaché,
+  // il s'allume quand la séance démarre et s'éteint quand elle se clot — un
+  // geste de moins le jour J, et un oubli de moins le lendemain.
+  l.appendChild(choixSeance(m, c, a));
   return l;
+}
+
+// « Avec la séance… » — les séances de cours de cette classe, celle du jour
+// signalée. Détacher ne change pas ce que voient les étudiants : l'interrupteur
+// reste le seul geste qui décide de cela.
+function choixSeance(m, c, a){
+  var lig = document.createElement("label");
+  lig.className = "qn-rat";
+  var txt = document.createElement("span");
+  txt.textContent = "Avec la séance";
+  lig.appendChild(txt);
+
+  var sel = document.createElement("select");
+  sel.setAttribute("aria-label", "Séance accompagnée par « " + m.titre +
+                   " » pour " + c.nom);
+  var aucune = document.createElement("option");
+  aucune.value = "";
+  aucune.textContent = "— aucune, je l'allume moi-même —";
+  sel.appendChild(aucune);
+
+  (c.seances || []).forEach(function(s){
+    var o = document.createElement("option");
+    o.value = String(s.seance_id);
+    o.textContent = s.numero + " — " + s.titre + (s.en_cours ? "  ·  en cours" : "");
+    if (String(a.rattachee_a) === String(s.seance_id)) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  if (!(c.seances || []).length) {
+    aucune.textContent = "— aucune séance de cours pour cette classe —";
+    sel.disabled = true;
+  }
+
+  sel.addEventListener("change", function(){
+    sel.disabled = true;
+    rattacher(m, c, a, sel);
+  });
+  lig.appendChild(sel);
+  return lig;
+}
+
+function rattacher(m, c, a, sel){
+  var cible = sel.value ? Number(sel.value) : null;
+  erreur("err-qactifs", "");
+  sb.rpc("rattacher_questionnaire", { p_seance_id: Number(a.seance_id),
+                                      p_cible: cible }).then(function(r){
+    sel.disabled = false;
+    var d = r && r.data;
+    if (!r || r.error || !d || !d.ok) {
+      erreur("err-qactifs", (d && d.motif === "autre_classe")
+        ? "Cette séance appartient à une autre classe."
+        : (d && d.motif === "pas_un_cours")
+          ? "On ne rattache un questionnaire qu'à une séance de cours."
+          : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      rafraichirQuestionnaires();
+      return;
+    }
+    if (!cible) {
+      erreur("err-qactifs", "« " + m.titre + " » ne suit plus aucune séance pour " +
+             c.nom + ". Son état n'a pas changé : c'est l'interrupteur qui décide " +
+             "de ce que voient les étudiants.", true);
+    } else {
+      erreur("err-qactifs", "« " + m.titre + " » accompagne la séance " + d.numero +
+             " de " + c.nom + (d.allume_maintenant
+               ? " — elle est en cours, il vient d'être proposé."
+               : ". Il s'allumera au démarrage de cette séance."), true);
+    }
+    rafraichirQuestionnaires();
+  });
 }
 
 function basculer(m, c, a, b){
@@ -4392,7 +4518,7 @@ function affecter(m, c){
 // Retirer efface la séance et ses questions. La base refuse dès qu'une
 // réponse existe — et c'est bien : à ce moment-là on veut éteindre, pas
 // détruire. On le dit plutôt que de laisser un refus muet.
-function retirer(m, c, a, boite){
+function retirer(m, c, a, bouton){
   if (!a) { rafraichirQuestionnaires(); return; }
   erreur("err-qactifs", "");
   sb.rpc("retirer_questionnaire", { p_seance_id: Number(a.seance_id) }).then(function(r){
