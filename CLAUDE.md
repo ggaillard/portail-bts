@@ -39,7 +39,7 @@ heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
 | Onglet **Appel du jour** | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
 | Onglet **Vue d'ensemble** | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
 | Onglet **Questionnaires** | *Que leur ai-je posé, hors quiz de séance ?* | **Contrôles d'entrée** (tous, avec leur classe et leur interrupteur), puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. |
-| Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | Pré-vol, cadence, réussite par question, élève par élève — **une séance choisie**. |
+| Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | Pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève — **une séance choisie**. |
 
 **Ne pas ajouter une carte sans décider de son onglet** — ou sans décider
 qu'elle est bloquante, auquel cas elle rejoint `a_faire()` plutôt que de
@@ -132,6 +132,20 @@ ajoute chaque jour de cours **une** question nommée `appel-AAAA-MM-JJ`.
 - `APPEL.sql` embarque une **banque prête** : 14 questions BTS1 (une par séance)
   et 5 BTS2 (une par TP), chacune réactivant la séance précédente. Avant un cours,
   une seule ligne change — la classe et le numéro de la séance qui commence.
+- **La question de repli propose trois lieux, et aucun aveu** : « Présent »,
+  « Présent, à distance », « Présent, sur un autre poste ». « Présent, en
+  retard » a été retiré le 16/09. Deux raisons, et la seconde est la vraie :
+  `reponses.updated_at` horodate déjà l'arrivée à la minute près et la carte
+  l'affiche, donc on faisait saisir une donnée qu'on possède ; et surtout, les
+  trois autres options nomment un lieu quand celle-ci nommait un manquement —
+  répondre à l'appel devenait un aveu, et la première chose que l'étudiant
+  faisait de son heure était de se ranger du mauvais côté. **Ne pas la remettre,
+  et ne pas ajouter d'option qui fasse déclarer une faute.**
+- **Une option ne se retire jamais d'une question déjà répondue.** Les lettres se
+  décaleraient — un « C » qui voulait dire « à distance » se relirait « sur un
+  autre poste » — et on réécrirait après coup ce que les étudiants ont dit.
+  `20260916080000_appel_sans_retard.sql` ne corrige que le modèle et les
+  questions encore vierges ; les jours passés gardent leur formulation.
 - Les bonnes réponses sont réparties sur A, B, C et D : ne pas les réaligner sur
   une même lettre en ajoutant des questions, les étudiants repèrent le motif.
 - Vue `v_appel` : une ligne par étudiant et par appel, avec `present` et l'heure.
@@ -282,6 +296,43 @@ doute — jamais à la place des numéros.
 `numerosAbsents()` trie numériquement (`7` avant `14`), le bouton « Copier » de
 la classe copie `02, 07, 14`, et « Copier tous les absents » copie, par classe,
 la ligne de numéros puis la ligne nommée en dessous.
+
+### La hauteur de la carte est une contrainte, pas un détail
+
+Le 16/09, mesurée : **1 399 px sur un téléphone** pour deux classes. Ce qu'on
+vient y chercher — le compte et les numéros absents — faisait 232 px ; les
+1 167 px restants le poussaient vers le bas. Quatre gestes, tous mesurés :
+
+| | Avant | Après | Pourquoi |
+|---|---|---|---|
+| La question de repli | 46 px × classe | 23 px en tout | Elle est la même partout : elle monte en tête de carte **quand elle est identique**, et chaque classe reprend la sienne dès qu'elles diffèrent — à ce moment-là, la différence est l'information. `hisserQuestion()` |
+| L'humeur | 133 px × classe | 44 px × classe | Repliée, résumé chargé : « Humeur — 22 réponses, surtout « Ça va » ». Elle ne se lit pas au même moment que l'appel. Un total à zéro n'affiche plus rien. |
+| L'assiduité | 130 px | 90 px | « 3/6 absences, pas vu depuis 7 j » tient sur une ligne ; « 3 absences sur 6 » passait à la ligne sur un téléphone. Le chiffre est entier, c'est la formulation qui maigrit. |
+| Les classes | l'une sous l'autre | deux colonnes ≥ 58 rem | En dessous, une seule colonne : deux colonnes de 200 px couperaient la ligne des numéros en deux. |
+
+**1 399 → 1 090 px** sur un téléphone, **1 334 → 922 px** sur un bureau.
+
+**La ligne des numéros absents n'a pas bougé d'un pixel, et ne doit pas bouger.**
+C'est celle qu'on lit à voix haute. Le bouton « Copier » qu'elle porte fait
+22 px et doit rester petit — l'agrandir la repousserait vers le bas à chaque
+classe — donc sa zone tactile est étendue par un pseudo-élément : 44 px sous le
+doigt, 22 px à l'écran. Il était sous la règle des 44 px depuis le début et
+aucun contrôle ne le voyait ; celui qui devait le voir, `t_ens_mob.mjs`, n'a
+jamais été déposé dans le dépôt.
+
+**`outils/t_appel.mjs`** mesure tout cela et refuse quatre choses : un
+débordement horizontal, une cible tactile sous 44 px (zone étendue comprise —
+un contrôle qui ne regarderait que la boîte déclarerait « Copier » faux à tort),
+une carte au-dessus de **1 150 px** à 390 px, et la question de repli écrite
+plus d'une fois. Il tourne en local, sans base :
+
+```
+npx playwright install chromium
+node outils/t_appel.mjs
+```
+
+Le plafond est arbitraire ; ce qui compte est qu'il ne remonte pas sans qu'on le
+décide. Les quatre contrôles ont été essayés en cassant chacun exprès.
 
 La correspondance numéro → nom vit dans `localStorage` (`tdc-noms`), saisie à la
 main dans le panneau « Noms des étudiants… ». **Elle ne part jamais vers la
@@ -579,6 +630,69 @@ rien — le piège de `preflight_seance()`, une troisième fois.
 
 ---
 
+## Le parcours de l'heure — où en est chacun, et où en est le groupe
+
+Chaque heure commence par la même suite, et elle n'était lisible nulle part
+d'un seul tenant : l'appel dans son onglet, l'humeur sous la classe, le
+contrôle d'entrée derrière deux sélecteurs, le quiz dans les tuiles. Quatre
+écrans pour une question qu'on se pose debout, une fois par heure — **qui n'a
+pas démarré ?**
+
+| | L'étape | Où elle vit |
+|---|---|---|
+| 1 | **Appel** | séance 99, `appel-AAAA-MM-JJ` |
+| 2 | **Comment ça va** | séance 99, `humeur-AAAA-MM-JJ` |
+| 3 | **Contrôle d'entrée** | les `pre-NN` de **cette** séance — ce qu'ils ont gardé du cours d'avant |
+| 4 | **Le quiz** | les questions de la séance, ou **les jalons du TP** quand c'en est un |
+
+`parcours_seance(seance_id)` rend deux lectures d'une même donnée, calculées au
+même endroit — même principe que `bibliotheque()` :
+
+- **`etapes`** — l'entonnoir : 28 → 25 → 18 → 0. Où ça coince pour le groupe.
+- **`eleves`** — la ligne par étudiant, avec **`bloque`** : la *première* étape
+  non faite. C'est elle qu'on lit en séance, parce qu'elle nomme le geste.
+
+Règles qui ne se devinent pas :
+
+- **La quatrième étape se compte différemment selon la nature de la séance.**
+  `seances.jalons` distingue les deux, comme le fait déjà `suivi_projet()` : un
+  TP se mesure en jalons franchis (`tp%` à `true`/`ok`), une séance de cours en
+  questions répondues. Le nom de l'étape change avec — « Le quiz de la séance »
+  ou « Le TP » — et **le portail lit ce nom dans la réponse**, il ne le réécrit
+  pas : deux noms pour la même chose à deux endroits de l'écran est ce qui fait
+  douter de ce qu'on lit.
+- **Une étape non posée n'est pas une étape à zéro.** Pas de contrôle écrit →
+  `pose = false`, et l'écran dit « pas posé ». « 0 / 13 » se lirait « personne
+  ne l'a fait ». Même choix que `debriefing()`, qui préfère un blanc à un zéro.
+  Et **une étape non posée ne bloque personne** : le portail ne doit jamais
+  envoyer voir quelqu'un pour un contrôle qui n'existe pas.
+- **Le jour est celui de la séance, pas aujourd'hui** (`demarree_le::date`).
+  Avec `current_date`, relire le parcours d'une séance passée afficherait toute
+  la classe absente.
+- **La liste est triée par l'étape où l'on bute, pas par numéro ni par
+  « bloqué ou non ».** Celui qui n'a pas pointé passe avant celui qui n'a pas
+  fini le quiz : c'est l'ordre dans lequel on va les voir.
+- **`numero <> '99'` et `pre-%` exclu du quiz** — les deux règles habituelles,
+  et deux assertions les tiennent dans la migration.
+- **Une séance ≥ 90 n'a pas de parcours** : elle *est* une étape du parcours
+  d'une séance de cours. La RPC refuse avec le motif `pas_un_cours`.
+
+### La vue projetée ne montre aucun numéro
+
+Le parcours se projette **pendant** l'heure — contrairement au débriefing, qui
+la conclut — et il reste donc dans la rotation automatique, juste après la
+progression. Mais il n'affiche **que les quatre barres** : projeter « il manque
+le 07 à l'appel » désigne quelqu'un devant la classe, quand « il en manque
+trois » fait le même travail — chacun sait s'il a pointé — sans mettre personne
+au tableau. **Le détail par étudiant reste sur l'écran de l'enseignant**, qui
+est le seul à le regarder. Ne pas ajouter les numéros à la vue projetée.
+
+Les entamés apparaissent derrière les finis, en teinte plus sombre : sans cette
+nuance, « 0 / 31 » sur le quiz laisse croire que personne n'a commencé alors
+que neuf sont dessus.
+
+---
+
 ## Les questionnaires — une bibliothèque, pas des numéros en dur
 
 Un questionnaire était un numéro de séance écrit dans le code : 98 pour
@@ -704,6 +818,81 @@ Règles qui ne se devinent pas :
   `20260916060000_questionnaire_rattache.sql` — elle y gagne le rattachement de
   chaque affectation et la liste `seances` des cibles possibles, `en_cours`
   marquant la séance du jour. C'est cette définition qui gagne.
+
+### Le mode « révision » — le seul écran étudiant qui dise « faux »
+
+Le 16/09, un questionnaire de révision a été cherché pour préparer l'interro
+écrite sur la POO. Il n'existait pas, et **aucun des deux mécanismes en place ne
+pouvait en tenir lieu** :
+
+| | Pourquoi il ne peut pas servir à réviser |
+|---|---|
+| Contrôle d'acquis | Ne montre jamais la correction, et c'est voulu : `mes_controles()` ne rend que l'intitulé et les options. Dire « faux » avant la séance transforme un point de départ en sanction, et fausse la question de certitude qui suit. |
+| Questionnaire ordinaire | `bonne_reponse = 'Z'` : aucune option n'est juste, donc il n'y a rien à corriger. |
+
+Réviser demande l'inverse : répondre, se tromper, **voir pourquoi**,
+recommencer. C'est une troisième intention, et elle prend la forme d'un
+**troisième mode du modèle** — pas d'une quatrième nature de séance. Le
+questionnaire de révision reste une séance 90-98, avec son affectation, son
+interrupteur et son rattachement.
+
+| mode | à l'écran | correction |
+|---|---|---|
+| `sequentiel` | une question à la fois, sans retour | aucune |
+| `revisable` | tout à l'écran, modifiable | aucune |
+| `revision` | une à la fois, et on peut tout refaire | **après chaque réponse** |
+
+**Écrire un questionnaire de révision** : une **étoile devant la bonne option**
+— même convention que `creer_controle()`, pour n'avoir qu'une chose à retenir —
+et une **flèche `→`** (ou `->`) introduit l'explication :
+
+```
+Un objet, c'est : · le modèle écrit une fois · *l'exemplaire fabriqué · une méthode
+  → La classe est le moule, l'objet le gâteau.
+```
+
+Règles qui ne se devinent pas :
+
+- **La bonne réponse ne vit pas dans `modele_questions`.** Cette table est
+  lisible par tout le monde — sa politique dit `for select to anon,
+  authenticated using (true)`, et c'est délibéré. Vérifié le 16/09 avec la clé
+  publique : `GET /rest/v1/modele_questions` rend tout, `GET /rest/v1/corriges`
+  rend `[]`. Les lettres justes vivent donc dans **`modele_corriges`**, sans
+  aucune politique pour `anon` : sans politique, RLS refuse tout. **Ne jamais
+  ajouter de colonne de correction à `modele_questions`** — ce serait publier la
+  grille.
+- **La correction ne sort que sur une question déjà répondue**, et c'est
+  `mes_questionnaires()` qui tient la règle, pas la page. La fonction est
+  appelée avec la clé publique : la livrer d'avance mettrait le corrigé entier à
+  une requête de distance.
+- **La page ne devine jamais la bonne réponse.** Après chaque envoi elle
+  redemande `mes_questionnaires()` — un appel de plus, sur un questionnaire
+  qu'on fait chez soi. Calculer le verdict côté page voudrait dire lui avoir
+  envoyé la grille.
+- **Une ligne sans étoile fait échouer toute la création**, en disant laquelle.
+  Une question sans bonne réponse compterait la classe entière fausse.
+- **Une étoile ou une flèche dans un mode qui ne corrige pas est refusée** :
+  l'étoile finirait affichée telle quelle, l'explication ne serait jamais lue.
+- **La carte ne se replie pas quand tout est répondu**, contrairement aux deux
+  autres, et elle ne compte pas dans la file d'attente : un questionnaire de
+  révision se refait, et le refermer sur un « c'est fait » enlèverait ce qu'on
+  vient d'y mettre.
+- **Les réponses de révision n'entrent dans aucun chiffre du semestre** :
+  `semestre()` exclut la bande 90-98, et le tableau de bord ne lit qu'une séance
+  choisie. `correct` est renseigné — c'est ce qui permet de dire « juste » — mais
+  rien ne le compte ailleurs.
+- ⚠️ `creer_modele()`, `affecter_questionnaire()` et `mes_questionnaires()` sont
+  **réécrites en entier** dans `20260916070000_questionnaire_revision.sql`, et ce
+  sont ces définitions qui gagnent. Corriger les versions du 08/09 sans corriger
+  celles-ci ne changerait rien — le piège de `preflight_seance()`, une quatrième
+  fois.
+
+Le questionnaire posé : `revision-poo-tp1`, douze questions, affecté au BTS2
+SLAM, **créé fermé**. Ses questions ne sont **pas** celles du contrôle d'acquis
+de la séance 2, délibérément : réviser sur les huit mêmes notions, correction
+affichée, viderait le contrôle de son sens. Elles couvrent en revanche les cinq
+exercices de l'interro — vocabulaire, choix `List` / `Dictionary`, requêtes
+LINQ, trace console, lecture de code.
 
 ---
 
@@ -853,6 +1042,35 @@ différentes :
 | `verifier-portail.yml` · **coherence** | Les bonnes réponses de la base collent-elles aux supports ? |
 | `verifier-portail.yml` · **fiche** | **Cette séance est-elle prête ?** Douze points, appliqués à chaque `docs/seances/seance-*.md` trouvée |
 | `supabase.yml` · **verifier** | La chaîne de migrations se rejoue-t-elle deux fois sur une base vierge, et les invariants tiennent-ils ? |
+
+### Un contrôle trop strict bloque plus qu'il ne protège
+
+Le 16/09, deux migrations poussées les 15 et 16 étaient sur `main` et **pas**
+dans la base : `controles()` répondait 404, `seances.rattachee_a` n'existait pas.
+Le portail, lui, affichait la nouvelle IHM — il masque toute carte dont la RPC
+manque, donc « Contrôles d'entrée » ne s'affichait nulle part et « Avec la
+séance… » n'avait rien à proposer. On cherchait un bogue d'interface ; c'était
+un déploiement arrêté.
+
+Cause : `supabase.yml` · **verifier** exigeait que `a_faire()` renvoie **zéro
+point, toutes gravités confondues**, sur une base neuve. Or la migration du
+15/09 pose un contrôle d'acquis **éteint** sur la séance 2 du BTS2 — et la
+neuvième règle d'`a_faire()`, ajoutée le même jour, existe précisément pour le
+signaler. Le job est donc devenu rouge par construction. `appliquer` dépend de
+`verifier` ; il n'a plus jamais tourné.
+
+L'assertion vérifie maintenant ce qui est vraiment anormal :
+
+- **zéro bloquant** — un bloquant sur une base neuve veut dire que la chaîne
+  laisse la base dans un état où l'on ne peut pas faire cours ;
+- **aucune tâche en double** — deux fois la même, c'est une insertion rejouée
+  qui a dupliqué ce qu'elle posait, exactement ce que le second passage cherche ;
+- les **attentions sont écrites au journal**, pas comptées comme des pannes.
+  « Écrit mais pas encore allumé » est un état normal de préparation.
+
+La leçon vaut au-delà de ce cas : **un contrôle qui prend un état normal pour
+une panne ne rend pas la base plus sûre — il arrête le reste.** Avant de resserrer
+une assertion, se demander ce qu'elle rendra rouge le jour où tout va bien.
 
 ### La fiche — pourquoi elle ne connaît aucun numéro de séance
 
