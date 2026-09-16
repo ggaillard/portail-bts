@@ -5,12 +5,18 @@ Portail commun de Guillaume Gaillard, année 2026-2027.
 
 Répondre en **français**. Modifier directement les fichiers, ne pas se contenter de suggérer.
 
+**[`REFONTE.md`](REFONTE.md)** — l'audit chiffré du 16/09/2026 et le plan de
+découpage en modules ES, en étapes cochables. À lire avant toute intervention
+de fond sur `index.html` ou sur la navigation : plusieurs défauts y sont déjà
+nommés et mesurés, et l'ordre des étapes est choisi. `node outils/mesurer.mjs`
+recompte ses chiffres et échoue quand le document a vieilli.
+
 ---
 
 ## Ce que fait ce dépôt
 
-Un seul fichier de rendu, `index.html` (~1 500 lignes, autonome), plus `config.js`
-(URL Supabase, clé anon, codes de classe). Trois rôles :
+Un seul fichier de rendu, `index.html` (**5 847 lignes** au 16/09/2026, autonome),
+plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
 
 1. **Identifier** l'étudiant — code de classe, numéro, PIN à 4 chiffres, avatar.
 2. **Orienter** — la liste des projets de sa classe, lus dans `public.projets`.
@@ -1017,8 +1023,15 @@ clic.
 
 ## Points de vigilance
 
-- **`index.html` est autonome et unique.** Ne pas le découper en modules ni le
-  réécrire : les animations, le minuteur et le mode classe y sont imbriqués.
+- **`index.html` est autonome et unique** — *tant que l'étape A3 de
+  [`REFONTE.md`](REFONTE.md) n'est pas publiée et vérifiée en production.* Ne
+  pas le découper de sa propre initiative. Le découpage en modules ES est
+  décidé et planifié (16/09), étape par étape, chacune publiable et annulable
+  seule ; il ne s'improvise pas au détour d'une correction. L'avertissement
+  d'origine — « les animations, le minuteur et le mode classe y sont
+  imbriqués » — a été mesuré : ces quatorze fonctions font 618 lignes et
+  n'ont que quatre portes d'entrée (`modeEcran`, `rendreEcran`, `rotationAuto`,
+  `fermerEcran`). Elles partent donc **d'un seul tenant**, jamais en morceaux.
 - **Ne jamais committer la clé `service_role`.** Seule la clé `anon` va dans
   `config.js`, et c'est prévu : les règles RLS la rendent inoffensive.
 - **Les vues `v_appel` et `v_absences` sont révoquées pour `anon` et
