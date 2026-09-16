@@ -264,11 +264,7 @@ tr:last-child td{border-bottom:0}
 .db-v.acquis{background:var(--ok-soft);color:var(--ok)}
 .db-v.fragile{background:var(--signal-soft,#F7EEDC);color:var(--signal)}
 .db-v.a_revoir{background:#F6E2E2;color:#963232}
-/* --surface-2 n'a jamais existé : la valeur de repli #EEF1F4 s'appliquait donc
-   dans les deux thèmes, y compris en sombre, avec --ink-faint dessus — 2,64:1
-   en clair, quand WCAG AA en demande 4,5. --surface-alt est la nuance qui
-   était visée, et --ink-soft passe à 4,84:1 en clair, 6,52:1 en sombre. */
-.db-v.sans_mesure{background:var(--surface-alt);color:var(--ink-soft)}
+.db-v.sans_mesure{background:var(--surface-2,#EEF1F4);color:var(--ink-faint)}
 .db-d{flex:1 1 100%;font-size:.85rem;color:var(--ink-soft);line-height:1.5}
 .db-q{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-faint)}
 #db-texte{width:100%;font-family:var(--f-mono);font-size:.88rem;line-height:1.6;
