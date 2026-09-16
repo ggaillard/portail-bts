@@ -1393,7 +1393,17 @@ function majFile(){
     if (h) h.setAttribute("data-n", i + 1);
   });
 
-  var reste = vus.filter(function(e){ return e.getAttribute("data-fait") !== "oui"; });
+  // Une carte peut être visible ET hors file : le questionnaire de révision se
+  // refait à volonté, il n'a pas de fin, et le compteur réclamerait
+  // indéfiniment « 1 chose à faire ». C'est un état à part entière, et c'est
+  // ICI qu'il se dit — pas en marquant la carte « faite », ce qui la replierait
+  // sur son titre et la rendrait inutilisable. Le 16/09, c'est exactement ce
+  // qui s'est produit : la carte s'affichait pliée, sans question ni options,
+  // et la classe n'avait aucun moyen d'y répondre.
+  var reste = vus.filter(function(e){
+    return e.getAttribute("data-fait") !== "oui"
+        && e.getAttribute("data-hors-file") !== "oui";
+  });
   var f = $("file-etu");
   if (!f) return;
   f.hidden = !vus.length;
@@ -1976,9 +1986,17 @@ function rendreRevision(d){
   apres.appendChild(suite);
 
   // La file d'attente ne compte pas la révision : elle n'a pas de fin, et un
-  // bandeau qui réclame indéfiniment une carte qu'on peut refaire à volonté
-  // se lirait comme un reproche.
-  marquerEtape("qn-" + d.seance_id, true);
+  // bandeau qui réclame indéfiniment une carte qu'on peut refaire à volonté se
+  // lirait comme un reproche. Mais on ne la marque SURTOUT PAS « faite » :
+  // `data-fait="oui"` masque l'intitulé et les options (voir la règle CSS
+  // `.etape[data-fait="oui"] > .appel-choix`), et la carte se réduirait à son
+  // titre — visible, et impossible à utiliser. C'est le défaut du 16/09.
+  var carte = $("qn-" + d.seance_id);
+  if (carte) {
+    carte.setAttribute("data-hors-file", "oui");
+    carte.setAttribute("data-fait", "non");
+  }
+  majFile();
 }
 
 // Une seule question a changé, mais on relit la liste entière : c'est la base
