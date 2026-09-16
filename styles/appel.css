@@ -1,0 +1,88 @@
+/* ── appel ─────────────────────────────────────────
+   Les avatars, les options de réponse, le pré-vol, le rythme, les jalons, les
+   corrigés, et la carte « Appel du jour » avec ses deux colonnes.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.avatars{display:flex;flex-wrap:wrap;gap:.4rem}
+.appel-choix{display:flex;flex-direction:column;gap:.45rem;align-items:stretch}
+.appel-opt{text-align:left;font-size:.95rem}
+.prevol{border:1px solid var(--rule);border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem}
+.prevol-tete{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem}
+.prevol-etat{font-size:.85rem;font-weight:600;padding:.12rem .5rem;border-radius:99px}
+.prevol-etat.ok{background:#DEF3E6;color:#1B6B42}
+.prevol-etat.ko{background:#FBE6E6;color:#963232}
+.prevol-liste{list-style:none;padding:0;margin:0 0 .7rem}
+.prevol-liste li{display:flex;gap:.55rem;align-items:baseline;padding:.2rem 0;font-size:.92rem}
+.prevol-liste li b{font-weight:600}
+.prevol-liste .pv-i{flex:0 0 1.1rem}
+.prevol-liste .pv-ko{color:var(--ink-soft)}
+.rythme{border-radius:8px;padding:.6rem .85rem;margin-bottom:1rem;font-size:.92rem}
+.rythme.ok{background:#DEF3E6;color:#1B6B42}
+.rythme.avance{background:#E4EDFA;color:#24507F}
+.rythme.retard{background:#FDF0DC;color:#8A5A16}
+.rythme.mort{background:var(--surface);color:var(--ink-soft);border:1px solid var(--rule)}
+.rythme b{font-weight:600}
+.pastilles{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
+.pastille{font-family:var(--f-mono);font-size:.82rem;padding:.15rem .45rem;border-radius:5px;
+  background:var(--surface);border:1px solid var(--rule)}
+.pastille.abs{background:#FBE6E6;border-color:#F0C9C9;color:#963232}
+.pastille.pre{background:#DEF3E6;border-color:#C2E6D2;color:#1B6B42}
+.jalon{display:flex;align-items:center;gap:.5rem;font-size:.88rem;padding:.12rem 0}
+.jalon-n{font-family:var(--f-mono);flex:0 0 3.6rem;color:var(--ink-soft)}
+.jalon-b{height:.55rem;border-radius:99px;background:var(--accent);opacity:.75;min-width:2px}
+.corriges{border:1px solid var(--rule);border-radius:8px;padding:.6rem .85rem;margin-bottom:1.1rem}
+.corriges summary{cursor:pointer;font-weight:600;font-size:.95rem}
+.cq{padding:.6rem 0;border-top:1px solid var(--rule)}
+.cq:first-child{border-top:0}
+.cq-cle{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft)}
+.cq-txt{display:block;margin:.15rem 0 .35rem;font-size:.95rem}
+.cq-opt{display:block;font-size:.9rem;padding:.08rem 0;color:var(--ink-soft)}
+.cq-opt.juste{color:#1B6B42;font-weight:600}
+.cq-exp{display:block;margin-top:.25rem;font-size:.85rem;color:var(--ink-soft);font-style:italic}
+/* Deux classes l'une sous l'autre, c'est deux écrans de téléphone à franchir
+   pour arriver à la seconde. Dès qu'il y a la largeur, elles passent côte à
+   côte : la carte cesse de s'allonger avec le nombre de classes. En dessous de
+   58 rem la grille redevient une colonne — deux colonnes de 200 px couperaient
+   la ligne des numéros absents en deux, et c'est celle qu'on lit à voix haute. */
+#appel-classes{display:grid;gap:0}
+@media (min-width: 58rem){
+  #appel-classes{grid-template-columns:1fr 1fr;gap:0 1.6rem}
+  #appel-classes > .appel-classe:nth-child(2){border-top:0;padding-top:.2rem}
+}
+.appel-classe{padding:.75rem 0;border-top:1px solid var(--rule);min-width:0}
+.appel-classe:first-child{border-top:0;padding-top:.2rem}
+/* L'humeur : repliée, son résumé porte déjà le chiffre et ce qui domine. */
+.ac-hum{margin-top:.5rem}
+.ac-hum > summary{cursor:pointer;font-size:.85rem;color:var(--ink-soft);
+  padding:.35rem 0;min-height:44px;display:flex;align-items:center}
+.ac-hum > summary::marker{color:var(--ink-faint)}
+.appel-classe h3{font-size:1rem;margin:0 0 .1rem}
+.appel-classe .ac-q{font-size:.9rem;color:var(--ink-soft);margin:0 0 .5rem}
+.appel-classe .ac-compte{margin:0 0 .35rem;font-size:.95rem}
+.ac-nums{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:.15rem 0 .5rem;
+  padding:.45rem .7rem;border-radius:8px;background:#FBE6E6;border:1px solid #F0C9C9}
+.ac-nums .lbl{font-size:.82rem;color:#963232;flex:0 0 auto}
+/* Chaque absent : le numéro en gros, le prénom collé dessous ou à côté. La
+   ligne se lit à voix haute — elle doit se suffire, sans aller chercher les
+   pastilles plus bas. */
+.ac-u{display:inline-flex;align-items:baseline;gap:.32rem;margin-right:1rem}
+.ac-u b{font-weight:600}
+.ac-pn{font-family:var(--f-sans);font-style:normal;font-size:.82rem;font-weight:500;
+  color:#7d3c3c;letter-spacing:0}
+
+/* Ceux dont l'absence se répète. Une absence isolée et une quatrième
+   d'affilée demandent deux gestes différents. */
+.ac-suivi{margin:.1rem 0 .6rem;padding:.6rem .8rem;border-radius:8px;
+  background:var(--signal-soft);border:1px solid rgba(180,83,9,.18)}
+.ac-suivi > b{display:block;font-size:.83rem;color:var(--signal);margin-bottom:.3rem}
+.ac-suivi ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.15rem}
+.ac-suivi li{font-size:.87rem;line-height:1.45}
+.ac-suivi li b{font-family:var(--f-mono);font-weight:600}
+.ac-suivi li span{color:var(--ink-soft)}

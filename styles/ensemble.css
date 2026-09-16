@@ -1,0 +1,52 @@
+/* ── ensemble ─────────────────────────────────────────
+   « Le semestre » : les étages, les lignes de séance, leur état et le bouton
+   Visible / Cachée.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.etage{display:flex;align-items:baseline;gap:.6rem;margin:2.2rem 0 .7rem;flex-wrap:wrap}
+.etage:first-of-type{margin-top:1.2rem}
+.etage-n{font-family:var(--f-mono);font-size:.8rem;font-weight:600;color:#fff;
+  background:var(--accent);border-radius:99px;padding:.1rem .55rem;flex:0 0 auto}
+.etage h2{margin:0;font-size:1.15rem}
+.etage p{margin:0;font-size:.87rem;color:var(--ink-soft);flex:1 1 100%}
+.sem-c{padding:.8rem 0;border-top:1px solid var(--rule)}
+.sem-c:first-of-type{border-top:0;padding-top:.2rem}
+.sem-c h3{font-size:1rem;margin:0 0 .1rem}
+.sem-bilan{margin:0 0 .5rem;font-size:.88rem;color:var(--ink-soft)}
+.sem-bilan b{color:var(--ink);font-weight:600}
+.sem-l{display:flex;align-items:baseline;gap:.55rem;padding:.28rem 0;font-size:.9rem;
+  border-top:1px solid var(--rule)}
+.sem-l:first-of-type{border-top:0}
+.sem-n{font-family:var(--f-mono);font-size:.82rem;color:var(--ink-soft);flex:0 0 1.6rem}
+.sem-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sem-e{font-size:.76rem;font-weight:600;padding:.08rem .5rem;border-radius:99px;flex:0 0 auto}
+.sem-e.a_produire{background:var(--surface);border:1px solid var(--rule);color:var(--ink-soft)}
+.sem-e.prete{background:#E4EDFA;color:#24507F}
+.sem-e.en_cours{background:#FDF0DC;color:#8A5A16}
+.sem-e.jouee{background:#DEF3E6;color:#1B6B42}
+/* Visible / Cachée : ce que les étudiants ont le droit de LIRE. À ne pas
+   confondre avec « ouverte », qui décide s'ils peuvent RÉPONDRE. */
+.sem-pub{appearance:none;cursor:pointer;font:inherit;font-size:.74rem;font-weight:600;
+  min-height:44px;padding:.2rem .6rem;border-radius:99px;flex:0 0 auto;
+  border:1px solid var(--rule);background:var(--surface);color:var(--ink-faint)}
+.sem-pub.on{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+.sem-pub:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sem-pub[disabled]{opacity:.55;cursor:progress}
+.sem-x{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);flex:0 0 auto;
+  min-width:8.5rem;text-align:right}
+.sem-notee{font-size:.72rem;color:#8A5A16;flex:0 0 auto}
+@media (max-width: 40rem){
+  .sem-x{min-width:0;flex:1 1 100%;text-align:left;padding-left:2.15rem}
+  .sem-l{flex-wrap:wrap;padding:.45rem 0}
+}
+.av{font-size:1.4rem;line-height:1;background:var(--surface-alt);border:1px solid var(--rule);
+    border-radius:8px;padding:.45rem .5rem;cursor:pointer}
+.av:hover:not([disabled]){border-color:var(--accent);background:var(--accent-soft)}
+.av[disabled]{opacity:.25;cursor:not-allowed}

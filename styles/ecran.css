@@ -1,0 +1,257 @@
+/* ── ecran ─────────────────────────────────────────
+   Le mode classe projeté au tableau : progression, classement, répartition,
+   parcours, débriefing, et les animations qui vont avec.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+#classe-ecran{position:fixed;inset:0;background:#0B1017;color:#EAF2F8;z-index:50;
+              display:flex;flex-direction:column;padding:2vmin 3vmin}
+#classe-ecran[hidden]{display:none!important}
+.ce-tete{display:flex;align-items:baseline;gap:1.2rem;flex-wrap:wrap;margin-bottom:2vmin}
+.ce-titre{font-size:clamp(1.1rem,3vmin,2rem);font-weight:600;flex:1 1 12rem}
+.ce-kpi{font-family:var(--f-mono);font-size:clamp(1.3rem,3.8vmin,2.8rem);font-weight:600;
+        color:#4FB3AD;font-variant-numeric:tabular-nums;text-align:center}
+.ce-kpi small{display:block;font-size:.3em;letter-spacing:.1em;text-transform:uppercase;
+              color:#7B8FA1;font-weight:500}
+.ce-grille{flex:1;display:grid;gap:1.2vmin;align-content:start;overflow:hidden;
+           grid-template-columns:repeat(auto-fill,minmax(min(8.5rem,27vw),1fr))}
+.ce-el{background:#141C26;border:1px solid #22303D;border-radius:10px;padding:1.2vmin .8vmin;
+       display:flex;flex-direction:column;align-items:center;gap:.7vmin}
+.ce-el.top{border-color:#4FB3AD;background:#10262A}
+.ce-av{font-size:clamp(1.5rem,4.2vmin,2.8rem);line-height:1}
+.ce-b{width:88%;height:6px;background:#22303D;border-radius:3px;overflow:hidden}
+.ce-f{display:block;height:100%;background:#4FB3AD;border-radius:3px;
+      transition:width 1.6s cubic-bezier(.2,.75,.25,1)}
+.ce-n{font-family:var(--f-mono);font-size:clamp(.68rem,1.5vmin,.95rem);color:#8CA3B5;
+      font-variant-numeric:tabular-nums}
+.ce-rang{font-family:var(--f-mono);font-size:clamp(.62rem,1.3vmin,.85rem);color:#4FB3AD;font-weight:600}
+.ce-pied{display:flex;gap:.6rem;align-items:center;margin-top:2vmin;flex-wrap:wrap}
+.ce-btn{background:#22303D;color:#EAF2F8;border:0;border-radius:7px;padding:.5rem .9rem;
+        font:inherit;font-size:.85rem;font-weight:600;cursor:pointer}
+.ce-btn:hover{background:#2E3F4F}
+.ce-btn.on{background:#4FB3AD;color:#0B1017}
+.ce-vide{color:#7B8FA1;font-size:clamp(.95rem,2.2vmin,1.3rem);padding:5vmin;text-align:center}
+
+/* Objectif collectif : un but commun, pas une compétition */
+.ce-objectif{display:flex;align-items:center;gap:1.2rem;margin-bottom:1.4vmin;flex-wrap:wrap}
+.ce-obj-l{font-family:var(--f-mono);font-size:clamp(.68rem,1.5vmin,.95rem);letter-spacing:.08em;
+          text-transform:uppercase;color:#7B8FA1;flex:none}
+.ce-obj-barre{flex:1;min-width:8rem;height:clamp(10px,1.7vmin,18px);background:#1B2733;
+              border-radius:99px;overflow:hidden}
+.ce-obj-fill{display:block;height:100%;border-radius:99px;
+             background:linear-gradient(90deg,#2F8F86,#4FB3AD);
+             transition:width 2s cubic-bezier(.2,.75,.25,1)}
+.ce-obj-n{font-family:var(--f-mono);font-size:clamp(.85rem,2.1vmin,1.35rem);color:#4FB3AD;
+          font-variant-numeric:tabular-nums;flex:none}
+
+/* Le défi du moment : la question qui résiste */
+.ce-defi{background:#2A1E10;border:1px solid #6B4A1E;border-radius:8px;
+         padding:.9vmin 1.3vmin;margin-bottom:1.4vmin;
+         font-size:clamp(.78rem,1.9vmin,1.15rem);color:#E3B872}
+.ce-defi b{color:#FFD79A}
+.ce-defi[hidden]{display:none!important}
+
+/* Podium, en mode classement */
+.ce-podium{display:flex;justify-content:center;align-items:flex-end;gap:2vmin;margin-bottom:1.8vmin}
+.ce-podium[hidden]{display:none!important}
+.ce-pod{display:flex;flex-direction:column;align-items:center;gap:.5vmin;background:#141C26;
+        border:1px solid #22303D;border-radius:12px;padding:1.2vmin 2vmin}
+.ce-pod.or{border-color:#E3B872;background:#241D10}
+.ce-pod-m{font-size:clamp(1.1rem,2.8vmin,1.9rem)}
+.ce-pod-av{font-size:clamp(1.9rem,5.6vmin,4rem);line-height:1}
+.ce-pod-n{font-family:var(--f-mono);font-size:clamp(.68rem,1.5vmin,1rem);color:#8CA3B5}
+
+/* Série de bonnes réponses */
+.ce-serie{font-family:var(--f-mono);font-size:clamp(.6rem,1.35vmin,.9rem);color:#E3B872}
+
+/* Pulsation quand une réponse vient d'arriver */
+@keyframes tdcPulse{
+  0%   { box-shadow:0 0 0 0 rgba(79,179,173,.75); }
+  70%  { box-shadow:0 0 0 2.6vmin rgba(79,179,173,.12); }
+  100% { box-shadow:0 0 0 3.2vmin rgba(79,179,173,0); }
+}
+.ce-el.pulse{animation:tdcPulse 2.2s ease-out}
+@media (prefers-reduced-motion: reduce){ .ce-el.pulse{animation:none} .ce-obj-fill{transition:none} }
+
+/* Fil d'activité */
+.ce-fil{font-family:var(--f-mono);font-size:clamp(.62rem,1.4vmin,.9rem);color:#7B8FA1;
+        flex:1 1 10rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+/* Fond vivant : deux halos qui dérivent lentement */
+@keyframes tdcFond{
+  0%, 100% { background-position:   0%   0%, 100% 100%, 0 0; }
+  50%      { background-position:  28%  18%,  72%  82%, 0 0; }
+}
+#classe-ecran{
+  background:
+    radial-gradient(900px 520px at 15% -8%,  #17262F 0%, transparent 62%),
+    radial-gradient(820px 460px at 85% 108%, #14272B 0%, transparent 62%),
+    #0B1017;
+  background-size: 200% 200%, 200% 200%, auto;
+  animation: tdcFond 48s ease-in-out infinite;
+}
+
+/* Minuteur de séance */
+.ce-chrono{font-family:var(--f-mono);font-size:clamp(1.3rem,3.8vmin,2.8rem);font-weight:600;
+           color:#EAF2F8;font-variant-numeric:tabular-nums;text-align:center}
+.ce-chrono small{display:block;font-size:.3em;letter-spacing:.1em;text-transform:uppercase;
+                 color:#7B8FA1;font-weight:500}
+.ce-chrono.presse{color:#E3B872}
+.ce-chrono.fini{color:#E2576B}
+.ce-chrono[hidden]{display:none!important}
+
+/* Répartition des réponses : le moment fort */
+.ce-rep{flex:1;display:flex;flex-direction:column;gap:1.5vmin;justify-content:center;padding:0 3vmin}
+.ce-rep[hidden]{display:none!important}
+.ce-rep-r{font-family:var(--f-mono);font-size:clamp(.7rem,1.6vmin,1rem);letter-spacing:.06em;
+          text-transform:uppercase;color:#7B8FA1;text-align:center;margin-bottom:.6vmin}
+.ce-rep-q{font-size:clamp(1.05rem,3.1vmin,2.2rem);color:#EAF2F8;text-align:center;
+          margin-bottom:1.8vmin;line-height:1.3;max-width:46rem;
+          margin-left:auto;margin-right:auto;text-wrap:balance}
+.ce-rep-l{display:flex;align-items:center;gap:1.6vmin}
+.ce-rep-k{font-family:var(--f-mono);font-size:clamp(1.1rem,3.5vmin,2.5rem);font-weight:600;
+          width:2.1em;text-align:center;border-radius:10px;padding:.5vmin 0;flex:none;
+          background:#22303D;color:#EAF2F8}
+.ce-rep-l.juste .ce-rep-k{background:#1F7A5A;color:#EAFBF3}
+.ce-rep-b{flex:1;height:clamp(16px,3.6vmin,40px);background:#141C26;border-radius:9px;overflow:hidden}
+.ce-rep-f{display:block;height:100%;border-radius:9px;background:#3E5265;
+          transition:width 2.2s cubic-bezier(.2,.75,.25,1)}
+.ce-rep-l.juste .ce-rep-f{background:linear-gradient(90deg,#1F7A5A,#4FD1A5)}
+.ce-rep-n{font-family:var(--f-mono);font-size:clamp(.9rem,2.5vmin,1.7rem);color:#8CA3B5;
+          width:4.2em;flex:none;font-variant-numeric:tabular-nums}
+.ce-rep-l.juste .ce-rep-n{color:#4FD1A5}
+
+/* ── Le débriefing projeté : l'écran des cinq dernières minutes ───────────
+   Volontairement calme — pas de podium, pas de confettis, pas d'avatar. On
+   parle de notions, plus de personnes. */
+.ce-deb{flex:1;display:flex;flex-direction:column;gap:1.1vmin;justify-content:center;
+        padding:0 4vmin}
+.ce-deb[hidden]{display:none!important}
+.ce-deb-r{font-family:var(--f-mono);font-size:clamp(.7rem,1.6vmin,1rem);letter-spacing:.06em;
+          text-transform:uppercase;color:#7B8FA1;text-align:center;margin-bottom:1.2vmin}
+.ce-deb-l{display:flex;align-items:center;gap:1.8vmin}
+.ce-deb-k{font-family:var(--f-mono);font-size:clamp(1rem,3vmin,2.1rem);font-weight:600;
+          width:1.9em;text-align:center;border-radius:10px;padding:.4vmin 0;flex:none;
+          background:#22303D;color:#8CA3B5}
+.ce-deb-i{flex:1 1 auto;font-size:clamp(.95rem,2.7vmin,1.9rem);color:#EAF2F8;line-height:1.25}
+.ce-deb-i small{display:block;font-size:.62em;color:#8CA3B5;margin-top:.35vmin;line-height:1.35}
+.ce-deb-b{flex:0 0 26%;height:clamp(14px,3.1vmin,34px);background:#141C26;
+          border-radius:9px;overflow:hidden}
+.ce-deb-f{display:block;height:100%;border-radius:9px;background:#3E5265;
+          transition:width 1.8s cubic-bezier(.2,.75,.25,1)}
+.ce-deb-n{font-family:var(--f-mono);font-size:clamp(.85rem,2.3vmin,1.6rem);color:#8CA3B5;
+          width:3.4em;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.ce-deb-l.acquis   .ce-deb-f{background:linear-gradient(90deg,#1F7A5A,#4FD1A5)}
+.ce-deb-l.acquis   .ce-deb-n,.ce-deb-l.acquis .ce-deb-k{color:#4FD1A5}
+.ce-deb-l.fragile  .ce-deb-f{background:linear-gradient(90deg,#8A6A1E,#E0B34C)}
+.ce-deb-l.fragile  .ce-deb-n,.ce-deb-l.fragile .ce-deb-k{color:#E0B34C}
+.ce-deb-l.a_revoir .ce-deb-f{background:linear-gradient(90deg,#8C2F3E,#E2576B)}
+.ce-deb-l.a_revoir .ce-deb-n,.ce-deb-l.a_revoir .ce-deb-k{color:#E2576B}
+.ce-deb-l.sans_mesure .ce-deb-n{color:#57697A}
+.ce-deb-p{text-align:center;color:#8CA3B5;font-size:clamp(.8rem,1.9vmin,1.25rem);
+          margin-top:1.6vmin;line-height:1.4}
+.ce-deb-p b{color:#EAF2F8}
+
+/* ── Vue projetée « Parcours » ─────────────────────────────────────────────
+   Quatre étapes, quatre barres, et AUCUN numéro — c'est la différence de
+   nature avec Progression et Classement. Projeter « il manque le 07 à
+   l'appel » devant la classe désigne quelqu'un ; « il en manque trois »
+   fait exactement le même travail — chacun sait s'il a pointé — sans mettre
+   personne au tableau. Le détail par étudiant reste sur l'écran de
+   l'enseignant, qui est le seul à le regarder. */
+.ce-par{flex:1;display:flex;flex-direction:column;gap:1.4vmin;justify-content:center;
+        padding:0 6vmin}
+.ce-par[hidden]{display:none!important}
+.ce-par-r{font-family:var(--f-mono);font-size:clamp(.7rem,1.6vmin,1rem);letter-spacing:.06em;
+          text-transform:uppercase;color:#7B8FA1;text-align:center;margin-bottom:1.4vmin}
+.ce-par-l{display:flex;align-items:center;gap:2vmin}
+.ce-par-i{flex:0 0 30%;font-size:clamp(.95rem,2.9vmin,2rem);color:#EAF2F8}
+.ce-par-b{flex:1 1 auto;height:clamp(16px,4vmin,44px);background:#141C26;
+          border-radius:10px;overflow:hidden;position:relative}
+.ce-par-f{display:block;height:100%;border-radius:10px;
+          background:linear-gradient(90deg,#1F7A5A,#4FD1A5);
+          transition:width 1.4s cubic-bezier(.2,.75,.25,1)}
+/* Les entamés, derrière les finis : on voit d'un coup ceux qui sont dedans
+   sans être au bout. Sans cette nuance, « 0 / 31 » sur le quiz donnerait
+   l'impression que personne n'a commencé alors que neuf sont dessus. */
+.ce-par-e{position:absolute;inset:0;height:100%;border-radius:10px;
+          background:#2C4A44;z-index:0;transition:width 1.4s cubic-bezier(.2,.75,.25,1)}
+.ce-par-f{position:relative;z-index:1}
+.ce-par-n{font-family:var(--f-mono);font-size:clamp(.9rem,2.6vmin,1.8rem);color:#EAF2F8;
+          width:4.6em;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.ce-par-l.pas-pose .ce-par-i,.ce-par-l.pas-pose .ce-par-n{color:#57697A}
+.ce-par-l.pas-pose .ce-par-n{font-family:var(--f-sans);font-size:clamp(.75rem,1.9vmin,1.2rem)}
+.ce-par-p{text-align:center;color:#8CA3B5;font-size:clamp(.8rem,1.9vmin,1.25rem);
+          margin-top:2vmin;line-height:1.4}
+.ce-par-p b{color:#EAF2F8}
+
+/* Podium révélé en cascade, le premier en dernier */
+@keyframes tdcMonte{
+  from { opacity:0; transform:translateY(2.6vmin) scale(.92); }
+  to   { opacity:1; transform:none; }
+}
+.ce-pod.entre{animation:tdcMonte 1.1s cubic-bezier(.2,.8,.2,1) both}
+.ce-pod.entre:nth-child(1){animation-delay:.3s}
+.ce-pod.entre:nth-child(3){animation-delay:1.3s}
+.ce-pod.entre:nth-child(2){animation-delay:2.3s}
+
+/* Mouvement dans le classement depuis le dernier relevé */
+.ce-fleche{font-family:var(--f-mono);font-size:clamp(.58rem,1.3vmin,.85rem)}
+.ce-fleche.monte{color:#4FD1A5}
+.ce-fleche.descend{color:#D98A3A}
+
+/* Entrée d'une vue : rien ne claque, tout se pose */
+@keyframes tdcEntree{
+  from { opacity:0; transform:translateY(1.8vmin); }
+  to   { opacity:1; transform:none; }
+}
+.tdc-entre{animation:tdcEntree .55s cubic-bezier(.2,.8,.2,1) both}
+.ce-el.entre{animation:tdcEntree .55s cubic-bezier(.2,.8,.2,1) both}
+
+/* Révélation différée : les mauvaises réponses s'effacent */
+.ce-rep-l{transition:opacity 1s ease}
+.ce-rep-l.estompe{opacity:.38}
+.ce-rep-ok{opacity:0;transition:opacity .7s ease}
+.ce-rep-l.juste .ce-rep-ok{opacity:1}
+
+/* Les quatre formes de réponse, repère visuel immédiat */
+.ce-forme{position:relative;flex:none;display:inline-block;
+          width:2.5em;height:2.5em;font-size:clamp(1rem,3vmin,2.1rem)}
+.ce-forme-f{position:absolute;inset:0}
+.ce-forme-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+            color:#fff;font-family:var(--f-mono);font-weight:600;font-size:.6em;
+            text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.ce-forme.tri .ce-forme-l{align-items:flex-end;padding-bottom:.35em}
+
+/* Bandeau de série, plein écran */
+#ce-banniere{position:absolute;left:0;right:0;top:19%;z-index:4;text-align:center;
+             pointer-events:none;opacity:0;transform:scale(.93);
+             transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1)}
+#ce-banniere.on{opacity:1;transform:none}
+.ce-ban{display:inline-block;background:#2A1E10;border:2px solid #E3B872;border-radius:16px;
+        padding:1.5vmin 3.2vmin;font-size:clamp(1.05rem,3.4vmin,2.4rem);color:#FFD79A;
+        box-shadow:0 1.2vmin 4vmin rgba(0,0,0,.55)}
+.ce-ban b{color:#fff}
+
+/* Un élève vient de terminer */
+@keyframes tdcFini{
+  0%   { box-shadow:0 0 0 0 rgba(79,209,165,.9); }
+  100% { box-shadow:0 0 0 4.5vmin rgba(79,209,165,0); }
+}
+.ce-el.fini{animation:tdcFini 3s ease-out; border-color:#4FD1A5}
+
+/* Confettis */
+#ce-confettis{position:absolute;inset:0;pointer-events:none;z-index:3}
+
+@media (prefers-reduced-motion: reduce){
+  .ce-pod, .tdc-entre, .ce-el.entre, .ce-el.fini{animation:none}
+  .ce-rep-f, .ce-rep-l, .ce-rep-ok{transition:none}
+  #classe-ecran{animation:none}
+  #ce-banniere{transition:none}
+}

@@ -1,0 +1,142 @@
+/* ── seance ─────────────────────────────────────────
+   Le parcours de l'heure, le contrôle d'entrée et le débriefing, côté
+   enseignant.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Le parcours de l'heure ────────────────────────────────────────────────
+   Quatre étapes, quatre barres. L'entonnoir d'abord — où ça coince pour le
+   groupe — puis la liste repliée, où l'on va chercher qui.
+   Les barres partagent la même largeur de libellé : sans cela, « Appel » et
+   « Le quiz de la séance » décalent leurs jauges de trois centimètres et on
+   ne peut plus comparer deux lignes d'un coup d'œil, ce qui est tout
+   l'intérêt d'un entonnoir. */
+.pa-bloc{margin:1rem 0;padding:.9rem 1rem;border:1px solid var(--rule-soft);
+  border-radius:10px;background:var(--surface-alt)}
+.pa-e{display:flex;align-items:center;gap:.6rem;padding:.3rem 0;font-size:.9rem}
+.pa-e-n{flex:0 0 9.5rem;color:var(--ink-soft)}
+.pa-e-j{flex:1 1 auto;min-width:3rem;height:.6rem;border-radius:99px;
+  background:var(--rule-soft);overflow:hidden}
+.pa-e-j > span{display:block;height:100%;background:var(--accent);
+  transition:width .5s ease}
+.pa-e-c{flex:0 0 auto;font-family:var(--f-mono);font-size:.85rem;font-weight:600}
+.pa-e-p{flex-basis:100%;margin:0 0 .2rem 10.1rem;font-size:.8rem;color:var(--ink-faint)}
+.pa-e.pas-pose .pa-e-c{font-weight:500;color:var(--ink-faint);font-family:var(--f-sans);
+  font-size:.82rem}
+.pa-e.pas-pose .pa-e-j{opacity:.35}
+@media (max-width: 30rem){
+  .pa-e{flex-wrap:wrap}
+  .pa-e-n{flex-basis:100%}
+  .pa-e-p{margin-left:0}
+}
+/* Une ligne par étudiant : le numéro, puis quatre pastilles dans l'ordre des
+   étapes. On lit une colonne pour voir qui manque à l'appel, une ligne pour
+   voir où quelqu'un s'est arrêté. */
+.pa-l{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;
+  border-top:1px solid var(--rule-soft);font-size:.88rem}
+.pa-l:first-child{border-top:0}
+.pa-num{font-family:var(--f-mono);font-weight:600;flex:0 0 2.2rem}
+.pa-pts{display:flex;gap:.3rem;flex:0 0 auto}
+.pa-pt{width:1.6rem;height:1.6rem;border-radius:6px;display:flex;
+  align-items:center;justify-content:center;font-size:.7rem;font-weight:600;
+  background:var(--rule-soft);color:var(--ink-faint)}
+.pa-pt.fait{background:var(--ok-soft);color:var(--ok)}
+.pa-pt.entame{background:var(--signal-soft);color:var(--signal)}
+.pa-pt.absent{background:transparent;border:1px dashed var(--rule);color:var(--ink-faint)}
+.pa-ou{color:var(--ink-soft);font-size:.83rem;margin-left:auto;text-align:right}
+.pa-l.fini .pa-ou{color:var(--ok)}
+#pa-detail > summary{cursor:pointer;font-size:.9rem;font-weight:600;
+  padding:.5rem 0;min-height:44px;display:flex;align-items:center}
+#pa-lignes{margin-top:.3rem}
+
+/* Le contrôle d'entrée se distingue des questionnaires : il précède la
+   séance au lieu de l'accompagner, et il porte une bonne réponse. Un liseré
+   suffit à le dire ; une couleur d'alerte le ferait passer pour une note. */
+.ct-bloc{margin:1rem 0;padding:.9rem 1rem;border:1px solid var(--rule-soft);
+  border-radius:10px;background:var(--surface-alt)}
+.ct-tete{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:.3rem}
+.ct-tete .qa-b{margin-left:auto}
+.ct-l{padding:.55rem 0;border-top:1px solid var(--rule-soft)}
+.ct-l:first-child{border-top:0}
+.ct-i{font-size:.92rem;font-weight:600}
+.ct-b{display:flex;align-items:center;gap:.5rem;margin-top:.25rem;flex-wrap:wrap}
+.ct-jauge{flex:1 1 8rem;min-width:6rem;height:7px;border-radius:4px;
+  background:var(--rule-soft);overflow:hidden;display:flex}
+.ct-jauge i{display:block;height:100%}
+.ct-jauge .ok{background:var(--ok)}
+.ct-jauge .ko{background:#963232}
+.ct-c{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);flex:0 0 auto}
+/* Le seul chiffre qui décide par quoi commencer : ceux qui se trompent en
+   étant sûrs ne poseront pas de question, ils ne savent pas qu'ils ont tort. */
+.ct-alerte{display:block;margin-top:.2rem;font-size:.83rem;color:var(--signal)}
+.ct-alerte b{font-family:var(--f-mono)}
+#ct-texte{width:100%;font-family:var(--f-mono);font-size:.88rem;line-height:1.6;
+  padding:.55rem .7rem;border:1px solid var(--rule);border-radius:9px;
+  background:var(--surface);color:var(--ink);resize:vertical}
+#ct-neuf{margin-top:.8rem;border-top:1px solid var(--rule-soft);padding-top:.6rem}
+#ct-neuf > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.4rem 0;
+  min-height:44px;display:flex;align-items:center}
+
+/* ── Le débriefing de fin d'heure, côté enseignant ────────────────────────
+   Même mise en page que le contrôle d'entrée : les deux répondent à la même
+   question, l'une avant l'heure et l'autre après. */
+.db-l{padding:.55rem 0;border-top:1px solid var(--rule-soft);display:flex;
+  align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.db-l:first-child{border-top:0}
+.db-r{font-family:var(--f-mono);font-size:.8rem;color:var(--ink-faint);flex:none;width:1.4rem}
+.db-i{font-size:.92rem;font-weight:600;flex:1 1 10rem}
+.db-v{font-family:var(--f-mono);font-size:.78rem;font-weight:600;flex:none;
+  padding:.12rem .5rem;border-radius:99px;white-space:nowrap}
+.db-v.acquis{background:var(--ok-soft);color:var(--ok)}
+.db-v.fragile{background:var(--signal-soft,#F7EEDC);color:var(--signal)}
+.db-v.a_revoir{background:#F6E2E2;color:#963232}
+/* --surface-2 n'a jamais existé : la valeur de repli #EEF1F4 s'appliquait donc
+   dans les deux thèmes, y compris en sombre, avec --ink-faint dessus — 2,64:1
+   en clair, quand WCAG AA en demande 4,5. --surface-alt est la nuance qui
+   était visée, et --ink-soft passe à 4,84:1 en clair, 6,52:1 en sombre. */
+.db-v.sans_mesure{background:var(--surface-alt);color:var(--ink-soft)}
+.db-d{flex:1 1 100%;font-size:.85rem;color:var(--ink-soft);line-height:1.5}
+.db-q{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-faint)}
+#db-texte{width:100%;font-family:var(--f-mono);font-size:.88rem;line-height:1.6;
+  padding:.55rem .7rem;border:1px solid var(--rule);border-radius:9px;
+  background:var(--surface);color:var(--ink);resize:vertical}
+#db-neuf{margin-top:.8rem;border-top:1px solid var(--rule-soft);padding-top:.6rem}
+#db-neuf > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.4rem 0;
+  min-height:44px;display:flex;align-items:center}
+
+.ct-carte{border-left:3px solid var(--accent)}
+.ct-av{font-weight:600}
+/* Les quatre degrés de certitude vont du plus sûr au moins sûr : la nuance de
+   gris suit la même pente, pour qu'on lise l'échelle sans la relire. */
+.appel-opt.ct-sur:nth-child(1){border-color:var(--ok)}
+.appel-opt.ct-sur:nth-child(2){border-color:var(--rule)}
+.appel-opt.ct-sur:nth-child(3){border-color:var(--signal)}
+.appel-opt.ct-sur:nth-child(4){border-color:#963232}
+
+.ac-pre{margin:.2rem 0 .5rem}
+.ac-pre > summary{cursor:pointer;font-size:.85rem;color:var(--ink-soft);
+  padding:.5rem 0;min-height:44px;display:flex;align-items:center}
+.ac-pre > summary::marker{color:var(--ink-faint)}
+
+.ac-nums .nums{font-family:var(--f-mono);font-size:1.45rem;font-weight:600;color:#963232;
+  letter-spacing:.06em;line-height:1.25}
+/* « Copier » fait 22 px de haut, et doit le rester : l'agrandir pousserait la
+   ligne des numéros — celle qu'on lit à voix haute — vers le bas, à chaque
+   classe. On étend donc la zone tactile SANS toucher au gabarit : un
+   pseudo-élément déborde de 11 px en haut et en bas, soit 44 px sous le doigt
+   pour 22 px à l'écran. Le bouton restait sous la règle des 44 px depuis le
+   début, et aucun contrôle ne le voyait — celui qui devait le voir
+   (`t_ens_mob.mjs`) n'a jamais été déposé dans le dépôt. */
+.ac-nums .btn-mini{margin-left:auto;font-size:.78rem;padding:.2rem .5rem;border-radius:6px;
+  border:1px solid #F0C9C9;background:#fff;color:#963232;cursor:pointer;flex:0 0 auto;
+  position:relative}
+.ac-nums .btn-mini::after{content:"";position:absolute;left:0;right:0;top:-11px;bottom:-11px}
+.ac-nums.vide{background:#DEF3E6;border-color:#C2E6D2}
+.ac-nums.vide .lbl,.ac-nums.vide .nums{color:#1B6B42}
+.ac-nums.vide .nums{font-size:1rem;font-weight:500;letter-spacing:0}
