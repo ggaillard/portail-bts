@@ -15,7 +15,9 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-Un seul fichier de rendu, `index.html` (**5 847 lignes** au 16/09/2026, autonome),
+`index.html` (**472 lignes**) + `styles/` (dix feuilles) + `js/` — `socle.js`
+(le client Supabase, `$`, l'état partagé `suivi`, six utilitaires d'affichage),
+`ecran.js` (le mode classe projeté), `app.js` (tout le reste, à découper) —
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
 
 1. **Identifier** l'étudiant — code de classe, numéro, PIN à 4 chiffres, avatar.
@@ -1023,15 +1025,45 @@ clic.
 
 ## Points de vigilance
 
-- **`index.html` est autonome et unique** — *tant que l'étape A3 de
-  [`REFONTE.md`](REFONTE.md) n'est pas publiée et vérifiée en production.* Ne
-  pas le découper de sa propre initiative. Le découpage en modules ES est
-  décidé et planifié (16/09), étape par étape, chacune publiable et annulable
-  seule ; il ne s'improvise pas au détour d'une correction. L'avertissement
-  d'origine — « les animations, le minuteur et le mode classe y sont
-  imbriqués » — a été mesuré : ces quatorze fonctions font 618 lignes et
+- **Le portail ne s'ouvre plus par double-clic.** `js/app.js` est un module ES,
+  et un navigateur refuse un import depuis `file://`. En local :
+  `node outils/serveur.mjs` puis <http://127.0.0.1:8080>, ou l'extension
+  *Live Server* de VS Code. C'est le seul coût du découpage, il était mesuré
+  avant d'être accepté.
+- **Le découpage se poursuit par étapes, il ne s'improvise pas.**
+  [`REFONTE.md`](REFONTE.md) tient le plan : A1 à A4, A7 et A8 sont faites, A5
+  est commencée (`socle.js`, `ecran.js` sortis). **`app.js` n'a plus le droit
+  de grossir** : `outils/mesurer.mjs` compare sa taille à la ligne
+  `@chantier` de REFONTE.md et échoue si elle monte. Ne pas déplacer de fonction au détour d'une correction.
+  L'avertissement d'origine — « les animations, le minuteur et le mode classe
+  sont imbriqués » — a été mesuré : ces quatorze fonctions font 618 lignes et
   n'ont que quatre portes d'entrée (`modeEcran`, `rendreEcran`, `rotationAuto`,
-  `fermerEcran`). Elles partent donc **d'un seul tenant**, jamais en morceaux.
+  `fermerEcran`). Elles partiront **d'un seul tenant**, jamais en morceaux.
+- **L'ordre des feuilles de `styles/` fait partie du rendu.** Deux règles de
+  même spécificité se départagent par leur position ; le découpage a été fait
+  par tranches contiguës pour n'y rien changer. Réordonner la liste de
+  `index.html`, ou déplacer une règle d'une feuille à l'autre, peut modifier
+  l'affichage sans modifier une déclaration. `node outils/comparer.mjs <avant>`
+  compare boîte et styles calculés de chaque élément, à sept largeurs.
+- **Les seuils de rupture sont déclarés une fois**, dans la table `@seuil` en
+  tête de `styles/socle.css`. `outils/mesurer.mjs` refuse toute media query
+  absente de cette table. Une variable CSS ne peut pas servir à cela :
+  `@media (max-width: var(--x))` ne s'applique jamais.
+- **Un module d'écran n'importe jamais `app.js`.** Ce serait un cycle —
+  `app.js` importe déjà l'écran. Ce qui descend (`$`, `suivi`, `typo`…) vient
+  de `socle.js` ; ce qui remonte (`chargerDebrief`, `chargerParcours`) est
+  reçu par `brancherEcran()`, appelée une fois au démarrage. **Un module
+  possède aussi ses propres boutons** : les brancher ailleurs reviendrait à
+  pouvoir déplacer l'un sans l'autre, et `comparer.mjs` ne verrait rien —
+  c'est `outils/t_ecran.mjs` qui clique.
+- **`erreur()` ne concatène plus de données.** Elle construit sa carcasse et
+  y verse le texte par `textContent`. Ne pas revenir à `innerHTML` : douze de
+  ses appels y versent une valeur venue de la base.
+- **Les contrôles ouvrent le portail servi, pas réécrit.** `outils/serveur.mjs`
+  le sert comme GitHub Pages, `outils/portail.mjs` substitue `config.js`, le
+  client Supabase et une ligne du script au passage sur le réseau — et
+  **échoue bruyamment** si son ancre disparaît, au lieu de passer au vert en ne
+  testant rien.
 - **Ne jamais committer la clé `service_role`.** Seule la clé `anon` va dans
   `config.js`, et c'est prévu : les règles RLS la rendent inoffensive.
 - **Les vues `v_appel` et `v_absences` sont révoquées pour `anon` et

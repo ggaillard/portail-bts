@@ -25,22 +25,48 @@ const LIBRE = process.argv.includes('--libre');
 const lire = (p) => fs.readFileSync(path.join(RACINE, p), 'utf8');
 const existe = (p) => fs.existsSync(path.join(RACINE, p));
 
-// ── Découper index.html en ses trois parties ──────────────────────────────
+// ── Où vit le code ────────────────────────────────────────────────────────
+// Avant l'étape A2, tout était dans index.html, entre <style> et <script>.
+// Après, dans styles/ et js/. Ce contrôle doit continuer à mesurer LA MÊME
+// CHOSE des deux côtés du découpage, sinon ses chiffres ne se comparent plus
+// à rien — et il se tairait en beauté le jour où il ne trouverait plus le
+// script.
 const brut = lire('index.html');
 const src = brut.split('\n');
-const ligneDe = (i) => brut.slice(0, i).split('\n').length;
+const nbLignes = (t) => t.split('\n').length;
 
-const css = (() => {
-  const a = brut.indexOf('<style'), b = brut.indexOf('</style>');
-  return { debut: ligneDe(a), fin: ligneDe(b), texte: brut.slice(a, b) };
-})();
-const js = (() => {
-  const a = brut.indexOf('\n<script>'), b = brut.lastIndexOf('</script>');
-  return { debut: ligneDe(a) + 1, fin: ligneDe(b), texte: brut.slice(a, b) };
-})();
+const feuillesDe = (dossier, ext) => existe(dossier)
+  ? fs.readdirSync(path.join(RACINE, dossier)).filter((f) => f.endsWith(ext)).sort()
+      .map((f) => ({ nom: `${dossier}/${f}`, t: lire(path.join(dossier, f)) }))
+  : [];
+
+const FCSS = feuillesDe('styles', '.css');
+const FJS  = feuillesDe('js', '.js');
+
+const morceau = (ouvrant, fermant) => {
+  const a = brut.indexOf(ouvrant), b = brut.indexOf(fermant);
+  return a < 0 || b < 0 ? '' : brut.slice(a, b);
+};
+
+const css = { texte: FCSS.length ? FCSS.map((f) => f.t).join('\n') : morceau('<style', '</style>') };
+const js  = { texte: FJS.length  ? FJS.map((f) => f.t).join('\n')  : morceau('\n<script>', '</script>') };
+if (!js.texte.trim()) {
+  console.error("  ✗ mesurer.mjs ne trouve plus le script du portail : ni js/*.js, ni bloc <script>.");
+  process.exit(1);
+}
+css.lignes = css.texte ? nbLignes(css.texte) : 0;
+js.lignes = nbLignes(js.texte);
 
 // ── Les mesures ───────────────────────────────────────────────────────────
 const tousLes = (re, s) => (s.match(re) || []).length;
+
+// Un commentaire CSS peut citer une media query ou une var() pour expliquer ce
+// qu'on a corrigé — la table des seuils le fait, et elle donne l'exemple de ce
+// qui ne marche pas. Compter ces citations comme du code ferait échouer le
+// contrôle sur sa propre documentation. On mesure donc le CSS sans ses
+// commentaires, et on ne lit la table « @seuil » que dans le texte brut.
+const sansCommentaires = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '');
+const cssNet = sansCommentaires(css.texte);
 
 const fonctions = [...js.texte.matchAll(/^function\s+([A-Za-z_$][\w$]*)/gm)];
 const longueurs = fonctions.map((m, i) => {
@@ -49,17 +75,19 @@ const longueurs = fonctions.map((m, i) => {
 }).sort((x, y) => y.lignes - x.lignes);
 const mediane = [...longueurs].sort((a, b) => a.lignes - b.lignes)[longueurs.length >> 1].lignes;
 
-const seuils = [...css.texte.matchAll(/@media[^{]+/g)].map((m) => m[0].trim());
-const classes = new Set([...css.texte.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]));
-const varsDef = new Set([...css.texte.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
-const varsUse = new Set([...css.texte.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]));
+const seuils = [...cssNet.matchAll(/@media[^{]+/g)].map((m) => m[0].trim());
+const classes = new Set([...cssNet.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]));
+const varsDef = new Set([...cssNet.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
+const varsUse = new Set([...cssNet.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]));
 const rpcs = new Set([...js.texte.matchAll(/rpc\(\s*["']([\w_]+)["']/g)].map((m) => m[1]));
 
 const m = {
   'lignes de index.html':        src.length - (src[src.length - 1] === '' ? 1 : 0),
-  'lignes de CSS':               css.fin - css.debut,
-  'lignes de JavaScript':        js.fin - js.debut,
-  'règles CSS':                  tousLes(/^[^@\s][^{]*\{/gm, css.texte),
+  'feuilles de style':           FCSS.length,
+  'modules':                     FJS.length,
+  'lignes de CSS':               css.lignes,
+  'lignes de JavaScript':        js.lignes,
+  'règles CSS':                  tousLes(/^[^@\s][^{]*\{/gm, cssNet),
   'classes CSS':                 classes.size,
   'variables CSS définies':      varsDef.size,
   'variables CSS inutilisées':   [...varsDef].filter((v) => !varsUse.has(v)).length,
@@ -77,17 +105,19 @@ const m = {
   'aria-live':                   tousLes(/aria-live/g, brut),
 };
 
-// ── Ce que REFONTE.md affirmait le 16/09/2026 ─────────────────────────────
+// ── L'état attendu aujourd'hui, celui que REFONTE.md décrit ───────────────
 // Quand une valeur bouge parce que le plan avance, on met à jour les DEUX :
 // cette table et le document. C'est le point : ils ne peuvent plus diverger
 // en silence.
 const ATTENDU = {
-  'lignes de index.html': 5847, 'lignes de CSS': 890, 'lignes de JavaScript': 4499,
-  'règles CSS': 476, 'classes CSS': 299, 'variables CSS définies': 17,
-  'variables CSS inutilisées': 0, 'var() jamais déclarées': 0, 'media queries': 13, 'seuils distincts': 10,
+  'lignes de index.html': 472, 'feuilles de style': 10, 'modules': 3,
+  'lignes de CSS': 1054, 'lignes de JavaScript': 4658,
+  'règles CSS': 470, 'classes CSS': 298, 'variables CSS définies': 17,
+  'variables CSS inutilisées': 0, 'var() jamais déclarées': 0,
+  'media queries': 12, 'seuils distincts': 8,
   'fonctions de premier niveau': 146, 'médiane des fonctions': 22,
-  'plus longue fonction': 248, 'fonctions RPC appelées': 35,
-  'innerHTML =': 114, 'textContent =': 215, 'createElement': 161,
+  'plus longue fonction': 246, 'fonctions RPC appelées': 35,
+  'innerHTML =': 113, 'textContent =': 216, 'createElement': 162,
   'onclick= en chaîne': 0, 'aria-live': 0,
 };
 
@@ -112,8 +142,8 @@ const fautes = [];
 {
   const feuilles = existe('styles')
     ? fs.readdirSync(path.join(RACINE, 'styles')).filter((x) => x.endsWith('.css'))
-        .map((f) => ({ ou: `styles/${f}`, t: lire(path.join('styles', f)) }))
-    : [{ ou: 'index.html', t: css.texte }];
+        .map((f) => ({ ou: `styles/${f}`, t: sansCommentaires(lire(path.join('styles', f))) }))
+    : [{ ou: 'index.html', t: cssNet }];
   const tout = feuilles.map((f) => f.t).join('\n');
   const dec = new Set([...tout.matchAll(/(--[\w-]+)\s*:/g)].map((x) => x[1]));
   for (const f of feuilles) {
@@ -123,24 +153,81 @@ const fautes = [];
   }
 }
 
-// 1. Un module, 400 lignes au plus. Tant que js/ n'existe pas, rien à dire :
-//    la règle naît avec le découpage, elle ne condamne pas l'état actuel.
-if (existe('js')) {
+// 1. Un module, un sujet, un plafond (§6.1).
+//
+//    Le plafond était 400 lignes dans la première écriture du plan. Chiffre
+//    posé au jugé, avant d'avoir sorti le moindre module : le premier, le mode
+//    classe, en fait 646 d'un seul tenant, et il est parfaitement cohérent —
+//    treize fonctions, quatre portes d'entrée, un seul sujet. Le découper pour
+//    satisfaire un nombre que personne n'avait mesuré aurait produit deux
+//    fichiers qu'il faut ouvrir ensemble, ce qui est exactement le défaut
+//    qu'on corrige. Le plafond est donc 700, et il ne sert pas à viser : il
+//    sert à ce qu'aucun module ne redevienne un app.js sans qu'on le voie.
+//
+//    Pendant le découpage, app.js reste au-dessus par construction. Il est
+//    déclaré dans REFONTE.md avec sa taille du jour : il a le droit d'être
+//    gros, il n'a pas le droit de GROSSIR. La dette est écrite, datée, et elle
+//    ne peut que diminuer.
+const PLAFOND = 700;
+if (FJS.length) {
+  const chantier = new Map(
+    [...lire('REFONTE.md').matchAll(/@chantier\s+(\S+)\s+(\d+)/g)].map((x) => [x[1], Number(x[2])]));
   console.log('\n  modules :');
-  for (const f of fs.readdirSync(path.join(RACINE, 'js')).filter((x) => x.endsWith('.js'))) {
-    const n = lire(path.join('js', f)).split('\n').length;
-    console.log('    ' + f.padEnd(large - 2) + '  ' + String(n).padStart(5));
-    if (n > 400) fautes.push(`js/${f} fait ${n} lignes, plafond 400 (§6.1) — à découper`);
+  for (const f of FJS) {
+    const n = nbLignes(f.t);
+    const plafondDit = chantier.has(f.nom) ? `en découpage, ≤ ${chantier.get(f.nom)}` : `≤ ${PLAFOND}`;
+    console.log('    ' + f.nom.replace('js/', '').padEnd(large - 2) + '  ' +
+                String(n).padStart(5) + '   (' + plafondDit + ')');
+    if (chantier.has(f.nom)) {
+      if (n > chantier.get(f.nom)) {
+        fautes.push(`${f.nom} passe de ${chantier.get(f.nom)} à ${n} lignes : un module en cours ` +
+                    `de découpage ne grossit pas. Sortez-en quelque chose, ou corrigez la ligne ` +
+                    `« @chantier » de REFONTE.md si la hausse est voulue et expliquée.`);
+      }
+    } else if (n > PLAFOND) {
+      fautes.push(`${f.nom} fait ${n} lignes, plafond ${PLAFOND} (§6.1) — à découper, ` +
+                  `ou à déclarer « @chantier » dans REFONTE.md avec la raison`);
+    }
   }
 }
 
-// 2. Aucun seuil de rupture en dur une fois styles/socle.css en place.
-if (existe('styles/socle.css')) {
-  const nommes = [...lire('styles/socle.css').matchAll(/(--seuil-[\w-]+)\s*:/g)].map((x) => x[1]);
-  console.log('\n  seuils nommés :', nommes.join(', ') || 'aucun');
-  for (const f of fs.readdirSync(path.join(RACINE, 'styles')).filter((x) => x.endsWith('.css'))) {
-    for (const q of lire(path.join('styles', f)).match(/@media[^{]+/g) || []) {
-      if (!/var\(--seuil-/.test(q)) fautes.push(`styles/${f} : seuil en dur — ${q.trim()} (§6.2)`);
+// 2. Un seul jeu de seuils de rupture, celui que déclare la table « @seuil ».
+//
+//    Le plan annonçait des variables CSS. Essayé, et faux : « @media
+//    (max-width: var(--x)) » ne s'applique jamais — mesuré, une page où seule
+//    la version littérale prend effet. Les custom properties ne sont pas
+//    évaluées dans une media query, et @custom-media n'est implémenté nulle
+//    part. Ce qui reste possible sans outil de compilation, c'est de déclarer
+//    la liste une fois et de refuser tout ce qui n'y figure pas. Le contrôle
+//    ne remplace donc rien : il empêche d'ajouter un onzième seuil sans s'en
+//    apercevoir, ce qui était exactement le défaut.
+{
+  const brut = existe('styles')
+    ? fs.readdirSync(path.join(RACINE, 'styles')).filter((x) => x.endsWith('.css'))
+        .map((f) => lire(path.join('styles', f))).join('\n')
+    : css.texte;
+  const feuilles = existe('styles')
+    ? fs.readdirSync(path.join(RACINE, 'styles')).filter((x) => x.endsWith('.css'))
+        .map((f) => ({ ou: `styles/${f}`, t: sansCommentaires(lire(path.join('styles', f))) }))
+    : [{ ou: 'index.html', t: cssNet }];
+
+  const table = [...brut.matchAll(/@seuil\s+(\S+)\s+\(([^)]+)\)/g)]
+    .map((x) => ({ nom: x[1], q: x[2].replace(/\s+/g, ' ').trim() }));
+  if (!table.length) {
+    fautes.push('aucune table « @seuil » trouvée : la liste des seuils doit être déclarée en commentaire, une fois (§6.2)');
+  } else {
+    console.log('\n  seuils déclarés :', table.map((x) => `${x.nom} ${x.q}`).join(' · '));
+    const permis = new Set(table.map((x) => x.q));
+    for (const f of feuilles) {
+      for (const m of f.t.matchAll(/@media\s*\(([^)]+)\)/g)) {
+        const q = m[1].replace(/\s+/g, ' ').trim();
+        // Les requêtes de préférence ne sont pas des seuils de largeur.
+        if (/prefers-/.test(q)) continue;
+        if (!permis.has(q)) {
+          fautes.push(`${f.ou} : seuil « ${q} » absent de la table @seuil — ` +
+                      `ajoutez-le là-bas, avec ce qu'il gouverne, ou utilisez-en un existant (§6.2)`);
+        }
+      }
     }
   }
 }

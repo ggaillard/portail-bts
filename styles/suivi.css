@@ -1,0 +1,84 @@
+/* ── suivi ─────────────────────────────────────────
+   Le suivi d'une séance : les tuiles de chiffres, la liste élève par élève,
+   la réussite par question.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Suivi de séance, pensé pour le téléphone ── */
+.pick{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.pick select{flex:1 1 11rem;width:auto}
+.pick .btn{flex:0 0 auto}
+
+/* Écrit en partant du téléphone, ce qui supprime le seuil « max-width:33.9rem »
+   — ce « .9 » n'existait que pour ne pas recouvrir 34rem.
+
+   En le supprimant, on a découvert que la moitié de ce qu'il portait ne
+   s'appliquait pas : ses règles .tuile et .tuile-v étaient écrasées par les
+   règles .tuile et .tuile-v ordinaires, écrites PLUS BAS dans la feuille et de
+   même spécificité. Seuls gap et text-align passaient — d'où des tuiles
+   centrées mais à la taille du bureau sur un téléphone, depuis toujours.
+
+   Les valeurs conservées ici sont celles qui s'appliquaient vraiment : le
+   rendu ne bouge pas d'un pixel. Réveiller l'intention d'origine (chiffres à
+   1.7rem, marges à .8rem) est tentant — c'est un tableau de bord qu'on lit
+   debout — mais essayé et mesuré : la page déborde alors de 36 px à 360 px.
+   C'est une décision d'IHM, pas un nettoyage : elle est notée dans REFONTE.md
+   et se prendra avec le reste du chantier B. */
+.tuiles{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem}
+.tuile{background:var(--surface);border:1px solid var(--rule);border-radius:8px;
+       padding:.7rem .8rem;text-align:center}
+.tuile-v{font-family:var(--f-mono);font-size:1.45rem;font-weight:600;line-height:1.1;
+         color:var(--accent-ink);font-variant-numeric:tabular-nums}
+@media (min-width: 34rem){
+  .tuiles{grid-template-columns:repeat(4,1fr);gap:.6rem}
+  .tuile{text-align:start}
+}
+.tuile-l{font-family:var(--f-mono);font-size:.68rem;color:var(--ink-faint);
+         text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem}
+
+.eleves{display:flex;flex-direction:column;gap:.4rem}
+.el{display:flex;align-items:center;gap:.6rem;background:var(--surface);
+    border:1px solid var(--rule);border-radius:8px;padding:.55rem .7rem}
+.el-av{font-size:1.3rem;line-height:1;width:1.6rem;text-align:center;flex:none}
+.el-num{font-family:var(--f-mono);font-size:.82rem;color:var(--ink-faint);width:1.8rem;flex:none}
+.el-barre{flex:1;height:7px;background:var(--surface-alt);border-radius:4px;overflow:hidden;min-width:2.5rem}
+.el-fill{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .9s}
+.el-fill.bien{background:var(--ok)}
+.el-fill.faible{background:var(--signal)}
+.el-chiffres{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-soft);
+             font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.el.absent{opacity:.5}
+.el-maj{font-family:var(--f-mono);font-size:.72rem;color:var(--ink-faint);flex:none}
+@media (max-width: 27rem){.el-maj{display:none}}
+
+.chip{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;
+      padding:.13rem .38rem;border-radius:3px;flex:none;white-space:nowrap}
+.chip-fini{color:var(--ok);background:var(--ok-soft)}
+.chip-cours{color:var(--accent);background:var(--accent-soft)}
+.chip-rien{color:var(--ink-faint);background:var(--surface-alt)}
+
+.sous-titre{font-size:.95rem;font-weight:600;margin:1.4rem 0 .2rem}
+.sous-hint{font-size:.85rem;color:var(--ink-soft);margin-bottom:.6rem}
+
+.questions{display:flex;flex-direction:column;gap:.35rem}
+.q{display:flex;align-items:center;gap:.6rem;background:var(--surface);
+   border:1px solid var(--rule);border-radius:7px;padding:.45rem .7rem}
+.q-nom{font-family:var(--f-mono);font-size:.8rem;color:var(--ink);width:2.4rem;flex:none}
+.q-barre{flex:1;height:7px;background:var(--surface-alt);border-radius:4px;overflow:hidden;min-width:2.5rem}
+.q-fill{display:block;height:100%;border-radius:4px;background:var(--accent);transition:width .9s}
+.q-fill.bien{background:var(--ok)}
+.q-fill.faible{background:var(--signal)}
+.q-pct{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);
+       font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
+.seance-etat{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.05em;
+             text-transform:uppercase;padding:.15rem .4rem;border-radius:3px;margin-left:.4rem}
+.etat-ouverte{color:var(--ok);background:var(--ok-soft)}
+.etat-fermee{color:var(--signal);background:var(--signal-soft)}
+
+/* ── Mode classe : projection au tableau ── */

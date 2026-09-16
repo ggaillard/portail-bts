@@ -19,36 +19,16 @@
 //     les classes, y compris celles où il n'est pas donné. Les lignes des
 //     classes non concernées coûtaient plus cher que les autres.
 //
-// Il n'appelle pas la base : le portail est ouvert avec une fausse couche
-// Supabase, et les réponses sont fabriquées. Ce qu'on vérifie est le gabarit
-// et le câblage des boutons, pas les données.
+// Il n'appelle pas la base : le portail est SERVI par outils/serveur.mjs et la
+// fausse couche Supabase est substituée au passage sur le réseau — voir
+// outils/portail.mjs. Ce qu'on vérifie est le gabarit et le câblage des
+// boutons, pas les données, mais le portail vérifié est celui du dépôt.
 
 import { chromium } from 'playwright';
-import fs from 'fs';
-import path from 'path';
+import { ouvrir } from './portail.mjs';
 
 const RACINE = process.argv[2] || process.cwd();
 const PLAFOND_390 = 2100;   // arbitraire ; ce qui compte est qu'il ne remonte pas
-
-const faux = `<script>
-  window.TDC_CONFIG = { url: 'https://essai.invalid', cle: 'x' };
-  window.__appels = [];
-  window.supabase = { createClient: function(){ return {
-    rpc: function(nom, args){ window.__appels.push({ nom: nom, args: args });
-      return Promise.resolve({ data: { ok: true }, error: null }); },
-    from: function(){ return { select: function(){ return Promise.resolve({ data: [], error: null }); } }; },
-    auth: { getSession: function(){ return Promise.resolve({ data: { session: null } }); },
-            signInAnonymously: function(){ return Promise.resolve({ data: {}, error: null }); },
-            onAuthStateChange: function(){ return { data: { subscription: { unsubscribe: function(){} } } }; } },
-  }; } };
-<\/script>`;
-
-const html = fs.readFileSync(path.join(RACINE, 'index.html'), 'utf8')
-  .replace(/<script src=[^>]*><\/script>/g, '')
-  .replace('<script>', faux + '<script>')
-  .replace('\n})();',
-    '\nwindow.__e = { rendreAFaire: rendreAFaire, rendreBibliotheque: rendreBibliotheque,' +
-    ' rendreControles: rendreControles, BIB: BIB };\n})();');
 
 // Une séance oubliée ouverte (réglable d'un clic) et une classe sans projet
 // (qui ne se règle pas d'un clic : il faut saisir un lien).
@@ -101,11 +81,7 @@ const rates = [];
 const nav = await chromium.launch();
 
 for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
-  const ctx = await nav.newContext({ viewport: { width: w, height: 900 } });
-  const p = await ctx.newPage();
-  const err = [];
-  p.on('pageerror', (e) => err.push(String(e)));
-  await p.setContent(html, { waitUntil: 'load' });
+  const { page: p, erreurs: err, police, fermer } = await ouvrir(nav, RACINE, { largeur: w });
 
   const r = await p.evaluate(({ AFAIRE, BIB, CTRL }) => {
     let e = document.getElementById('volet-quest');
@@ -170,6 +146,10 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   console.log('   lignes de classe             :', r.nbLignesClasse, '·', r.lignesClasse.join('/'), 'px');
   console.log('   tiroirs de réglages          :', r.tiroirs);
 
+  if (!police) {
+    rates.push(`${nom} : IBM Plex n'a pas été chargée — toutes les hauteurs mesurées ici sont fausses, ` +
+               `et les plafonds ne veulent plus rien dire. Vérifiez l'accès à fonts.googleapis.com.`);
+  }
   if (r.lignes !== 2) {
     rates.push(`${nom} : ${r.lignes} ligne(s) de tâche pour 2 gestes — l'information « Question du jour » occupe-t-elle encore une ligne pleine ?`);
   }
@@ -200,7 +180,7 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     rates.push(`téléphone : l'onglet Questionnaires fait ${r.quest} px, plafond ${PLAFOND_390}`);
   }
 
-  await ctx.close();
+  await fermer();
 }
 await nav.close();
 

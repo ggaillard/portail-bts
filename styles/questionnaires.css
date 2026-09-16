@@ -1,0 +1,146 @@
+/* ── questionnaires ─────────────────────────────────────────
+   Les questionnaires actifs, la file d'attente de l'étudiant, les étapes
+   repliées, et la bibliothèque avec ses tiroirs de réglages.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.qa-l{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+  padding:.75rem 0;border-top:1px solid var(--rule-soft)}
+.qa-l:first-child{border-top:0}
+.qa-txt{flex:1 1 12rem;min-width:0}
+.qa-t{display:block;font-weight:600;font-size:.98rem}
+.qa-d{display:block;font-size:.85rem;color:var(--ink-soft)}
+.qa-b{appearance:none;border:1px solid var(--rule);cursor:pointer;font:inherit;
+  font-size:.88rem;font-weight:600;min-height:44px;padding:.4rem 1rem;
+  border-radius:999px;display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--surface);color:var(--ink-soft);white-space:nowrap}
+.qa-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qa-b[disabled]{opacity:.55;cursor:progress}
+.qa-b .pt{width:.6rem;height:.6rem;border-radius:50%;background:var(--ink-faint)}
+.qa-b.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.qa-b.on .pt{background:var(--ok)}
+/* La file d'attente de l'étudiant. Sur un téléphone, trois cartes empilées
+   ne disent pas combien il en reste ni où l'on va : ce bandeau le dit en une
+   ligne, et il colle en haut pour rester vrai pendant le défilement. */
+.file{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  margin:0 0 1rem;padding:.6rem .8rem;border-radius:10px;
+  background:var(--accent-soft);position:sticky;top:0;z-index:20}
+.file-n{font-family:var(--f-mono);font-weight:600;font-size:1.05rem;color:var(--accent-ink)}
+.file-t{font-size:.9rem;color:var(--accent-ink);flex:1 1 8rem;min-width:0}
+.file-l{font-size:.88rem;font-weight:600;color:var(--accent-ink);
+  text-decoration:none;padding:.35rem .1rem}
+.file-l:hover{text-decoration:underline}
+
+/* Une carte finie se replie : son titre et une ligne verte, rien d'autre.
+   La page raccourcit à mesure qu'on avance, et ce qui reste à faire remonte. */
+.etape > h2::before{content:attr(data-n) " · ";font-family:var(--f-mono);
+  font-size:.8rem;font-weight:600;color:var(--ink-faint);vertical-align:.12em}
+.etape[data-fait="oui"] > h2{font-size:1rem;color:var(--ink-soft)}
+.etape[data-fait="oui"] > .hint,
+.etape[data-fait="oui"] > .cn-int,
+.etape[data-fait="oui"] > .appel-choix,
+.etape[data-fait="oui"] > #stage-questions{display:none}
+.etape[data-fait="oui"]{padding-top:.9rem;padding-bottom:.9rem}
+/* Un modèle et ses affectations : le titre, les classes en cases à cocher,
+   et pour chaque classe cochée un interrupteur. Deux niveaux, pas trois. */
+.qn-m{padding:.9rem 0;border-top:1px solid var(--rule-soft)}
+/* Une ligne de contrôle : où il est posé à gauche, les deux gestes à droite.
+   `flex-wrap` et non une grille : à 390 px la ligne passe à deux étages
+   d'elle-même, sans cible tactile rétrécie. */
+.ctl-bas{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem}
+.ctl-ou{font-size:.9rem;color:var(--ink-soft);margin-right:auto}
+.ctl-voir{padding:.45rem .8rem;font-size:.9rem}
+.qn-m:first-child{border-top:0;padding-top:.2rem}
+.qn-tete{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.qn-tt{font-weight:600;font-size:1rem}
+.qn-meta{font-size:.85rem;color:var(--ink-soft)}
+.qn-sup{margin-left:auto;appearance:none;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:.82rem;color:var(--ink-faint);padding:.4rem;text-decoration:underline}
+.qn-sup:hover{color:var(--signal)}
+/* Une classe, deux gestes qui ne se confondent pas : l'AFFECTATION (le
+   questionnaire est-il donné à cette classe ?) et l'INTERRUPTEUR (les
+   étudiants le voient-ils ?). Ils étaient portés par une même ligne
+   cliquable dont la case à cocher RETIRAIT l'affectation : vouloir arrêter
+   un questionnaire et cliquer au mauvais endroit effaçait la séance. D'où
+   deux boutons nommés, et plus aucune zone cliquable par accident. */
+.qn-cl{display:flex;flex-direction:column;gap:.5rem;margin-top:.6rem}
+.qn-c{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;min-height:44px;
+  padding:.5rem .7rem;border:1px solid var(--rule);border-radius:10px;
+  background:var(--surface);font-size:.9rem}
+.qn-c.pose{border-color:var(--accent-soft);background:var(--accent-soft)}
+.qn-c .qn-cn{font-weight:600}
+.qn-c .qn-cd{color:var(--ink-soft);font-size:.82rem;margin-right:auto}
+/* Sur un téléphone, le nom de la classe et l'interrupteur tiennent la même
+   ligne, et l'état passe dessous. En laissant le flex envelopper librement,
+   les trois éléments prenaient trois lignes : le nom, l'état, puis le
+   bouton — et l'interrupteur, qui est le seul geste, se retrouvait en bas. */
+@media (max-width: 30rem){
+  .qn-c{display:grid;grid-template-columns:1fr auto;align-items:center;
+    gap:.2rem .6rem}
+  .qn-c .qn-cn{grid-column:1;grid-row:1}
+  .qn-c .qn-actes{grid-column:2;grid-row:1}
+  .qn-c .qn-cd{grid-column:1 / -1;grid-row:2;margin-right:0}
+}
+.qn-actes{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.qn-aff{padding:.45rem .8rem;font-size:.86rem}
+.qn-aff[disabled]{opacity:.55;cursor:not-allowed}
+.qn-pourquoi{flex-basis:100%;margin:0;font-size:.8rem;color:var(--ink-faint)}
+/* Le rattachement : sa propre ligne sous la classe, pour que le sélecteur
+   garde ses 44 px sans écraser les deux boutons à côté. */
+.qn-rat{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;
+  gap:.35rem .5rem;min-width:0;max-width:100%;font-size:.83rem;color:var(--ink-soft)}
+.qn-rat select{width:auto;flex:1 1 12rem;min-width:0;max-width:100%;
+  font-size:.86rem;padding:.4rem .5rem}
+
+.qn-rep{margin-top:.6rem;border:1px solid var(--rule-soft);border-radius:10px}
+.qn-rep > summary{cursor:pointer;font-size:.9rem;font-weight:600;padding:.6rem .8rem;
+  color:var(--ink-soft);min-height:44px;display:flex;align-items:center}
+.qn-rep[open] > summary{border-bottom:1px solid var(--rule-soft);color:var(--ink)}
+.qn-rep-corps{padding:.8rem}
+.qn-rep-corps h3{font-size:.95rem;margin-bottom:.3rem}
+
+/* ── Le tiroir des réglages d'un questionnaire ────────────────────────────
+   Mesuré le 16/09 : l'onglet faisait 2 778 px sur un téléphone pour trois
+   questionnaires. Chaque modèle affichait TOUTES les classes, y compris
+   celles où il n'est pas donné, chacune avec ses deux boutons et son
+   sélecteur de séance — les lignes des classes non concernées coûtaient plus
+   cher que celles des classes concernées.
+
+   Reste dehors ce qu'on touche debout, en séance : les classes où le
+   questionnaire est donné, et leur interrupteur. Tout le reste est ici. */
+.qn-reg{margin-top:.5rem;border-top:1px solid var(--rule-soft)}
+.qn-reg > summary{cursor:pointer;font-size:.85rem;color:var(--ink-soft);
+  padding:.4rem 0;min-height:44px;display:flex;align-items:center}
+.qn-reg > summary::marker{color:var(--ink-faint)}
+.qn-reg-corps{padding:.3rem 0 .6rem;display:flex;flex-direction:column;gap:.6rem}
+.qn-reg-cl{display:flex;flex-direction:column;gap:.45rem;padding:.55rem .7rem;
+  border:1px solid var(--rule-soft);border-radius:8px;background:var(--surface)}
+.qn-reg-cl > b{font-size:.88rem}
+.qn-reg-corps .btn{min-height:44px}
+/* Supprimer : au fond du tiroir, jamais à côté du titre. À portée du pouce
+   d'un bouton qu'on touche souvent, c'est un accident qui attend son tour. */
+.qn-sup-reg{align-self:flex-start;color:var(--signal);border-color:var(--signal)}
+
+/* Le formulaire de création, replié tant qu'on n'en a pas besoin. */
+.qn-neuf{margin-top:1rem;border-top:1px solid var(--rule-soft);padding-top:.8rem}
+.qn-neuf > summary{cursor:pointer;font-weight:600;font-size:.94rem;padding:.4rem 0;
+  min-height:44px;display:flex;align-items:center}
+.qn-lbl{display:block;font-size:.85rem;color:var(--ink-soft);margin:.7rem 0 .25rem}
+#qn-titre,#qn-intro,#qn-mode,#qn-texte{width:100%;font:inherit;font-size:.95rem;
+  padding:.55rem .7rem;border:1px solid var(--rule);border-radius:9px;
+  background:var(--surface);color:var(--ink)}
+#qn-texte{font-family:var(--f-mono);font-size:.88rem;line-height:1.6;resize:vertical}
+.epingle{margin:1.2rem 0 .7rem}
+.epingle h2{margin:0;font-size:1.15rem}
+.epingle p{margin:.15rem 0 0;font-size:.87rem;color:var(--ink-soft)}
+
+/* Les onglets. Un seul écran à la fois : en séance on ne cherche pas, on clique.
+   Ils collent en haut au défilement — la carte « Appel » est longue, et perdre
+   le chemin du retour au milieu d'une liste d'absents est exactement le
+   problème qu'on essaie de régler. */

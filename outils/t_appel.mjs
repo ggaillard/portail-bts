@@ -24,6 +24,7 @@
 // gabarit, pas les données.
 
 import { chromium } from 'playwright';
+import { ouvrir } from './portail.mjs';
 import fs from 'fs';
 import path from 'path';
 
@@ -47,39 +48,18 @@ const jeu = (inscrits, absents, presents, intitule) => ({
   humeur: { A: 5, B: 9, C: 6, D: 2 },
 });
 
-// Le script du portail vit dans une IIFE et porte un `return` de premier
-// niveau : on ne peut ni l'ouvrir ni l'appeler du dehors. On ajoute une seule
-// ligne avant sa fermeture, en mémoire. Le fichier n'est pas touché.
-function pageOuverte() {
-  const html = fs.readFileSync(PAGE, 'utf8');
-  const faux = `<script>window.TDC_CONFIG={url:'https://essai.invalid',cle:'x'};`
-    + `window.supabase={createClient:function(){return{`
-    + `rpc:function(){return Promise.resolve({data:null,error:null});},`
-    + `from:function(){return{select:function(){return Promise.resolve({data:[],error:null});}};},`
-    + `auth:{getSession:function(){return Promise.resolve({data:{session:null}});},`
-    + `signInAnonymously:function(){return Promise.resolve({data:{},error:null});},`
-    + `onAuthStateChange:function(){return{data:{subscription:{unsubscribe:function(){}}}};}}`
-    + `};}};<\/script>`;
-  return html
-    .replace(/<script src=[^>]*><\/script>/g, '')
-    .replace('<script>', faux + '<script>')
-    .replace('\n})();',
-      '\nwindow.__essai={remplirAppelClasse:remplirAppelClasse,hisserQuestion:hisserQuestion};\n})();');
-}
-
 const LARGEURS = [[360, 'petit téléphone'], [390, 'téléphone'],
                   [768, 'tablette'], [1280, 'bureau']];
 
 const nav = await chromium.launch();
-const doc = pageOuverte();
 const rates = [];
 
 for (const [w, nom] of LARGEURS) {
-  const ctx = await nav.newContext({ viewport: { width: w, height: 900 } });
-  const p = await ctx.newPage();
-  const erreurs = [];
-  p.on('pageerror', (e) => erreurs.push(String(e)));
-  await p.setContent(doc, { waitUntil: 'load' });
+  // Le portail est servi et ouvert par son adresse, pas injecté : voir
+  // outils/portail.mjs. C'est ce qui permet aux feuilles de styles/ et au
+  // module de js/ de se résoudre, et ce qui fait que le portail mesuré ici est
+  // exactement celui que GitHub Pages publiera.
+  const { page: p, erreurs, police, fermer } = await ouvrir(nav, RACINE, { largeur: w });
 
   const r = await p.evaluate(({ j1, j2, j3 }) => {
     let e = document.getElementById('carte-appel');
@@ -92,13 +72,13 @@ for (const [w, nom] of LARGEURS) {
       const d = document.createElement('div');
       d.className = 'appel-classe';
       z.appendChild(d);
-      window.__essai.remplirAppelClasse(d, c, a);
+      window.__e.remplirAppelClasse(d, c, a);
     };
     const poser = (a, b) => {
       z.innerHTML = '';
       mk({ id: 1, code: 'BTS1-DEV-2026', nom: 'BTS SIO 1 - Bloc 1 DEV' }, a);
       if (b) mk({ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }, b);
-      window.__essai.hisserQuestion();
+      window.__e.hisserQuestion();
     };
     const etat = () => ({
       hissee: !document.getElementById('ac-question').hidden,
@@ -138,6 +118,10 @@ for (const [w, nom] of LARGEURS) {
 
   console.log(`\n── ${nom} (${w} px) : ${r.colonnes} colonne(s), carte ${r.carte} px`);
 
+  if (!police) {
+    rates.push(`${nom} : IBM Plex n'a pas été chargée — toutes les hauteurs mesurées ici sont fausses, ` +
+               `et les plafonds ne veulent plus rien dire. Vérifiez l'accès à fonts.googleapis.com.`);
+  }
   if (r.debord > 0) rates.push(`${nom} : la page déborde de ${r.debord} px sur la droite`);
   if (r.petits.length) rates.push(`${nom} : cible(s) tactile(s) sous 44 px — ${r.petits.join(', ')}`);
   if (erreurs.length) rates.push(`${nom} : erreur JS — ${erreurs[0]}`);
@@ -162,7 +146,7 @@ for (const [w, nom] of LARGEURS) {
     rates.push(`${nom} : une seule classe — il n'y a rien à mutualiser`);
   }
 
-  await ctx.close();
+  await fermer();
 }
 await nav.close();
 

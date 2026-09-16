@@ -1,0 +1,39 @@
+/* ── navigation ─────────────────────────────────────────
+   La barre d'onglets collante et les volets de l'espace enseignant.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.onglets{display:flex;gap:.35rem;flex-wrap:wrap;margin:1.6rem 0 1.1rem;
+  padding:.3rem;border-radius:12px;background:var(--surface-alt);
+  position:sticky;top:0;z-index:20;
+  box-shadow:0 6px 10px -8px rgba(0,0,0,.18)}
+.onglet{appearance:none;border:0;cursor:pointer;font:inherit;font-size:.94rem;
+  min-height:44px;padding:.55rem 1rem;border-radius:9px;background:transparent;color:var(--ink-soft);
+  display:inline-flex;align-items:center;gap:.45rem;transition:background .12s,color .12s}
+.onglet:hover{background:var(--rule-soft);color:var(--ink)}
+.onglet:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.onglet.actif{background:var(--surface);color:var(--ink);font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.10)}
+/* La pastille porte le nombre d'absents du jour, toutes classes confondues :
+   le seul chiffre qu'on veut voir sans ouvrir l'onglet. */
+.ong-p{font-family:var(--f-mono);font-size:.76rem;font-weight:600;
+  min-width:1.35rem;padding:.05rem .35rem;border-radius:999px;text-align:center;
+  background:#FBE6E6;color:#963232}
+.volet-hint{margin:0 0 .9rem;font-size:.87rem;color:var(--ink-soft)}
+@media (max-width: 40rem){
+  /* Quatre onglets sur 390 px passaient sur deux lignes : 88 px de hauteur
+     perdus en permanence, puisque la barre est collante. Une seule ligne qui
+     défile latéralement, avec les bords estompés pour dire qu'il y a une
+     suite. Le défilement reste dans la barre : la page, elle, ne bouge pas. */
+  .onglets{gap:.25rem;padding:.25rem;flex-wrap:nowrap;overflow-x:auto;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    mask-image:linear-gradient(90deg,transparent 0,#000 .6rem,#000 calc(100% - .6rem),transparent 100%)}
+  .onglets::-webkit-scrollbar{display:none}
+  .onglet{padding:.5rem .7rem;font-size:.88rem;flex:0 0 auto}
+}

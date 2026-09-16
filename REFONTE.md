@@ -1,9 +1,12 @@
 # Refonte du portail — audit mesuré et plan
 
-Écrit le 16/09/2026. Chaque chiffre de ce document a été compté sur
-`index.html` tel qu'il est dans le dépôt ce jour-là, et non estimé. Les
-commandes qui les recomptent sont dans `outils/mesurer.mjs` : si un chiffre
-d'ici ne correspond plus, c'est le document qui a vieilli, pas la mesure.
+Écrit le 16/09/2026. Chaque chiffre a été compté, pas estimé.
+
+**Les sections 1 à 4 décrivent le portail AVANT le chantier**, le 16/09 au
+matin : c'est le constat, il ne bouge plus, et c'est ce qui permet de mesurer
+le chemin parcouru. **L'état d'aujourd'hui est au §5bis**, et
+`node outils/mesurer.mjs` le recompte : il échoue quand le dépôt et ce
+document ne disent plus la même chose, en nommant l'écart.
 
 Ce document est fait pour être coché. Chaque étape du plan est livrable seule,
 vérifiable seule, et annulable seule.
@@ -105,8 +108,9 @@ Conséquences concrètes, pas théoriques :
 
 ### 2.2 — Aucun seuil de rupture nommé
 
-Voir §1. Dix seuils, quatre syntaxes, zéro nom. Le correctif tient en six
-variables et une convention.
+Voir §1. Dix seuils, quatre syntaxes, zéro nom. → **corrigé en A1** : six
+seuils, une syntaxe, une table qui les déclare et un contrôle qui la fait
+respecter (§5bis).
 
 ### 2.3 — Les tests savent voir, mais ils s'installent mal
 
@@ -386,26 +390,43 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
 
 ### Chantier A — Le code
 
-- [ ] **A1. Nommer les seuils de rupture.** Six variables, une convention
-      écrite, les 13 media queries réécrites dessus. Aucun pixel ne bouge :
-      les trois tests de gabarit le prouvent avant et après.
-- [ ] **A2. Sortir le CSS** vers `styles/`. Zéro JavaScript touché, donc zéro
-      risque de régression fonctionnelle.
-- [ ] **A3. Passer en module** — `index.html` + `js/app.js` contenant tout le
-      script actuel, à l'identique. Publier, et **vérifier en production**
-      avant d'aller plus loin : c'est l'étape qui valide la mécanique.
-- [ ] **A4. Adapter les trois tests** au serveur statique et à `page.route()`
-      (§4.3). Les casser à nouveau, chacun, pour vérifier qu'ils voient
-      encore.
-- [ ] **A5. Extraire les modules feuilles** — `ecran.js`, `quiz.js`,
-      `appel.js`. Un commit par module.
+- [x] **A1. Un seul jeu de seuils.** ✅ 16/09. Dix seuils en quatre syntaxes →
+      **six, en rem, écrits pareil**, déclarés dans une table `@seuil` en tête
+      de `styles/socle.css` que `outils/mesurer.mjs` lit et fait respecter.
+      *Le plan disait « six variables CSS » : c'était faux, et c'est mesuré —
+      `@media (max-width: var(--x))` ne s'applique jamais, les custom
+      properties ne sont pas évaluées dans une media query et `@custom-media`
+      n'existe dans aucun navigateur. On ne remplace donc pas l'écriture, on
+      refuse ce qui sort de la liste.*
+- [x] **A2. Le CSS dans `styles/`.** ✅ 16/09. 926 lignes → **dix feuilles**,
+      découpées par tranches contiguës pour que l'ordre de la cascade ne bouge
+      pas d'un cran. `outils/comparer.mjs` : identique aux sept largeurs.
+- [x] **A3. Le script en module.** ✅ 16/09, **à publier et à vérifier en
+      production avant A5**. `index.html` passe de 5 847 à **472 lignes** ;
+      `js/app.js` porte les 4 529 lignes, sans une virgule de changée.
+      `comparer.mjs` : identique aux sept largeurs.
+- [x] **A4. Les contrôles ouvrent le portail réel.** ✅ 16/09.
+      `outils/serveur.mjs` le sert comme GitHub Pages ; `outils/portail.mjs`
+      substitue `config.js`, le client Supabase et **une seule ligne** dans le
+      script, au passage sur le réseau. Les trois `t_*.mjs` n'ont plus une
+      seule expression régulière sur le HTML.
+- [~] **A5. Extraire les modules feuilles.** Commencé le 16/09 :
+      `js/socle.js` (167 l.) et `js/ecran.js` (646 l.) sont sortis. Reste
+      `quiz.js`, `appel.js`. *Le plan disait « les feuilles d'abord, le socle
+      ensuite ». Faux dans ce sens : un module d'écran a besoin de `$`, de
+      `suivi`, de `typo` ; si le socle est encore dans `app.js`, l'écran doit
+      importer `app.js`, qui importe l'écran — un cycle. Le socle sort en
+      premier, et plus personne n'importe personne.*
 - [ ] **A6. Extraire les modules centraux** — `socle.js`, `session.js`,
       `navigation.js`, puis le reste.
-- [ ] **A7. Réparer `erreur()`** (§2.4) : `textContent` pour le texte, la
-      classe posée sur l'élément. Aucun appel à changer.
-- [ ] **A8. `outils/mesurer.mjs`** : recompter les chiffres de ce document, et
-      échouer si un module dépasse 400 lignes. Ce qui a dérivé une fois
-      dérivera deux fois.
+- [x] **A7. `erreur()` réparée.** ✅ 16/09. La carcasse se construit sans
+      jamais concaténer de données ; aucun des 73 appels n'a changé.
+      `outils/t_messages.mjs` rejoue l'injection et vérifie aussi que le texte
+      s'affiche **en entier** — échapper en mangeant la moitié du message
+      serait un autre défaut, pas un correctif.
+- [x] **A8. `outils/mesurer.mjs`.** ✅ 16/09. Recompte les chiffres, tient la
+      table des seuils, refuse une `var()` non déclarée, et surveille la
+      taille des modules — `app.js` ne peut que diminuer (§6.1).
 
 ### Chantier B — La navigation
 
@@ -440,6 +461,10 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
   taxonomie à deux catégories clairement séparées vaut mieux que quatre
   catégories mêlées.
 
+- [ ] **B8. Les tuiles de chiffres sur un téléphone.** Leur mise en forme
+      étroite était écrite mais sans effet depuis le début (§5bis). La rétablir
+      telle quelle fait déborder la page de 36 px à 360 px : il faut donc
+      décider ce qu'on veut vraiment y lire debout, et dimensionner pour ça.
 - [ ] **B7. L'espace étudiant.** Aujourd'hui une pile de cartes sous l'avatar,
       avec une file d'attente en bandeau. À reprendre une fois B1 en place, car
       l'étudiant aussi rafraîchit sa page.
@@ -454,14 +479,110 @@ désoriente ; la fin d'un semestre est le bon moment.
 
 ---
 
+## 5bis. Journal des mesures
+
+`outils/mesurer.mjs` compare le dépôt à la ligne « aujourd'hui ». Quand une
+valeur bouge parce que le plan avance, on met à jour **le tableau et le
+fichier** : c'est ce qui les empêche de diverger en silence.
+
+| | 16/09 avant | après A1-A4 |
+|---|---|---|
+| `index.html` | 5 847 lignes | **472** |
+| feuilles de style | 0 | **10** (1 054 lignes) |
+| modules | 0 | **1** (4 529 lignes — la marche A3) |
+| règles CSS | 476 | 470 |
+| media queries | 13 | 12 |
+| seuils distincts | 10 | **8** (6 de largeur + 2 de préférence) |
+| fonctions de premier niveau | 146 | 146 |
+| `aria-live` | 0 | 0 *(chantier B)* |
+
+Après A5 (partiel) et A7 :
+
+| | après A1-A4 | après A5-A7 |
+|---|---|---|
+| modules | 1 | **3** — `app.js` 3 845, `ecran.js` 646, `socle.js` 167 |
+| contrôles d'écran | 3 | **6** |
+| `innerHTML =` | 114 | 113 |
+
+### Ce que A1-A4 a changé à l'écran : une chose, à une largeur
+
+`outils/comparer.mjs` relève, pour **chaque élément visible**, sa boîte et
+seize styles calculés, à sept largeurs, avant et après. Verdict :
+
+- **identique à 360, 390, 480, 620, 768 et 1280 px** ;
+- **à 640 px exactement**, la ligne du semestre se replie désormais, comme
+  elle le faisait déjà à 620 px et en dessous. C'est la fusion assumée de deux
+  seuils qui disaient la même chose (« l'écran est étroit ») à 20 px d'écart.
+  La carte du semestre gagne 248 px à cette seule largeur.
+
+### Ce que A5 et A7 ont changé, et ce qu'il a fallu vérifier autrement
+
+`comparer.mjs` ne voit que des boîtes. Sortir 646 lignes du mode classe
+déplace aussi **le branchement de ses neuf boutons** : ils étaient câblés au
+premier niveau du script, ils le sont désormais dans `brancherEcran()`,
+appelée une fois au démarrage. Si cet appel disparaissait, l'écran
+s'afficherait parfaitement et ne répondrait à rien — et `comparer.mjs` le
+trouverait identique au pixel près. C'est le trou exact qu'ouvre un
+découpage : le gabarit tient, le câblage est parti.
+
+`outils/t_ecran.mjs` clique donc, et regarde où va la vue. Cassé trois fois :
+appel à `brancherEcran()` commenté, écouteur d'Échap oublié, bouton branché
+sur la mauvaise vue — il a nommé les trois.
+
+Trouvé au passage : `new Event("change")`, ajouté le 16/09 au matin, aurait
+fait échouer le contrôle « toute fonction appelée est-elle définie » dès la
+première poussée. `Event` manquait à la liste des noms natifs du workflow.
+Personne ne l'avait vu parce que rien n'avait été poussé depuis.
+
+### Deux choses trouvées en chemin
+
+**Des règles écrites qui ne s'appliquaient pas.** Le bloc
+`@media(max-width:33.9rem)` portait quatre déclarations pour les tuiles de
+chiffres du suivi. Deux d'entre elles — `padding` et `font-size` — étaient
+écrasées par les règles `.tuile` et `.tuile-v` ordinaires, écrites **plus bas**
+dans la feuille et de même spécificité. Sur un téléphone, les tuiles étaient
+donc centrées (ça, ça passait) mais à la taille du bureau, depuis toujours.
+Les valeurs conservées sont celles qui s'appliquaient vraiment : le rendu ne
+bouge pas. **Réveiller l'intention d'origine fait déborder la page de 36 px à
+360 px** — mesuré — donc c'est une décision d'IHM, pas un nettoyage :
+→ **B8** ci-dessous.
+
+**Un contrôle qui pouvait devenir muet.** L'ancienne façon d'ouvrir le portail
+reposait sur trois substitutions dans son HTML. `outils/portail.mjs` n'en fait
+plus qu'une, et **échoue bruyamment** si son point d'ancrage disparaît :
+essayé, en changeant `})();` en `}());`, il s'arrête en le disant au lieu de
+passer au vert. Les trois contrôles refusent aussi de conclure quand IBM Plex
+ne s'est pas chargée : essayé aussi, en la neutralisant — une hauteur mesurée
+sans la bonne police ne se compare à aucun plafond.
+
+---
+
 ## 6. Les règles à tenir ensuite
 
 À reverser dans `CLAUDE.md` une fois le chantier A engagé.
 
-1. **Un module, un sujet, 400 lignes au plus.** Au-delà, on découpe.
-   `outils/mesurer.mjs` le vérifie.
-2. **Aucun seuil de rupture en dur.** Les media queries n'utilisent que les
-   variables nommées de `styles/socle.css`.
+1. **Un module, un sujet, 700 lignes au plus.** `outils/mesurer.mjs` le
+   vérifie. *Le plafond était 400 dans la première écriture de ce plan —
+   chiffre posé au jugé, avant d'avoir sorti le moindre module. Le premier, le
+   mode classe, en fait 646 d'un seul tenant et il est cohérent : treize
+   fonctions, quatre portes d'entrée, un seul sujet. Le couper en deux pour
+   satisfaire un nombre que personne n'avait mesuré aurait donné deux fichiers
+   qu'il faut ouvrir ensemble.* Le plafond ne sert pas à viser : il sert à ce
+   qu'aucun module ne redevienne un `app.js` sans qu'on le voie.
+
+   Pendant le découpage, `app.js` est forcément au-dessus. Il est donc déclaré
+   ici avec sa taille du jour : il a le droit d'être gros, **il n'a pas le
+   droit de grossir**.
+
+   ```
+   @chantier js/app.js 3845
+   ```
+2. **Aucun seuil hors de la table.** La liste des seuils est déclarée une fois,
+   en commentaire `@seuil` en tête de `styles/socle.css`, avec ce que chacun
+   gouverne. `outils/mesurer.mjs` refuse toute media query qui n'y figure pas.
+   *Une variable CSS ne peut pas servir à cela* — `@media (max-width: var(--x))`
+   ne s'applique jamais, c'est vérifié. Ajouter un seuil est une décision : une
+   largeur de plus à vérifier à chaque changement, pour toujours.
 3. **`innerHTML` ne reçoit jamais de donnée.** Il pose une carcasse ; les
    valeurs entrent par `textContent`. La règle est déjà suivie à une exception
    près — elle devient explicite.

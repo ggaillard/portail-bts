@@ -15,18 +15,14 @@
 // maintenant, et ce contrôle vérifie les deux à la fois : la carte est
 // utilisable, et le bandeau ne réclame rien.
 //
-// Il n'appelle pas la base : le portail est ouvert avec une fausse couche
-// Supabase et la liste est fabriquée à la main.
+// Il n'appelle pas la base : le portail est SERVI par outils/serveur.mjs, comme
+// GitHub Pages le sert, et la fausse couche Supabase est substituée au passage
+// sur le réseau — voir outils/portail.mjs. Le portail testé est celui du dépôt,
+// pas une version réécrite par expression régulière.
 
 import { chromium } from 'playwright';
-import fs from 'fs';
-import path from 'path';
+import { ouvrir } from './portail.mjs';
 const RACINE = process.argv[2] || process.cwd();
-const html = fs.readFileSync(path.join(RACINE, 'index.html'), 'utf8');
-const stub = `<script>window.TDC_CONFIG={url:'https://e.invalid',cle:'x'};window.supabase={createClient:function(){return{rpc:function(){return Promise.resolve({data:null,error:null});},from:function(){return{select:function(){return Promise.resolve({data:[],error:null});}};},auth:{getSession:function(){return Promise.resolve({data:{session:null}});},signInAnonymously:function(){return Promise.resolve({data:{},error:null});},onAuthStateChange:function(){return{data:{subscription:{unsubscribe:function(){}}}};}}};}};<\/script>`;
-const doc = html.replace(/<script src=[^>]*><\/script>/g,'')
-  .replace('<script>', stub+'<script>')
-  .replace('\n})();', '\nwindow.__e={rendreQuestionnairesEtu:rendreQuestionnairesEtu};\n})();');
 
 const q = (n, rep, juste) => ({
   question:'revision-poo-tp1-'+String(n).padStart(2,'0'),
@@ -43,9 +39,7 @@ const liste = [{
 const rates = [];
 const nav = await chromium.launch();
 for (const w of [390, 1280]) {
-  const ctx = await nav.newContext({ viewport:{width:w,height:900} });
-  const p = await ctx.newPage(); const err=[]; p.on('pageerror',e=>err.push(String(e)));
-  await p.setContent(doc,{waitUntil:'load'});
+  const { page: p, erreurs: err, police, fermer } = await ouvrir(nav, RACINE, { largeur: w });
   const r = await p.evaluate((liste) => {
     let e = document.getElementById('espace-etu');
     while (e) { e.hidden = false; e = e.parentElement; }
@@ -72,6 +66,10 @@ for (const w of [390, 1280]) {
   console.log('   zone des options :', r.choix, '· boutons cliquables :', r.boutonsVisibles);
   console.log('   bandeau de file  :', r.file);
   console.log('   erreurs          :', err.length?err:'aucune');
+  if (!police) {
+    rates.push(`${w} px : IBM Plex n'a pas été chargée — toutes les hauteurs mesurées ici sont fausses, ` +
+               `et les plafonds ne veulent plus rien dire. Vérifiez l'accès à fonts.googleapis.com.`);
+  }
   if (r.carte === 'ABSENTE') rates.push(`${w} px : la carte de révision ne s'affiche pas du tout`);
   else {
     if (r.fait === 'oui') rates.push(`${w} px : la carte est marquée « faite » — elle se replie et devient inutilisable`);
@@ -81,7 +79,7 @@ for (const w of [390, 1280]) {
     if (/chose/.test(r.file)) rates.push(`${w} px : la file d'attente réclame la révision, qui n'a pas de fin — ${r.file}`);
     if (err.length) rates.push(`${w} px : erreur JS — ${err[0]}`);
   }
-  await ctx.close();
+  await fermer();
 }
 await nav.close();
 

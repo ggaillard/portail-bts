@@ -1,0 +1,55 @@
+/* ── etudiant ─────────────────────────────────────────
+   Ce que l'étudiant voit : « Faisons connaissance », le suivi de stage, le
+   mode révision et l'entonnoir des étapes.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.cn-q{padding:.7rem 0;border-top:1px solid var(--rule)}
+.cn-q:first-of-type{border-top:0}
+.cn-int{display:block;font-size:.95rem;font-weight:600;margin:0 0 .4rem}
+.cn-nums{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-soft);
+  margin:-.1rem 0 .35rem 4.1rem;word-spacing:.25rem}
+.cn-sig{margin-top:.9rem;padding:.6rem .85rem;border-radius:8px;
+  background:#FDF0DC;border:1px solid #F2DDB8}
+.cn-sig h4{margin:0 0 .35rem;font-size:.9rem;color:#8A5A16}
+.cn-sig ul{margin:0;padding-left:1.1rem;font-size:.88rem;color:#8A5A16}
+.cn-sig li{margin:.15rem 0}
+.cn-sig b{font-weight:600}
+.st-q{padding:.6rem 0;border-top:1px solid var(--rule)}
+.st-q:first-of-type{border-top:0}
+.st-opts{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.35rem}
+.st-opt{font-size:.86rem;padding:.3rem .6rem;border-radius:7px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--rule);color:var(--ink);text-align:left}
+.st-opt:hover{border-color:var(--accent)}
+.st-opt.pris{background:#DEF3E6;border-color:#1B6B42;color:#1B6B42;font-weight:600}
+.st-opt:disabled{opacity:.55;cursor:default}
+.st-maj{font-size:.8rem;color:var(--ink-soft)}
+/* Mode révision — la seule carte étudiante qui dise « faux ».
+   Le contrôle d'entrée, lui, ne corrige jamais : il mesure un point de
+   départ, et « faux » avant la séance se lit comme une sanction. Ici on
+   révise une interro : ne pas dire où est l'erreur enlèverait tout l'objet.
+   La bonne réponse est donc teinte, la mauvaise soulignée en signal, et
+   l'explication passe en dessous — c'est elle qu'on est venu chercher. */
+.rv-opt.juste{background:var(--ok-soft);border-color:var(--ok);color:var(--ok);font-weight:600}
+.rv-opt.rate{background:var(--signal-soft);border-color:var(--signal);color:var(--signal)}
+.rv-verdict{margin-top:.7rem;font-weight:600;font-size:.95rem}
+.rv-verdict.juste{color:var(--ok)}
+.rv-verdict.rate{color:var(--signal)}
+.rv-expl{margin-top:.35rem;font-size:.9rem;color:var(--ink-soft);line-height:1.55}
+.rv-suite{margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.rv-score{font-size:.85rem;color:var(--ink-soft)}
+.et-etape{margin:.55rem 0}
+.et-tete{display:flex;align-items:baseline;gap:.5rem;font-size:.88rem}
+.et-tete b{font-weight:600}
+.et-nums{font-family:var(--f-mono);font-size:1.05rem;letter-spacing:.05em;margin-left:.1rem}
+.et-0 .et-tete b,.et-0 .et-nums{color:#963232}
+.et-1 .et-tete b,.et-1 .et-nums{color:#8A5A16}
+.et-2 .et-tete b,.et-2 .et-nums{color:#24507F}
+.et-3 .et-tete b,.et-3 .et-nums{color:#1B6B42}
+.et-x .et-tete b,.et-x .et-nums{color:var(--ink-soft)}

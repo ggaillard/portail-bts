@@ -1,0 +1,47 @@
+/* ── afaire ─────────────────────────────────────────
+   « Ce qui bloque » : la carte épinglée, ses lignes, ses boutons d'action et
+   son pied d'informations.
+
+   Découpé de index.html le 16/09/2026 (étape A2 de REFONTE.md). L'ORDRE DES
+   FEUILLES DANS index.html COMPTE : deux règles de même spécificité se
+   départagent par leur position, et ce découpage a été fait par tranches
+   contiguës précisément pour ne rien changer à cet ordre. Déplacer une feuille
+   dans la liste, ou une règle d'une feuille à l'autre, peut donc modifier le
+   rendu sans modifier une seule déclaration. outils/comparer.mjs le vérifie.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.af-t{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.2rem}
+.af-pastille{font-size:.82rem;font-weight:600;padding:.12rem .55rem;border-radius:99px}
+.af-pastille.rien{background:#DEF3E6;color:#1B6B42}
+.af-pastille.bloc{background:#FBE6E6;color:#963232}
+.af-pastille.att{background:#FDF0DC;color:#8A5A16}
+.af-l{display:flex;gap:.65rem;padding:.6rem 0;border-top:1px solid var(--rule)}
+.af-l:first-of-type{border-top:0}
+.af-i{flex:0 0 1.2rem;font-size:1rem;line-height:1.35}
+.af-c{flex:1;min-width:0}
+.af-q{font-size:.95rem;font-weight:600;margin:0}
+.af-q .af-cl{font-weight:400;color:var(--ink-soft);font-size:.85rem;margin-left:.4rem}
+.af-d{margin:.1rem 0 0;font-size:.88rem;color:var(--ink-soft)}
+.af-g{margin:.2rem 0 0;font-size:.86rem}
+.af-g b{font-family:var(--f-mono);font-size:.82rem;background:var(--surface);
+  border:1px solid var(--rule);border-radius:5px;padding:.1rem .4rem;font-weight:500}
+/* Le geste, en bouton. Une carte qui nomme le geste sans le rendre possible
+   informe ; elle ne débloque pas. Le bouton fait 44 px de haut et prend toute
+   la largeur sur un téléphone : c'est souvent la seule chose qu'on touche
+   dans cette carte, entre deux heures de cours. */
+.af-actes{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+.af-actes .btn{min-height:44px;padding:.45rem .9rem;font-size:.9rem}
+@media (max-width: 30rem){
+  .af-actes{flex-direction:column;align-items:stretch}
+  .af-actes .btn{width:100%}
+}
+.af-l.fait{opacity:.5}
+.af-info{margin:.5rem 0 0;padding-top:.5rem;border-top:1px solid var(--rule);
+  font-size:.85rem;color:var(--ink-soft);line-height:1.45}
+.af-info + .af-info{border-top:0;padding-top:0;margin-top:.15rem}
+.af-info b{font-weight:600;color:var(--ink)}
+.af-info .af-cl{font-size:.82rem;margin-left:.35rem}
+.af-msg{margin:.35rem 0 0;font-size:.85rem;color:var(--ok)}
+.af-msg.rate{color:var(--signal)}
+/* Une ligne de pilotage par questionnaire : ce qu'il est, où en est la
+   classe, et l'interrupteur. Assez large pour le doigt (44 px de haut). */
