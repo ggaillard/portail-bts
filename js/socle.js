@@ -260,7 +260,7 @@ function signalerSessionPerimee(err){
 // mauvaise direction — le socle deviendrait le nouveau fourre-tout.
 
 // Aucun appel lisible : pas de pastille du tout. Zéro absent : pas de pastille
-// non plus — un « 0 » rouge à côté de « Appel du jour » se lirait comme un souci.
+// non plus — un « 0 » rouge à côté de « Aujourd'hui » se lirait comme un souci.
 function pastilleAppel(n){
   var p = $("ong-appel-n");
   if (!p) return;

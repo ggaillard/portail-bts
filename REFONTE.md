@@ -173,6 +173,10 @@ Les normes de référence : **ARIA Authoring Practices** (motif *Tabs*) et
 
 ### 3.1 — Les quatre onglets ne relèvent pas de la même logique
 
+> *Corrigé le 17/09 par B6 : les libellés ci-dessous sont ceux d'avant. Ce
+> constat reste écrit tel qu'il a été fait — c'est lui qui a motivé le
+> renommage, et un audit qu'on réécrit après coup ne prouve plus rien.*
+
 | Libellé | Ce que c'est |
 |---|---|
 | Appel du jour | un **moment** |
@@ -476,21 +480,60 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
 - [x] **B5bis. `--surface-2` déclarée.** ✅ 16/09. `.db-v.sans_mesure` utilise
       `--surface-alt` et `--ink-soft` : 4,84 : 1 en clair, 6,52 : 1 en sombre,
       contre 2,65 : 1 avant (§3.7).
-- [ ] **B6. Renommer les onglets dans une seule taxonomie** (§3.1). Proposition
-      à trancher ensemble, pas à appliquer d'office :
+- [x] **B6. Renommer les onglets dans une seule taxonomie** (§3.1). ✅ 17/09,
+      **décidé avec vous**, pas appliqué d'office — c'était la condition posée
+      ici, et elle a été tenue.
 
-  | Aujourd'hui | Proposition | Ce que c'est |
-  |---|---|---|
-  | Appel du jour | **Aujourd'hui** | la journée |
-  | Suivi d'une séance | **La séance** | l'heure en cours |
-  | Vue d'ensemble | **Le semestre** | le semestre |
-  | Questionnaires | **Ma bibliothèque** | le matériel réutilisable |
+  | Avant | Depuis le 17/09 | Ce que c'est | Clé d'adresse |
+  |---|---|---|---|
+  | Appel du jour | **Aujourd'hui** | la journée | `#appel` |
+  | Suivi d'une séance | **La séance** | l'heure en cours | `#seance` |
+  | Vue d'ensemble | **Le semestre** | le semestre | `#ensemble` |
+  | Questionnaires | **Ma bibliothèque** | le matériel réutilisable | `#quest` |
 
   Les trois premiers sont trois échelles de temps — jour, heure, semestre — et
   se déduisent l'un de l'autre. Le quatrième reste à part, et c'est assumé :
   une bibliothèque de matériel réutilisable est un lieu, pas un moment. Une
   taxonomie à deux catégories clairement séparées vaut mieux que quatre
-  catégories mêlées.
+  catégories mêlées — et c'est bien ce qu'on avait : un geste, un point de vue,
+  un type d'objet et une tâche, quatre catégories pour quatre onglets.
+
+  **Trois décisions prises en appliquant, et dites ici :**
+
+  1. **Les clés d'adresse ne bougent pas.** `#appel`, `#ensemble`, `#quest`,
+     `#seance` restent, et les identifiants `ong-*` / `volet-*` avec eux. Un
+     lien mis en favori le 16/09 continue d'ouvrir le bon onglet. Le libellé
+     est ce qu'on lit, la clé est ce qui dure ; les aligner coûterait tous les
+     liens existants pour un bénéfice nul — personne ne lit un fragment d'URL.
+  2. **L'ordre des onglets ne bouge pas non plus.** La logique de la taxonomie
+     voudrait jour → heure → semestre, donc échanger « Le semestre » et
+     « La séance ». Mais le renommage se fait en cours d'année : déplacer sous
+     la main un onglet dont on vient de changer le nom, c'est deux repères
+     perdus d'un coup au lieu d'un. **À rouvrir à la fin du semestre**, et
+     c'est le seul point de ce plan qui reste ouvert.
+  3. **Les titres de cartes n'ont pas suivi.** L'onglet « Aujourd'hui » contient
+     toujours une carte « Appel du jour », et « La séance » une carte « Suivi
+     d'une séance ». Ce n'est pas un oubli : l'onglet nomme une ÉCHELLE, la
+     carte nomme un GESTE. Ce sont deux choses, et les faire dire la même
+     chose n'apprendrait rien de plus.
+
+  Mesuré — la barre d'onglets raccourcit, ce qui compte parce qu'elle défile
+  latéralement sur un téléphone :
+
+  | Largeur | Avant | Après | Ce qui dépasse |
+  |---|---|---|---|
+  | 360 px | 511 px | **427 px** | 191 → **107 px** |
+  | 390 px | 511 px | **427 px** | 161 → **77 px** |
+  | 768 / 1280 px | tient déjà | tient | — |
+
+  `outils/comparer.mjs` ne relève, en plus de B8, que les quatre boutons : la
+  barre garde ses 44 px de haut, donc rien en dessous ne bouge d'un pixel.
+
+  Et une exigence de plus dans `outils/t_navigation.mjs` : **le titre de la
+  page commence par le libellé du bouton.** Les deux vivent dans deux fichiers,
+  `index.html` et `js/navigation.js` ; renommer l'un sans l'autre laissait un
+  historique de navigateur qui parle d'onglets disparus, et rien ne l'aurait
+  dit. Cassée, elle nomme le fichier fautif.
 
 - [x] **B8. Les tuiles de chiffres sur un téléphone.** ✅ 17/09. Leur mise en
       forme étroite était écrite mais sans effet depuis le début (§5bis). Elle
@@ -536,12 +579,16 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
 `A1 → A2 → A3` (publier, vérifier en production) `→ A4 → B1 → B2 → B3 → B4 →
 B5 → A5 → A6 → A7 → A8 → B8 → B7 → B6`.
 
-**Tout est fait sauf B6**, qui arrive en dernier **exprès** : renommer les
-onglets pendant l'année scolaire désoriente ; la fin d'un semestre est le bon
-moment, et c'est une décision à prendre ensemble, pas à appliquer d'office.
-B8 et B7 ont changé de place dans l'ordre parce que B8 est né d'une découverte
-faite en A1 — une règle écrite qui ne s'appliquait pas — et qu'il valait mieux
-la traiter tant qu'on l'avait sous les yeux.
+**Tout est fait.** B8 et B7 ont changé de place dans l'ordre d'origine parce que
+B8 est né d'une découverte faite en A1 — une règle écrite qui ne s'appliquait
+pas — et qu'il valait mieux la traiter tant qu'on l'avait sous les yeux. B6, lui,
+est resté en dernier comme prévu, et il a été tranché avec vous, pas appliqué
+d'office : c'était la condition posée au moment d'écrire ce plan.
+
+Une seule chose reste ouverte, et elle est notée dans B6 : **l'ORDRE des quatre
+onglets**, que le renommage n'a volontairement pas touché. À rouvrir à la fin
+du semestre, quand changer deux repères d'un coup ne coûtera plus une heure de
+cours.
 
 ---
 
@@ -588,7 +635,9 @@ Après B2 et la suite du découpage (17/09) :
 | `js/app.js` | 3 802 | **582** |
 | contrôles | 7 | 7, plus deux règles neuves dans `mesurer.mjs` |
 
-**Le chantier A est terminé.** `index.html` : 5 847 → 509 lignes. Le style dans
+**Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
+du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
+Le style dans
 dix feuilles, le script dans treize modules dont aucun ne dépasse 646 lignes, et
 `app.js` réduit à ce qu'il aurait toujours dû être : l'orchestration, et rien
 d'autre. Le rendu n'a pas bougé d'un pixel à sept largeurs — sauf à 640 px, une
@@ -732,6 +781,32 @@ tuiles étaient donc comparées sur une valeur qui n'existe pas — et c'est sa
 largeur insécable qui a fait croire, une heure durant, à un débordement de
 67 px. Le jeu d'essai est corrigé, et **un jeu d'essai refusé est désormais
 remonté** au lieu d'être avalé.
+
+### B6 : ce qu'un renommage ne peut pas réparer
+
+Renommer quatre boutons est la modification la moins chère de tout ce plan —
+quatre chaînes dans `index.html`, quatre dans `js/navigation.js`. Ce qui a
+demandé du soin, c'est ce qui entoure ces huit chaînes :
+
+- **Une phrase affichée à l'écran nommait un onglet.** `js/controle.js` disait,
+  quand aucun contrôle n'est écrit : « Ils s'écrivent dans **Suivi d'une
+  séance** ». Renommer l'onglet sans elle, et le portail envoyait l'utilisateur
+  vers un endroit qui n'existe plus — dans le message dont le rôle est
+  précisément de sortir quelqu'un d'une impasse. Le pire endroit possible.
+- **Quatre commentaires de code nommaient les anciens onglets** pour expliquer
+  où vivent les choses. Un commentaire faux est plus coûteux qu'un commentaire
+  absent : on le croit.
+- **Les libellés vivent dans deux fichiers** et rien ne les reliait. D'où la
+  nouvelle exigence de `t_navigation.mjs` : le titre de la page commence par le
+  texte du bouton. C'est la seule partie de B6 qui ne s'oubliera pas.
+
+Ce qu'un renommage ne répare pas, en revanche : **l'ordre**. Les trois échelles
+de temps se lisent jour → heure → semestre, et la barre les donne dans l'ordre
+jour → semestre → bibliothèque → heure. Le faire d'un même geste était tentant,
+et c'est exactement pour cela qu'il fallait s'arrêter : on renomme en cours
+d'année, sur un outil qu'on utilise vingt fois par heure, et changer le nom ET
+la place d'un onglet le même jour retire les deux repères qui permettent de le
+retrouver. Un seul à la fois. Noté dans B6, à rouvrir à la fin du semestre.
 
 **Deux contrôles qui n'existaient pas, et le document qui les annonçait.**
 `CLAUDE.md` disait « Vérifié par `t_ens_mob.mjs` » et « vérifiées par

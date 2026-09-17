@@ -59,10 +59,31 @@ heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
 | Zone | La question | Ce qu'on y trouve |
 |---|---|---|
 | **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — neuf règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
-| Onglet **Appel du jour** | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
-| Onglet **Vue d'ensemble** | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
-| Onglet **Questionnaires** | *Que leur ai-je posé, hors quiz de séance ?* | La **bibliothèque** : les modèles, leurs affectations, puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. Les contrôles d'entrée n'y sont plus depuis le 17/09 (voir ci-dessous). |
-| Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | L'**inventaire des contrôles d'entrée** (toutes classes, avec leur interrupteur), puis, pour **une séance choisie** : pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève, contrôle d'entrée, débriefing. |
+| Onglet **Aujourd'hui** (`#appel`) | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
+| Onglet **Le semestre** (`#ensemble`) | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
+| Onglet **Ma bibliothèque** (`#quest`) | *Que leur ai-je posé, hors quiz de séance ?* | Les modèles, leurs affectations, puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. Les contrôles d'entrée n'y sont plus depuis le 17/09 (voir ci-dessous). |
+| Onglet **La séance** (`#seance`) | *Que s'est-il passé à la S2 ?* | L'**inventaire des contrôles d'entrée** (toutes classes, avec leur interrupteur), puis, pour **une séance choisie** : pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève, contrôle d'entrée, débriefing. |
+
+**Les quatre libellés relèvent d'une seule taxonomie** (B6, 17/09) : trois
+échelles de **temps** — le jour, l'heure, le semestre — qui se déduisent l'une
+de l'autre, et un **lieu** à part, le matériel réutilisable. Avant, les quatre
+mélangeaient un geste (« Appel du jour »), un point de vue (« Vue d'ensemble »),
+un type d'objet (« Questionnaires ») et une tâche (« Suivi d'une séance ») :
+quatre catégories pour quatre onglets, donc aucune. Un cinquième onglet se
+range dans l'une des deux, ou ne se crée pas.
+
+**Les clés de l'adresse n'ont PAS été renommées** — `#appel`, `#ensemble`,
+`#quest`, `#seance` restent ce qu'elles étaient. Un lien mis en favori continue
+d'ouvrir le bon onglet, et les identifiants `ong-*` / `volet-*` avec eux. Le
+libellé est ce qu'on lit ; la clé est ce qui dure. Changer la seconde pour
+qu'elle ressemble au premier coûterait tous les liens existants, pour un
+bénéfice nul — personne ne lit un fragment d'URL.
+
+**Le libellé du bouton est la seule source, et le titre de la page le suit.**
+Les deux vivent dans deux fichiers — `index.html` et `js/navigation.js` —
+`outils/t_navigation.mjs` refuse qu'ils divergent : sans lui, on renomme un
+onglet et l'historique du navigateur continue de parler d'un onglet qui
+n'existe plus.
 
 **Ne pas ajouter une carte sans décider de son onglet** — ou sans décider
 qu'elle est bloquante, auquel cas elle rejoint `a_faire()` plutôt que de
@@ -628,19 +649,19 @@ contrôle d'entrée de la suivante.** Écrire les uns, c'est écrire l'autre.
 ### Où on le voit — et pourquoi ce n'est pas là qu'on l'écrit
 
 Un contrôle appartient à sa séance, donc **tout ce qui le concerne est sous
-« Suivi d'une séance »** : l'inventaire en tête de l'onglet, l'éditeur plus bas
+« La séance »** : l'inventaire en tête de l'onglet, l'éditeur plus bas
 derrière deux sélecteurs. Il a vécu jusqu'au 17/09 à cheval sur deux onglets —
-l'inventaire sous « Questionnaires », l'éditeur ici — avec deux libellés et
+l'inventaire sous « Ma bibliothèque », l'éditeur ici — avec deux libellés et
 deux niveaux de titre : on ne savait pas lequel faisait autorité, donc on
 regardait les deux. **Ne pas en remettre une moitié ailleurs.** Le 15/09, huit notions posées sur le TP2 du BTS2 y ont
-été cherchées dans **Questionnaires**, où elles n'étaient pas : écrites,
+été cherchées dans l'onglet de la bibliothèque, où elles n'étaient pas : écrites,
 appliquées en base, et introuvables. Le modèle était bon ; **c'est la lecture qui
 manquait.**
 
 `controles()` rend la liste de tout ce qui est écrit — classe, séance, nombre de
 notions, allumé ou non, combien y ont répondu — et la carte « Contrôles
-d'entrée » de l'onglet Questionnaires l'affiche, avec l'interrupteur et un
-bouton qui ouvre la séance concernée dans l'onglet du suivi.
+d'entrée », en tête de l'onglet « La séance », l'affiche avec l'interrupteur et
+un bouton qui ouvre la séance concernée juste en dessous.
 
 **Cette carte ne sait pas écrire un contrôle, et c'est volontaire.** Un contrôle
 s'écrit en regardant la séance qu'il prépare ; deux endroits pour le même geste,

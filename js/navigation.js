@@ -26,7 +26,7 @@ var ONGLETS = ["appel", "ensemble", "quest", "seance"];
 // Jusqu'au 17/09, `location` n'apparaissait qu'une fois dans tout le portail,
 // pour un `location.reload()`. Conséquences, toutes quotidiennes :
 //
-//   · un rafraîchissement ramenait TOUJOURS sur « Appel du jour ». En cours on
+//   · un rafraîchissement ramenait TOUJOURS sur le premier onglet. En cours on
 //     rafraîchit vingt fois par heure, et on repayait le trajet à chaque fois ;
 //   · le bouton Précédent quittait l'application au lieu de revenir à l'onglet
 //     précédent — le geste le plus naturel du navigateur ne faisait pas ce
@@ -39,8 +39,13 @@ var ONGLETS = ["appel", "ensemble", "quest", "seance"];
 // sont pas — ce serait utile pour partager un lien, mais cela demande de tenir
 // deux sélecteurs en accord avec l'adresse, et de décider ce qui gagne quand
 // ils divergent. Une chose à la fois.
-var TITRES = { appel: "Appel du jour", ensemble: "Vue d'ensemble",
-               quest: "Questionnaires", seance: "Suivi d'une séance" };
+// Les mêmes mots que les onglets, et pour la même raison : le titre de la page
+// est ce qu'on lit dans un onglet de navigateur et dans l'historique. S'il ne
+// dit pas ce que dit le bouton, l'historique devient illisible. Les clés, elles,
+// sont celles de l'ADRESSE (#appel, #ensemble, #quest, #seance) et ne bougent
+// pas : un lien mis en favori le 16/09 doit continuer d'ouvrir le bon onglet.
+var TITRES = { appel: "Aujourd'hui", ensemble: "Le semestre",
+               quest: "Ma bibliothèque", seance: "La séance" };
 var TITRE_BASE = document.title;
 
 function ongletDeLAdresse(){

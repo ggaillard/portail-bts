@@ -252,7 +252,8 @@ function ligneControle(l){
   return d;
 }
 
-// Depuis le 17/09 il vit dans l'onglet « Suivi d'une séance », avec
+// Depuis le 17/09 il vit dans l'onglet « La séance » (nommé « Suivi d'une
+// séance » jusqu'au renommage du 17/09 au soir), avec
 // l'éditeur : un contrôle appartient à la vie d'une séance, pas à la
 // bibliothèque de questionnaires. Cette carte reste l'INVENTAIRE et ne sait
 // toujours pas écrire un contrôle — deux endroits pour le même geste, c'est
@@ -283,7 +284,7 @@ function rendreControles(liste){
     // Le vide se dit avec le chemin pour en sortir, sinon il se lit comme une
     // panne — c'est ce qui s'est passé le 15/09, dans l'autre sens.
     z.innerHTML = '<p class="hint" style="margin:0">Aucun contrôle écrit pour ' +
-      "l'instant. Ils s'écrivent dans <b>Suivi d'une séance</b> : choisissez la " +
+      "l'instant. Ils s'écrivent ici même, dans <b>La séance</b> : choisissez la " +
       'classe et la séance, puis « Écrire le contrôle de cette séance ».</p>';
     return;
   }
