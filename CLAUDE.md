@@ -15,10 +15,11 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**472 lignes**) + `styles/` (dix feuilles) + `js/` — `socle.js`
+`index.html` (**491 lignes**) + `styles/` (dix feuilles) + `js/` — `socle.js`
 (le client Supabase, `$`, l'état partagé `suivi`, six utilitaires d'affichage),
-`ecran.js` (le mode classe projeté), `app.js` (tout le reste, à découper) —
-plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
+`navigation.js` (les deux barres d'onglets et l'adresse), `ecran.js` (le mode
+classe projeté), `app.js` (tout le reste, à découper) — plus `config.js`
+(URL Supabase, clé anon, codes de classe). Trois rôles :
 
 1. **Identifier** l'étudiant — code de classe, numéro, PIN à 4 chiffres, avatar.
 2. **Orienter** — la liste des projets de sa classe, lus dans `public.projets`.
@@ -1059,6 +1060,23 @@ clic.
 - **`erreur()` ne concatène plus de données.** Elle construit sa carcasse et
   y verse le texte par `textContent`. Ne pas revenir à `innerHTML` : douze de
   ses appels y versent une valeur venue de la base.
+- **L'onglet ouvert vit dans l'adresse** (`#appel`, `#ensemble`, `#quest`,
+  `#seance`), et le titre de la page le suit. Un rechargement garde l'onglet,
+  Précédent revient au précédent. `ouvrirOnglet(cle, adresse)` prend
+  « pousser » (défaut), « remplacer » (à l'ouverture) ou « aucun » (quand on
+  répond à un mouvement d'historique — y réécrire l'adresse ferait une boucle).
+  La classe et la séance choisies n'y sont PAS : à décider avant de les y
+  mettre, car il faudra trancher qui gagne quand l'adresse et les sélecteurs
+  divergent.
+- **Les deux barres d'onglets suivent le même motif** (ARIA Authoring
+  Practices, *Tabs*) et vivent dans le même fichier, `js/navigation.js`. Elles
+  ont divergé une fois — l'écran de connexion, le premier que voit un étudiant,
+  n'avait ni flèches ni `tabindex` roulant. Les garder côte à côte est ce qui
+  rendra la prochaine divergence visible.
+- **Toute zone qui reçoit un message porte `aria-live="polite"`.** WCAG 4.1.3 :
+  une erreur qui apparaît sans être annoncée n'existe pas pour qui n'a pas les
+  yeux dessus. `outils/t_navigation.mjs` refuse toute zone `err-*` sans
+  annonce — ajouter une zone de message, c'est ajouter l'attribut.
 - **Les contrôles ouvrent le portail servi, pas réécrit.** `outils/serveur.mjs`
   le sert comme GitHub Pages, `outils/portail.mjs` substitue `config.js`, le
   client Supabase et une ligne du script au passage sur le réseau — et

@@ -32,6 +32,7 @@ import { CFG, $, sb, probleme, suivi, erreur, montrer, typo, anime, entree,
          pousse, son, SONS, NOMS_CLE, estDemo, classesReelles } from './socle.js';
 import { brancherEcran, modeEcran, rendreEcran, rotationAuto,
          fermerEcran, minuteur } from './ecran.js';
+import { ONGLETS, ouvrirOnglet, ongletDeLAdresse } from './navigation.js';
 
 (function(){
 "use strict";
@@ -43,17 +44,6 @@ if (probleme) {
   return;
 }
 
-
-// ── Onglets ────────────────────────────────────────────────────────────────
-function onglet(actif){
-  var etu = actif === "etu";
-  $("t-etu").setAttribute("aria-selected", etu);
-  $("t-ens").setAttribute("aria-selected", !etu);
-  $("p-etu").hidden = !etu;
-  $("p-ens").hidden = etu;
-}
-$("t-etu").addEventListener("click", function(){ onglet("etu"); });
-$("t-ens").addEventListener("click", function(){ onglet("ens"); });
 
 // ── Rendu des cartes projet ────────────────────────────────────────────────
 function carte(p){
@@ -3575,6 +3565,12 @@ function remplirSelecteurClasses(sel, classes, valeur, texte){
 function ouvrirEspaceEnseignant(){
   montrer("espace-ens");
 
+  // L'onglet vient de l'adresse quand elle en porte un : c'est ce qui fait
+  // qu'un rafraîchissement en pleine séance ne renvoie plus à l'appel.
+  // « remplacer » : on normalise l'adresse sans ajouter d'entrée, sinon le
+  // premier Précédent ne ferait que retirer le dièse.
+  ouvrirOnglet(ongletDeLAdresse() || "appel", "remplacer");
+
   sb.from("classes").select("id,code,nom").order("code").then(function(rc){
     var toutes = rc.data || [];
     // Les démos restent joignables par le sélecteur, mais elles ne comptent
@@ -3754,45 +3750,6 @@ $("b-noms-vider").addEventListener("click", function(){
   chargerStage(suivi.classesConnues || []);
   chargerAFaire();
   chargerSemestre();
-});
-// ── Les onglets de l'espace enseignant ────────────────────────────────────
-// « Ce qui bloque » reste épinglé au-dessus : c'est la seule carte qu'on ne
-// doit jamais avoir à aller chercher. Tout le reste vit dans un onglet, et
-// c'est l'appel qui est ouvert au départ — c'est le geste du début d'heure.
-var ONGLETS = ["appel", "ensemble", "quest", "seance"];
-
-function ouvrirOnglet(cle){
-  if (ONGLETS.indexOf(cle) < 0) cle = "appel";
-  ONGLETS.forEach(function(k){
-    var o = $("ong-" + k), v = $("volet-" + k);
-    var actif = (k === cle);
-    o.classList.toggle("actif", actif);
-    o.setAttribute("aria-selected", actif ? "true" : "false");
-    // Un seul onglet dans l'ordre de tabulation : les flèches font le reste.
-    o.tabIndex = actif ? 0 : -1;
-    v.hidden = !actif;
-  });
-}
-
-ONGLETS.forEach(function(cle, i){
-  var o = $("ong-" + cle);
-  o.addEventListener("click", function(){
-    ouvrirOnglet(cle);
-    // Sans cela, quitter un onglet long pour un onglet court laisse la page
-    // au-delà de son contenu : l'écran paraît vide et on croit à une panne.
-    var nav = $("onglets-ens");
-    if (nav && nav.getBoundingClientRect().top < 0) {
-      window.scrollTo({ top: nav.offsetTop, behavior: "instant" });
-    }
-  });
-  o.addEventListener("keydown", function(e){
-    var d = e.key === "ArrowRight" ? 1 : (e.key === "ArrowLeft" ? -1 : 0);
-    if (!d) return;
-    e.preventDefault();
-    var suivant = ONGLETS[(i + d + ONGLETS.length) % ONGLETS.length];
-    ouvrirOnglet(suivant);
-    $("ong-" + suivant).focus();
-  });
 });
 
 $("b-demarrer").addEventListener("click", function(){

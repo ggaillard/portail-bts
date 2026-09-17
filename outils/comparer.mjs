@@ -113,13 +113,20 @@ async function releve(nav, racine, largeur) {
         const b = enf.getBoundingClientRect();
         const cl = (enf.className && enf.className.baseVal !== undefined
           ? enf.className.baseVal : String(enf.className || '')).trim();
-        const cle = chemin + '>' + enf.tagName.toLowerCase() +
+        // La clé ne contient PAS le chemin complet. Elle l'a contenu jusqu'au
+        // 17/09, et l'insertion d'un seul conteneur — la cible du lien
+        // d'évitement — faisait alors « disparaître » puis « apparaître » les
+        // 419 éléments de la page : 5 880 différences pour un div. Un contrôle
+        // qui crie autant ne se lit plus, et on finit par le désactiver le jour
+        // où il dit quelque chose. La clé est donc ce que l'élément EST ;
+        // l'endroit où il se trouve est comparé à part, comme un attribut.
+        const cle = enf.tagName.toLowerCase() +
                     (enf.id ? '#' + enf.id : '') + (cl ? '.' + cl.split(/\s+/).join('.') : '');
         if (b.width || b.height) {
           const st = getComputedStyle(enf);
           const styles = {};
           STYLES.forEach((k) => { styles[k] = st.getPropertyValue(k); });
-          sortie.push({ cle,
+          sortie.push({ cle, chemin: chemin + '>' + cle,
             boite: [Math.round(b.width), Math.round(b.height),
                     Math.round(b.left), Math.round(b.top)],
             styles });
@@ -143,9 +150,20 @@ let total = 0;
 for (const w of LARGEURS) {
   const a = await releve(nav, AVANT, w);
   const b = await releve(nav, APRES, w);
-  const ia = new Map(a.elements.map((x, i) => [x.cle + '@@' + i, x]));
-  const ib = new Map(b.elements.map((x, i) => [x.cle + '@@' + i, x]));
+  // Chaque élément est numéroté parmi ses semblables : le troisième .qn-c
+  // reste le troisième .qn-c, où qu'on l'ait déplacé dans l'arbre.
+  const numeroter = (liste) => {
+    const vus = new Map();
+    return new Map(liste.map((x) => {
+      const n = (vus.get(x.cle) || 0) + 1;
+      vus.set(x.cle, n);
+      return [x.cle + '@@' + n, x];
+    }));
+  };
+  const ia = numeroter(a.elements);
+  const ib = numeroter(b.elements);
   const ecarts = [];
+  let reparentes = 0;
 
   for (const [k, x] of ia) {
     const y = ib.get(k);
@@ -158,10 +176,15 @@ for (const w of LARGEURS) {
         ecarts.push(`${k.replace(/@@[0-9]*$/, '')} : ${s} « ${x.styles[s]} » -> « ${y.styles[s]} »`);
       }
     }
+    // Un élément qui n'a pas bougé d'un pixel mais a changé de parent : c'est
+    // exactement ce qu'une comparaison d'images ne verrait pas, et c'est
+    // rarement anodin. On le compte, on ne l'égrène pas.
+    if (x.chemin !== y.chemin) reparentes++;
   }
   for (const k of ib.keys()) if (!ia.has(k)) ecarts.push(`apparu : ${k.replace(/@@[0-9]*$/, '')}`);
 
   const etat = ecarts.length ? `${ecarts.length} écart(s)` : 'identique';
+  if (reparentes) console.log(`  ${String(w).padStart(4)} px : ${reparentes} élément(s) ont changé de place dans l'arbre sans changer de boîte`);
   console.log(`  ${String(w).padStart(4)} px : ${String(a.elements.length).padStart(4)} éléments · ` +
               `page ${a.hauteur} -> ${b.hauteur} px · ${etat}`);
   ecarts.slice(0, 12).forEach((x) => console.log('           ' + x));
