@@ -30,14 +30,37 @@
    debout — mais essayé et mesuré : la page déborde alors de 36 px à 360 px.
    C'est une décision d'IHM, pas un nettoyage : elle est notée dans REFONTE.md
    et se prendra avec le reste du chantier B. */
-.tuiles{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem}
+/* minmax(0,1fr) et non 1fr : « 1fr » vaut minmax(auto, 1fr), donc une colonne
+   ne descend JAMAIS sous la largeur insécable de son contenu. Une valeur sans
+   espace où se couper — et « 12/31 » n'en a plus depuis B8 — peut donc élargir
+   sa colonne, désaligner les quatre tuiles et pousser la grille hors de sa
+   carte.
+
+   Honnêteté sur ce que cela corrige : avec les valeurs qu'affiche vraiment ce
+   tableau de bord (« 12/31 », « 143 », « 64 % »), 1fr et minmax(0,1fr) donnent
+   le MÊME rendu au pixel, aux sept largeurs — mesuré le 17/09. Ce n'est donc
+   pas un défaut constaté qu'on répare, c'est un garde-fou : les quatre chiffres
+   viennent de la base, et une grille ne doit pas pouvoir être cassée par la
+   longueur d'une valeur. outils/t_suivi.mjs le vérifie avec une valeur
+   volontairement trop longue. */
+.tuiles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.5rem;margin-bottom:1rem}
 .tuile{background:var(--surface);border:1px solid var(--rule);border-radius:8px;
        padding:.7rem .8rem;text-align:center}
-.tuile-v{font-family:var(--f-mono);font-size:1.45rem;font-weight:600;line-height:1.1;
+/* Le chiffre est plus gros sur un téléphone qu'au bureau, et c'est voulu : ces
+   quatre tuiles sont ce qu'on lit debout, entre deux rangs, sans s'arrêter.
+   C'était d'ailleurs l'intention d'origine — elle était écrite dans un bloc
+   @media qui n'a jamais pris effet, écrasé par les règles suivantes (§5bis de
+   REFONTE.md). Rétablie ici, correctement, et mesurée : la grille des quatre
+   tuiles passe de 166 à 175 px à 360 et à 390 px. Neuf pixels pour un chiffre
+   17 % plus grand. */
+.tuile-v{font-family:var(--f-mono);font-size:1.7rem;font-weight:600;line-height:1.1;
          color:var(--accent-ink);font-variant-numeric:tabular-nums}
 @media (min-width: 34rem){
-  .tuiles{grid-template-columns:repeat(4,1fr);gap:.6rem}
+  .tuiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem}
   .tuile{text-align:start}
+  /* Au bureau, les quatre tuiles sont côte à côte et on les lit assis : le
+     chiffre revient à sa taille de lecture. */
+  .tuile-v{font-size:1.45rem}
 }
 .tuile-l{font-family:var(--f-mono);font-size:.68rem;color:var(--ink-faint);
          text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem}

@@ -115,9 +115,9 @@ const m = {
 const ATTENDU = {
   'lignes de index.html': 509,
   'feuilles de style': 10,
-  'modules': 9,
-  'lignes de CSS': 1065,
-  'lignes de JavaScript': 4931,
+  'modules': 13,
+  'lignes de CSS': 1088,
+  'lignes de JavaScript': 5129,
   'règles CSS': 473,
   'classes CSS': 299,
   'variables CSS définies': 17,
@@ -338,6 +338,87 @@ if (FJS.length) {
           fautes.push(`${f.ou} : seuil « ${q} » absent de la table @seuil — ` +
                       `ajoutez-le là-bas, avec ce qu'il gouverne, ou utilisez-en un existant (§6.2)`);
         }
+      }
+    }
+  }
+}
+
+// 4. Un contrôle cité existe, et un contrôle qui existe tourne (§6.6).
+//
+//    Le 17/09, CLAUDE.md annonçait deux vérifications — « Vérifié par
+//    t_ens_mob.mjs », « vérifiées par t_mobile.mjs » — par des fichiers qui
+//    n'ont JAMAIS existé dans ce dépôt. Deux écrans entiers, l'espace étudiant
+//    compris, se croyaient couverts et ne l'étaient par rien. Une promesse de
+//    contrôle est pire que pas de contrôle : on cesse de regarder.
+//
+//    L'inverse compte autant. Un contrôle écrit, rangé dans outils/ et jamais
+//    appelé par le workflow ne protège que le jour où quelqu'un pense à le
+//    lancer à la main — c'est-à-dire jamais, passé trois semaines.
+{
+  const DOCS = ['CLAUDE.md', 'REFONTE.md', 'README.md', 'JOURNAL.md'].filter((d) => existe(d));
+  const outils = existe('outils')
+    ? new Set(fs.readdirSync(path.join(RACINE, 'outils'))
+        .filter((x) => /\.(mjs|py)$/.test(x)))
+    : new Set();
+
+  // Un nom peut être cité PRÉCISÉMENT pour dire qu'il ne vérifie rien — c'est
+  // le cas des deux ci-dessus, dont CLAUDE.md garde la trace pour que la panne
+  // reste lisible. Cet aveu se déclare, comme « @chantier » et « @seuil » :
+  //
+  //     @fantome t_mobile.mjs — cité ici pour dire qu'il n'a jamais existé
+  //
+  // Déclarer coûte une ligne ; c'est ce qui distingue « j'assume ce nom mort »
+  // de « j'ai oublié que ce contrôle n'existe plus ».
+  const avoues = new Map(
+    DOCS.flatMap((d) => [...lire(d).matchAll(/@fantome\s+([\w-]+\.(?:mjs|py))/g)]
+      .map((x) => [x[1], d])));
+  if (avoues.size) {
+    console.log('  contrôles cités comme inexistants (@fantome) :',
+                [...avoues.keys()].join(' · '));
+  }
+  for (const [f, d] of avoues) {
+    if (outils.has(f)) {
+      fautes.push(`${d} déclare « @fantome ${f} » alors que outils/${f} existe — ` +
+                  `l'aveu a survécu au contrôle : retirez la déclaration, et dites ` +
+                  `ce qu'il vérifie (§6.6)`);
+    }
+  }
+
+  // Cité dans un document, absent du dossier.
+  const fantomes = new Map();
+  for (const d of DOCS) {
+    for (const m of lire(d).matchAll(/\b(?:outils\/)?(t_[\w-]+\.mjs|[\w-]+\.mjs|[\w-]+\.py)\b/g)) {
+      const f = m[1];
+      // Les fichiers du dépôt étudiant et les noms de modules js/ ne sont pas
+      // des outils : on ne réclame que ce qui se présente comme tel.
+      if (outils.has(f) || avoues.has(f)) continue;
+      if (existe(path.join('js', f)) || existe(f)) continue;
+      if (!fantomes.has(f)) fantomes.set(f, d);
+    }
+  }
+  for (const [f, d] of fantomes) {
+    fautes.push(`${d} cite « ${f} », qui n'existe pas dans outils/ — ` +
+                `soit le contrôle a disparu, soit il n'a jamais été écrit : ` +
+                `dans les deux cas le document promet une vérification qui n'a pas lieu (§6.6)`);
+  }
+
+  // Présent dans outils/, jamais appelé par le workflow.
+  const WF = '.github/workflows/verifier-portail.yml';
+  if (existe(WF)) {
+    const wf = lire(WF);
+    const lances = [...wf.matchAll(/outils\/([\w-]+\.(?:mjs|py))/g)].map((x) => x[1]);
+    const jamais = [...outils].filter((f) => f.startsWith('t_') && !lances.includes(f));
+    console.log('\n  contrôles de navigateur :',
+                [...outils].filter((f) => f.startsWith('t_')).length,
+                '· lancés par le workflow :', new Set(lances.filter((f) => f.startsWith('t_'))).size);
+    for (const f of jamais) {
+      fautes.push(`outils/${f} existe mais ${WF} ne le lance pas — ` +
+                  `un contrôle qu'il faut penser à exécuter n'est pas un contrôle (§6.6)`);
+    }
+    // Et l'inverse : une étape qui appelle un outil disparu.
+    for (const f of new Set(lances)) {
+      if (!outils.has(f)) {
+        fautes.push(`${WF} lance outils/${f}, qui n'existe pas — le travail échouera à la poussée`);
       }
     }
   }

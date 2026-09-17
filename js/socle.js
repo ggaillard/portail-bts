@@ -352,6 +352,15 @@ function prenomSeul(nom){
   return mots[mots.length - 1];
 }
 
+// Le code de la classe sélectionnée : c'est lui qui sert de clé aux prénoms
+// rangés dans ce navigateur.
+function codeClasseCourante(){
+  var l = (suivi.classesConnues || []).filter(function(c){
+    return String(c.id) === String(suivi.classeId);
+  });
+  return l.length ? l[0].code : "";
+}
+
 // Les noms que le reste du portail importe d'ici. `suivi` est un objet qu'on
 // mute, jamais qu'on remplace : c'est ce qui permet à deux modules de parler
 // du même état sans le passer en paramètre partout.
@@ -359,4 +368,4 @@ export { suivi, erreur, montrer, typo, anime, entree, pousse, son, SONS,
          NOMS_CLE, estDemo, classesReelles,
          etapes, majFile, marquerEtape, motifEnvoi, texteEnvoi, signalerSessionPerimee,
          pastilles, pastilleAppel, copierTexte, dateCourte,
-         lireNoms, enregistrerNoms, nomDe, prenomSeul };
+         lireNoms, enregistrerNoms, nomDe, prenomSeul, codeClasseCourante };

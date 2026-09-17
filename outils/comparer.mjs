@@ -85,12 +85,25 @@ const JEU = {
       { seance_id: 13, numero: 4, titre: 'Séance 4', etat: 'a_produire', notee: false,
         repondants: 0, inscrits: 31, reussite: null, avancement: null, dernier: null, publiee: false },
     ]}],
-  suivi: { ok: true, inscrits: 13, commences: 9, termines: 4, questions: 10,
-    moyenne: 6.4, taux: 64, eleves: [
-      { numero: '01', avatar: '🦊', faites: 10, justes: 8, present: true, maj: '09:41' },
-      { numero: '02', avatar: '🦉', faites: 4, justes: 1, present: true, maj: '09:52' },
-      { numero: '07', avatar: '🐢', faites: 0, justes: 0, present: false, maj: null },
-    ], questions_detail: [] },
+  // Les quatre champs que les tuiles affichent — actifs, reponses, avancement,
+  // reussite — manquaient à ce jeu d'essai jusqu'au 17/09, et « questions »
+  // valait 10 au lieu d'une liste. rendreSuivi() écrivait donc « undefined/13 »
+  // dans la première tuile puis levait une exception que le try/catch d'en bas
+  // avalait : les tuiles étaient comparées sur une valeur qui n'existe pas, et
+  // sa largeur insécable était celle qu'on mesurait. Corrigé, et c'est ce qui a
+  // fait voir le vrai défaut de B8 (« 1fr » ne descend pas sous le contenu).
+  suivi: { ok: true, inscrits: 31, actifs: 12, reponses: 143, avancement: 64, reussite: 71,
+    total: 10,
+    questions: [
+      { nom: 'Q1 — types', ok: 25, n: 31, pct: 81 },
+      { nom: 'Q2 — boucles', ok: 17, n: 31, pct: 55 },
+      { nom: 'Q3 — POO', ok: 9, n: 29, pct: 31 },
+    ],
+    lignes: [
+      { numero: '01', avatar: '🦊', n: 10, pct: 100, reussite: 80, maj: '2026-09-17T09:41:00Z' },
+      { numero: '02', avatar: '🦉', n: 4, pct: 40, reussite: 25, maj: '2026-09-17T09:52:00Z' },
+      { numero: '07', avatar: '🐢', n: 0, pct: 0, reussite: null, maj: null },
+    ] },
 };
 
 async function releve(nav, racine, largeur) {
@@ -101,11 +114,18 @@ async function releve(nav, racine, largeur) {
     document.querySelectorAll('[hidden]').forEach((e) => { e.hidden = false; });
     document.querySelectorAll('.volet').forEach((v) => { v.hidden = false; });
     const e = window.__e;
-    try { e.rendreAFaire(JEU.afaire); } catch (x) {}
-    try { e.BIB.classes = JEU.classes; e.rendreBibliotheque(JEU.bib); } catch (x) {}
-    try { e.rendreControles(JEU.ctrl); } catch (x) {}
-    try { e.rendreSemestre(JEU.semestre); } catch (x) {}
-    try { e.rendreSuivi(JEU.suivi); } catch (x) {}
+    // Ces appels ont longtemps été enveloppés dans des try/catch muets, « au
+    // cas où ». Le jour où le jeu d'essai a cessé de convenir à rendreSuivi(),
+    // l'exception a donc été avalée sans un mot et la comparaison a continué
+    // sur une page à moitié remplie. Un jeu d'essai qui ne passe plus est une
+    // information, pas un accident : on la remonte.
+    const ratages = [];
+    const essai = (nom, f) => { try { f(); } catch (x) { ratages.push(nom + ' : ' + x.message); } };
+    essai('rendreAFaire', () => e.rendreAFaire(JEU.afaire));
+    essai('rendreBibliotheque', () => { e.BIB.classes = JEU.classes; e.rendreBibliotheque(JEU.bib); });
+    essai('rendreControles', () => e.rendreControles(JEU.ctrl));
+    essai('rendreSemestre', () => e.rendreSemestre(JEU.semestre));
+    essai('rendreSuivi', () => e.rendreSuivi(JEU.suivi));
 
     const sortie = [];
     const marche = (n, chemin) => {
@@ -135,7 +155,7 @@ async function releve(nav, racine, largeur) {
       }
     };
     marche(document.body, '');
-    return { elements: sortie,
+    return { elements: sortie, ratages,
              hauteur: Math.round(document.body.getBoundingClientRect().height),
              debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   }, { JEU, STYLES });
@@ -190,6 +210,12 @@ for (const w of LARGEURS) {
   ecarts.slice(0, 12).forEach((x) => console.log('           ' + x));
   if (ecarts.length > 12) console.log(`           … et ${ecarts.length - 12} de plus`);
   if (b.erreurs.length) { console.log('           erreur JS : ' + b.erreurs[0]); total++; }
+  for (const côté of [['avant', a], ['après', b]]) {
+    for (const r of côté[1].ratages) {
+      console.log(`           jeu d'essai refusé (${côté[0]}) — ${r}`);
+      total++;
+    }
+  }
   // Un débordement se compare, il ne s'affirme pas : ce contrôle déplie TOUT
   // d'un coup, y compris l'écran projeté, ce qu'aucun utilisateur ne voit. Il
   // déborde donc des deux côtés. Ce qui compterait, c'est qu'il déborde PLUS
