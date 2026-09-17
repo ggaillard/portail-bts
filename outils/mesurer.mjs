@@ -115,9 +115,9 @@ const m = {
 const ATTENDU = {
   'lignes de index.html': 509,
   'feuilles de style': 10,
-  'modules': 6,
+  'modules': 9,
   'lignes de CSS': 1065,
-  'lignes de JavaScript': 4790,
+  'lignes de JavaScript': 4931,
   'règles CSS': 473,
   'classes CSS': 299,
   'variables CSS définies': 17,
@@ -202,6 +202,102 @@ if (FJS.length) {
     } else if (n > PLAFOND) {
       fautes.push(`${f.nom} fait ${n} lignes, plafond ${PLAFOND} (§6.1) — à découper, ` +
                   `ou à déclarer « @chantier » dans REFONTE.md avec la raison`);
+    }
+  }
+}
+
+// 1bis. Chaque module définit ou importe tout ce qu'il appelle.
+//
+//    Le contrôle « toute fonction appelée est-elle définie » du workflow
+//    travaille sur la CONCATÉNATION des modules : un import oublié y est
+//    parfaitement invisible, puisque la fonction existe — ailleurs. Le 17/09,
+//    ensemble.js appelait classesReelles() sans l'importer ; la page se
+//    chargeait, le module s'exécutait, et la panne n'arrivait qu'au moment
+//    d'afficher le semestre. Seul t_navigation l'a vue, par hasard.
+//
+//    Ici on lit chaque fichier SÉPARÉMENT, comme le navigateur le fait.
+if (FJS.length) {
+  const lexique = new Map();
+  const NATIFS = new Set(('Array Object String Number Boolean Date Math JSON RegExp Error Promise ' +
+    'Set Map parseInt parseFloat isNaN encodeURIComponent decodeURIComponent setTimeout ' +
+    'clearTimeout setInterval clearInterval requestAnimationFrame fetch console document window ' +
+    'localStorage sessionStorage navigator location history AudioContext webkitAudioContext Event ' +
+    'CustomEvent KeyboardEvent MouseEvent URL URLSearchParams Intl AbortController performance ' +
+    'structuredClone queueMicrotask if for while switch catch typeof return function new delete ' +
+    'void in of do else try finally throw case break continue instanceof await async yield').split(' '));
+  // Commentaires et chaînes retirés : un nom de RPC entre guillemets ou un mot
+  // français suivi d'une parenthèse passerait pour un appel.
+  const net = (t) => {
+    let o = '', i = 0;
+    while (i < t.length) {
+      const c = t[i];
+      if (c === '/' && t[i + 1] === '/') { const j = t.indexOf('\n', i); i = j < 0 ? t.length : j; }
+      else if (c === '/' && t[i + 1] === '*') { i = t.indexOf('*/', i) + 2; }
+      else if (c === '"' || c === "'" || c === '`') {
+        const q = c; i++;
+        while (i < t.length && t[i] !== q) { if (t[i] === '\\') i++; i++; }
+        i++; o += ' ';
+      } else { o += c; i++; }
+    }
+    return o;
+  };
+  for (const f of FJS) {
+    const t = net(f.t);
+    const connus = new Set();
+    const ajoute = (re, g) => { for (const x of t.matchAll(re)) {
+      for (const n of (x[g] || '').match(/[A-Za-z_$][\w$]*/g) || []) connus.add(n); } };
+    ajoute(/\bfunction\s+([A-Za-z_$][\w$]*)/g, 1);
+    ajoute(/\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)/g, 1);
+    ajoute(/\b(?:var|let|const)\s*\{([^}]*)\}/g, 1);
+    ajoute(/function[^(]*\(([^)]*)\)/g, 1);
+    ajoute(/import\s*\{([^}]*)\}/g, 1);
+    ajoute(/catch\s*\(\s*([A-Za-z_$][\w$]*)/g, 1);
+    ajoute(/\(?\s*([A-Za-z_$][\w$]*)\s*\)?\s*=>/g, 1);
+    for (const x of t.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
+      if (!connus.has(x[1]) && !NATIFS.has(x[1])) {
+        fautes.push(`${f.nom} appelle ${x[1]}() sans la définir ni l'importer — ` +
+                    `la page se chargera, et la panne arrivera à l'usage`);
+      }
+    }
+    lexique.set(f.nom, { t, connus });
+  }
+
+  // Et le cas qui a mordu trois fois en une heure le 17/09 : un nom employé
+  // comme VALEUR, pas comme appel — addEventListener("click", copierAbsents),
+  // SEM_ETAT[x.etat], suivi.seanceId. La recherche de « nom( » ne le voit pas.
+  //
+  // Chercher tous les identifiants inconnus produirait surtout du bruit (une
+  // variable de boucle, une clé d'objet, un paramètre déstructuré). On ne
+  // retient donc que ceux qui sont EXPORTÉS PAR UN AUTRE MODULE : c'est
+  // exactement la faute « ça a déménagé et personne ne l'a suivi », et elle ne
+  // ressemble à rien d'autre.
+  const exportes = new Map();
+  for (const f of FJS) {
+    for (const x of f.t.matchAll(/export\s*\{([^}]*)\}/g)) {
+      for (const n of (x[1].replace(/\/\/[^\n]*/g, '').match(/[A-Za-z_$][\w$]*/g) || [])) {
+        if (!exportes.has(n)) exportes.set(n, f.nom);
+      }
+    }
+    for (const x of f.t.matchAll(/(?:^|\n)export\s+(?:function|var|let|const)\s+([A-Za-z_$][\w$]*)/g)) {
+      if (!exportes.has(x[1])) exportes.set(x[1], f.nom);
+    }
+  }
+  for (const [nom, { t, connus }] of lexique) {
+    const vus = new Set();
+    // `suivi.minuteur` n'emploie pas `minuteur` : c'est une propriété. Sans ce
+    // retrait, le contrôle réclamait d'importer dans socle.js une fonction de
+    // l'écran qui n'y est pour rien.
+    const sansProp = t.replace(/\.\s*[A-Za-z_$][\w$]*/g, '.')
+                      .replace(/([{,])\s*([A-Za-z_$][\w$]*)\s*:/g, '$1 :');
+    for (const x of sansProp.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)/g)) {
+      const n = x[1];
+      if (connus.has(n) || vus.has(n)) continue;
+      const ou = exportes.get(n);
+      if (ou && ou !== nom) {
+        vus.add(n);
+        fautes.push(`${nom} emploie ${n}, que ${ou} exporte, sans l'importer — ` +
+                    `la page se chargera, et la panne arrivera à l'usage`);
+      }
     }
   }
 }
