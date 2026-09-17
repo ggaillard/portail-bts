@@ -159,8 +159,102 @@ function estDemo(c){ return /^DEMO/i.test((c && c.code) || ""); }
 
 function classesReelles(l){ return (l || []).filter(function(c){ return !estDemo(c); }); }
 
+
+// ── La file d'attente de l'étudiant, et ce qu'on lui dit quand ça rate ─────
+//
+// Ces six-là sont montées au socle le 17/09, en sortant js/questionnaires.js :
+// elles servent aux questionnaires, à l'appel, à l'humeur et aux contrôles,
+// c'est-à-dire à tout ce que l'étudiant voit. Les laisser dans app.js aurait
+// obligé chaque module d'écran à importer app.js, qui les importe — le cycle
+// qu'on évite depuis le début.
+//
+// `etapes()` lit le DOM dans son ordre plutôt que de tenir une liste : le
+// nombre de cartes dépend de la classe et du jour, et une liste figée
+// mentirait une fois sur deux.
+
+// Quatre cartes possibles avant « Vos projets ». Empilées, elles ne disent ni
+// combien il en reste, ni laquelle est faite. Chaque carte porte donc son rang
+// et son état, et le bandeau du haut compte ce qui reste.
+// Plus de liste figée : le nombre de questionnaires dépend de la classe et du
+// jour. On lit le DOM dans son ordre, ce qui est aussi l'ordre de lecture.
+function etapes(){
+  return Array.prototype.slice.call(
+    document.querySelectorAll("#espace-etu .etape"));
+}
+
+function marquerEtape(id, fait){
+  var e = $(id);
+  if (e) e.setAttribute("data-fait", fait ? "oui" : "non");
+  majFile();
+}
+
+function majFile(){
+  var vus = etapes().filter(function(e){ return e && !e.hidden; });
+  // Le rang se recalcule à chaque fois : selon la classe et le jour, il peut
+  // y avoir deux cartes ou quatre. Un « 3 » figé mentirait une fois sur deux.
+  vus.forEach(function(e, i){
+    var h = e.querySelector("h2");
+    if (h) h.setAttribute("data-n", i + 1);
+  });
+
+  // Une carte peut être visible ET hors file : le questionnaire de révision se
+  // refait à volonté, il n'a pas de fin, et le compteur réclamerait
+  // indéfiniment « 1 chose à faire ». C'est un état à part entière, et c'est
+  // ICI qu'il se dit — pas en marquant la carte « faite », ce qui la replierait
+  // sur son titre et la rendrait inutilisable. Le 16/09, c'est exactement ce
+  // qui s'est produit : la carte s'affichait pliée, sans question ni options,
+  // et la classe n'avait aucun moyen d'y répondre.
+  var reste = vus.filter(function(e){
+    return e.getAttribute("data-fait") !== "oui"
+        && e.getAttribute("data-hors-file") !== "oui";
+  });
+  var f = $("file-etu");
+  if (!f) return;
+  f.hidden = !vus.length;
+  $("file-reste").textContent = reste.length ? String(reste.length) : "✓";
+  // Pas d'énumération : à 390 px elle passait sur trois lignes, et les cartes
+  // juste en dessous portent déjà leur numéro et leur nom.
+  $("file-txt").textContent = reste.length
+    ? (reste.length > 1 ? "choses à faire avant vos projets" : "chose à faire avant vos projets")
+    : "Tout est fait. Bonne séance.";
+  // Le raccourci n'apparaît qu'une fois la présence marquée : c'est elle qui
+  // ne peut pas attendre, le reste peut se faire après.
+  var appel = $("bloc-appel");
+  $("file-saut").hidden = !(appel && (appel.hidden || appel.getAttribute("data-fait") === "oui"));
+}
+
+function motifEnvoi(err){
+  var m = (err && err.message) || "";
+  if (/non identifie/i.test(m)) return "session";
+  if (/ferm/i.test(m))          return "fermee";
+  return "autre";
+}
+
+function texteEnvoi(err, quoi){
+  switch (motifEnvoi(err)) {
+    case "session":
+      return "Votre session a été reprise sur un autre appareil : rien n'a été " +
+             "enregistré. Cliquez « Ce n'est pas moi », puis identifiez-vous à nouveau.";
+    case "fermee":
+      return quoi === "appel"
+        ? "L'appel est fermé pour cette classe. Prévenez votre enseignant : " +
+          "votre présence n'est pas enregistrée."
+        : "Cette séance est fermée : les réponses n'y sont plus acceptées. " +
+          "Prévenez votre enseignant.";
+    default:
+      return "L'enregistrement n'a pas abouti. Réessayez dans un instant.";
+  }
+}
+
+function signalerSessionPerimee(err){
+  if (motifEnvoi(err) !== "session") return;
+  var b = $("b-sortie-etu");
+  if (b) { b.classList.add("btn"); b.classList.remove("btn-sec"); }
+}
+
 // Les noms que le reste du portail importe d'ici. `suivi` est un objet qu'on
 // mute, jamais qu'on remplace : c'est ce qui permet à deux modules de parler
 // du même état sans le passer en paramètre partout.
 export { suivi, erreur, montrer, typo, anime, entree, pousse, son, SONS,
-         NOMS_CLE, estDemo, classesReelles };
+         NOMS_CLE, estDemo, classesReelles,
+         etapes, majFile, marquerEtape, motifEnvoi, texteEnvoi, signalerSessionPerimee };

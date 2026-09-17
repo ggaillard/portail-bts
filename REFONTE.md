@@ -410,15 +410,22 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
       substitue `config.js`, le client Supabase et **une seule ligne** dans le
       script, au passage sur le réseau. Les trois `t_*.mjs` n'ont plus une
       seule expression régulière sur le HTML.
-- [~] **A5. Extraire les modules feuilles.** Commencé le 16/09 :
+- [~] **A5-A6. Extraire les modules.** En cours. Au 17/09, `app.js` est passé
+      de **4 529 à 2 909 lignes** et six modules existent : `socle.js` (261),
+      `navigation.js` (146), `ecran.js` (646), `bibliotheque.js` (488),
+      `quiz.js` (340). Reste dans `app.js` : l'appel, la vue d'ensemble, le
+      suivi d'une séance, l'espace étudiant, et l'orchestration du démarrage.
+      *(note d'origine, 16/09 :*
       `js/socle.js` (167 l.) et `js/ecran.js` (646 l.) sont sortis. Reste
       `quiz.js`, `appel.js`. *Le plan disait « les feuilles d'abord, le socle
       ensuite ». Faux dans ce sens : un module d'écran a besoin de `$`, de
       `suivi`, de `typo` ; si le socle est encore dans `app.js`, l'écran doit
       importer `app.js`, qui importe l'écran — un cycle. Le socle sort en
-      premier, et plus personne n'importe personne.*
-- [ ] **A6. Extraire les modules centraux** — `socle.js`, `session.js`,
-      `navigation.js`, puis le reste.
+      premier, et plus personne n'importe personne.)*
+- [ ] **A6bis. Le reste** — `appel.js`, `ensemble.js`, `seance.js`,
+      `etudiant.js`, `session.js`. Même méthode : mesurer les portes d'entrée
+      avant de couper, `brancher…()` pour ce qui remonte, `comparer.mjs` et les
+      sept contrôles à chaque étape.
 - [x] **A7. `erreur()` réparée.** ✅ 16/09. La carcasse se construit sans
       jamais concaténer de données ; aucun des 73 appels n'a changé.
       `outils/t_messages.mjs` rejoue l'injection et vérifie aussi que le texte
@@ -436,9 +443,17 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
       séance choisies n'y sont pas — ce serait utile pour partager un lien,
       mais il faudrait décider ce qui gagne quand l'adresse et les sélecteurs
       divergent. Une chose à la fois.
-- [ ] **B2. Un seul endroit pour les contrôles d'entrée** (§3.2) : ils
-      appartiennent à la vie d'une séance, pas à la bibliothèque. La carte de
-      l'onglet Questionnaires disparaît, un lien la remplace.
+- [x] **B2. Les contrôles d'entrée, en un seul endroit.** ✅ 17/09. La carte
+      d'inventaire rejoint l'onglet « Suivi d'une séance », au-dessus de
+      l'éditeur : un contrôle appartient à la vie d'une séance, pas à la
+      bibliothèque. *Le plan disait « la carte disparaît, un lien la
+      remplace » : à la relecture, non — elle et le bloc plus bas ne font pas
+      la même chose. Elle est l'INVENTAIRE (ce qui existe, pour quelle classe,
+      les étudiants le voient-ils) et ne sait pas écrire un contrôle,
+      volontairement. La supprimer aurait retiré la seule vue d'ensemble.*
+      Mesuré à 390 px : onglet Questionnaires **1 604 → 996 px**, Suivi
+      1 575 → 2 207 px. L'onglet Questionnaires est désormais la bibliothèque,
+      et rien d'autre.
 - [x] **B3. Un seul système d'onglets.** ✅ 17/09. L'écran de connexion suit
       le même motif que l'espace enseignant : `type="button"`, un seul onglet
       tabulable, flèches ← →, `aria-selected` en toutes lettres. Les deux
@@ -606,7 +621,7 @@ sans la bonne police ne se compare à aucun plafond.
    droit de grossir**.
 
    ```
-   @chantier js/app.js 3802
+   @chantier js/app.js 2909
    ```
 2. **Aucun seuil hors de la table.** La liste des seuils est déclarée une fois,
    en commentaire `@seuil` en tête de `styles/socle.css`, avec ce que chacun

@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tour de contrôle — Portail BTS SIO</title>
+<!-- Sans cette ligne, le navigateur demande /favicon.ico à chaque chargement et
+     reçoit un 404 — vérifié en production le 17/09. Une icône en ligne coûte
+     200 octets et supprime une requête perdue plus une erreur en console, où
+     l'on ne veut voir que ce qui compte. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E6E6E'/%3E%3Ccircle cx='16' cy='16' r='7.5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -234,15 +239,6 @@
        qu'ils appartiennent à la séance qu'ils précèdent. Mais on les cherche
        ici : c'est l'onglet des questions qu'on pose à une classe. D'où cette
        carte, qui montre et allume sans dupliquer la rédaction. -->
-  <div class="card" id="carte-controles" hidden>
-    <h2>Contrôles d'entrée</h2>
-    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
-      qu'ils en avaient gardé. Un contrôle appartient à la séance qu'il précède :
-      il s'écrit là-bas, il s'allume ici. <b>Éteint, aucun étudiant ne le voit.</b></p>
-    <div id="ctl-liste"></div>
-    <div aria-live="polite" id="err-controles"></div>
-  </div>
-
   <div class="card" id="carte-qactifs" hidden>
     <h2>Vos questionnaires</h2>
     <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une ou
@@ -302,6 +298,28 @@
   </div>
 
   <div class="volet" id="volet-seance" role="tabpanel" aria-labelledby="ong-seance" hidden>
+  <!-- Les contrôles d'entrée vivaient dans l'onglet Questionnaires, et leur
+       éditeur dans celui-ci : même objet, deux endroits, deux libellés
+       (« Contrôles » / « Contrôle »), deux niveaux de titre. On ne savait pas
+       lequel faisait autorité, donc on regardait les deux. Un contrôle
+       appartient à la vie d'une séance ; il est donc ici, en entier.
+
+       La carte et le bloc plus bas ne font pas la même chose, et c'est pour
+       cela qu'on garde les deux : celle-ci est l'INVENTAIRE — ce qui existe,
+       pour quelle classe, les étudiants le voient-ils — et elle ne sait pas
+       écrire un contrôle, volontairement. Le bloc, lui, écrit celui de la
+       séance choisie. Deux endroits pour le même geste, c'est la garantie que
+       l'un des deux divergera. -->
+  <div class="card" id="carte-controles" hidden>
+    <h2>Contrôles d'entrée</h2>
+    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
+      qu'ils en avaient gardé. Ici, tout ce qui est écrit, pour toutes les
+      classes, avec son interrupteur. <b>Éteint, aucun étudiant ne le voit.</b>
+      Pour en écrire un, choisissez sa séance ci-dessous.</p>
+    <div id="ctl-liste"></div>
+    <div aria-live="polite" id="err-controles"></div>
+  </div>
+
   <div class="card">
     <h2>Suivi d'une séance</h2>
     <p class="hint">Choisissez la classe puis la séance. Les chiffres se rafraîchissent seuls toutes les huit secondes.</p>
