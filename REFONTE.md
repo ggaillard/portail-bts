@@ -422,10 +422,12 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
       `suivi`, de `typo` ; si le socle est encore dans `app.js`, l'écran doit
       importer `app.js`, qui importe l'écran — un cycle. Le socle sort en
       premier, et plus personne n'importe personne.)*
-- [ ] **A6bis. Le reste** — `appel.js`, `ensemble.js`, `seance.js`,
-      `etudiant.js`, `session.js`. Même méthode : mesurer les portes d'entrée
-      avant de couper, `brancher…()` pour ce qui remonte, `comparer.mjs` et les
-      sept contrôles à chaque étape.
+- [~] **A6bis. Le reste.** En cours. Sortis le 17/09 : `ensemble.js` (290),
+      `appel.js` (521), `enquetes.js` (253). **`app.js` : 2 909 → 1 884
+      lignes**, neuf modules. Reste : le suivi d'une séance (avec le contrôle
+      d'entrée, le parcours et le débriefing — ~800 lignes, treize dépendances
+      sortantes, à couper en deux), l'espace étudiant, la session et
+      l'orchestration du démarrage.
 - [x] **A7. `erreur()` réparée.** ✅ 16/09. La carcasse se construit sans
       jamais concaténer de données ; aucun des 73 appels n'a changé.
       `outils/t_messages.mjs` rejoue l'injection et vérifie aussi que le texte
@@ -537,6 +539,43 @@ Après B1, B3, B4, B5 (17/09) :
 | contrôles | 6 | **7** |
 | `location` dans le code | 1 (un `reload`) | l'adresse porte l'onglet |
 
+Après B2 et la suite du découpage (17/09) :
+
+| | après B1-B5 | aujourd'hui |
+|---|---|---|
+| modules | 4 | **9** |
+| `js/app.js` | 3 802 | **1 884** |
+| contrôles | 7 | 7, plus deux règles neuves dans `mesurer.mjs` |
+
+### Ce que le découpage casse, et comment on l'a su
+
+Trois fois en une heure, la même faute : une fonction déménage, et l'endroit
+qui l'employait ne la suit pas. `SEM_ETAT` dans la vue d'ensemble, `suivi` dans
+la bibliothèque, `copierAbsents` câblé sur un bouton depuis `app.js`. Dans les
+trois cas **la page se charge** : l'erreur n'arrive qu'à l'usage, sur un écran
+précis, peut-être en séance.
+
+Le contrôle du workflow ne pouvait pas les voir : il travaille sur la
+CONCATÉNATION des modules, où un import oublié est invisible — la fonction
+existe, ailleurs. `outils/mesurer.mjs` lit donc désormais **chaque fichier
+séparément**, comme le navigateur, avec deux règles :
+
+- un module appelle `machin()` sans l'avoir défini ni importé ;
+- un module **emploie** un nom qu'un autre module exporte, sans l'importer —
+  celle-ci attrape les usages qui ne sont pas des appels : `SEM_ETAT[x.etat]`,
+  `suivi.seanceId`, un gestionnaire passé en valeur.
+
+La seconde règle ne cherche que les noms exportés ailleurs, et c'est
+délibéré : chercher tous les identifiants inconnus produisait surtout du bruit
+— variables de boucle, clés d'objet, paramètres déstructurés — et un contrôle
+qui crie pour rien finit coupé le jour où il a raison.
+
+*Et une quatrième, dans l'outillage cette fois : `outils/portail.mjs` posait
+les noms d'`app.js` APRÈS les exports des modules, si bien qu'un nom devenu
+`undefined` dans `app.js` écrasait la vraie fonction venue du module. La clé
+existait, sa valeur ne valait rien, et le contrôle échouait sur « n'est pas une
+fonction » sans que rien ne désigne la cause.*
+
 `comparer.mjs` à sept largeurs : **deux différences, et deux seulement** — le
 lien d'évitement et le conteneur `#contenu` qui lui sert de cible. Toutes les
 hauteurs de page sont identiques au pixel. Trois éléments ont changé de place
@@ -621,7 +660,7 @@ sans la bonne police ne se compare à aucun plafond.
    droit de grossir**.
 
    ```
-   @chantier js/app.js 2909
+   @chantier js/app.js 1884
    ```
 2. **Aucun seuil hors de la table.** La liste des seuils est déclarée une fois,
    en commentaire `@seuil` en tête de `styles/socle.css`, avec ce que chacun

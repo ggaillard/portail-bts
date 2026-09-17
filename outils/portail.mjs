@@ -122,9 +122,26 @@ export async function ouvrir(nav, racine, options = {}) {
   // scène. En échange, une mesure faite sans la police est une mesure fausse :
   // `police` le dit, et les contrôles le signalent plutôt que de conclure.
 
-  const ajout = '\nwindow.__e = { ' +
+  // Les fonctions vivent maintenant dans plusieurs modules. Celles d'app.js
+  // sont dans la portée de la fermeture, et on les nomme une à une ; celles des
+  // autres modules arrivent par leurs exports, importés ici en bloc. Un import
+  // au bas d'un module est hissé comme les autres : il n'y a pas d'ordre à
+  // respecter, et app.js n'a pas à porter d'import dont il ne se sert pas.
+  const autres = fs.readdirSync(path.join(racine, 'js'))
+    .filter((f) => f.endsWith('.js') && f !== 'app.js').sort();
+  const imports = autres.map((f, i) => `import * as __m${i} from './${f}';`).join('\n');
+  const fusion = autres.map((f, i) => `__m${i}`).join(', ');
+  // Les noms d'EXPOSEES qu'app.js ne connaît plus valent `undefined` — et un
+  // `undefined` posé APRÈS la fusion écrasait la vraie fonction venue du
+  // module. C'est arrivé le 17/09 en sortant appel.js : la clé existait, sa
+  // valeur ne valait rien, et le contrôle échouait sur « n'est pas une
+  // fonction » sans que rien ne désigne la cause. On retire donc les `undefined`
+  // avant de fusionner.
+  const ajout = '\nwindow.__e = (function(){ var l = { ' +
     EXPOSEES.map((n) => `${n}: typeof ${n} === "undefined" ? undefined : ${n}`).join(', ') +
-    ' };' + ANCRE;
+    ' }; for (var k in l) if (l[k] === undefined) delete l[k];' +
+    ' return Object.assign({}' + (fusion ? ', ' + fusion : '') + ', l); })();' +
+    ANCRE + '\n' + imports + '\n';
   await page.route(cible, async (r) => {
     const rep = await r.fetch();
     const t = (await rep.text()).replace(ANCRE, ajout);

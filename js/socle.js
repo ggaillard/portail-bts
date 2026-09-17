@@ -252,9 +252,111 @@ function signalerSessionPerimee(err){
   if (b) { b.classList.add("btn"); b.classList.remove("btn-sec"); }
 }
 
+
+// ── Quatre petits partages ────────────────────────────────────────────────
+// Ils ne sont ici que parce que deux écrans les appellent : une rangée de
+// pastilles sert à l'appel ET aux projets, la copie dans le presse-papiers à
+// trois endroits. Monter au socle ce qui n'a qu'un seul client serait la
+// mauvaise direction — le socle deviendrait le nouveau fourre-tout.
+
+// Aucun appel lisible : pas de pastille du tout. Zéro absent : pas de pastille
+// non plus — un « 0 » rouge à côté de « Appel du jour » se lirait comme un souci.
+function pastilleAppel(n){
+  var p = $("ong-appel-n");
+  if (!p) return;
+  p.hidden = !n;
+  p.textContent = n ? String(n) : "";
+  p.setAttribute("aria-label", n ? (n + " absents aujourd'hui") : "");
+}
+
+// Une seule mécanique de copie, pour le bouton de classe comme pour le global.
+function copierTexte(texte, bouton){
+  var dit = function(ok){
+    if (bouton) {
+      var avant = bouton.textContent;
+      bouton.textContent = ok ? "Copié" : "Échec";
+      setTimeout(function(){ bouton.textContent = avant; }, 1600);
+    }
+    return ok;
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(texte).then(function(){ return dit(true); },
+                                                     function(){ return dit(false); });
+  }
+  return Promise.resolve(dit(false));
+}
+
+function pastilles(id, liste, classe, texte){
+  var z = (typeof id === "string") ? $(id) : id;
+  if (!z) return;
+  z.innerHTML = "";
+  liste.forEach(function(x){
+    var s = document.createElement("span");
+    s.className = "pastille " + classe;
+    s.textContent = texte(x);
+    z.appendChild(s);
+  });
+}
+
+function dateCourte(iso){
+  var d = new Date(iso);
+  return isNaN(d) ? "?" : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+
+// ── La table des noms, dans CE navigateur et nulle part ailleurs ──────────
+// `eleves` n'a ni nom ni prénom, et le dépôt est public : la correspondance
+// numéro -> nom vit dans le localStorage, saisie à la main. Elle est au socle
+// parce que trois écrans la lisent — l'appel, le parcours de l'heure et les
+// deux enquêtes. Ne jamais proposer de la mettre en base ni dans config.js.
+//
+// `prenomSeul` prend le dernier mot qui n'est pas tout en majuscules : les
+// listes collées viennent en « NOM Prénom ». Rien n'est inventé, et rien ne
+// part vers la base.
+
+function lireNoms(){
+  try { return JSON.parse(localStorage.getItem(NOMS_CLE) || "{}"); }
+  catch (e) { return {}; }
+}
+
+function nomDe(codeClasse, numero){
+  var m = lireNoms()[codeClasse];
+  if (!m) return "";
+  var n = String(numero || "").trim();
+  return m[n] || m[n.replace(/^0+/, "")] || m[("0" + n).slice(-2)] || "";
+}
+
+function enregistrerNoms(texte){
+  var map = lireNoms(), lus = 0, ignores = 0;
+  String(texte || "").split(/\r?\n/).forEach(function(ligne){
+    if (!ligne.trim()) return;
+    var p = ligne.split(/[;\t]/).map(function(x){ return x.trim(); });
+    if (p.length < 3 || !p[0] || !p[1] || !p[2]) { ignores++; return; }
+    (map[p[0]] = map[p[0]] || {})[p[1]] = p[2];
+    lus++;
+  });
+  try { localStorage.setItem(NOMS_CLE, JSON.stringify(map)); }
+  catch (e) { return { erreur: true }; }
+  return { lus: lus, ignores: ignores };
+}
+
+// Les listes collées viennent souvent en « NOM Prénom ». À l'oral on appelle
+// par le prénom : on prend le dernier mot qui n'est pas tout en majuscules,
+// et à défaut la chaîne entière — jamais rien d'inventé.
+function prenomSeul(nom){
+  var mots = String(nom || "").trim().split(/\s+/).filter(Boolean);
+  if (!mots.length) return "";
+  for (var i = mots.length - 1; i >= 0; i--) {
+    if (mots[i] !== mots[i].toUpperCase()) return mots[i];
+  }
+  return mots[mots.length - 1];
+}
+
 // Les noms que le reste du portail importe d'ici. `suivi` est un objet qu'on
 // mute, jamais qu'on remplace : c'est ce qui permet à deux modules de parler
 // du même état sans le passer en paramètre partout.
 export { suivi, erreur, montrer, typo, anime, entree, pousse, son, SONS,
          NOMS_CLE, estDemo, classesReelles,
-         etapes, majFile, marquerEtape, motifEnvoi, texteEnvoi, signalerSessionPerimee };
+         etapes, majFile, marquerEtape, motifEnvoi, texteEnvoi, signalerSessionPerimee,
+         pastilles, pastilleAppel, copierTexte, dateCourte,
+         lireNoms, enregistrerNoms, nomDe, prenomSeul };

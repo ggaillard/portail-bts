@@ -19,12 +19,15 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 | module | ce qu'il porte |
 |---|---|
-| `socle.js` | le client Supabase, `$`, l'état partagé `suivi`, les utilitaires d'affichage, la file d'attente de l'étudiant |
+| `socle.js` | le client Supabase, `$`, l'état partagé `suivi`, les utilitaires d'affichage, la file d'attente de l'étudiant, la table des noms locale |
 | `navigation.js` | les deux barres d'onglets, et l'onglet dans l'adresse |
+| `appel.js` | l'appel du jour, l'humeur, l'assiduité, les numéros absents |
+| `enquetes.js` | « Faisons connaissance » (98) et « Recherche de stage » (97) |
+| `ensemble.js` | le semestre et les projets |
 | `ecran.js` | le mode classe projeté au tableau |
 | `bibliotheque.js` | les questionnaires côté enseignant : modèles, affectations, réglages |
 | `quiz.js` | les trois modes de rendu côté étudiant |
-| `app.js` | l'appel, la vue d'ensemble, le suivi d'une séance, l'espace étudiant, le démarrage — **à découper** |
+| `app.js` | le suivi d'une séance, l'espace étudiant, la session, le démarrage — **à découper** |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
 
@@ -1061,6 +1064,14 @@ clic.
   tête de `styles/socle.css`. `outils/mesurer.mjs` refuse toute media query
   absente de cette table. Une variable CSS ne peut pas servir à cela :
   `@media (max-width: var(--x))` ne s'applique jamais.
+- **Un nom qui déménage emmène ses usages.** C'est la faute du découpage, et
+  elle est silencieuse : la page se charge, et l'erreur arrive à l'usage, sur
+  un écran précis, peut-être en séance. Le contrôle du workflow ne la voit pas
+  — il lit la concaténation des modules, où un import oublié est invisible.
+  `outils/mesurer.mjs` lit chaque fichier séparément et refuse deux choses :
+  appeler `machin()` sans l'avoir défini ni importé, et **employer** un nom
+  qu'un autre module exporte sans l'importer (`SEM_ETAT[…]`, `suivi.seanceId`,
+  un gestionnaire passé en valeur).
 - **Un module d'écran n'importe jamais `app.js`.** Ce serait un cycle —
   `app.js` importe déjà l'écran. Ce qui descend (`$`, `suivi`, `typo`…) vient
   de `socle.js` ; ce qui remonte (`chargerDebrief`, `chargerParcours`) est

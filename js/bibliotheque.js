@@ -16,7 +16,7 @@
 // bloque », « Faisons connaissance » et « Recherche de stage », qui lisent les
 // mêmes séances. Les importer ferait un cycle.
 
-import { $, sb, erreur, typo } from './socle.js';
+import { $, sb, suivi, erreur, typo } from './socle.js';
 
 let chargerAFaire = function(){};
 let chargerConnaissance = function(){};
