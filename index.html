@@ -166,15 +166,27 @@
     <div id="af-liste"></div>
   </div>
 
+  <!-- Les quatre libellés relèvent d'une seule taxonomie (B6 de REFONTE.md) :
+       trois échelles de TEMPS — le jour, l'heure, le semestre — qui se
+       déduisent l'une de l'autre, et un LIEU à part, le matériel réutilisable.
+       Avant, les quatre mélangeaient un geste (« Appel du jour »), un point de
+       vue (« Vue d'ensemble »), un type d'objet (« Questionnaires ») et une
+       tâche (« Suivi d'une séance ») : quatre catégories pour quatre onglets,
+       donc aucune.
+
+       L'ORDRE N'A PAS CHANGÉ, volontairement : le renommage se fait en cours
+       d'année, et déplacer sous la main un onglet dont on vient de changer le
+       nom, c'est deux repères perdus d'un coup au lieu d'un. L'ordre des trois
+       échelles de temps est une question à part, notée dans REFONTE.md. -->
   <nav class="onglets" id="onglets-ens" role="tablist" aria-label="Espace enseignant">
     <button class="onglet actif" type="button" role="tab" id="ong-appel" aria-controls="volet-appel"
-            aria-selected="true">Appel du jour<span class="ong-p" id="ong-appel-n" hidden></span></button>
+            aria-selected="true">Aujourd'hui<span class="ong-p" id="ong-appel-n" hidden></span></button>
     <button class="onglet" type="button" role="tab" id="ong-ensemble" aria-controls="volet-ensemble"
-            aria-selected="false" tabindex="-1">Vue d'ensemble</button>
+            aria-selected="false" tabindex="-1">Le semestre</button>
     <button class="onglet" type="button" role="tab" id="ong-quest" aria-controls="volet-quest"
-            aria-selected="false" tabindex="-1">Questionnaires</button>
+            aria-selected="false" tabindex="-1">Ma bibliothèque</button>
     <button class="onglet" type="button" role="tab" id="ong-seance" aria-controls="volet-seance"
-            aria-selected="false" tabindex="-1">Suivi d'une séance</button>
+            aria-selected="false" tabindex="-1">La séance</button>
   </nav>
 
   <div class="volet" id="volet-appel" role="tabpanel" aria-labelledby="ong-appel">
@@ -235,7 +247,7 @@
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
     <p class="volet-hint">Tout ce que vous posez aux étudiants en dehors du quiz de séance : les contrôles d'entrée, notion par notion, avant une séance ; les questionnaires ponctuels, quelques fois dans l'année.</p>
 
-  <!-- Les contrôles d'entrée s'écrivent dans « Suivi d'une séance », parce
+  <!-- Les contrôles d'entrée s'écrivent dans « La séance », parce
        qu'ils appartiennent à la séance qu'ils précèdent. Mais on les cherche
        ici : c'est l'onglet des questions qu'on pose à une classe. D'où cette
        carte, qui montre et allume sans dupliquer la rédaction. -->
@@ -298,7 +310,7 @@
   </div>
 
   <div class="volet" id="volet-seance" role="tabpanel" aria-labelledby="ong-seance" hidden>
-  <!-- Les contrôles d'entrée vivaient dans l'onglet Questionnaires, et leur
+  <!-- Les contrôles d'entrée vivaient dans l'onglet de la bibliothèque, et leur
        éditeur dans celui-ci : même objet, deux endroits, deux libellés
        (« Contrôles » / « Contrôle »), deux niveaux de titre. On ne savait pas
        lequel faisait autorité, donc on regardait les deux. Un contrôle

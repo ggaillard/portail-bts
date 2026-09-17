@@ -42,13 +42,23 @@ await ouvrirEns();
 const parcours = [];
 for (const [id, cle] of [['ong-quest', 'quest'], ['ong-seance', 'seance'], ['ong-ensemble', 'ensemble']]) {
   await p.click('#' + id);
-  parcours.push({ clic: cle, hash: new URL(p.url()).hash, titre: await p.title() });
+  parcours.push({ clic: cle, hash: new URL(p.url()).hash, titre: await p.title(),
+                  // Le texte du bouton lui-même, tel qu'il est écrit dans la page.
+                  bouton: (await p.textContent('#' + id)).trim() });
 }
 console.log('\n── l\'adresse suit l\'onglet');
 for (const x of parcours) {
-  console.log(`   clic « ${x.clic} » -> ${x.hash || '(aucune)'} · titre « ${x.titre} »`);
+  console.log(`   clic « ${x.clic} » -> ${x.hash || '(aucune)'} · bouton « ${x.bouton} » · titre « ${x.titre} »`);
   if (x.hash !== '#' + x.clic) rates.push(`le clic sur « ${x.clic} » laisse l'adresse à « ${x.hash || 'rien'} »`);
-  if (!x.titre.startsWith('Appel') && !/^[A-ZÀ-Ü]/.test(x.titre)) rates.push(`titre inattendu : ${x.titre}`);
+  // Le titre de la page COMMENCE par le libellé du bouton. Les deux vivent
+  // dans deux fichiers — index.html et js/navigation.js — et B6 a renommé les
+  // quatre onglets d'un coup : renommer le bouton sans toucher TITRES laissait
+  // un historique de navigateur qui parle d'onglets qui n'existent plus, et
+  // rien ne l'aurait dit. Le libellé est la seule source ; le titre la suit.
+  if (!x.titre.startsWith(x.bouton)) {
+    rates.push(`l'onglet s'appelle « ${x.bouton} » et le titre de la page dit ` +
+               `« ${x.titre} » — index.html et js/navigation.js ont divergé`);
+  }
 }
 const titres = new Set(parcours.map((x) => x.titre));
 if (titres.size !== parcours.length) {
@@ -100,7 +110,7 @@ const apresF5 = await p.evaluate(() => {
 });
 console.log('\n── rechargement sur #quest :', apresF5.actif, '·', apresF5.volet);
 if (apresF5.actif !== 'ong-quest' || apresF5.volet !== 'volet-quest') {
-  rates.push(`ouvrir « #quest » n'ouvre pas l'onglet Questionnaires (${apresF5.actif} / ${apresF5.volet})`);
+  rates.push(`ouvrir « #quest » n'ouvre pas l'onglet « Ma bibliothèque » (${apresF5.actif} / ${apresF5.volet})`);
 }
 
 // ── 4. Les deux barres d'onglets suivent le même motif ───────────────────
