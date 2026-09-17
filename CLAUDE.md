@@ -15,11 +15,18 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**491 lignes**) + `styles/` (dix feuilles) + `js/` — `socle.js`
-(le client Supabase, `$`, l'état partagé `suivi`, six utilitaires d'affichage),
-`navigation.js` (les deux barres d'onglets et l'adresse), `ecran.js` (le mode
-classe projeté), `app.js` (tout le reste, à découper) — plus `config.js`
-(URL Supabase, clé anon, codes de classe). Trois rôles :
+`index.html` (**509 lignes**) + `styles/` (dix feuilles) + `js/` :
+
+| module | ce qu'il porte |
+|---|---|
+| `socle.js` | le client Supabase, `$`, l'état partagé `suivi`, les utilitaires d'affichage, la file d'attente de l'étudiant |
+| `navigation.js` | les deux barres d'onglets, et l'onglet dans l'adresse |
+| `ecran.js` | le mode classe projeté au tableau |
+| `bibliotheque.js` | les questionnaires côté enseignant : modèles, affectations, réglages |
+| `quiz.js` | les trois modes de rendu côté étudiant |
+| `app.js` | l'appel, la vue d'ensemble, le suivi d'une séance, l'espace étudiant, le démarrage — **à découper** |
+
+plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
 
 1. **Identifier** l'étudiant — code de classe, numéro, PIN à 4 chiffres, avatar.
 2. **Orienter** — la liste des projets de sa classe, lus dans `public.projets`.
@@ -47,8 +54,8 @@ heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
 | **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — neuf règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
 | Onglet **Appel du jour** | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
 | Onglet **Vue d'ensemble** | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
-| Onglet **Questionnaires** | *Que leur ai-je posé, hors quiz de séance ?* | **Contrôles d'entrée** (tous, avec leur classe et leur interrupteur), puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. |
-| Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | Pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève — **une séance choisie**. |
+| Onglet **Questionnaires** | *Que leur ai-je posé, hors quiz de séance ?* | La **bibliothèque** : les modèles, leurs affectations, puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. Les contrôles d'entrée n'y sont plus depuis le 17/09 (voir ci-dessous). |
+| Onglet **Suivi d'une séance** | *Que s'est-il passé à la S2 ?* | L'**inventaire des contrôles d'entrée** (toutes classes, avec leur interrupteur), puis, pour **une séance choisie** : pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève, contrôle d'entrée, débriefing. |
 
 **Ne pas ajouter une carte sans décider de son onglet** — ou sans décider
 qu'elle est bloquante, auquel cas elle rejoint `a_faire()` plutôt que de
@@ -613,8 +620,12 @@ contrôle d'entrée de la suivante.** Écrire les uns, c'est écrire l'autre.
 
 ### Où on le voit — et pourquoi ce n'est pas là qu'on l'écrit
 
-Un contrôle appartient à sa séance, donc il s'écrit sous **Suivi d'une séance**,
-derrière deux sélecteurs. Le 15/09, huit notions posées sur le TP2 du BTS2 y ont
+Un contrôle appartient à sa séance, donc **tout ce qui le concerne est sous
+« Suivi d'une séance »** : l'inventaire en tête de l'onglet, l'éditeur plus bas
+derrière deux sélecteurs. Il a vécu jusqu'au 17/09 à cheval sur deux onglets —
+l'inventaire sous « Questionnaires », l'éditeur ici — avec deux libellés et
+deux niveaux de titre : on ne savait pas lequel faisait autorité, donc on
+regardait les deux. **Ne pas en remettre une moitié ailleurs.** Le 15/09, huit notions posées sur le TP2 du BTS2 y ont
 été cherchées dans **Questionnaires**, où elles n'étaient pas : écrites,
 appliquées en base, et introuvables. Le modèle était bon ; **c'est la lecture qui
 manquait.**

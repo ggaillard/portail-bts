@@ -113,11 +113,11 @@ const m = {
 // n'est pas une table à tenir à la main, c'est la photo du dépôt le jour où
 // l'on a mis REFONTE.md d'accord avec lui.
 const ATTENDU = {
-  'lignes de index.html': 491,
+  'lignes de index.html': 509,
   'feuilles de style': 10,
-  'modules': 4,
+  'modules': 6,
   'lignes de CSS': 1065,
-  'lignes de JavaScript': 4761,
+  'lignes de JavaScript': 4790,
   'règles CSS': 473,
   'classes CSS': 299,
   'variables CSS définies': 17,
