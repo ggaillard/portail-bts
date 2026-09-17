@@ -39,7 +39,22 @@ window.supabase = { createClient: function(){ return {
     var r = (window.__reponses && window.__reponses[nom]) || { ok: true };
     return Promise.resolve({ data: r, error: null });
   },
-  from: function(){ return { select: function(){ return Promise.resolve({ data: [], error: null }); } }; },
+  // Le client réel s'enchaîne — .from().select().order().eq()… — et se
+  // termine en promesse. Une fausse couche qui ne rend qu'un .select()
+  // oblige chaque contrôle à éviter les chemins qui enchaînent, c'est-à-dire
+  // à éviter précisément ce qui casse. Celle-ci s'enchaîne autant qu'on veut
+  // et se résout toujours sur une liste vide.
+  from: function(){
+    var vide = { data: [], error: null };
+    var chaine = {
+      then: function(ok, ko){ return Promise.resolve(vide).then(ok, ko); },
+      catch: function(f){ return Promise.resolve(vide).catch(f); }
+    };
+    ['select','order','eq','neq','in','gte','lte','limit','single','maybeSingle',
+     'insert','update','upsert','delete','filter','or','not','range']
+      .forEach(function(m){ chaine[m] = function(){ return chaine; }; });
+    return chaine;
+  },
   auth: {
     getSession: function(){ return Promise.resolve({ data: { session: null } }); },
     signInAnonymously: function(){ return Promise.resolve({ data: {}, error: null }); },
@@ -53,7 +68,7 @@ const EXPOSEES = [
   'rendreAFaire', 'rendreBibliotheque', 'rendreControles', 'rendreSemestre',
   'rendreSuivi', 'rendreRevision', 'rendreQuestionnairesEtu', 'remplirAppelClasse',
   'rendreParcours', 'rendreEcran', 'majFile', 'hisserQuestion', 'erreur',
-  'modeEcran', 'ouvrirEcran', 'suivi', 'BIB',
+  'modeEcran', 'ouvrirEcran', 'ouvrirEspaceEnseignant', 'suivi', 'BIB',
 ];
 
 const ANCRE = '\n})();';

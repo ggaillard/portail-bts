@@ -132,3 +132,14 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
        font-size:.83rem;color:var(--ink-faint);display:flex;flex-direction:column;gap:.35rem}
 .spin{color:var(--ink-faint);font-size:.92rem}
 [hidden]{display:none!important}
+
+/* ── Le lien d'évitement (WCAG 2.4.1) ─────────────────────────────────────
+   Il est le premier élément de la page et reste invisible tant qu'il n'a pas
+   le focus. Pas de display:none ni de visibility:hidden : les deux le
+   retireraient aussi de l'ordre de tabulation, et il ne servirait plus à rien.
+   On le sort de l'écran, et il revient dès qu'on l'atteint au clavier. */
+.evitement{position:absolute;left:-9999px;top:0;z-index:50;
+  background:var(--accent);color:#fff;font-size:.95rem;font-weight:600;
+  padding:.7rem 1.1rem;border-radius:0 0 8px 0;text-decoration:none}
+.evitement:focus{left:0}
+#contenu:focus{outline:none}

@@ -430,21 +430,29 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
 
 ### Chantier B — La navigation
 
-- [ ] **B1. L'état dans l'adresse.** `#appel`, `#seance`, `#quest`,
-      `#ensemble` ; le titre de la page suit l'onglet ; le bouton Précédent
-      revient à l'onglet précédent. **À faire tôt** : c'est le point qui se
-      paie vingt fois par heure (§3.3).
+- [x] **B1. L'onglet est dans l'adresse.** ✅ 17/09. `#appel`, `#ensemble`,
+      `#quest`, `#seance` ; le titre de la page suit ; Précédent revient à
+      l'onglet précédent ; un rechargement garde l'onglet. La classe et la
+      séance choisies n'y sont pas — ce serait utile pour partager un lien,
+      mais il faudrait décider ce qui gagne quand l'adresse et les sélecteurs
+      divergent. Une chose à la fois.
 - [ ] **B2. Un seul endroit pour les contrôles d'entrée** (§3.2) : ils
       appartiennent à la vie d'une séance, pas à la bibliothèque. La carte de
       l'onglet Questionnaires disparaît, un lien la remplace.
-- [ ] **B3. Un seul système d'onglets** : l'écran de connexion adopte celui de
-      l'espace enseignant, flèches et `tabindex` compris (§3.4).
-- [ ] **B4. `aria-live`** sur les zones d'erreur et les pastilles d'état
-      (§3.5).
-- [ ] **B5. Lien d'évitement** (§3.6).
-- [ ] **B5bis. Déclarer `--surface-2`** dans les deux thèmes, et remonter le
-      contraste de `.db-v.sans_mesure` au-dessus de 4,5 : 1 (§3.7). Petit,
-      isolé, à faire dès qu'on touche au CSS.
+- [x] **B3. Un seul système d'onglets.** ✅ 17/09. L'écran de connexion suit
+      le même motif que l'espace enseignant : `type="button"`, un seul onglet
+      tabulable, flèches ← →, `aria-selected` en toutes lettres. Les deux
+      barres vivent maintenant dans `js/navigation.js`, côte à côte : c'est ce
+      qui rendra la prochaine divergence visible.
+- [x] **B4. `aria-live`.** ✅ 17/09. Les seize zones de message, la pastille
+      d'état de « Ce qui bloque », le bandeau de file de l'étudiant et la ligne
+      de chargement : dix-neuf annonces là où il n'y en avait aucune.
+- [x] **B5. Lien d'évitement.** ✅ 17/09. Premier élément focalisable de la
+      page, invisible tant qu'il n'a pas le focus — sorti de l'écran, pas
+      masqué : `display:none` le retirerait aussi de l'ordre de tabulation.
+- [x] **B5bis. `--surface-2` déclarée.** ✅ 16/09. `.db-v.sans_mesure` utilise
+      `--surface-alt` et `--ink-soft` : 4,84 : 1 en clair, 6,52 : 1 en sombre,
+      contre 2,65 : 1 avant (§3.7).
 - [ ] **B6. Renommer les onglets dans une seule taxonomie** (§3.1). Proposition
       à trancher ensemble, pas à appliquer d'office :
 
@@ -503,6 +511,29 @@ Après A5 (partiel) et A7 :
 | modules | 1 | **3** — `app.js` 3 845, `ecran.js` 646, `socle.js` 167 |
 | contrôles d'écran | 3 | **6** |
 | `innerHTML =` | 114 | 113 |
+
+Après B1, B3, B4, B5 (17/09) :
+
+| | après A5-A7 | après B1-B5 |
+|---|---|---|
+| modules | 3 | **4** — `navigation.js` 146 |
+| `js/app.js` | 3 845 | **3 802** |
+| `aria-live` | 0 | **19** |
+| contrôles | 6 | **7** |
+| `location` dans le code | 1 (un `reload`) | l'adresse porte l'onglet |
+
+`comparer.mjs` à sept largeurs : **deux différences, et deux seulement** — le
+lien d'évitement et le conteneur `#contenu` qui lui sert de cible. Toutes les
+hauteurs de page sont identiques au pixel. Trois éléments ont changé de place
+dans l'arbre sans changer de boîte : les trois sections, qui entrent dans
+`#contenu`.
+
+*Au passage, `comparer.mjs` a dû être corrigé : sa clé contenait le chemin
+complet de chaque élément, si bien que l'insertion d'un seul conteneur faisait
+« disparaître » puis « apparaître » les 419 éléments de la page — 5 880
+différences pour un `div`. Un contrôle qui crie autant ne se lit plus. La clé
+est maintenant ce que l'élément EST ; l'endroit où il se trouve est comparé à
+part, et un déplacement dans l'arbre se compte au lieu de s'égrener.*
 
 ### Ce que A1-A4 a changé à l'écran : une chose, à une largeur
 
@@ -575,7 +606,7 @@ sans la bonne police ne se compare à aucun plafond.
    droit de grossir**.
 
    ```
-   @chantier js/app.js 3845
+   @chantier js/app.js 3802
    ```
 2. **Aucun seuil hors de la table.** La liste des seuils est déclarée une fois,
    en commentaire `@seuil` en tête de `styles/socle.css`, avec ce que chacun

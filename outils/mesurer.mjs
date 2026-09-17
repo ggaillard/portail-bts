@@ -109,16 +109,31 @@ const m = {
 // Quand une valeur bouge parce que le plan avance, on met à jour les DEUX :
 // cette table et le document. C'est le point : ils ne peuvent plus diverger
 // en silence.
+// Reprise automatiquement depuis « --libre » à chaque étape franchie : ce
+// n'est pas une table à tenir à la main, c'est la photo du dépôt le jour où
+// l'on a mis REFONTE.md d'accord avec lui.
 const ATTENDU = {
-  'lignes de index.html': 472, 'feuilles de style': 10, 'modules': 3,
-  'lignes de CSS': 1054, 'lignes de JavaScript': 4658,
-  'règles CSS': 470, 'classes CSS': 298, 'variables CSS définies': 17,
-  'variables CSS inutilisées': 0, 'var() jamais déclarées': 0,
-  'media queries': 12, 'seuils distincts': 8,
-  'fonctions de premier niveau': 146, 'médiane des fonctions': 22,
-  'plus longue fonction': 246, 'fonctions RPC appelées': 35,
-  'innerHTML =': 113, 'textContent =': 216, 'createElement': 162,
-  'onclick= en chaîne': 0, 'aria-live': 0,
+  'lignes de index.html': 491,
+  'feuilles de style': 10,
+  'modules': 4,
+  'lignes de CSS': 1065,
+  'lignes de JavaScript': 4761,
+  'règles CSS': 473,
+  'classes CSS': 299,
+  'variables CSS définies': 17,
+  'variables CSS inutilisées': 0,
+  'var() jamais déclarées': 0,
+  'media queries': 12,
+  'seuils distincts': 8,
+  'fonctions de premier niveau': 147,
+  'médiane des fonctions': 22,
+  'plus longue fonction': 246,
+  'fonctions RPC appelées': 35,
+  'innerHTML =': 113,
+  'textContent =': 216,
+  'createElement': 162,
+  'onclick= en chaîne': 0,
+  'aria-live': 19,
 };
 
 const large = Math.max(...Object.keys(m).map((k) => k.length));

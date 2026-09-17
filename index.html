@@ -24,6 +24,12 @@
 <link rel="stylesheet" href="styles/ecran.css">
 </head>
 <body>
+<!-- WCAG 2.4.1 : sans ce lien, un usage au clavier retraverse l'en-tête à
+     chaque page, et côté enseignant la carte épinglée « Ce qui bloque » avec.
+     Il ne se voit qu'une fois focalisé : c'est la forme habituelle, et c'est
+     ce qui permet de le placer en tout premier sans rien coûter à l'œil. -->
+<a class="evitement" href="#contenu">Aller au contenu</a>
+
 <div class="wrap">
 
 <header>
@@ -32,19 +38,30 @@
   <p class="sub">Identifiez-vous une fois : vous accédez ensuite à tous vos projets sans ressaisir quoi que ce soit.</p>
 </header>
 
-<p id="chargement" class="spin">Chargement…</p>
+<p id="chargement" class="spin" aria-live="polite">Chargement…</p>
+
+<!-- La cible du lien d'évitement. tabindex="-1" la rend focalisable par
+     programme sans l'ajouter à l'ordre de tabulation. -->
+<div id="contenu" tabindex="-1">
 
 <!-- ══════════ CONNEXION ══════════ -->
 <section id="connexion" hidden>
-  <div class="tabs" role="tablist">
-    <button class="tab" id="t-etu" role="tab" aria-selected="true" aria-controls="p-etu">Étudiant</button>
-    <button class="tab" id="t-ens" role="tab" aria-selected="false" aria-controls="p-ens">Enseignant</button>
+  <!-- Même motif que la barre de l'espace enseignant (ARIA Authoring
+       Practices, « Tabs ») : un seul onglet dans l'ordre de tabulation, les
+       flèches pour circuler, type="button" pour qu'un Entrée n'envoie jamais
+       le formulaire qui suit. C'était le premier écran que voit un étudiant,
+       et c'était le seul des deux à ne rien respecter de tout cela. -->
+  <div class="tabs" role="tablist" aria-label="Qui êtes-vous ?">
+    <button class="tab" type="button" id="t-etu" role="tab"
+            aria-selected="true" aria-controls="p-etu">Étudiant</button>
+    <button class="tab" type="button" id="t-ens" role="tab" tabindex="-1"
+            aria-selected="false" aria-controls="p-ens">Enseignant</button>
   </div>
 
-  <div class="card" id="p-etu" role="tabpanel">
+  <div class="card" id="p-etu" role="tabpanel" aria-labelledby="t-etu">
     <h2>Accéder à mes projets</h2>
     <p class="hint">Votre numéro et votre code vous ont été remis par votre enseignant. Aucun nom n'est demandé, et aucun n'est enregistré.</p>
-    <div id="err-etu"></div>
+    <div aria-live="polite" id="err-etu"></div>
     <form id="f-etu">
       <div class="field">
         <label for="classe">Votre classe</label>
@@ -64,10 +81,10 @@
     </form>
   </div>
 
-  <div class="card" id="p-ens" role="tabpanel" hidden>
+  <div class="card" id="p-ens" role="tabpanel" aria-labelledby="t-ens" hidden>
     <h2>Espace enseignant</h2>
     <p class="hint">Connexion avec le compte enseignant déclaré dans Supabase.</p>
-    <div id="err-ens"></div>
+    <div aria-live="polite" id="err-ens"></div>
     <form id="f-ens">
       <div class="field">
         <label for="email">Adresse électronique</label>
@@ -94,27 +111,27 @@
   <div class="card" id="bloc-avatar" hidden>
     <h2>Choisissez votre avatar</h2>
     <p class="hint">Il sera à vous seul toute l'année. C'est lui qu'on verra au tableau, jamais votre nom. Les avatars grisés sont déjà pris.</p>
-    <div id="err-avatar"></div>
+    <div aria-live="polite" id="err-avatar"></div>
     <div class="avatars" id="grille-avatars"></div>
   </div>
 
   <div class="file" id="file-etu" hidden>
     <span class="file-n" id="file-reste"></span>
-    <span class="file-t" id="file-txt"></span>
+    <span class="file-t" id="file-txt" aria-live="polite"></span>
     <a class="file-l" href="#mes-projets" id="file-saut" hidden>Mes projets ↓</a>
   </div>
 
   <div class="card etape" id="bloc-appel" data-etape="Présence" hidden>
     <h2 id="appel-titre">Question du jour</h2>
     <p class="hint">Répondez avant de rejoindre vos projets : c'est ce qui marque votre présence.</p>
-    <div id="err-appel"></div>
+    <div aria-live="polite" id="err-appel"></div>
     <div class="appel-choix" id="appel-choix"></div>
   </div>
 
   <div class="card etape" id="bloc-humeur" data-etape="Humeur" hidden>
     <h2 id="humeur-titre">Et aujourd'hui, comment ça va ?</h2>
     <p class="hint">Cette réponse ne compte pas dans vos résultats. Elle me dit juste dans quel état vous démarrez.</p>
-    <div id="err-humeur"></div>
+    <div aria-live="polite" id="err-humeur"></div>
     <div class="appel-choix" id="humeur-choix"></div>
   </div>
 
@@ -138,7 +155,7 @@
   </div>
 
   <div class="card" id="carte-afaire" hidden>
-    <h2 class="af-t">À faire <span class="af-pastille" id="af-etat"></span></h2>
+    <h2 class="af-t">À faire <span class="af-pastille" id="af-etat" aria-live="polite"></span></h2>
     <p class="hint">Recalculé depuis la base à chaque affichage : rien n'y reste par oubli,
       et rien n'y manque. Ce qui est rouge empêchera quelque chose de marcher en séance.</p>
     <div id="af-liste"></div>
@@ -177,7 +194,7 @@
         <button class="btn" id="b-noms-ok" type="button">Enregistrer</button>
         <button class="btn btn-sec" id="b-noms-vider" type="button">Oublier ces noms</button>
       </div>
-      <div id="err-noms"></div>
+      <div aria-live="polite" id="err-noms"></div>
     </details>
   </div>
   </div>
@@ -190,7 +207,7 @@
       signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
       jamais être évaluées.</p>
     <div id="sem-classes"></div>
-    <div id="err-semestre"></div>
+    <div aria-live="polite" id="err-semestre"></div>
   </div>
 
   <div class="card">
@@ -223,7 +240,7 @@
       qu'ils en avaient gardé. Un contrôle appartient à la séance qu'il précède :
       il s'écrit là-bas, il s'allume ici. <b>Éteint, aucun étudiant ne le voit.</b></p>
     <div id="ctl-liste"></div>
-    <div id="err-controles"></div>
+    <div aria-live="polite" id="err-controles"></div>
   </div>
 
   <div class="card" id="carte-qactifs" hidden>
@@ -238,7 +255,7 @@
       semestre : il s'allume alors quand cette séance démarre, et s'éteint quand
       elle se clot.</p>
     <div id="qa-liste"></div>
-    <div id="err-qactifs"></div>
+    <div aria-live="polite" id="err-qactifs"></div>
     <details class="qn-neuf" id="qn-neuf">
       <summary>Écrire un nouveau questionnaire</summary>
       <p class="sous-hint">Une question par ligne : l'intitulé puis deux à quatre
@@ -265,7 +282,7 @@
       <div class="pick" style="margin-top:.7rem">
         <button class="btn" id="b-qn-creer" type="button">Créer le questionnaire</button>
       </div>
-      <div id="err-qn-neuf"></div>
+      <div aria-live="polite" id="err-qn-neuf"></div>
     </details>
   </div>
 
@@ -303,7 +320,7 @@
         <button class="btn" id="b-demarrer" type="button">Démarrer la séance</button>
         <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
       </div>
-      <div id="err-prevol"></div>
+      <div aria-live="polite" id="err-prevol"></div>
     </div>
 
     <!-- Le parcours de l'heure. Le pré-vol dit « cette séance est-elle
@@ -322,7 +339,7 @@
         <summary>Étudiant par étudiant</summary>
         <div id="pa-lignes"></div>
       </details>
-      <div id="err-parcours"></div>
+      <div aria-live="polite" id="err-parcours"></div>
     </div>
 
     <!-- Le contrôle d'entrée se lit AVANT la séance : il vient donc juste
@@ -335,7 +352,7 @@
       </div>
       <p class="sous-hint" id="ct-resume"></p>
       <div id="ct-lignes"></div>
-      <div id="err-controle"></div>
+      <div aria-live="polite" id="err-controle"></div>
       <details id="ct-neuf">
         <summary>Écrire le contrôle de cette séance</summary>
         <p class="sous-hint">Une notion par ligne : l'intitulé puis deux à quatre
@@ -346,7 +363,7 @@
         <div class="pick" style="margin-top:.7rem">
           <button class="btn" id="b-ct-creer" type="button">Enregistrer le contrôle</button>
         </div>
-        <div id="err-ct-neuf"></div>
+        <div aria-live="polite" id="err-ct-neuf"></div>
       </details>
     </div>
 
@@ -360,7 +377,7 @@
       </div>
       <p class="sous-hint" id="db-resume"></p>
       <div id="db-lignes"></div>
-      <div id="err-debrief"></div>
+      <div aria-live="polite" id="err-debrief"></div>
       <details id="db-neuf">
         <summary>Écrire les concepts de cette séance</summary>
         <p class="sous-hint">Un concept par ligne : l'intitulé, un tiret, puis ce
@@ -372,7 +389,7 @@
         <div class="pick" style="margin-top:.7rem">
           <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
         </div>
-        <div id="err-db-neuf"></div>
+        <div aria-live="polite" id="err-db-neuf"></div>
       </details>
     </div>
 
@@ -412,6 +429,8 @@
   </div>
 
 </section>
+
+</div><!-- #contenu -->
 
 <footer>
   <span>Aucun nom, aucune adresse électronique d'élève n'est enregistré. Seuls un numéro et un avatar sont conservés.</span>
