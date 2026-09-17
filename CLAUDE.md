@@ -21,13 +21,17 @@ recompte ses chiffres et échoue quand le document a vieilli.
 |---|---|
 | `socle.js` | le client Supabase, `$`, l'état partagé `suivi`, les utilitaires d'affichage, la file d'attente de l'étudiant, la table des noms locale |
 | `navigation.js` | les deux barres d'onglets, et l'onglet dans l'adresse |
+| `afaire.js` | « Ce qui bloque » : la carte épinglée et ses gestes |
 | `appel.js` | l'appel du jour, l'humeur, l'assiduité, les numéros absents |
 | `enquetes.js` | « Faisons connaissance » (98) et « Recherche de stage » (97) |
 | `ensemble.js` | le semestre et les projets |
+| `controle.js` | le contrôle d'entrée, des deux côtés de l'écran |
+| `seance.js` | pré-vol, démarrer / clore, rafraîchir, chiffres, élève par élève |
+| `heure.js` | le parcours de l'heure et le débriefing — les deux lectures qui se projettent |
 | `ecran.js` | le mode classe projeté au tableau |
 | `bibliotheque.js` | les questionnaires côté enseignant : modèles, affectations, réglages |
 | `quiz.js` | les trois modes de rendu côté étudiant |
-| `app.js` | le suivi d'une séance, l'espace étudiant, la session, le démarrage — **à découper** |
+| `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
 
@@ -922,7 +926,18 @@ LINQ, trace console, lecture de code.
 ## Le portail enseignant sur un téléphone
 
 Il se pilote au téléphone en séance, pas seulement à la souris au bureau.
-Vérifié par `t_ens_mob.mjs` à 390 px :
+
+> **Ce document a menti ici jusqu'au 17/09 :** il annonçait une vérification par
+> `t_ens_mob.mjs` — @fantome t_ens_mob.mjs, cité ici pour dire qu'il n'a jamais
+> existé dans ce dépôt, et `outils/mesurer.mjs` refuse désormais toute autre
+> citation d'un contrôle absent. Les quatre
+> points ci-dessous sont des mesures réelles, faites une fois, à la main — pas
+> des contrôles qui tournent. Ce qui tourne aujourd'hui et couvre une partie de
+> cette liste : `outils/t_appel.mjs` (la carte d'appel, quatre largeurs),
+> `outils/t_pilotage.mjs` (« Ce qui bloque » et les Questionnaires),
+> `outils/t_suivi.mjs` (les tuiles de chiffres). Le reste attend son contrôle.
+
+Mesuré à 390 px :
 
 - **aucune cible tactile sous 44 px** — onglets, sélecteurs, boutons,
   interrupteurs. `input, select` et `.btn` portent `min-height:44px` ;
@@ -941,12 +956,19 @@ Vérifié par `t_ens_mob.mjs` à 390 px :
 ## L'espace étudiant sur un téléphone
 
 La plupart des étudiants répondent au téléphone. Trois contraintes, vérifiées
-par `t_mobile.mjs` à 390 px :
+par **`outils/t_etudiant.mjs`** à 360, 390 et 768 px — le contrôle porte ce nom
+depuis le 17/09 ; le `t_mobile.mjs` que ce document citait avant n'a jamais
+existé dans ce dépôt (@fantome t_mobile.mjs), et pendant ce temps cet écran
+n'était vérifié par rien :
 
 - **aucun débordement horizontal** — la page ne défile jamais latéralement ;
-- **aucune cible tactile sous 44 × 44 px**, interrupteurs compris ;
-- **la page raccourcit à mesure qu'on avance** : 2 256 px à l'arrivée, 1 769 px
-  une fois l'appel et l'humeur faits.
+- **aucune cible tactile sous 44 px de haut**, interrupteurs compris ;
+- **la page raccourcit à mesure qu'on avance** : 1 660 px à 390 px avec l'appel
+  et l'humeur encore à faire, et chaque carte finie rendue à son titre.
+
+Le contrôle vérifie aussi que **le compteur du bandeau vaut exactement le
+nombre de cartes visibles ni faites ni hors file** : un « 2 » quand il en reste
+trois, et l'étudiant croit avoir fini.
 
 Trois mécanismes, à ne pas défaire :
 
@@ -1079,6 +1101,16 @@ clic.
   possède aussi ses propres boutons** : les brancher ailleurs reviendrait à
   pouvoir déplacer l'un sans l'autre, et `comparer.mjs` ne verrait rien —
   c'est `outils/t_ecran.mjs` qui clique.
+- **Sur le suivi d'une séance, le chiffre est PLUS GROS sur un téléphone qu'au
+  bureau** — 1.7rem sous 34rem, 1.45rem au-dessus. Ce n'est pas une coquille :
+  ces quatre tuiles sont ce qu'on lit debout, entre deux rangs, sans s'arrêter ;
+  au bureau on les lit assis. La valeur « en activité » s'écrit **`12/31`, sans
+  espaces** — avec elles, à 1.7rem, elle se coupe en deux à 360 px et la tuile
+  gagne 30 px pour rien. Les marges, elles, restent à leur valeur de bureau :
+  c'est leur réveil qui faisait déborder la page. `outils/t_suivi.mjs` mesure
+  les trois. Et la grille s'écrit `minmax(0,1fr)`, jamais `1fr` : `1fr` vaut
+  `minmax(auto,1fr)`, donc une colonne ne descend pas sous la largeur
+  insécable de son contenu, et ces quatre valeurs viennent de la base.
 - **`erreur()` ne concatène plus de données.** Elle construit sa carcasse et
   y verse le texte par `textContent`. Ne pas revenir à `innerHTML` : douze de
   ses appels y versent une valeur venue de la base.
@@ -1118,12 +1150,13 @@ clic.
 Le dépôt est **public** et publié par GitHub Pages. Demander confirmation avant
 tout `git push`.
 
-Trois contrôles tournent sur chaque poussée, et ils répondent à trois questions
+Cinq contrôles tournent sur chaque poussée, et ils répondent à cinq questions
 différentes :
 
 | Workflow | Question |
 |---|---|
 | `verifier-portail.yml` · **syntaxe** | `index.html` s'affiche-t-il encore ? Syntaxe JS, `$("id")` existants, et **toute fonction appelée est-elle définie** |
+| `verifier-portail.yml` · **gabarits** | Les chiffres de `REFONTE.md` sont-ils ceux du dépôt (`mesurer.mjs`), et les neuf contrôles de navigateur passent-ils ? `t_chargement` · `t_appel` · `t_revision` · `t_pilotage` · `t_ecran` · `t_messages` · `t_navigation` · `t_suivi` · `t_etudiant` |
 | `verifier-portail.yml` · **coherence** | Les bonnes réponses de la base collent-elles aux supports ? |
 | `verifier-portail.yml` · **fiche** | **Cette séance est-elle prête ?** Douze points, appliqués à chaque `docs/seances/seance-*.md` trouvée |
 | `supabase.yml` · **verifier** | La chaîne de migrations se rejoue-t-elle deux fois sur une base vierge, et les invariants tiennent-ils ? |

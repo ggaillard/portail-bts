@@ -410,11 +410,18 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
       substitue `config.js`, le client Supabase et **une seule ligne** dans le
       script, au passage sur le réseau. Les trois `t_*.mjs` n'ont plus une
       seule expression régulière sur le HTML.
-- [~] **A5-A6. Extraire les modules.** En cours. Au 17/09, `app.js` est passé
-      de **4 529 à 2 909 lignes** et six modules existent : `socle.js` (261),
-      `navigation.js` (146), `ecran.js` (646), `bibliotheque.js` (488),
-      `quiz.js` (340). Reste dans `app.js` : l'appel, la vue d'ensemble, le
-      suivi d'une séance, l'espace étudiant, et l'orchestration du démarrage.
+- [x] **A5-A6. Le découpage est fait.** ✅ 17/09. `app.js` est passé de
+      **4 529 à 582 lignes**, et **treize modules** existent :
+
+      | | | | |
+      |---|---|---|---|
+      | `socle.js` 372 | `appel.js` 521 | `ecran.js` 646 | `afaire.js` 243 |
+      | `navigation.js` 146 | `enquetes.js` 253 | `seance.js` 579 | `heure.js` 305 |
+      | `ensemble.js` 290 | `controle.js` 361 | `bibliotheque.js` 488 | `quiz.js` 340 |
+
+      Ce qui reste dans `app.js` : ouvrir l'espace étudiant, ouvrir l'espace
+      enseignant, la connexion, la déconnexion, la liste des classes. C'est
+      l'orchestration, et c'est tout — il n'a plus de sujet à lui.
       *(note d'origine, 16/09 :*
       `js/socle.js` (167 l.) et `js/ecran.js` (646 l.) sont sortis. Reste
       `quiz.js`, `appel.js`. *Le plan disait « les feuilles d'abord, le socle
@@ -422,12 +429,11 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
       `suivi`, de `typo` ; si le socle est encore dans `app.js`, l'écran doit
       importer `app.js`, qui importe l'écran — un cycle. Le socle sort en
       premier, et plus personne n'importe personne.)*
-- [~] **A6bis. Le reste.** En cours. Sortis le 17/09 : `ensemble.js` (290),
-      `appel.js` (521), `enquetes.js` (253). **`app.js` : 2 909 → 1 884
-      lignes**, neuf modules. Reste : le suivi d'une séance (avec le contrôle
-      d'entrée, le parcours et le débriefing — ~800 lignes, treize dépendances
-      sortantes, à couper en deux), l'espace étudiant, la session et
-      l'orchestration du démarrage.
+- [x] **A6bis. Le reste.** ✅ 17/09. `ensemble.js`, `appel.js`, `enquetes.js`,
+      puis le morceau le plus enchevêtré — le suivi d'une séance — en trois :
+      `controle.js` (le contrôle d'entrée), `seance.js` (pré-vol, pilotage,
+      chiffres) et `heure.js` (le parcours et le débriefing, les deux lectures
+      qui se projettent). Enfin `afaire.js`, la carte épinglée.
 - [x] **A7. `erreur()` réparée.** ✅ 16/09. La carcasse se construit sans
       jamais concaténer de données ; aucun des 73 appels n'a changé.
       `outils/t_messages.mjs` rejoue l'injection et vérifie aussi que le texte
@@ -486,21 +492,56 @@ utile, et chacune s'annule par un `git revert` d'un seul commit.
   taxonomie à deux catégories clairement séparées vaut mieux que quatre
   catégories mêlées.
 
-- [ ] **B8. Les tuiles de chiffres sur un téléphone.** Leur mise en forme
-      étroite était écrite mais sans effet depuis le début (§5bis). La rétablir
-      telle quelle fait déborder la page de 36 px à 360 px : il faut donc
-      décider ce qu'on veut vraiment y lire debout, et dimensionner pour ça.
-- [ ] **B7. L'espace étudiant.** Aujourd'hui une pile de cartes sous l'avatar,
-      avec une file d'attente en bandeau. À reprendre une fois B1 en place, car
-      l'étudiant aussi rafraîchit sa page.
+- [x] **B8. Les tuiles de chiffres sur un téléphone.** ✅ 17/09. Leur mise en
+      forme étroite était écrite mais sans effet depuis le début (§5bis). Elle
+      est rétablie, pas telle quelle : le chiffre passe à **1.7rem sous 34rem**
+      et **revient à 1.45rem au-dessus** — plus gros sur un téléphone qu'au
+      bureau, et c'est le sens de l'écran, celui qu'on lit debout entre deux
+      rangs. Les marges, elles, n'ont pas été touchées : c'est leur réveil qui
+      faisait déborder la page de 36 px.
+
+      La valeur « en activité » s'écrit désormais **`12/31` et non `12 / 31`** :
+      avec les espaces, à 1.7rem, elle se coupe en deux à 360 px et la tuile
+      gagne 30 px pour rien (mesuré : tuile 75 → 105 px, grille 175 → 205 px).
+      Serrée, elle tient — et c'est aussi comme cela qu'on écrit un score.
+
+      Mesuré aux sept largeurs, contre l'état du 16/09 :
+
+      | Largeur | Chiffre | Grille des quatre tuiles |
+      |---|---|---|
+      | 360 px | 23,2 → **27,2 px** | 166 → **175 px** |
+      | 390 px | 23,2 → **27,2 px** | 166 → **175 px** |
+      | 480 px | 23,2 → **27,2 px** | 149 → **158 px** |
+      | 620 px | inchangé | 96 → **88 px** (une valeur ne se coupe plus) |
+      | 640 / 768 / 1280 px | inchangé | **identique au pixel** |
+
+      Neuf pixels pour un chiffre 17 % plus grand, et rien d'autre ne bouge :
+      `outils/comparer.mjs` ne relève, sous 544 px, que les tuiles et le
+      décalage vertical de ce qui les suit. Nouveau contrôle : `t_suivi.mjs`
+      (le huitième), cassé de quatre façons avant d'être cru — chiffre revenu
+      à la taille du bureau, espaces remis dans « 12 / 31 », carte des
+      contrôles renvoyée dans Questionnaires, `minmax(0,1fr)` redevenu `1fr`.
+
+- [x] **B7. L'espace étudiant.** ✅ 17/09, **et il dément ce que j'en avais
+      dit** : voir « Ce que B7 a démenti » au §5bis. Mesuré plutôt que lu, cet
+      espace tient déjà ses promesses — bandeau qui compte ce qui reste, rang
+      sur chaque carte, carte finie repliée et non disparue, 1 660 px à 390 px
+      sans débordement, aucune cible sous 44 px. Le travail livré ici n'est
+      donc pas une refonte, c'est de le mettre **sous mesure** :
+      `outils/t_etudiant.mjs`, le neuvième contrôle, et le premier à regarder
+      l'écran que trente personnes ouvrent en même temps.
 
 ### Ordre conseillé
 
 `A1 → A2 → A3` (publier, vérifier en production) `→ A4 → B1 → B2 → B3 → B4 →
-B5 → A5 → A6 → A7 → A8 → B6 → B7`.
+B5 → A5 → A6 → A7 → A8 → B8 → B7 → B6`.
 
-B6 arrive tard **exprès** : renommer les onglets pendant l'année scolaire
-désoriente ; la fin d'un semestre est le bon moment.
+**Tout est fait sauf B6**, qui arrive en dernier **exprès** : renommer les
+onglets pendant l'année scolaire désoriente ; la fin d'un semestre est le bon
+moment, et c'est une décision à prendre ensemble, pas à appliquer d'office.
+B8 et B7 ont changé de place dans l'ordre parce que B8 est né d'une découverte
+faite en A1 — une règle écrite qui ne s'appliquait pas — et qu'il valait mieux
+la traiter tant qu'on l'avait sous les yeux.
 
 ---
 
@@ -543,9 +584,22 @@ Après B2 et la suite du découpage (17/09) :
 
 | | après B1-B5 | aujourd'hui |
 |---|---|---|
-| modules | 4 | **9** |
-| `js/app.js` | 3 802 | **1 884** |
+| modules | 4 | **13** |
+| `js/app.js` | 3 802 | **582** |
 | contrôles | 7 | 7, plus deux règles neuves dans `mesurer.mjs` |
+
+**Le chantier A est terminé.** `index.html` : 5 847 → 509 lignes. Le style dans
+dix feuilles, le script dans treize modules dont aucun ne dépasse 646 lignes, et
+`app.js` réduit à ce qu'il aurait toujours dû être : l'orchestration, et rien
+d'autre. Le rendu n'a pas bougé d'un pixel à sept largeurs — sauf à 640 px, une
+fois, par décision (§5bis).
+
+Le plafond de 700 lignes a refusé un module **quatre fois**, et il avait raison
+les quatre : `questionnaires.js` portait deux sujets (l'enseignant et
+l'étudiant), `appel.js` deux (le début d'heure et les enquêtes annuelles),
+`seance.js` deux (le pilotage et les deux lectures projetées). Chaque refus a
+produit une coupe que personne n'avait vue en écrivant le plan — et les deux
+moitiés, à chaque fois, ne s'appelaient jamais.
 
 ### Ce que le découpage casse, et comment on l'a su
 
@@ -632,6 +686,66 @@ bouge pas. **Réveiller l'intention d'origine fait déborder la page de 36 px à
 360 px** — mesuré — donc c'est une décision d'IHM, pas un nettoyage :
 → **B8** ci-dessous.
 
+### Ce que B7 a démenti, et ce que ça dit de la méthode
+
+En ouvrant B7, j'ai affirmé — dans la conversation, pas dans ce document — que
+l'espace étudiant n'avait « ni repères d'avancement ni retour en arrière ».
+C'était **lu dans le balisage, pas mesuré**. Mesuré, c'est faux :
+
+| Ce que j'affirmais | Ce que la mesure dit |
+|---|---|
+| pas de repère d'avancement | le bandeau compte ce qui reste (« 2 choses à faire »), chaque carte porte son rang, recalculé à chaque rendu |
+| pas de retour en arrière | une carte finie **se replie** au lieu de disparaître, et garde son accusé |
+| écran trop long sur un téléphone | 1 660 px à 390 px, sans un pixel de débordement |
+| cibles tactiles à surveiller | aucune sous 44 px, à 360 comme à 390 px |
+
+La leçon n'est pas « l'audit s'est trompé une fois » : c'est que **la partie de
+l'audit écrite en lisant le code vaut moins que la partie écrite en mesurant**,
+et que la différence ne se voit pas à la relecture. Toutes les affirmations
+mesurées de §1 sont recomptées par `outils/mesurer.mjs` ; celles qui ne le sont
+pas sont des opinions bien informées, et doivent se lire comme telles.
+
+La réponse à B7 n'est donc pas une refonte, c'est une mise sous mesure :
+`outils/t_etudiant.mjs`, neuvième contrôle, sur le seul écran du portail que
+trente personnes ouvrent en même temps et dont une panne se paie en minutes de
+cours. Il a été cassé cinq fois avant d'être cru : carte finie qui disparaît
+au lieu de se replier, questionnaire de révision remis dans la file, repli CSS
+désactivé, compteur de file qui ne déduit plus les cartes faites, rang figé à
+« 1 · », cible tactile ramenée à 33 px. Il a nommé les six.
+
+**Un garde-fou plutôt qu'un défaut.** En corrigeant B8, `1fr` a été remplacé
+par `minmax(0,1fr)` sur la grille des tuiles. À dire honnêtement : avec les
+valeurs que ce tableau de bord affiche vraiment, les deux écritures donnent le
+**même rendu au pixel**, aux sept largeurs. Ce n'est pas une réparation, c'est
+une protection — `1fr` vaut `minmax(auto,1fr)`, donc une colonne ne descend
+jamais sous la largeur insécable de son contenu, et `12/31` n'a plus d'espace
+où se couper. Les quatre chiffres viennent de la base ; une grille ne doit pas
+pouvoir être cassée par la longueur d'une valeur. `t_suivi.mjs` le vérifie avec
+une valeur volontairement absurde — le seul moyen de vérifier un garde-fou.
+
+**Un jeu d'essai qui ne convenait plus, et personne pour le dire.**
+`outils/comparer.mjs` appelait ses cinq fonctions de rendu dans des `try/catch`
+muets. Son jeu d'essai avait cessé de convenir à `rendreSuivi()` : la fonction
+écrivait `undefined/13` dans la première tuile puis levait une exception avalée
+en silence, et la comparaison continuait sur une page à moitié remplie. Les
+tuiles étaient donc comparées sur une valeur qui n'existe pas — et c'est sa
+largeur insécable qui a fait croire, une heure durant, à un débordement de
+67 px. Le jeu d'essai est corrigé, et **un jeu d'essai refusé est désormais
+remonté** au lieu d'être avalé.
+
+**Deux contrôles qui n'existaient pas, et le document qui les annonçait.**
+`CLAUDE.md` disait « Vérifié par `t_ens_mob.mjs` » et « vérifiées par
+`t_mobile.mjs` ». Ni l'un ni l'autre n'a jamais existé dans ce dépôt —
+`git log --all` ne les connaît pas. Deux écrans entiers se croyaient couverts,
+dont l'espace étudiant, celui que trente personnes ouvrent en même temps.
+
+Ce n'est pas un oubli isolé, c'est une classe d'erreurs : rien, jusqu'ici, ne
+reliait ce que les documents affirment à ce que le dépôt contient. La réponse
+est donc une règle, §6.6, et elle tient dans `outils/mesurer.mjs` — cassée
+quatre fois avant d'être crue : citation d'un contrôle absent, contrôle présent
+mais jamais lancé, étape de workflow qui appelle un outil disparu, aveu
+`@fantome` qui a survécu au retour du contrôle. Elle a nommé les quatre.
+
 **Un contrôle qui pouvait devenir muet.** L'ancienne façon d'ouvrir le portail
 reposait sur trois substitutions dans son HTML. `outils/portail.mjs` n'en fait
 plus qu'une, et **échoue bruyamment** si son point d'ancrage disparaît :
@@ -655,13 +769,10 @@ sans la bonne police ne se compare à aucun plafond.
    qu'il faut ouvrir ensemble.* Le plafond ne sert pas à viser : il sert à ce
    qu'aucun module ne redevienne un `app.js` sans qu'on le voie.
 
-   Pendant le découpage, `app.js` est forcément au-dessus. Il est donc déclaré
-   ici avec sa taille du jour : il a le droit d'être gros, **il n'a pas le
-   droit de grossir**.
-
-   ```
-   @chantier js/app.js 1884
-   ```
+   *Pendant le découpage, `app.js` a été déclaré ici avec sa taille du jour —
+   il avait le droit d'être gros, pas de grossir. La ligne `@chantier` a été
+   retirée le 17/09 : à 582 lignes, `app.js` passe le plafond comme n'importe
+   quel module, et il n'y a plus rien à excepter.*
 2. **Aucun seuil hors de la table.** La liste des seuils est déclarée une fois,
    en commentaire `@seuil` en tête de `styles/socle.css`, avec ce que chacun
    gouverne. `outils/mesurer.mjs` refuse toute media query qui n'y figure pas.
@@ -676,7 +787,28 @@ sans la bonne police ne se compare à aucun plafond.
 5. **Un contrôle d'intégration ne bloque que ce qui empêche de faire cours.**
    Le 15/09, une assertion trop stricte a arrêté le déploiement une semaine
    (§2.5).
-6. **Le dépôt est public.** Ni clé `service_role`, ni nom d'élève, ni
+6. **Un contrôle cité existe, et un contrôle qui existe tourne.**
+   `outils/mesurer.mjs` refuse les deux dérives, dans les deux sens : un
+   document qui nomme un `outils/…` absent, et un `outils/t_*.mjs` que
+   `verifier-portail.yml` n'appelle pas.
+
+   *Cette règle est née d'une panne, le 17/09 : `CLAUDE.md` annonçait deux
+   vérifications — « Vérifié par `t_ens_mob.mjs` », « vérifiées par
+   `t_mobile.mjs` » — par des fichiers qui n'ont jamais existé dans ce dépôt.
+   Deux écrans entiers, l'espace étudiant compris, se croyaient couverts et ne
+   l'étaient par rien. **Une promesse de contrôle est pire que pas de
+   contrôle** : devant une case vide on regarde, devant une case cochée on
+   passe. Et l'inverse coûte aussi cher — un contrôle rangé dans `outils/` que
+   rien n'appelle ne protège que le jour où quelqu'un pense à le lancer, donc
+   jamais, passé trois semaines.*
+
+   Un nom peut être cité pour dire qu'il ne vérifie rien : cela se **déclare**,
+   comme `@chantier` et `@seuil`, par `@fantome <fichier>` dans le document.
+   L'aveu coûte une ligne — c'est ce qui sépare « j'assume ce nom mort » de
+   « j'ai oublié ». Un `@fantome` qui nomme un fichier redevenu présent est
+   refusé à son tour : l'aveu ne survit pas au contrôle.
+
+7. **Le dépôt est public.** Ni clé `service_role`, ni nom d'élève, ni
    correspondance numéro↔nom. La règle existe déjà dans `CLAUDE.md` ; le
    découpage en modules multiplie les fichiers, donc les occasions de
    l'oublier.
