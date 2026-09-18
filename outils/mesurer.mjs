@@ -343,6 +343,45 @@ if (FJS.length) {
   }
 }
 
+// 5. Le workflow DÉPLOYÉ est celui du dépôt (§6.7).
+//
+//    GitHub ne lit les workflows que dans .github/workflows/, dossier protégé
+//    en écriture à distance — à raison : un fichier qui déclenche une
+//    exécution ne doit pas pouvoir changer sans que personne ne regarde. Toute
+//    correction faite depuis une session Claude restait donc dans un dossier à
+//    part, hors du dépôt, et il fallait PENSER à la recopier.
+//
+//    Le 17/09 on a mesuré ce que « penser à » vaut : le workflow déployé datait
+//    d'avant le découpage en modules, sa première étape cherchait le script
+//    dans un bloc <script> disparu, elle échouait, et les deux étapes suivantes
+//    — dont « toute fonction appelée est-elle définie », celle qui avait
+//    rattrapé sept fonctions perdues — ne s'exécutaient plus. Deux jours de
+//    poussées non vérifiées, et rien ne le disait : un contrôle qui ne tourne
+//    pas ressemble exactement à un contrôle qui passe.
+//
+//    Les workflows sont donc écrits dans outils/ci/, versionnés et poussés
+//    comme le reste, et cette règle refuse que les deux copies divergent.
+{
+  const MIROIR = 'outils/ci';
+  const CIBLE = '.github/workflows';
+  if (existe(MIROIR)) {
+    const ymls = fs.readdirSync(path.join(RACINE, MIROIR)).filter((f) => f.endsWith('.yml'));
+    const ecarts = [];
+    for (const f of ymls) {
+      const a = path.join(CIBLE, f);
+      if (!existe(a)) { ecarts.push(`${f} (absent de ${CIBLE})`); continue; }
+      if (lire(a) !== lire(path.join(MIROIR, f))) ecarts.push(f);
+    }
+    console.log(`\n  workflows : ${ymls.length} dans ${MIROIR} · ` +
+                (ecarts.length ? `${ecarts.length} à recopier` : 'identiques à ' + CIBLE));
+    if (ecarts.length) {
+      fautes.push(`${ecarts.join(', ')} : ${MIROIR}/ et ${CIBLE}/ ont divergé — ` +
+                  `c'est le second qui tourne sur GitHub, et lui seul. ` +
+                  `Copiez : « Copy-Item outils\\ci\\*.yml .github\\workflows\\ -Force » (§6.7)`);
+    }
+  }
+}
+
 // 4. Un contrôle cité existe, et un contrôle qui existe tourne (§6.6).
 //
 //    Le 17/09, CLAUDE.md annonçait deux vérifications — « Vérifié par

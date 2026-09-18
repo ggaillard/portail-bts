@@ -883,7 +883,20 @@ sans la bonne police ne se compare à aucun plafond.
    « j'ai oublié ». Un `@fantome` qui nomme un fichier redevenu présent est
    refusé à son tour : l'aveu ne survit pas au contrôle.
 
-7. **Le dépôt est public.** Ni clé `service_role`, ni nom d'élève, ni
+7. **Le workflow déployé est celui du dépôt.** Les workflows s'écrivent dans
+   `outils/ci/`, versionnés et poussés comme le reste ; `outils/mesurer.mjs`
+   refuse que `outils/ci/` et `.github/workflows/` divergent, et donne la
+   commande de copie.
+
+   *Née d'un angle mort de deux jours, §8.1 : `.github/workflows/` est protégé
+   en écriture à distance — à raison — donc chaque correction de CI restait
+   hors du dépôt, et il fallait penser à la recopier. On n'y a pas pensé, et le
+   workflow qui tournait sur GitHub cherchait encore le script dans un bloc
+   `<script>` supprimé par A3. Il échouait à sa première étape ; les deux
+   suivantes ne s'exécutaient plus. La règle ne supprime pas la copie manuelle,
+   elle supprime le silence.*
+
+8. **Le dépôt est public.** Ni clé `service_role`, ni nom d'élève, ni
    correspondance numéro↔nom. La règle existe déjà dans `CLAUDE.md` ; le
    découpage en modules multiplie les fichiers, donc les occasions de
    l'oublier.
@@ -899,3 +912,97 @@ sans la bonne police ne se compare à aucun plafond.
   publication — exactement ce qui vous a bloqué une semaine. À rouvrir si un
   jour l'écriture de l'interface devient le goulot ; ce n'est pas le cas.
 - **Le contenu pédagogique.** Séances, sujets, corrigés : ailleurs.
+
+---
+
+## 8. Ce qui reste, au 17/09 au soir
+
+Les dix-sept étapes du plan sont faites. Ce qui suit n'en fait pas partie :
+ce sont trois choses **constatées en vérifiant l'état publié**, et dont deux ne
+peuvent pas être corrigées depuis une session Claude.
+
+### 8.1 — Les contrôles ne tournent plus sur GitHub depuis A3 ⛔
+
+C'est le point le plus important de cette liste, et il ne se voyait nulle part.
+
+`.github/workflows/verifier-portail.yml`, **tel qu'il est sur `main`**, date
+d'avant le découpage. Sa première étape extrait le script du bloc `<script>`
+d'`index.html` :
+
+```
+blocs = re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', s, re.S)
+if not blocs:
+    sys.exit("Aucun script en ligne trouvé dans index.html")
+```
+
+Depuis A3, ce bloc n'existe plus — le script vit dans `js/`. Rejoué sur la page
+d'aujourd'hui : **zéro bloc trouvé**, donc le travail s'arrête là, en rouge, et
+les deux étapes suivantes — « les `$("id")` existent-ils » et « toute fonction
+appelée est-elle définie », celle qui avait rattrapé sept fonctions disparues —
+ne s'exécutent jamais. Aucune poussée n'est vérifiée depuis deux jours.
+
+La version à jour utilise `outils/source.py`, qui sait où vit le script des deux
+côtés du découpage, et lance les neuf contrôles de navigateur plus
+`mesurer.mjs`. Elle n'avait jamais pu être écrite sur le disque : le pont
+refuse `.github/workflows/` — à raison, un fichier qui déclenche une exécution
+ne doit pas pouvoir changer à distance sans que personne ne regarde.
+
+**Ce que ça dit, au-delà du cas :** un contrôle qui ne tourne pas ressemble
+exactement à un contrôle qui passe — dans les deux cas, personne ne dit rien.
+C'était §6.6 vu de l'autre bout : elle vérifie qu'un contrôle est *appelé* par
+le workflow, pas que le workflow *déployé* est celui du dépôt.
+
+**La réponse, et elle est en place :** les workflows vivent désormais dans
+**`outils/ci/`**, dans le dépôt, donc versionnés, poussés et écrits par le pont
+comme n'importe quel fichier. `mesurer.mjs` compare chaque fichier à son jumeau
+de `.github/workflows/` et **échoue quand les deux diffèrent**, avec la commande
+de copie (§6.7). La copie manuelle reste — GitHub ne lit que `.github/` — mais
+elle cesse d'être silencieuse. Cassée deux fois : un fichier en retard, un
+fichier absent ; elle a nommé les deux.
+
+Il reste donc **une copie à faire une fois**, depuis la racine du dépôt :
+
+```
+Copy-Item outils\ci\*.yml .github\workflows\ -Force
+```
+
+Puis Commit + Sync. `node outils/mesurer.mjs` repasse au vert, et l'onglet
+Actions montre six travaux au lieu de deux.
+
+**Un second oubli de la même famille, trouvé en relisant ce fichier.** La liste
+`paths:` qui déclenche le workflow ne contenait ni `js/**` ni `styles/**` :
+elle a été écrite quand tout vivait dans `index.html`, et A2 puis A3 ont sorti
+le code sans que personne n'y revienne. Une modification d'un module ou d'une
+feuille — c'est-à-dire la quasi-totalité du travail depuis le 16/09 — ne
+déclenchait donc rien, même si le workflow avait fonctionné. Corrigé dans la
+version à copier.
+
+### 8.2 — `supabase.yml` porte encore l'assertion qui a bloqué une semaine ⛔
+
+Sur `main`, le travail « verifier » exige toujours **zéro point dans
+`a_faire()`, toutes gravités confondues**. C'est l'assertion du §2.5 : le 15/09,
+une migration a posé un contrôle d'entrée éteint — un état parfaitement normal,
+et même exactement ce que la règle 9 sert à rappeler — le travail est passé au
+rouge, « appliquer » en dépend, et deux migrations sont restées sur GitHub sans
+atteindre la production pendant que le portail parlait à des fonctions absentes.
+
+La version corrigée n'exige zéro que sur les **bloquants**, et ajoute une
+recherche de doublons que l'ancienne ne faisait pas. Elle part dans la même
+copie que ci-dessus : `outils\ci\*.yml` → `.github\workflows\`.
+
+### 8.3 — Un second portail, obsolète, est en ligne 🔶
+
+`index-2.html` — 5 843 lignes, la copie d'avant le découpage — est toujours sur
+`main`, donc **servi par GitHub Pages** à `/portail-bts/index-2.html`. Vérifié :
+la page se charge.
+
+Ce n'est pas un fichier mort. C'est un second front-end, complet et
+fonctionnel, branché sur **la même base de production** : il lit `config.js`,
+donc la clé `anon`, donc les vraies données. Qui y arrive par un favori ou un
+lien utilise le portail du 16/09 — carte de révision pliée et inutilisable,
+aucun `aria-live`, aucune des corrections des deux derniers jours — sans qu'un
+seul indice ne lui dise qu'il est sur une vieille version.
+
+Pas de fuite : ni clé `service_role`, ni nom d'élève, ni correspondance
+numéro↔nom. C'est une question de cohérence, pas de sécurité. Il est supprimé
+dans l'historique de la session ; il reste à le supprimer là où il compte.
