@@ -36,8 +36,12 @@ def _trace(bac, n):
 
 def _migration(bac, motif):
     import glob
-    return glob.glob(os.path.join(bac, 'portail', 'supabase',
-                                  'migrations', motif))[0]
+    # Le DERNIER fichier qui correspond, dans l'ordre des noms : c'est lui qui
+    # fait foi, comme en base (lire.py lit dans l'ordre, le dernier écrit gagne).
+    # Casser le premier ne prouvait plus rien dès qu'une migration plus récente
+    # réécrit la même séance — ce qu'a fait celle de la séance 4, le 24/09.
+    return sorted(glob.glob(os.path.join(bac, 'portail', 'supabase',
+                                         'migrations', motif)))[-1]
 
 
 ESSAIS = [

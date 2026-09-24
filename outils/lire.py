@@ -256,9 +256,15 @@ def corriges(racine):
     les séances à venir. Le premier écrit de ce contrôle ne lisait qu'un seul
     fichier : la séance 3, écrite dans sa propre migration, n'était vérifiée
     par personne.
+
+    Il couvre aussi les migrations qui CORRIGENT un corrigé existant, comme
+    celle du 18/09 qui remet les accents. Les fichiers sont lus dans l'ordre
+    des noms — donc dans l'ordre d'application — et le dernier écrit gagne,
+    exactement comme en base. Sans cela, ce contrôle vérifierait indéfiniment
+    le texte d'avant la correction, en se croyant à jour.
     """
     base, fichiers = {}, sorted(glob.glob(os.path.join(
-        racine, 'supabase', 'migrations', '*_bts1_seance*.sql')))
+        racine, 'supabase', 'migrations', '*seance*.sql')))
     for f in fichiers:
         with open(f, encoding='utf-8') as fh:
             sql = fh.read()

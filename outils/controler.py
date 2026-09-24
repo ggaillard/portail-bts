@@ -23,6 +23,7 @@ Deux niveaux de retour :
 import argparse
 import os
 import sys
+import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lire  # noqa: E402
@@ -414,6 +415,39 @@ def coherence(racine, supports):
                            "diffèrent de celles de l'insert ; au prochain rejeu, "
                            "le rattrapage remettrait l'ancienne version"
                            % (f, cle[0], cle[1]))
+
+    # ── Ce que la base donne à LIRE, et pas seulement à comparer ───────────
+    #
+    #  Ces deux règles sont nées d'un angle mort du 18/09 : les 268 textes de
+    #  quiz des séances 1 à 3 étaient écrits SANS UN SEUL ACCENT, et rien ne
+    #  l'avait jamais dit. La raison est instructive — `lire.plat()` normalise
+    #  les accents avant de comparer page et base, ce qui est la bonne règle
+    #  pour ne pas crier sur une différence typographique, et ce qui rendait
+    #  ce contrôle parfaitement aveugle à un texte faux DES DEUX CÔTÉS.
+    #
+    #  Un contrôle qui compare deux sources ne voit jamais une erreur commune
+    #  aux deux. Il faut donc aussi regarder chaque source pour elle-même.
+    for (num, q), (bonne, opts) in sorted(base.items()):
+        p = 'séance %s q%s' % (num, q[1:])
+        marques = [any(unicodedata.category(c) == 'Mn'
+                       for c in unicodedata.normalize('NFD', o)) for o in opts]
+        j = 'ABCD'.index(bonne) if bonne in 'ABCD' else -1
+
+        # 1 — l'indice typographique. Si une seule option porte un accent et
+        #     que c'est la bonne, elle se reconnaît sans être lue. C'est le
+        #     jumeau de la règle des longueurs du contrôle « pedagogie ».
+        if 0 <= j < len(marques) and sum(marques) == 1 and marques[j]:
+            dur.append("%s : « %s » est la seule option accentuée, et c'est la "
+                       "bonne — elle se repère sans être lue" % (p, opts[j]))
+
+        # 2 — un texte entièrement sans accent au milieu d'options qui en
+        #     portent. On ne conclut pas : « Logiciel » et « WebSocket » n'en
+        #     veulent pas. On le montre, pour qu'un œil passe dessus.
+        if any(marques) and not all(marques):
+            muettes = [o for o, m in zip(opts, marques) if not m and len(o) > 12]
+            if muettes:
+                doux.append("%s : sans accent, à relire — %s"
+                            % (p, ' · '.join('« %s »' % o for o in muettes)))
 
     if not dur:
         doux.append("%d questions vérifiées dans %d migration(s)."

@@ -915,13 +915,19 @@ sans la bonne police ne se compare à aucun plafond.
 
 ---
 
-## 8. Ce qui reste, au 17/09 au soir
+## 8. Ce qui reste — constaté en vérifiant l'état publié
 
-Les dix-sept étapes du plan sont faites. Ce qui suit n'en fait pas partie :
-ce sont trois choses **constatées en vérifiant l'état publié**, et dont deux ne
-peuvent pas être corrigées depuis une session Claude.
+Les dix-sept étapes du plan sont faites. Ce qui suit n'en fait pas partie : ce
+sont des défauts **trouvés en vérifiant ce qui est réellement en ligne**, et
+non en relisant le plan.
 
-### 8.1 — Les contrôles ne tournent plus sur GitHub depuis A3 ⛔
+> **Au 18/09 au matin.** 8.1 et 8.2 sont **réglés** : les workflows ont été
+> recopiés et poussés, les six travaux existent sur GitHub. Rallumer les
+> contrôles a aussitôt montré ce qu'ils ne voyaient plus depuis deux jours —
+> c'est l'objet de **8.4**, et c'est de loin le plus grave de cette liste.
+> Restent 8.3 et la poussée du dépôt des supports (8.5).
+
+### 8.1 — Les contrôles ne tournaient plus sur GitHub depuis A3 ✅ *réglé le 17/09*
 
 C'est le point le plus important de cette liste, et il ne se voyait nulle part.
 
@@ -977,7 +983,7 @@ feuille — c'est-à-dire la quasi-totalité du travail depuis le 16/09 — ne
 déclenchait donc rien, même si le workflow avait fonctionné. Corrigé dans la
 version à copier.
 
-### 8.2 — `supabase.yml` porte encore l'assertion qui a bloqué une semaine ⛔
+### 8.2 — `supabase.yml` portait encore l'assertion qui a bloqué une semaine ✅ *réglé le 17/09*
 
 Sur `main`, le travail « verifier » exige toujours **zéro point dans
 `a_faire()`, toutes gravités confondues**. C'est l'assertion du §2.5 : le 15/09,
@@ -1006,3 +1012,79 @@ seul indice ne lui dise qu'il est sur une vieille version.
 Pas de fuite : ni clé `service_role`, ni nom d'élève, ni correspondance
 numéro↔nom. C'est une question de cohérence, pas de sécurité. Il est supprimé
 dans l'historique de la session ; il reste à le supprimer là où il compte.
+
+### 8.4 — Les 268 textes de quiz étaient écrits sans un seul accent ⛔ *corrigé le 18/09*
+
+Rallumer les contrôles a rendu la parole à trois travaux muets depuis deux
+jours. Ils ont immédiatement signalé six écarts entre la page d'une séance et
+la base. En les regardant, un défaut bien plus large est apparu.
+
+**Cent pour cent** des textes de quiz des séances 1, 2 et 3 — 268 intitulés,
+options et explications — sont écrits **sans le moindre accent** : « une
+attaque informatique venue de l'exterieur », « le probleme vient de qui ? »,
+« Materiel », « Donnees », « Un modele entraine sur des donnees corrompues ».
+Mesuré, pas estimé : 268 sur 268.
+
+Ce ne sont pas des chaînes internes. C'est ce que trente étudiants lisent sur
+leur téléphone pendant une évaluation.
+
+**Pourquoi aucun contrôle ne l'a jamais dit**, et c'est la partie instructive :
+`lire.plat()` normalise les accents avant de comparer page et base. C'est la
+BONNE règle — sans elle, le contrôle crierait sur une différence typographique
+et on finirait par ne plus le regarder. Mais elle le rendait parfaitement
+aveugle à un texte faux **des deux côtés**. *Un contrôle qui compare deux
+sources ne voit jamais une erreur commune aux deux.* Il faut donc aussi
+regarder chaque source pour elle-même, et `coherence` le fait désormais.
+
+Corrigé par `20260918060000_accents_quiz_seances.sql`, avec une garantie qui se
+vérifie mécaniquement : **le texte de cette migration, privé de ses signes
+diacritiques, redonne caractère pour caractère le texte d'origine.** 162 textes
+distincts, 0 altéré. Aucun mot n'a été réécrit, aucune lettre de bonne réponse
+n'a bougé, et les réponses déjà enregistrées gardent leur justesse.
+
+**Et un défaut que la correction a créé.** Une fois les accents rétablis, la
+séance 2 q9 n'avait plus qu'une seule option accentuée — la bonne. Elle se
+repérait sans être lue : le jumeau exact de l'indice de longueur que
+`pedagogie` traque depuis toujours. C'est la nouvelle règle de `coherence` qui
+l'a nommé, et `20260918061000_indice_accent_seance2_q9.sql` le corrige en un
+mot — « dossier » devient « répertoire ». Ce fichier est séparé **exprès** : la
+migration des accents porte la garantie « aucun mot réécrit », et cette
+garantie ne vaut que si rien d'autre ne s'y glisse.
+
+Les six écarts page/base du départ sont réglés dans l'autre sens que le premier
+réflexe : c'est **la base qui gagne**, parce qu'elle est mesurablement
+meilleure. Dans la page, la bonne réponse de la séance 1 q9 faisait 44 signes
+contre 17 aux distracteurs — 2,6 fois plus longue, donc devinable sans lire.
+En base, 44 contre 42. Adopter le texte de la base a fait disparaître les six
+écarts **et** les deux remarques de longueur de `pedagogie`, d'un seul geste.
+
+### 8.5 — Le dépôt des supports a du travail non poussé 🔶
+
+Vérifié en comparant le disque à GitHub : les trois pages de séance et
+`mkdocs.yml` sont **en avance sur `main`**. Y sont déjà, et seulement sur le
+disque : les sections « Concepts à connaître » des séances 1 et 2, les deux
+rappels qui referment la boucle du cold open, la page entière de la séance 3
+et son entrée au sommaire.
+
+Ce sont exactement les quatre points que `fiche` et `pedagogie` signalent sur
+la version publiée. Rejoués sur la version du disque : **tout est vert**. Il
+n'y a donc rien à écrire — seulement à pousser.
+
+---
+
+## 9. L'état vérifié, au 18/09
+
+Les six travaux du workflow, rejoués ici un par un, sur le dépôt du portail et
+sur la version disque du dépôt des supports :
+
+| Travail | État | Ce qu'il couvre |
+|---|---|---|
+| `syntaxe` | ✅ | le script se lit, 133 identifiants existent, aucune fonction appelée dans le vide |
+| `gabarits` | ✅ | `mesurer.mjs` + les **neuf** contrôles de navigateur |
+| `coherence` | ✅ | 30 questions, page et base d'accord, aucun indice typographique |
+| `fiche` | ✅ | les trois séances portent ce qu'une trace doit porter |
+| `pedagogie` | ✅ | lecture dans l'heure, boucles refermées, pas d'indice de longueur |
+| `essai` | ✅ | les contrôles voient encore ce qu'ils prétendent voir |
+
+Reste, et rien d'autre : **pousser le dépôt des supports** (§8.5), **appliquer
+les deux migrations** du 18/09, et **supprimer `index-2.html`** (§8.3).
