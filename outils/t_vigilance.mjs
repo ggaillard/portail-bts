@@ -126,6 +126,38 @@ for (const w of [360, 390, 768, 1280]) {
     if (pieges[2]) rates.push(`distracteur signalé sur 4 réponses : ${pieges[2]}`);
     if (pieges[3]) rates.push(`bonne réponse majoritaire signalée comme piège : ${pieges[3]}`);
 
+    // L'affichage instantané : trois écoutes filtrées sur la séance, la mention
+    // « En direct » seulement une fois le canal ouvert, et cinq changements
+    // rapprochés regroupés en UN rafraîchissement.
+    const direct = await p.evaluate(async () => {
+      const e = window.__e;
+      e.suivi.seanceId = 18;
+      e.suivi.minuteur = setInterval(() => {}, 100000);
+      e.brancherDirect(e.rafraichir);
+      await new Promise((r) => setTimeout(r, 50));
+      const c = (window.__canaux || []).slice(-1)[0];
+      const avant = window.__appels.filter((a) => a.nom === 'vigilance_seance').length;
+      for (let i = 0; i < 5; i++) c.ecoutes[i % 3].cb({});
+      await new Promise((r) => setTimeout(r, 700));
+      const apres = window.__appels.filter((a) => a.nom === 'vigilance_seance').length;
+      const z = document.getElementById('suivi-mode');
+      return { tables: c.ecoutes.map((x) => x.f.table + ':' + x.f.filter),
+               texte: z.textContent, classe: z.className, rafraichis: apres - avant };
+    });
+    console.log(`   direct : ${direct.tables.join(' · ')} · ${direct.rafraichis} rafraîchissement(s) pour 5 changements`);
+    if (direct.tables.join() !== 'reponses:seance_id=eq.18,passages:seance_id=eq.18,mains:seance_id=eq.18') {
+      rates.push(`écoutes temps réel inattendues : ${direct.tables.join(' · ')}`);
+    }
+    if (!/En direct/.test(direct.texte) || !/direct/.test(direct.classe)) rates.push(`« En direct » non affiché : « ${direct.texte} »`);
+    if (direct.rafraichis !== 1) rates.push(`${direct.rafraichis} rafraîchissements pour cinq changements rapprochés, attendu 1`);
+    const tombe = await p.evaluate(async () => {
+      window.__etatDirect = 'CHANNEL_ERROR';
+      window.__e.brancherDirect(window.__e.rafraichir);
+      await new Promise((r) => setTimeout(r, 50));
+      return document.getElementById('suivi-mode').textContent;
+    });
+    if (/En direct/.test(tombe)) rates.push(`canal en erreur, et le portail dit encore « En direct »`);
+
     await p.evaluate(() => {
       let e = document.getElementById('bloc-asuivre');
       while (e) { e.hidden = false; e = e.parentElement; }

@@ -38,6 +38,25 @@ sens » (embedding, recherche par similarité, RAG, pgvector, et surtout :
 
 Produites par `outils/seances/seance04/vectoriel.py` ; `generer.py` est figé.
 
+Et, le même jour, les deux propositions de suivi qui restaient —
+`20260925070000_suivi_semestre_et_direct.sql` :
+
+- « Sur le semestre » : **réussite en baisse** et **notions perdues en une
+  semaine**. Cette seconde règle repose sur une convention désormais écrite
+  dans le gabarit : la notion pre-0K du contrôle d'entrée de N+1 reprend le
+  concept de rang K de N.
+- **Affichage instantané** : `reponses`, `passages` et `mains` publiées en
+  temps réel ; lecture enseignante sur `passages` et `mains` (sinon Supabase
+  ne diffuse rien). Le contrôle de fin de `20260924070000` interdisait toute
+  politique sur ces deux tables : il ne regarde plus que `points_passage`.
+
+À vérifier une fois appliqué, dans le SQL Editor :
+
+```sql
+select tablename from pg_publication_tables where pubname = 'supabase_realtime';
+-- attendu, entre autres : reponses, passages, mains — et PAS points_passage
+```
+
 Deux ajustements d'outillage, nés de ce premier cas de « séance réécrite » :
 
 - `controler.py coherence` comparait le rattrapage d'un fichier à l'état

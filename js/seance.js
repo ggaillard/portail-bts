@@ -36,6 +36,7 @@ import { $, sb, suivi, erreur, typo, montrer, estDemo, classesReelles,
 import { chargerControle, chargerControles } from './controle.js';
 import { chargerParcours, chargerDebrief } from './heure.js';
 import { chargerVigilance, chargerASuivre } from './vigilance.js';
+import { brancherDirect, debrancherDirect } from './direct.js';
 import { rendreProjet } from './ensemble.js';
 import { ouvrirOnglet } from './navigation.js';
 import { chargerQuestionsSeance } from './bibliotheque.js';
@@ -325,10 +326,12 @@ function rafraichir(){
 function lancerBoucle(){
   arreterBoucle();
   suivi.minuteur = setInterval(rafraichir, 8000);
+  brancherDirect(rafraichir);
 }
 
 function arreterBoucle(){
   if (suivi.minuteur) { clearInterval(suivi.minuteur); suivi.minuteur = null; }
+  debrancherDirect();
 }
 
 // Après un geste, la carte concernée doit se remettre à jour elle aussi —

@@ -55,6 +55,20 @@ window.supabase = { createClient: function(){ return {
       .forEach(function(m){ chaine[m] = function(){ return chaine; }; });
     return chaine;
   },
+  // Le canal temps réel : il note les écoutes, et répond « SUBSCRIBED » (ou
+  // ce que window.__etatDirect demande) — t_vigilance.mjs s'en sert pour
+  // vérifier le regroupement des rafraîchissements.
+  channel: function(nom){
+    var c = { nom: nom, ecoutes: [],
+      on: function(ev, f, cb){ c.ecoutes.push({ ev: ev, f: f, cb: cb }); return c; },
+      subscribe: function(cb){
+        window.__canaux = (window.__canaux || []).concat([c]);
+        if (cb) setTimeout(function(){ cb(window.__etatDirect || 'SUBSCRIBED'); }, 0);
+        return c;
+      } };
+    return c;
+  },
+  removeChannel: function(){ window.__retires = (window.__retires || 0) + 1; },
   auth: {
     getSession: function(){ return Promise.resolve({ data: { session: null } }); },
     signInAnonymously: function(){ return Promise.resolve({ data: {}, error: null }); },

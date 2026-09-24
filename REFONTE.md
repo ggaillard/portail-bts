@@ -645,6 +645,7 @@ Après le suivi en temps réel (24/09) — hors plan, voir §10 :
 | contrôles de navigateur | 9 | **10** — `t_vigilance.mjs` |
 | fonctions RPC appelées | 35 | **38** — `vigilance_seance`, `main_vue`, `eleves_a_suivre` |
 | `aria-live` | 19 | **21** |
+| modules, le 25/09 | 14 | **15** — `direct.js` 63 |
 
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
@@ -1136,6 +1137,16 @@ elle annonçait toute la classe en retard pendant trois quarts d'heure.
 - `controler.py fiche`, point 13 : un point de passage par acte à partir de la
   séance 4 ; `essai.py` le casse (15 défauts injectés au lieu de 14).
 
-**Reste, et c'est voulu :** le temps réel Supabase (`postgres_changes`) à la
-place du rafraîchissement de huit secondes. Huit secondes suffisent à 31
-étudiants ; on le fera si l'usage montre le contraire.
+**Le 25/09, les deux derniers points** (`20260925070000_suivi_semestre_et_direct.sql`) :
+
+- « Sur le semestre » repère la **réussite en baisse** (30 points de moins à la
+  dernière séance jouée, sur 4 réponses au moins de chaque côté) et **ce qui
+  s'est oublié en une semaine** (juste à tout le quiz d'un concept en N, faux à
+  la notion correspondante du contrôle d'entrée de N+1 — la notion pre-0K
+  reprend le concept de rang K).
+- L'**affichage instantané** : `js/direct.js` (15e module, sorti de `seance.js`
+  pour qu'il reste sous 700 lignes) écoute `reponses`, `passages` et `mains`
+  de la séance ; cinq changements rapprochés font un seul rafraîchissement ; la
+  boucle reste en filet, 30 s en direct, 8 s si le canal tombe. « En direct »
+  n'est affiché que canal ouvert. `points_passage`, qui porte les bonnes
+  lettres, n'est ni lisible ni publiée.

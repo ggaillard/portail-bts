@@ -510,9 +510,11 @@ begin
                        'main_vue', 'vigilance_seance', 'eleves_a_suivre', 'eleve_de_seance');
   if v_n <> 8 then raise exception 'suivi en temps réel : % fonction(s) sur 8', v_n; end if;
 
-  -- La bonne lettre ne doit être lisible par personne en direct.
+  -- La bonne lettre ne doit être lisible par personne en direct. Seule
+  -- points_passage la porte : depuis le 25/09 (20260925070000), passages et
+  -- mains ont une lecture enseignante, pour l'affichage instantané.
   select count(*) into v_n from pg_policies
-   where schemaname = 'public' and tablename in ('points_passage', 'passages', 'mains');
+   where schemaname = 'public' and tablename = 'points_passage';
   if v_n <> 0 then raise exception '% politique(s) sur les tables du suivi : la bonne lettre fuirait', v_n; end if;
 
   if not public.est_enseignant() then
