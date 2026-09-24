@@ -274,6 +274,27 @@ def corriges(racine):
     return base, fichiers
 
 
+def inserts_par_fichier(racine):
+    """Le premier bloc de chaque migration de séance, fichier par fichier.
+
+    Le rattrapage d'un fichier se compare à l'insert DU MÊME fichier, pas à
+    l'état final de la base : depuis le 25/09, une migration plus récente peut
+    légitimement réécrire les corrigés d'une séance pas encore jouée (la
+    séance 4 et les bases vectorielles). Comparer à l'état final aurait fait
+    crier le fichier d'origine pour une correction voulue.
+    """
+    out = {}
+    for f in sorted(glob.glob(os.path.join(
+            racine, 'supabase', 'migrations', '*seance*.sql'))):
+        with open(f, encoding='utf-8') as fh:
+            sql = fh.read()
+        d = {}
+        for m in _CORRIGE.finditer(sql):
+            d[(int(m.group(1)), m.group(2))] = (m.group(3), _options(m.group(5)))
+        out[os.path.basename(f)] = d
+    return out
+
+
 def rattrapages(racine):
     """Le second bloc d'une migration : {fichier: {(seance,'qN'): (lettre, opts)}}.
 

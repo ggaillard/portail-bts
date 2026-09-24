@@ -424,13 +424,15 @@ def coherence(racine, supports):
                                    % (p, num, a.strip(), b))
 
     # Les deux blocs d'une même migration doivent s'accorder.
+    inserts = lire.inserts_par_fichier(racine)
     for f, tuples in lire.rattrapages(racine).items():
+        du_fichier = inserts.get(f, {})
         for cle, (bonne, opts) in sorted(tuples.items()):
-            if cle not in base:
+            if cle not in du_fichier:
                 dur.append("%s : le bloc de rattrapage porte %s séance %d, que "
                            "l'insert ne crée pas" % (f, cle[1], cle[0]))
                 continue
-            b0, o0 = base[cle]
+            b0, o0 = du_fichier[cle]
             if b0 != bonne:
                 dur.append("%s : séance %d %s — l'insert dit %s, le rattrapage "
                            "dit %s" % (f, cle[0], cle[1], b0, bonne))

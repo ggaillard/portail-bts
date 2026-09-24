@@ -70,13 +70,13 @@ ESSAIS = [
      'dans la trace'),
 
     ("un numéro de question inexistant", 'fiche',
-     lambda b: (_migration(b, '*_debriefing.sql'), r"\[7 8 9\]", '[7 8 14]'),
+     lambda b: (_migration(b, '*_debriefing.sql'), r"\[8 9\]", '[8 14]'),
      'question 14'),
 
     ("un acte sans point de passage", 'fiche',
-     lambda b: (_migration(b, '*_passages.sql'), r"\(4, 'Ouvrez le capot', 55,",
-                "(9, 'Ouvrez le capot', 55,"),
-     "l'acte 4 n'a pas de point de passage"),
+     lambda b: (_migration(b, '*_passages.sql'), r"\(5, 'Ouvrez le capot', 45,",
+                "(9, 'Ouvrez le capot', 45,"),
+     "l'acte 5 n'a pas de point de passage"),
 
     ("une séance absente du sommaire", 'fiche',
      lambda b: (os.path.join(b, 'support', 'mkdocs.yml'),

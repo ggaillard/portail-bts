@@ -22,6 +22,33 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 25 septembre 2026 — la séance 4 accueille les bases vectorielles
+
+La séance 4 n'avait pas été jouée (ni publiée, ni démarrée, aucune réponse) :
+on l'a enrichie. Le cold open ajoute un assistant qui cherche par le sens et
+répète un vieux chiffre ; un acte IV nouveau, « La base qui cherche par le
+sens » (embedding, recherche par similarité, RAG, pgvector, et surtout :
+**l'index se versionne avec le modèle qui l'a fabriqué**). Cinq actes, 42 min.
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20260925060000_bts1_seance4_vectoriel.sql` | réécrit les dix corrigés (deux questions vectorielles) — **refuse** s'il existe une seule réponse au quiz |
+| `20260925061000_bts1_seance4_vectoriel_debriefing.sql` | les cinq concepts, dont « Une base vectorielle » |
+| `20260925062000_bts1_seance4_vectoriel_passages.sql` | cinq points de passage ; l'accueil passe de 7 à 3 min — le quiz retrouve ses 10 min |
+
+Produites par `outils/seances/seance04/vectoriel.py` ; `generer.py` est figé.
+
+Deux ajustements d'outillage, nés de ce premier cas de « séance réécrite » :
+
+- `controler.py coherence` comparait le rattrapage d'un fichier à l'état
+  FINAL de la base : une réécriture voulue faisait crier le fichier d'origine.
+  Il compare désormais au bloc d'insert **du même fichier** (`lire.inserts_par_fichier`).
+- Le contrôle de fin de `20260924071000` exigeait exactement 4 points : au
+  rejeu de la chaîne, il en trouve 5. Il exige « au moins 4 ». Son effet en
+  production est inchangé — il a déjà été appliqué.
+
+---
+
 ## 24 septembre 2026 — la séance 4, et le suivi pendant l'heure
 
 Cinq migrations, toutes rejouées deux fois sur une base neuve, **avec

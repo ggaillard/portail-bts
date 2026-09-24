@@ -1,3 +1,9 @@
+# ⚠️ FIGÉ DEPUIS LE 25/09 : les migrations que produit ce script (060000,
+# 061000, 071000) sont appliquées en production. La séance 4 a depuis gagné les
+# bases vectorielles : c'est vectoriel.py, à côté, qui porte la version
+# courante. Ne relancez celui-ci que pour vérifier qu'il redonne à l'identique
+# les fichiers d'origine.
+#
 # Génère les deux migrations de la séance 4 depuis UNE seule liste :
 #
 #   cd portail-bts

@@ -40,5 +40,8 @@ begin
     join public.seances s on s.id = pp.seance_id
     join public.classes c on c.id = s.classe_id
    where c.code = 'BTS1-DEV-2026' and s.numero = 4;
-  if n <> 4 then raise exception 'séance 4 : % point(s) de passage, attendu 4', n; end if;
+  -- « au moins 4 » et non « 4 » : depuis le 25/09, la séance 4 a cinq actes
+  -- (20260925062000). Au rejeu de la chaîne, ce fichier passe AVANT celui-là
+  -- et trouve cinq points : ce n'est pas une panne, c'est la suite.
+  if n < 4 then raise exception 'séance 4 : % point(s) de passage, au moins 4 attendus', n; end if;
 end $$;
