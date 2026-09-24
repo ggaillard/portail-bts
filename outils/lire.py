@@ -300,6 +300,31 @@ def rattrapages(racine):
     return out
 
 
+def passages_base(racine):
+    """Les points de passage écrits en base : {seance: {acte: titre}}.
+
+    Lus dans les migrations `*_passages.sql`, dans l'ordre des noms — le
+    dernier écrit gagne, comme en base. Les tuples ont la forme :
+
+        (1, 'Trois façons de mener un projet', 20, …
+
+    et la séance est celle du `s.numero = N` du fichier.
+    """
+    out = {}
+    for f in sorted(glob.glob(os.path.join(
+            racine, 'supabase', 'migrations', '*_passages.sql'))):
+        with open(f, encoding='utf-8') as fh:
+            sql = fh.read()
+        mn = re.search(r"s\.numero\s*=\s*(\d+)", sql)
+        if not mn:
+            continue
+        pts = {}
+        for m in re.finditer(r"^\s*\((\d+),\s*'((?:[^']|'')*)',\s*(\d+),", sql, re.M):
+            pts[int(m.group(1))] = m.group(2).replace("''", "'")
+        out[int(mn.group(1))] = pts
+    return out
+
+
 def concepts_base(racine):
     """Ce que la migration du débriefing écrit : {seance: [(intitule, [nums])]}.
 

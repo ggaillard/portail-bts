@@ -635,6 +635,17 @@ Après B2 et la suite du découpage (17/09) :
 | `js/app.js` | 3 802 | **582** |
 | contrôles | 7 | 7, plus deux règles neuves dans `mesurer.mjs` |
 
+Après le suivi en temps réel (24/09) — hors plan, voir §10 :
+
+| | aujourd'hui (18/09) | après le 24/09 |
+|---|---|---|
+| modules | 13 | **14** — `vigilance.js` 232 |
+| `index.html` | 521 | **542** (la carte « À aller voir » et « Sur le semestre ») |
+| `js/seance.js` | 579 | **659** |
+| contrôles de navigateur | 9 | **10** — `t_vigilance.mjs` |
+| fonctions RPC appelées | 35 | **38** — `vigilance_seance`, `main_vue`, `eleves_a_suivre` |
+| `aria-live` | 19 | **21** |
+
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
 Le style dans
@@ -1088,3 +1099,43 @@ sur la version disque du dépôt des supports :
 
 Reste, et rien d'autre : **pousser le dépôt des supports** (§8.5), **appliquer
 les deux migrations** du 18/09, et **supprimer `index-2.html`** (§8.3).
+
+
+---
+
+## 10. Le suivi en temps réel (24/09)
+
+Hors du plan de refonte : c'est une fonction nouvelle, pas un rangement. Elle
+est notée ici parce qu'elle fait bouger les chiffres que `mesurer.mjs` tient.
+
+**Le constat.** Le quiz est à la fin de la trace. Pendant les actes — de la
+10e à la 50e minute —, le portail ne recevait rien, et la ligne de rythme
+attendait « question 4 » à la 22e minute alors que personne ne pouvait y être :
+elle annonçait toute la classe en retard pendant trois quarts d'heure.
+
+**Ce qui a été fait.**
+
+- `20260924070000_suivi_temps_reel.sql` : trois tables (`points_passage`,
+  `passages`, `mains`) sans aucune politique de lecture — tout passe par des
+  fonctions ; `vigilance_seance()` rend, par étudiant, des **raisons** en
+  phrases, jamais un score ; `eleves_a_suivre()` fait la même chose sur le
+  semestre. Tables à part plutôt que des clés dans `reponses` : aucune des
+  fonctions existantes ne les voit, aucun taux ne peut en être faussé.
+  `20260924080000_vigilance_ajustements.sql` corrige ce que le premier essai a
+  montré — la première était déjà appliquée, elle ne se réécrit pas.
+- `js/vigilance.js` : la carte « À aller voir », avant le parcours de l'heure,
+  rafraîchie avec les tuiles toutes les huit secondes ; « Sur le semestre »,
+  replié sous le choix de la classe. **Jamais projeté** : c'est nominatif, et
+  `t_vigilance.mjs` vérifie qu'`ecran.js` ne la lit pas.
+- `js/seance.js` : pendant les actes, la ligne de rythme parle d'actes et de
+  présents ; après, le quiz a le temps qui reste. Sous « Réussite par
+  question », le distracteur dominant (≥ 40 % sur une même mauvaise option,
+  cinq réponses au moins).
+- Côté étudiant (`BTS1_S1_B1_DEV/docs/assets/suivi.js`) : un point de passage
+  à la fin de chaque acte, et le bouton « ✋ Je bloque ».
+- `controler.py fiche`, point 13 : un point de passage par acte à partir de la
+  séance 4 ; `essai.py` le casse (15 défauts injectés au lieu de 14).
+
+**Reste, et c'est voulu :** le temps réel Supabase (`postgres_changes`) à la
+place du rafraîchissement de huit secondes. Huit secondes suffisent à 31
+étudiants ; on le fera si l'usage montre le contraire.

@@ -238,6 +238,10 @@ jobs:
         run: node outils/t_navigation.mjs
       - name: "Le tableau de bord d'une séance, lu debout"
         run: node outils/t_suivi.mjs
+      # « À aller voir », les points de passage, la ligne de rythme pendant
+      # les actes et le distracteur dominant — ajoutés le 24/09.
+      - name: "Qui aller voir, pendant l'heure"
+        run: node outils/t_vigilance.mjs
       # Le seul écran que trente personnes ouvrent en même temps, et le dernier
       # à être passé sous mesure : il n'était vérifié par rien jusqu'au 17/09.
       - name: "L'espace de l'étudiant, sur son téléphone"

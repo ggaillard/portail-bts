@@ -22,6 +22,46 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 24 septembre 2026 — la séance 4, et le suivi pendant l'heure
+
+Cinq migrations, toutes rejouées deux fois sur une base neuve, **avec
+`est_enseignant()` à vrai puis à faux** — la seconde passe est celle qui
+ressemble à la production :
+
+| Migration | Ce qu'elle pose |
+|---|---|
+| `20260924060000_bts1_seance4.sql` | titre, dix corrigés, contrôle d'entrée (5 notions de la séance 3, créé fermé) |
+| `20260924061000_bts1_seance4_debriefing.sql` | corrige **deux défauts** du débriefing, réécrit les concepts S1 à S4 |
+| `20260924070000_suivi_temps_reel.sql` | points de passage, main levée, `vigilance_seance()`, `eleves_a_suivre()` |
+| `20260924071000_bts1_seance4_passages.sql` | les quatre points de passage de la séance 4 |
+| `20260924080000_vigilance_ajustements.sql` | redéfinit `vigilance_seance()` et `eleves_a_suivre()` : la séance en cours n'est plus « jouée », les passages comptent comme réponse, silence à 20 min sur un TP |
+
+Les deux défauts du débriefing, trouvés en écrivant la séance 4 :
+
+- **Les concepts des séances 1 à 3 n'ont probablement jamais atteint la
+  production.** La migration appelait `definir_concepts()`, qui répond
+  « refus » hors session enseignante, et `perform` jetait la réponse sans la
+  lire. Rejoué avec `est_enseignant()` à faux : zéro concept en base.
+- **Chaque détail de concept perdait ses deux premières lettres** :
+  `position(' — ') + 5` au lieu de `+ 3`. « matériel » devenait « tériel ».
+
+Les deux migrations de séance sont **produites** par
+`outils/seances/seance04/generer.py`, depuis une seule liste : le bloc de
+rattrapage ne peut plus diverger de l'insert, puisque personne ne le tape.
+
+Ce qu'il faut vérifier en production une fois appliqué :
+
+```sql
+select s.numero, count(k.id) as concepts, min(k.detail) as un_detail
+  from seances s join classes c on c.id = s.classe_id
+  left join concepts k on k.seance_id = s.id
+ where c.code = 'BTS1-DEV-2026' and s.numero between 1 and 4
+ group by s.numero order by s.numero;
+-- attendu : 5 concepts par séance, et des détails qui commencent par un mot entier
+```
+
+---
+
 ## 14 septembre 2026 — les contrôles de séance existent enfin pour de bon
 
 Trois notes du projet décrivaient depuis le 10/09 un job `fiche` de douze points

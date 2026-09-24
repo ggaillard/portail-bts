@@ -340,6 +340,12 @@
       <select id="pk-classe" aria-label="Classe"></select>
       <select id="pk-seance" aria-label="Séance"></select>
     </div>
+    <!-- Ce qu'une séance ne voit pas : la répétition. Replié, parce qu'on le
+         lit en préparant la semaine, pas pendant l'heure. -->
+    <details id="bloc-asuivre" class="vg-semestre" hidden>
+      <summary id="as-titre">Sur le semestre</summary>
+      <div id="as-liste"></div>
+    </details>
     <div id="prevol" class="prevol" hidden>
       <div class="prevol-tete">
         <h3 class="sous-titre" style="margin:0">Avant de commencer</h3>
@@ -351,6 +357,21 @@
         <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
       </div>
       <div aria-live="polite" id="err-prevol"></div>
+    </div>
+
+    <!-- « À aller voir ». Vient AVANT le parcours : le parcours dit où en
+         est chacun, celui-ci dit qui aider maintenant, et pourquoi — c'est la
+         question qu'on se pose debout. Des raisons, jamais un score ; et
+         jamais projeté, puisque c'est nominatif. -->
+    <div id="bloc-vigilance" class="pa-bloc vg-bloc" hidden>
+      <div class="ct-tete">
+        <h3>À aller voir <span class="vg-compte" id="vg-compte" aria-live="polite"></span></h3>
+      </div>
+      <div id="vg-liste"></div>
+      <p class="sous-hint" id="vg-vide"></p>
+      <div id="vg-actes" hidden></div>
+      <p class="sous-hint vg-seuils" id="vg-seuils"></p>
+      <div aria-live="polite" id="err-vigilance"></div>
     </div>
 
     <!-- Le parcours de l'heure. Le pré-vol dit « cette séance est-elle

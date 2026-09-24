@@ -37,6 +37,9 @@ DECOMMISSIONNEES = ['suivi.gaillard42.workers.dev']
 #  1. La fiche — ce qu'une trace doit porter pour exister
 # ═══════════════════════════════════════════════════════════════════════════
 
+PREMIERE_AVEC_PASSAGES = 4
+
+
 def fiche(racine, supports):
     """Douze points, passés à chaque trace découverte."""
     dur, doux = [], []
@@ -46,6 +49,7 @@ def fiche(racine, supports):
 
     base, _ = lire.corriges(racine)
     concepts_sql = lire.concepts_base(racine)
+    passages_sql = lire.passages_base(racine)
     nav = ''
     if os.path.exists(os.path.join(supports, 'mkdocs.yml')):
         with open(os.path.join(supports, 'mkdocs.yml'), encoding='utf-8') as f:
@@ -135,6 +139,26 @@ def fiche(racine, supports):
 
         # 12 — les concepts de la trace et ceux de la base disent la même chose
         dur += _concepts(p, t, concepts_sql.get(t.numero), qs)
+
+        # 13 — un point de passage par acte, à partir de la séance 4.
+        #      Avant eux, le portail ne voyait RIEN pendant les actes : un
+        #      acte sans point redevient un trou de vingt minutes dans le
+        #      suivi. Les séances 1 à 3, jouées avant le 24/09, n'en ont pas.
+        if t.numero and t.numero >= PREMIERE_AVEC_PASSAGES:
+            pts = passages_sql.get(t.numero)
+            if not pts:
+                dur.append("%s : aucun point de passage en base — pendant les "
+                           "actes, l'enseignant ne verrait rien" % p)
+            else:
+                for i, (titre, _) in enumerate(t.actes, 1):
+                    if i not in pts:
+                        dur.append("%s : l'acte %d n'a pas de point de passage" % (p, i))
+                    elif lire.plat(pts[i]) != lire.plat(titre):
+                        dur.append("%s acte %d : « %s » dans la trace, « %s » en base"
+                                   % (p, i, titre, pts[i]))
+                for i in sorted(set(pts) - set(range(1, len(t.actes) + 1))):
+                    dur.append("%s : point de passage pour un acte %d que la trace "
+                               "n'a pas" % (p, i))
 
     return dur, doux
 

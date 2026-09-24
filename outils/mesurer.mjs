@@ -113,27 +113,27 @@ const m = {
 // n'est pas une table à tenir à la main, c'est la photo du dépôt le jour où
 // l'on a mis REFONTE.md d'accord avec lui.
 const ATTENDU = {
-  'lignes de index.html': 521,
+  'lignes de index.html': 542,
   'feuilles de style': 10,
-  'modules': 13,
-  'lignes de CSS': 1088,
-  'lignes de JavaScript': 5135,
-  'règles CSS': 473,
-  'classes CSS': 299,
+  'modules': 14,
+  'lignes de CSS': 1120,
+  'lignes de JavaScript': 5444,
+  'règles CSS': 492,
+  'classes CSS': 313,
   'variables CSS définies': 17,
   'variables CSS inutilisées': 0,
   'var() jamais déclarées': 0,
   'media queries': 12,
   'seuils distincts': 8,
-  'fonctions de premier niveau': 147,
-  'médiane des fonctions': 22,
+  'fonctions de premier niveau': 156,
+  'médiane des fonctions': 25,
   'plus longue fonction': 246,
-  'fonctions RPC appelées': 35,
-  'innerHTML =': 113,
-  'textContent =': 216,
-  'createElement': 162,
+  'fonctions RPC appelées': 38,
+  'innerHTML =': 117,
+  'textContent =': 232,
+  'createElement': 181,
   'onclick= en chaîne': 0,
-  'aria-live': 19,
+  'aria-live': 21,
 };
 
 const large = Math.max(...Object.keys(m).map((k) => k.length));
@@ -395,8 +395,12 @@ if (FJS.length) {
 //    lancer à la main — c'est-à-dire jamais, passé trois semaines.
 {
   const DOCS = ['CLAUDE.md', 'REFONTE.md', 'README.md', 'JOURNAL.md'].filter((d) => existe(d));
+  // Les sous-dossiers comptent : les générateurs de séance vivent dans
+  // outils/seances/seanceNN/ depuis le 24/09, et un document qui les cite
+  // cite un fichier qui existe.
   const outils = existe('outils')
-    ? new Set(fs.readdirSync(path.join(RACINE, 'outils'))
+    ? new Set(fs.readdirSync(path.join(RACINE, 'outils'), { recursive: true })
+        .map((x) => path.basename(String(x)))
         .filter((x) => /\.(mjs|py)$/.test(x)))
     : new Set();
 

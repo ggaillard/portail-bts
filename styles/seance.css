@@ -140,3 +140,35 @@
 .ac-nums.vide{background:#DEF3E6;border-color:#C2E6D2}
 .ac-nums.vide .lbl,.ac-nums.vide .nums{color:#1B6B42}
 .ac-nums.vide .nums{font-size:1rem;font-weight:500;letter-spacing:0}
+
+/* ── « À aller voir » ──────────────────────────────────────────────────────
+   Une ligne par étudiant à aller voir, ses raisons en phrases courtes. Le
+   liseré gauche porte la gravité la plus haute : on lit la colonne de
+   couleur pour savoir par où commencer, sans lire le texte. Les teintes
+   sont celles du reste du portail — signal pour l'urgence, accent pour le
+   reste — : une couleur d'alarme de plus aurait fait de cette carte une note. */
+.vg-compte{display:inline-block;min-width:1.5rem;margin-left:.4rem;padding:0 .45rem;
+  border-radius:99px;background:var(--accent-soft);color:var(--accent-ink);
+  font-family:var(--f-mono);font-size:.8rem;text-align:center}
+.vg-compte:empty{display:none}
+.vg-compte.urgent{background:var(--signal-soft);color:var(--signal)}
+.vg-l{display:flex;align-items:flex-start;gap:.5rem;padding:.45rem 0 .45rem .55rem;
+  border-top:1px solid var(--rule-soft);border-left:3px solid var(--rule);font-size:.86rem}
+.vg-l:first-child{border-top:0}
+.vg-l.g-urgent{border-left-color:var(--signal)}
+.vg-l.g-attention{border-left-color:var(--accent)}
+.vg-corps{display:flex;flex-wrap:wrap;gap:.3rem .45rem;flex:1 1 auto;min-width:0}
+.vg-nom{font-weight:600;flex-basis:100%}
+.vg-r{padding:.1rem .45rem;border-radius:6px;background:var(--surface-alt);color:var(--ink-soft);
+  overflow-wrap:anywhere}
+.vg-r.g-urgent{background:var(--signal-soft);color:var(--signal);font-weight:600}
+.vg-r.g-attention{background:var(--accent-soft);color:var(--accent-ink)}
+.vg-vu{flex:0 0 auto;min-height:44px;padding:0 .9rem}
+.vg-t{margin:.9rem 0 .2rem;font-size:.85rem;font-weight:600;color:var(--ink-soft)}
+.pa-e.vg-attendu .pa-e-n{color:var(--ink);font-weight:600}
+.vg-seuils{font-size:.75rem}
+.vg-semestre{margin:.2rem 0 1rem}
+.vg-semestre > summary{cursor:pointer;font-size:.9rem;font-weight:600;
+  min-height:44px;display:flex;align-items:center}
+/* Réussite par question : l'idée fausse commune, sous sa barre. */
+.q-piege{margin:-.1rem 0 .5rem;font-size:.8rem;color:var(--signal)}

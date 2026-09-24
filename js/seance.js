@@ -35,6 +35,7 @@ import { $, sb, suivi, erreur, typo, montrer, estDemo, classesReelles,
          anime } from './socle.js';
 import { chargerControle, chargerControles } from './controle.js';
 import { chargerParcours, chargerDebrief } from './heure.js';
+import { chargerVigilance, chargerASuivre } from './vigilance.js';
 import { rendreProjet } from './ensemble.js';
 import { ouvrirOnglet } from './navigation.js';
 import { chargerQuestionsSeance } from './bibliotheque.js';
@@ -141,10 +142,11 @@ function chargerStats(){
     });
 
     // Réussite question par question : dit à l'enseignant quoi reprendre.
-    var bonneDe = {}, texteDe = {};
+    var bonneDe = {}, texteDe = {}, optionsDe = {};
     cor.forEach(function(c){
       bonneDe[c.question] = c.bonne_reponse;
       if (c.intitule) texteDe[c.question] = c.intitule;
+      if (c.options) optionsDe[c.question] = c.options;
     });
 
     var parQ = {};
@@ -153,7 +155,8 @@ function chargerStats(){
       var q = parQ[r.question] ||
               (parQ[r.question] = { nom: r.question, n: 0, ok: 0,
                                     bonne: bonneDe[r.question] || null,
-                                    texte: texteDe[r.question] || null, choix: {} });
+                                    texte: texteDe[r.question] || null,
+                                    options: optionsDe[r.question] || null, choix: {} });
       q.n++;
       if (estJuste(r)) q.ok++;
       // Répartition des réponses données, pour l'écran « Répartition »
@@ -240,6 +243,13 @@ function rendreSuivi(s){
     d.querySelector(".q-nom").textContent = qu.nom;
     d.querySelector(".q-pct").textContent = qu.ok + "/" + qu.n + " · " + qu.pct + " %";
     q.appendChild(d);
+    var piege = distracteurDominant(qu);
+    if (piege) {
+      var p = document.createElement("p");
+      p.className = "q-piege";
+      p.textContent = piege;
+      q.appendChild(p);
+    }
   });
 
   // ── Élève par élève ──
@@ -284,7 +294,31 @@ function rendreSuivi(s){
   if (suivi.ecran) rendreEcran(s);
 }
 
+// Le distracteur dominant. Quand une même MAUVAISE option rassemble au moins
+// 40 % des réponses — et cinq réponses au moins —, ce n'est plus de
+// l'ignorance dispersée : c'est une idée fausse commune, et elle se reprend
+// à voix haute, tout de suite. Un taux de réussite bas ne le dit pas : 40 %
+// de réussite avec les erreurs éparpillées et 40 % avec 55 % sur « B » sont
+// deux situations qui n'appellent pas le même geste.
+var SEUIL_PIEGE = 0.4, MIN_PIEGE = 5;
+function distracteurDominant(qu){
+  if (!qu || qu.n < MIN_PIEGE || !qu.bonne) return null;
+  var pire = null;
+  Object.keys(qu.choix || {}).forEach(function(l){
+    if (l === qu.bonne || !/^[A-D]$/.test(l)) return;
+    if (!pire || qu.choix[l] > qu.choix[pire]) pire = l;
+  });
+  if (!pire || qu.choix[pire] / qu.n < SEUIL_PIEGE) return null;
+  var i = "ABCD".indexOf(pire);
+  var libelle = qu.options && qu.options[i] ? " — « " + qu.options[i] + " »" : "";
+  return "⚠ " + qu.choix[pire] + " sur " + qu.n + " ont choisi " + pire + libelle +
+         " : une idée fausse commune, à reprendre à voix haute.";
+}
+
 function rafraichir(){
+  // « À aller voir » suit la même boucle de huit secondes que les tuiles :
+  // une main levée qui attend la boucle suivante attend déjà trop.
+  chargerVigilance(function(){ if (suivi.stats) rendreRythme(suivi.stats); });
   return chargerStats().then(function(s){ if (s) rendreSuivi(s); });
 }
 
@@ -450,18 +484,30 @@ function rendreRythme(s){
                      "Le chrono part au clic sur <b>Démarrer la séance</b>.";
     return zone.appendChild(noteAvance(p));
   }
+  var debut = new Date(p.demarree_le).getTime();
+  var minutes = Math.max(0, (Date.now() - debut) / 60000);
+
+  // Pendant les actes, le repère est l'ACTE, pas la question du quiz. Avant
+  // les points de passage, cette ligne attendait « question 4 » à la 22e
+  // minute alors que personne ne pouvait y être : le quiz est à la fin de la
+  // trace. Elle annonçait donc toute la classe en retard pendant trois quarts
+  // d'heure — un repère faux, pire qu'aucun repère.
+  var v = suivi.vigilance, actes = (v && v.actes) || [];
+  var finActes = actes.length ? actes[actes.length - 1].fin_min : 0;
+  if (actes.length && minutes < finActes) return rendreRythmeActes(zone, p, v, minutes);
+
   if (!p.questions) {
     zone.className = "rythme mort";
     zone.innerHTML = "Pas de corrigé : impossible de calculer une cadence.";
     return zone.appendChild(noteAvance(p));
   }
 
-  var debut = new Date(p.demarree_le).getTime();
-  var minutes = Math.max(0, (Date.now() - debut) / 60000);
-  var cadence = p.duree_min / p.questions;
+  // Après les actes, le quiz a le temps qui reste, et seulement lui.
+  var fenetre = Math.max(1, p.duree_min - finActes);
+  var cadence = fenetre / p.questions;
   // floor et non ceil : à la 22e minute avec une cadence de 5,5 min, quatre
   // questions devraient être finies — pas cinq, dont l'intervalle vient de commencer.
-  var attendu = Math.min(p.questions, Math.floor(minutes / cadence));
+  var attendu = Math.min(p.questions, Math.floor((minutes - finActes) / cadence));
 
   // Les actifs du jour : ceux dont la dernière réponse est postérieure au top départ.
   var actifs = (s.lignes || []).filter(function(l){
@@ -481,6 +527,33 @@ function rendreRythme(s){
     "<b>" + Math.round(minutes) + " min</b> sur " + p.duree_min + " · " +
     "attendu <b>question " + attendu + "</b> sur " + p.questions + " · " +
     "classe à <b>" + moyenne.toFixed(1).replace(".", ",") + "</b> (" + actifs.length + " actifs) · " +
+    "<b>" + mot + "</b>";
+  zone.appendChild(noteAvance(p));
+}
+
+// La ligne de rythme pendant les actes. On compare ce qui a été PASSÉ à ce qui
+// devrait l'être, sur les seuls présents : un absent n'est pas en retard.
+var ROM = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+function rendreRythmeActes(zone, p, v, minutes){
+  var actes = v.actes;
+  var attendu = v.attendu_acte || 0;
+  var presents = (v.eleves || []).filter(function(x){ return x.appel || x.passes > 0; });
+  var enRetard = presents.filter(function(x){ return x.passes < attendu; }).length;
+  var courant = actes.filter(function(a){ return a.fin_min > minutes; })[0] || actes[actes.length - 1];
+  var part = presents.length ? (presents.length - enRetard) / presents.length : 1;
+  var etat = !attendu || part >= 0.75 ? "ok" : "retard";
+  var mot  = !attendu ? "premier acte en cours"
+           : part >= 0.75 ? "dans le rythme"
+           : part >= 0.5 ? "léger retard" : "en retard";
+  zone.className = "rythme " + etat;
+  zone.innerHTML =
+    "<b>" + Math.round(minutes) + " min</b> sur " + p.duree_min + " · " +
+    "en cours : <b>acte " + (ROM[courant.acte] || courant.acte) + "</b> (fin prévue " +
+    courant.fin_min + "′) · " +
+    (attendu ? "<b>" + enRetard + "</b> présent" + (enRetard > 1 ? "s" : "") +
+               " sur " + presents.length + " n'" + (enRetard > 1 ? "ont" : "a") +
+               " pas passé l'acte " + (ROM[attendu] || attendu) + " · "
+             : "") +
     "<b>" + mot + "</b>";
   zone.appendChild(noteAvance(p));
 }
@@ -505,6 +578,8 @@ function activerSeance(){
     suivi.prevol = null;
     arreterBoucle();
     $("prevol").hidden = true;
+    $("bloc-vigilance").hidden = true;
+    suivi.vigilance = null;
     $("bloc-corriges").hidden = true;
     $("stats-zone").hidden = true;
     $("stats-attente").hidden = false;
@@ -523,6 +598,7 @@ function activerSeance(){
 
 function chargerSeancesDe(classeId){
   suivi.classeId = classeId;
+  chargerASuivre(classeId);
   suivi.seanceId = null;
   suivi.stats = null;
   arreterBoucle();
@@ -578,4 +654,5 @@ function allerAuControle(c){
 
 export { chargerSeancesDe, activerSeance, rafraichir, arreterBoucle,
          rafraichirApresActe, chargerPrevol, chargerStats, rendreSuivi,
-         allerAuControle, noteAvance, rendreRythme, pilotage };
+         allerAuControle, noteAvance, rendreRythme, pilotage,
+         distracteurDominant, rendreRythmeActes };
