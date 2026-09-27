@@ -56,6 +56,8 @@ import { brancherSeance, chargerSeancesDe, activerSeance, rafraichir,
 import { chargerParcours, rendreParcours, chargerDebrief,
          enregistrerConcepts } from './heure.js';
 import { chargerAFaire, rendreAFaire } from './afaire.js';
+import { chargerMissionsEtu, brancherMissions } from './missions.js';
+import { brancherGestion, chargerGestion } from './gestion.js';
 
 (function(){
 "use strict";
@@ -149,6 +151,7 @@ function ouvrirEspaceEtudiant(moi){
   proposerAppel();
   chargerControlesEtu();
   chargerQuestionnairesEtu();
+  chargerMissionsEtu();
 
   sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", moi.classe_id).order("ordre")
@@ -405,6 +408,7 @@ function ouvrirEspaceEnseignant(){
     chargerAFaire();
     chargerSemestre();
     if (classes.length) chargerSeancesDe(classes[0].id);
+    chargerGestion(classes);
 
     classes.forEach(function(c){
       var tr = document.createElement("tr");
@@ -549,6 +553,8 @@ brancherBibliotheque({ chargerAFaire: chargerAFaire,
                        chargerConnaissance: chargerConnaissance,
                        chargerStage: chargerStage,
                        remplirConnaissanceClasse: remplirConnaissanceClasse });
+brancherMissions();
+brancherGestion({ apres: function(){ chargerAFaire(); chargerSemestre(); } });
 
 
 // ── Démarrage ──────────────────────────────────────────────────────────────

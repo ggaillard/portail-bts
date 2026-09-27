@@ -246,6 +246,10 @@ jobs:
       # à être passé sous mesure : il n'était vérifié par rien jusqu'au 17/09.
       - name: "L'espace de l'étudiant, sur son téléphone"
         run: node outils/t_etudiant.mjs
+      # Les missions d'une séance de projet et la carte « Les séances » —
+      # ajoutées le 27/09 avec js/missions.js et js/gestion.js.
+      - name: "Cocher une mission, lire la grille, régler une séance"
+        run: node outils/t_missions.mjs
 
   coherence:
     name: "🔗 La page et la base disent-elles la même chose ?"

@@ -647,6 +647,18 @@ Après le suivi en temps réel (24/09) — hors plan, voir §10 :
 | `aria-live` | 19 | **21** |
 | modules, le 25/09 | 14 | **15** — `direct.js` 63 |
 
+Après les missions et la gestion des séances (27/09) — hors plan, voir §10 :
+
+| | après le 25/09 | après le 27/09 |
+|---|---|---|
+| modules | 15 | **17** — `missions.js` 313, `gestion.js` 192 |
+| feuilles de style | 10 | **11** — `missions.css`, ajoutée en dernier : classes neuves seulement |
+| `index.html` | 542 | **610** (la carte « Les séances », le bloc des missions, la carte étudiante) |
+| `js/seance.js` | 662 | **665** — deux appels et un masquage, rien de plus : le plafond approche |
+| contrôles de navigateur | 10 | **11** — `t_missions.mjs` |
+| fonctions RPC appelées | 38 | **44** — `mes_missions`, `valider_mission`, `definir_missions`, `grille_missions`, `seances_de_classe`, `enregistrer_seance` |
+| `aria-live` | 22 | **25** |
+
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
 Le style dans

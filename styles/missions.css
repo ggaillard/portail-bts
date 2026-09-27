@@ -1,0 +1,80 @@
+/* ── missions ─────────────────────────────────────────
+   Les missions d'une séance de projet (côté étudiant et grille enseignante),
+   et la carte « Les séances » de l'onglet Le semestre.
+
+   Feuille ajoutée le 27/09/2026, EN DERNIER dans index.html : elle ne
+   redéfinit aucune règle des feuilles précédentes, seulement des classes
+   neuves (mi-*, gs-*). Sa position ne change donc rien à l'ordre de cascade
+   que outils/comparer.mjs surveille.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Côté étudiant : une case par mission ──
+   Une vraie cible de 44 px, le libellé en entier, et l'état lisible sans la
+   couleur : la coche est dessinée, pas seulement verte. */
+.mi-carte h2[data-compte]::after{content:" · " attr(data-compte);
+  font-family:var(--f-mono);font-size:.85rem;font-weight:600;color:var(--ink-soft)}
+.mi-liste{display:flex;flex-direction:column;gap:.45rem;margin-top:.6rem}
+.mi-case{appearance:none;display:flex;align-items:flex-start;gap:.7rem;width:100%;
+  min-height:44px;padding:.6rem .8rem;text-align:left;font:inherit;color:var(--ink);
+  background:var(--surface);border:1px solid var(--rule);border-radius:10px;cursor:pointer}
+.mi-case:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mi-case[disabled]{cursor:not-allowed;opacity:.6}
+.mi-coche{flex:0 0 1.35rem;height:1.35rem;margin-top:.1rem;border-radius:6px;
+  border:2px solid var(--ink-faint);position:relative}
+.mi-case.on{background:var(--ok-soft);border-color:transparent}
+.mi-case.on .mi-coche{background:var(--ok);border-color:var(--ok)}
+.mi-case.on .mi-coche::after{content:"";position:absolute;left:.36rem;top:.12rem;
+  width:.35rem;height:.7rem;border:solid var(--surface);border-width:0 .16rem .16rem 0;
+  transform:rotate(45deg)}
+.mi-txt{display:flex;flex-direction:column;min-width:0}
+.mi-lib{font-weight:500;line-height:1.35}
+.mi-meta{font-size:.8rem;color:var(--ink-soft)}
+.mi-meta:empty{display:none}
+
+/* ── Côté enseignant : la grille élèves × missions ──
+   Colonnes étroites et centrées : on lit une colonne pour voir qui n'a pas
+   franchi une mission, une ligne pour voir où quelqu'un s'est arrêté. */
+.mi-grille{margin-top:.6rem;font-size:.85rem}
+.mi-grille th,.mi-grille td{padding:.3rem .4rem;border-bottom:1px solid var(--rule-soft);
+  text-align:center;white-space:nowrap}
+.mi-grille tbody th{text-align:left;font-family:var(--f-mono);font-weight:600}
+.mi-grille thead th{color:var(--ink-soft);font-weight:600;cursor:help}
+.mi-grille .mi-ok{color:var(--ok);font-weight:700}
+.mi-grille .mi-non{color:var(--ink-faint)}
+.mi-grille .mi-date{text-align:right;color:var(--ink-soft);font-size:.8rem}
+.mi-grille tr.mi-fini th{color:var(--ok)}
+.mi-grille tr.mi-arret{background:var(--signal-soft)}
+.mi-grille tr.mi-arret .mi-date{color:var(--signal);font-weight:600}
+.mi-grille tr.mi-rien th{color:var(--ink-faint)}
+.mi-legende{margin:.6rem 0 0 1.2rem;font-size:.82rem;color:var(--ink-soft)}
+#mi-neuf{margin-top:.8rem}
+#mi-neuf > summary,#f-gs summary{cursor:pointer;font-size:.9rem;font-weight:600;
+  min-height:44px;display:flex;align-items:center}
+#mi-texte{width:100%;font-family:var(--f-mono);font-size:.85rem;margin-top:.4rem}
+
+/* ── La carte « Les séances » ── */
+.gs-l{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;
+  border-top:1px solid var(--rule-soft)}
+.gs-l:first-child{border-top:0}
+.gs-num{flex:0 0 2.2rem;font-family:var(--f-mono);font-weight:600;color:var(--ink-soft)}
+.gs-txt{display:flex;flex-direction:column;flex:1 1 0;min-width:0}
+.gs-titre{font-weight:500;line-height:1.3}
+.gs-meta{font-size:.8rem;color:var(--ink-soft)}
+.gs-projet .gs-num{color:var(--accent)}
+.gs-b{flex:0 0 auto;min-height:44px}
+.gs-form{margin-top:1rem;padding:.9rem 1rem;border:1px solid var(--rule-soft);
+  border-radius:10px;background:var(--surface-alt)}
+.gs-champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));
+  gap:.7rem;margin:.6rem 0}
+.gs-champs label{display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;
+  font-weight:500;color:var(--ink-soft)}
+.gs-champs input,.gs-champs select{font:inherit;color:var(--ink);min-height:44px;
+  padding:.4rem .5rem;border:1px solid var(--rule);border-radius:8px;background:var(--surface)}
+.gs-champs .gs-large{grid-column:1 / -1}
+.gs-champs .gs-case{flex-direction:row;align-items:center;gap:.5rem;min-height:44px}
+.gs-champs .gs-case input{min-height:0;width:1.2rem;height:1.2rem}
+@media (max-width: 30rem){
+  .gs-l{flex-wrap:wrap}
+  .gs-txt{flex-basis:calc(100% - 2.9rem)}
+  .gs-b{margin-left:2.9rem}
+}

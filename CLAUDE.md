@@ -31,6 +31,8 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `ecran.js` | le mode classe projeté au tableau |
 | `bibliotheque.js` | les questionnaires côté enseignant : modèles, affectations, réglages |
 | `quiz.js` | les trois modes de rendu côté étudiant |
+| `missions.js` | les missions d'une séance de projet : la carte étudiante qui les coche, la grille élèves × missions et son éditeur |
+| `gestion.js` | la carte « Les séances » : créer une séance, régler titre, nature, jalons, échéance, publication |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -60,9 +62,9 @@ heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
 |---|---|---|
 | **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — neuf règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
 | Onglet **Aujourd'hui** (`#appel`) | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
-| Onglet **Le semestre** (`#ensemble`) | *Où en est-on ?* | `semestre()` (les séances une par une), Vos classes, Tous les projets. |
+| Onglet **Le semestre** (`#ensemble`) | *Où en est-on ?* | `semestre()` (les séances une par une), **Les séances** (créer et régler, depuis le 27/09), Vos classes, Tous les projets. |
 | Onglet **Ma bibliothèque** (`#quest`) | *Que leur ai-je posé, hors quiz de séance ?* | Les modèles, leurs affectations, puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. Les contrôles d'entrée n'y sont plus depuis le 17/09 (voir ci-dessous). |
-| Onglet **La séance** (`#seance`) | *Que s'est-il passé à la S2 ?* | L'**inventaire des contrôles d'entrée** (toutes classes, avec leur interrupteur), puis, pour **une séance choisie** : pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève, contrôle d'entrée, débriefing. |
+| Onglet **La séance** (`#seance`) | *Que s'est-il passé à la S2 ?* | L'**inventaire des contrôles d'entrée** (toutes classes, avec leur interrupteur), puis, pour **une séance choisie** : pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève, contrôle d'entrée, débriefing, et sur un projet la **grille des missions**. |
 
 **Les quatre libellés relèvent d'une seule taxonomie** (B6, 17/09) : trois
 échelles de **temps** — le jour, l'heure, le semestre — qui se déduisent l'une
@@ -140,6 +142,7 @@ en service : un script poussé sur GitHub n'est pas un script joué sur Supabase
 | `reponses` | `eleve_id`, `seance_id`, `question`, `reponse`, `correct`, `updated_at` |
 | `projets` | `classe_id`, `titre`, `description`, `url`, `icone`, `ordre` |
 | `enseignants` | comptes autorisés à ouvrir l'espace enseignant |
+| `missions` | `seance_id`, `cle` (`tpN-mK`), `ordre`, `libelle`, `niveau`, `verbe` — lue seulement par fonctions |
 
 Fonctions : `rejoindre()`, `repondre()`, `qui_suis_je()`, `avatars_pris()`,
 `choisir_avatar()`, `est_enseignant()`, `purger_annee()`. RLS actif partout.
@@ -1230,3 +1233,33 @@ identique à celle de la base, dont les numéros de questions existent**.
 Le dernier point est celui qui a motivé la fiche : sans lui, deux listes
 divergent en silence et on débriefe sur des concepts que la trace écrite ne
 nomme pas.
+
+---
+
+## Les missions d'une séance de projet — depuis le 27/09
+
+Une séance de projet se suit en jalons, et jusqu'au 27/09 ils ne remontaient que
+du tableau de bord PlaylistApp (`tpN-…` = `'true'`). Une séance sans tableau de
+bord à elle — la séance IA 1 du BTS2 — ne remontait rien.
+
+- La table `missions` décrit les missions d'une séance ; l'étudiant les coche
+  dans la carte « Vos missions » (`mes_missions()`, `valider_mission()`).
+- **Une case cochée s'écrit exactement comme celle de PlaylistApp** : clé
+  `tpN-mK`, réponse `'true'`. `suivi_projet()`, `parcours_seance()` et le tableau
+  de bord la comptent donc sans changement, et `'true'` n'étant ni `'ok'` ni
+  `'ko'`, aucune mission n'entre dans un taux de réussite. **Ne pas passer les
+  missions en `'ok'`.**
+- La carte étudiante **n'est pas une étape de la file** : marquée étape, elle se
+  replierait une fois tout coché, et une case cochée par erreur ne se décocherait
+  plus.
+- `definir_missions()` réécrit les missions d'une séance (une par ligne, 🟢 🟡 🔴
+  en tête, `[Verbe]` à la fin) et **aligne `jalons` sur leur nombre**. Elle refuse
+  de retirer une mission déjà cochée par quelqu'un.
+- `grille_missions()` vaut aussi pour les TP PlaylistApp : sans missions
+  déclarées, les colonnes sont les clés `tp…` réellement cochées.
+- `enregistrer_seance()` crée ou règle une séance depuis la carte « Les séances ».
+  Bande 90-99 refusée, numéro déjà pris refusé, et **pas de renumérotation d'une
+  séance qui a des réponses** (les clés de mission portent son numéro).
+
+Contrôle : `outils/t_missions.mjs`, cassé quatre fois pour vérifier qu'il voit
+ce qu'il annonce.

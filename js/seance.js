@@ -47,6 +47,7 @@ import { chargerQuestionsSeance } from './bibliotheque.js';
 import { rendreEcran } from './ecran.js';
 import { chargerAppelToutesClasses } from './appel.js';
 import { chargerSemestre } from './ensemble.js';
+import { chargerMissions } from './missions.js';
 
 let chargerAFaire = function(){};
 export function brancherSeance(liens){ chargerAFaire = liens.chargerAFaire; }
@@ -320,6 +321,7 @@ function rafraichir(){
   // « À aller voir » suit la même boucle de huit secondes que les tuiles :
   // une main levée qui attend la boucle suivante attend déjà trop.
   chargerVigilance(function(){ if (suivi.stats) rendreRythme(suivi.stats); });
+  chargerMissions();
   return chargerStats().then(function(s){ if (s) rendreSuivi(s); });
 }
 
@@ -582,6 +584,7 @@ function activerSeance(){
     arreterBoucle();
     $("prevol").hidden = true;
     $("bloc-vigilance").hidden = true;
+    $("bloc-missions").hidden = true;
     suivi.vigilance = null;
     $("bloc-corriges").hidden = true;
     $("stats-zone").hidden = true;

@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="styles/ensemble.css">
 <link rel="stylesheet" href="styles/suivi.css">
 <link rel="stylesheet" href="styles/ecran.css">
+<link rel="stylesheet" href="styles/missions.css">
 </head>
 <body>
 <!-- WCAG 2.4.1 : sans ce lien, un usage au clavier retraverse l'en-tête à
@@ -144,6 +145,10 @@
 
   <div id="questionnaires-etu"></div>
 
+  <!-- Les missions d'une séance de projet : ce n'est pas une étape de la file,
+       c'est la séance elle-même (voir js/missions.js). -->
+  <div id="missions-etu"></div>
+
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
 </section>
@@ -225,6 +230,43 @@
       jamais être évaluées.</p>
     <div id="sem-classes"></div>
     <div aria-live="polite" id="err-semestre"></div>
+  </div>
+
+  <!-- Créer et régler les séances sans passer par une migration. Les corrigés,
+       contrôles et missions ne s'écrivent pas ici : chacun s'écrit dans
+       l'onglet La séance, en regardant la séance qu'il prépare. -->
+  <div class="card" id="carte-seances" hidden>
+    <h2>Les séances</h2>
+    <p class="hint">Titre, nature, jalons, échéance, publication. Une séance
+      <b>non publiée</b> n'apparaît pas aux étudiants ; <b>fermée</b>, elle
+      n'accepte plus de réponse. Les numéros 90 à 99 sont réservés.</p>
+    <div class="pick">
+      <select id="gs-classe" aria-label="Classe dont on règle les séances"></select>
+      <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>
+    </div>
+    <div aria-live="polite" id="err-gs-liste"></div>
+    <div id="gs-liste"></div>
+    <form id="f-gs" class="gs-form" hidden>
+      <h3 class="sous-titre" id="gs-f-titre">Nouvelle séance</h3>
+      <div class="gs-champs">
+        <label>Numéro <input id="gs-numero" type="number" min="0" max="89" required></label>
+        <label class="gs-large">Titre <input id="gs-titre" type="text" required autocomplete="off"></label>
+        <label>Nature
+          <select id="gs-nature"><option value="cours">Cours (une cadence)</option>
+            <option value="projet">Projet (des jalons)</option></select></label>
+        <label>Jalons <input id="gs-jalons" type="number" min="0" max="60">
+          <span class="sous-hint" id="gs-jalons-note"></span></label>
+        <label>Échéance <input id="gs-echeance" type="date"></label>
+        <label>Durée (min) <input id="gs-duree" type="number" min="5" max="600"></label>
+        <label class="gs-case"><input id="gs-publiee" type="checkbox"> Publiée</label>
+        <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
+      </div>
+      <div class="pick">
+        <button class="btn" id="b-gs-ok" type="submit">Enregistrer</button>
+        <button class="btn btn-sec" id="b-gs-annuler" type="button">Annuler</button>
+      </div>
+      <div aria-live="polite" id="err-gs"></div>
+    </form>
   </div>
 
   <div class="card">
@@ -441,6 +483,32 @@
           <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
         </div>
         <div aria-live="polite" id="err-db-neuf"></div>
+      </details>
+    </div>
+
+    <!-- Les missions d'une séance de projet, élève par élève. Visible sur une
+         séance de projet seulement ; vaut aussi pour les TP PlaylistApp, dont
+         les colonnes sont alors les clés cochées sur leur tableau de bord. -->
+    <div id="bloc-missions" class="ct-bloc" hidden>
+      <div class="ct-tete">
+        <h3 class="sous-titre" style="margin:0">Missions, élève par élève</h3>
+      </div>
+      <p class="sous-hint" id="mi-resume"></p>
+      <div id="mi-barres"></div>
+      <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
+      <ol class="mi-legende" id="mi-legende"></ol>
+      <details id="mi-neuf">
+        <summary>Écrire les missions de cette séance</summary>
+        <p class="sous-hint">Une mission par ligne. Devant, facultatif, le niveau :
+          🟢 guidé, 🟡 semi-guidé, 🔴 autonome. À la fin, facultatif, le verbe entre
+          crochets. <b>Les jalons de la séance suivent le nombre de missions.</b>
+          Une mission déjà cochée par un étudiant ne peut plus être retirée.</p>
+        <textarea id="mi-texte" rows="6" spellcheck="true"
+          placeholder="🟢 Règles de gestion et questions au tuteur [Concevoir]&#10;🟡 Agent lancé, livraison relue [Piloter]"></textarea>
+        <div class="pick" style="margin-top:.7rem">
+          <button class="btn" id="b-mi-creer" type="button">Enregistrer les missions</button>
+        </div>
+        <div aria-live="polite" id="err-mi-neuf"></div>
       </details>
     </div>
 

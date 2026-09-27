@@ -22,6 +22,30 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 27 septembre 2026 — la séance IA 1 du BTS2, les missions, et la gestion des séances
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20260927060000_bts2_ia_seance1.sql` | crée la séance **11** du BTS2 (projet, 5 jalons) et son contrôle d'entrée (6 notions + 6 certitudes, **éteint**) ; séance **non publiée et fermée** |
+| `20260927070000_missions_et_seances.sql` | table `missions` ; `mes_missions`, `valider_mission` (étudiant) ; `definir_missions`, `grille_missions`, `seances_de_classe`, `enregistrer_seance` (enseignant) ; les cinq missions de la séance 11 |
+
+Côté portail : `js/missions.js` (carte « Vos missions », grille élèves ×
+missions et son éditeur dans l'onglet La séance), `js/gestion.js` (carte « Les
+séances » dans l'onglet Le semestre), `styles/missions.css`, contrôle
+`outils/t_missions.mjs` — lancé par le workflow.
+
+Rejoué deux fois sur une base neuve avec le socle de `supabase.yml` : 0
+bloquant ; essais fonctionnels des six fonctions (cocher deux fois n'écrit
+qu'une ligne, `suivi_projet()` compte les missions cochées, retrait d'une
+mission cochée refusé, bande 90-99 et renumérotation refusées).
+
+**À faire en production, dans le portail, une fois appliqué :** onglet Le
+semestre → Les séances → BTS2 → séance 11 → corriger l'échéance, cocher
+**Publiée** et **Ouverte** le jour venu. Sans cela, la carte « Vos missions »
+reste invisible aux étudiants — c'est voulu.
+
+---
+
 ## 25 septembre 2026 — la séance 4 accueille les bases vectorielles
 
 La séance 4 n'avait pas été jouée (ni publiée, ni démarrée, aucune réponse) :
