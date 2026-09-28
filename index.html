@@ -367,19 +367,7 @@
           <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
           <ol class="mi-legende" id="mi-legende"></ol>
         </details>
-        <details id="mi-neuf">
-          <summary>Écrire les missions de cette séance</summary>
-          <p class="sous-hint">Une mission par ligne. Devant, facultatif, le niveau :
-            🟢 guidé, 🟡 semi-guidé, 🔴 autonome. À la fin, facultatif, le verbe entre
-            crochets. <b>Les jalons de la séance suivent le nombre de missions.</b>
-            Une mission déjà cochée par un étudiant ne peut plus être retirée.</p>
-          <textarea id="mi-texte" rows="6" spellcheck="true"
-            placeholder="🟢 Règles de gestion et questions au tuteur [Concevoir]&#10;🟡 Agent lancé, livraison relue [Piloter]"></textarea>
-          <div class="pick" style="margin-top:.7rem">
-            <button class="btn" id="b-mi-creer" type="button">Enregistrer les missions</button>
-          </div>
-          <div aria-live="polite" id="err-mi-neuf"></div>
-        </details>
+        <button class="qa-b vers-prep" type="button" data-onglet="missions">Écrire les missions ›</button>
       </div>
       <!-- Ce qu'une séance ne voit pas : la répétition. Replié, parce qu'on le
            lit en préparant la semaine, pas pendant l'heure. -->
@@ -403,18 +391,7 @@
         <details class="plie-in" id="ct-detail"><summary>Notion par notion</summary>
           <div id="ct-lignes"></div></details>
         <div aria-live="polite" id="err-controle"></div>
-        <details id="ct-neuf">
-          <summary>Écrire le contrôle de cette séance</summary>
-          <p class="sous-hint">Une notion par ligne : l'intitulé puis deux à quatre
-            options séparées par « · ». <b>Une étoile devant la bonne option.</b>
-            La question de certitude est ajoutée toute seule après chaque notion.</p>
-          <textarea id="ct-texte" rows="6" spellcheck="true"
-            placeholder="Que signifie un code 404 ? · la page a changé · *la ressource est introuvable · le serveur a planté · l'accès est refusé&#10;Qui parle en premier dans un échange HTTP ? · *le client · le serveur · les deux · aucun"></textarea>
-          <div class="pick" style="margin-top:.7rem">
-            <button class="btn" id="b-ct-creer" type="button">Enregistrer le contrôle</button>
-          </div>
-          <div aria-live="polite" id="err-ct-neuf"></div>
-        </details>
+      <button class="qa-b vers-prep" type="button" data-onglet="controle">Écrire le contrôle ›</button>
       </div>
       <h3 class="sous-titre">Réussite par question</h3>
       <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
@@ -442,36 +419,11 @@
         <details class="plie-in" id="db-detail"><summary>Concept par concept</summary>
           <div id="db-lignes"></div></details>
         <div aria-live="polite" id="err-debrief"></div>
-        <details id="db-neuf">
-          <summary>Écrire les concepts de cette séance</summary>
-          <p class="sous-hint">Un concept par ligne : l'intitulé, un tiret, puis ce
-            qu'il faut pouvoir en dire. Entre crochets à la fin, <b>les numéros des
-            questions du quiz</b> qui le mesurent — c'est ce qui donne son chiffre au
-            concept. Recopiez la section « Concepts à connaître » de la trace écrite.</p>
-          <textarea id="db-texte" rows="6" spellcheck="true"
-            placeholder="Client et serveur — le client demande toujours en premier, le serveur répond. [1 2]&#10;Les codes de statut — 4xx le client s'est trompé, 5xx le serveur a échoué. [3 4 5]"></textarea>
-          <div class="pick" style="margin-top:.7rem">
-            <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
-          </div>
-          <div aria-live="polite" id="err-db-neuf"></div>
-        </details>
+      <button class="qa-b vers-prep" type="button" data-onglet="concepts">Écrire les concepts ›</button>
       </div>
     </section>
   </div>
 
-  <!-- L'inventaire des contrôles vit À CÔTÉ du suivi de la séance, qui porte
-       leur éditeur : un contrôle se lit et s'écrit au même endroit (B2 de
-       REFONTE.md), juste APRÈS lui. Replié : « Ce qui bloque » signale déjà un contrôle éteint ;
-       il reste ici pour la vue d'ensemble, toutes classes confondues. -->
-  <details class="card plie" id="carte-controles" hidden>
-    <summary><h2>Contrôles d'entrée <span class="ctl-compte" id="ctl-compte"></span></h2></summary>
-    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
-      qu'ils en avaient gardé. Ici, tout ce qui est écrit, pour toutes les
-      classes, avec son interrupteur. <b>Éteint, aucun étudiant ne le voit.</b>
-      Pour en écrire un, choisissez sa séance ci-dessous.</p>
-    <div id="ctl-liste"></div>
-    <div aria-live="polite" id="err-controles"></div>
-  </details>
   </div>
 
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
@@ -489,32 +441,122 @@
       <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>
     </div>
     <div aria-live="polite" id="err-gs-liste"></div>
+    <div class="gs-cadre" id="gs-cadre">
+    <div class="gs-colonne">
     <div id="gs-liste"></div>
-    <form id="f-gs" class="gs-form" hidden>
-      <h3 class="sous-titre" id="gs-f-titre">Nouvelle séance</h3>
-      <div class="gs-champs">
-        <label>Numéro <input id="gs-numero" type="number" min="0" max="89" required></label>
-        <label class="gs-large">Titre <input id="gs-titre" type="text" required autocomplete="off"></label>
-        <label class="gs-large" id="gs-module-l" hidden>Module
-          <select id="gs-module"></select></label>
-        <label>Nature
-          <select id="gs-nature"><option value="cours">Cours (une cadence)</option>
-            <option value="projet">Projet (des jalons)</option></select></label>
-        <label>Jalons <input id="gs-jalons" type="number" min="0" max="60">
-          <span class="sous-hint" id="gs-jalons-note"></span></label>
-        <label>Échéance <input id="gs-echeance" type="date"></label>
-        <label>Durée (min) <input id="gs-duree" type="number" min="5" max="600"></label>
-        <label class="gs-case"><input id="gs-publiee" type="checkbox"> Publiée</label>
-        <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
+    </div>
+
+    <!-- La fiche d'une séance (28/09), le motif liste + détail : on choisit
+         une séance à gauche, elle s'ouvre à droite (sur un téléphone, à la
+         place de la liste). Tout ce qui se RÈGLE sur une séance est ici — ses
+         informations, son contrôle d'entrée, ses concepts, ses missions — et
+         plus dans l'écran du direct. js/preparer.js. -->
+    <section class="gs-fiche" id="gs-fiche" hidden aria-labelledby="gs-fiche-titre">
+      <div class="gs-fiche-tete">
+        <button class="btn btn-sec" id="b-gs-retour" type="button">‹ Les séances</button>
+        <h3 id="gs-fiche-titre">Séance</h3>
       </div>
-      <div class="pick">
-        <button class="btn" id="b-gs-ok" type="submit">Enregistrer</button>
-        <button class="btn btn-sec" id="b-gs-annuler" type="button">Annuler</button>
+      <div class="gs-pret" id="gs-pret" aria-live="polite"></div>
+      <nav class="sv-vues" id="gs-onglets" role="tablist" aria-label="Régler la séance">
+        <button class="sv-vue-b actif" type="button" role="tab" id="gsb-infos" data-onglet="infos"
+          aria-controls="gso-infos" aria-selected="true">Infos</button>
+        <button class="sv-vue-b" type="button" role="tab" id="gsb-controle" data-onglet="controle"
+          aria-controls="gso-controle" aria-selected="false" tabindex="-1">Contrôle</button>
+        <button class="sv-vue-b" type="button" role="tab" id="gsb-concepts" data-onglet="concepts"
+          aria-controls="gso-concepts" aria-selected="false" tabindex="-1">Concepts</button>
+        <button class="sv-vue-b" type="button" role="tab" id="gsb-missions" data-onglet="missions"
+          aria-controls="gso-missions" aria-selected="false" tabindex="-1">Missions</button>
+      </nav>
+      <div class="gs-onglet" id="gso-infos" role="tabpanel" aria-labelledby="gsb-infos">
+        <form id="f-gs" class="gs-form" hidden>
+          <h3 class="sous-titre" id="gs-f-titre">Nouvelle séance</h3>
+          <div class="gs-champs">
+            <label>Numéro <input id="gs-numero" type="number" min="0" max="89" required></label>
+            <label class="gs-large">Titre <input id="gs-titre" type="text" required autocomplete="off"></label>
+            <label class="gs-large" id="gs-module-l" hidden>Module
+              <select id="gs-module"></select></label>
+            <label>Nature
+              <select id="gs-nature"><option value="cours">Cours (une cadence)</option>
+                <option value="projet">Projet (des jalons)</option></select></label>
+            <label>Jalons <input id="gs-jalons" type="number" min="0" max="60">
+              <span class="sous-hint" id="gs-jalons-note"></span></label>
+            <label>Échéance <input id="gs-echeance" type="date"></label>
+            <label>Durée (min) <input id="gs-duree" type="number" min="5" max="600"></label>
+            <label class="gs-case"><input id="gs-publiee" type="checkbox"> Publiée</label>
+            <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
+          </div>
+          <div class="pick">
+            <button class="btn" id="b-gs-ok" type="submit">Enregistrer</button>
+            <button class="btn btn-sec" id="b-gs-annuler" type="button">Annuler</button>
+          </div>
+          <div aria-live="polite" id="err-gs"></div>
+        </form>
       </div>
-      <div aria-live="polite" id="err-gs"></div>
-    </form>
+      <div class="gs-onglet" id="gso-controle" role="tabpanel" aria-labelledby="gsb-controle" hidden>
+        <div class="pick gs-ctl-etat">
+          <span class="badge neutre" id="pr-ctl-badge">—</span>
+          <span class="sous-hint" id="pr-ctl-resume"></span>
+          <button class="btn btn-sec" id="b-pr-ctl" type="button" hidden></button>
+        </div>
+        <div aria-live="polite" id="err-pr-ctl"></div>
+        <div id="ct-neuf" class="gs-editeur">
+            <p class="sous-hint">Une notion par ligne : l'intitulé puis deux à quatre
+              options séparées par « · ». <b>Une étoile devant la bonne option.</b>
+              La question de certitude est ajoutée toute seule après chaque notion.</p>
+            <textarea id="ct-texte" rows="6" spellcheck="true"
+              placeholder="Que signifie un code 404 ? · la page a changé · *la ressource est introuvable · le serveur a planté · l'accès est refusé&#10;Qui parle en premier dans un échange HTTP ? · *le client · le serveur · les deux · aucun"></textarea>
+            <div class="pick" style="margin-top:.7rem">
+              <button class="btn" id="b-ct-creer" type="button">Enregistrer le contrôle</button>
+            </div>
+            <div aria-live="polite" id="err-ct-neuf"></div>
+        </div>
+      </div>
+      <div class="gs-onglet" id="gso-concepts" role="tabpanel" aria-labelledby="gsb-concepts" hidden>
+        <div id="db-neuf" class="gs-editeur">
+            <p class="sous-hint">Un concept par ligne : l'intitulé, un tiret, puis ce
+              qu'il faut pouvoir en dire. Entre crochets à la fin, <b>les numéros des
+              questions du quiz</b> qui le mesurent — c'est ce qui donne son chiffre au
+              concept. Recopiez la section « Concepts à connaître » de la trace écrite.</p>
+            <textarea id="db-texte" rows="6" spellcheck="true"
+              placeholder="Client et serveur — le client demande toujours en premier, le serveur répond. [1 2]&#10;Les codes de statut — 4xx le client s'est trompé, 5xx le serveur a échoué. [3 4 5]"></textarea>
+            <div class="pick" style="margin-top:.7rem">
+              <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
+            </div>
+            <div aria-live="polite" id="err-db-neuf"></div>
+        </div>
+      </div>
+      <div class="gs-onglet" id="gso-missions" role="tabpanel" aria-labelledby="gsb-missions" hidden>
+        <div id="mi-neuf" class="gs-editeur">
+            <p class="sous-hint">Une mission par ligne. Devant, facultatif, le niveau :
+              🟢 guidé, 🟡 semi-guidé, 🔴 autonome. À la fin, facultatif, le verbe entre
+              crochets. <b>Les jalons de la séance suivent le nombre de missions.</b>
+              Une mission déjà cochée par un étudiant ne peut plus être retirée.</p>
+            <textarea id="mi-texte" rows="6" spellcheck="true"
+              placeholder="🟢 Règles de gestion et questions au tuteur [Concevoir]&#10;🟡 Agent lancé, livraison relue [Piloter]"></textarea>
+            <div class="pick" style="margin-top:.7rem">
+              <button class="btn" id="b-mi-creer" type="button">Enregistrer les missions</button>
+            </div>
+            <div aria-live="polite" id="err-mi-neuf"></div>
+        </div>
+      </div>
+    </section>
+    </div>
   </div>
 
+
+  <!-- L'inventaire des contrôles vit À CÔTÉ de leur éditeur (B2 de REFONTE.md) :
+       depuis le 28/09, tous deux sont dans Préparer — l'éditeur dans la fiche
+       de chaque séance, juste au-dessus. Replié : « Ce qui bloque » signale déjà
+       un contrôle éteint ; il reste ici pour la vue d'ensemble, toutes classes. -->
+  <details class="card plie" id="carte-controles" hidden>
+    <summary><h2>Contrôles d'entrée <span class="ctl-compte" id="ctl-compte"></span></h2></summary>
+    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
+      qu'ils en avaient gardé. Ici, tout ce qui est écrit, pour toutes les
+      classes, avec son interrupteur. <b>Éteint, aucun étudiant ne le voit.</b>
+      Pour en écrire un, choisissez sa séance ci-dessous.</p>
+    <div id="ctl-liste"></div>
+    <div aria-live="polite" id="err-controles"></div>
+  </details>
 
   <!-- Les contrôles d'entrée s'écrivent dans « La séance », parce
        qu'ils appartiennent à la séance qu'ils précèdent. Mais on les cherche

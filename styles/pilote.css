@@ -193,3 +193,35 @@ body.fiche-ouverte{overflow:hidden}
   .sv-maj{display:none}
   .sv-action{min-height:38px;padding:.3rem .8rem;font-size:.85rem}
 }
+
+/* ── Préparer : la liste des séances et la fiche d'une séance (28/09) ──
+   Deux colonnes sur un grand écran ; sur un téléphone, la fiche prend la
+   place de la liste, avec « ‹ Les séances » pour revenir. */
+.gs-fiche{border:1px solid var(--rule);border-radius:10px;padding:.8rem .9rem;margin-top:.8rem;background:var(--surface)}
+.gs-fiche-tete{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem;flex-wrap:wrap}
+.gs-fiche-tete h3{margin:0;font-size:1rem;flex:1 1 12rem}
+.gs-cadre.fiche-ouverte .gs-colonne{display:none}
+@media (min-width: 58rem){
+  .gs-cadre.fiche-ouverte{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:1rem;align-items:start}
+  .gs-cadre.fiche-ouverte .gs-colonne{display:block}
+  .gs-cadre.fiche-ouverte .gs-fiche{margin-top:0;position:sticky;top:4.2rem;max-height:calc(100vh - 5rem);overflow-y:auto}
+  #b-gs-retour{display:none}
+}
+.gs-onglet{padding-top:.2rem}
+.gs-onglet .gs-form{margin-top:0;border:0;padding:0}
+.gs-editeur textarea{width:100%;font-family:var(--f-mono);font-size:.84rem;margin-top:.4rem}
+.gs-ctl-etat{align-items:center;margin-bottom:.4rem}
+.gs-pret{margin-bottom:.8rem}
+.gs-pret:empty{display:none}
+.gs-pret-tete{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}
+.gs-pret-liste{list-style:none;margin:0;padding:0;font-size:.88rem}
+.gs-pret-liste li{display:flex;align-items:center;gap:.5rem;padding:.12rem 0;min-height:32px}
+.gs-pret-i{flex:0 0 1.3rem;height:1.3rem;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:700}
+.gs-pret-liste li.ok .gs-pret-i{background:var(--ok-soft);color:var(--ok)}
+.gs-pret-liste li.ko .gs-pret-i{background:var(--signal-soft);color:var(--signal)}
+.gs-pret-liste li.info .gs-pret-i{background:var(--surface-alt);color:var(--ink-soft)}
+.gs-pret-lien{appearance:none;border:0;background:transparent;font:inherit;color:var(--accent-ink);
+  text-decoration:underline;cursor:pointer;padding:.3rem 0;text-align:left;min-height:32px}
+.vers-prep{margin-top:.5rem;white-space:normal;max-width:100%}
+.gs-onglet #gs-f-titre{display:none}

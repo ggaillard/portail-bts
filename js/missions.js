@@ -248,15 +248,17 @@ function rendreGrille(g){
     lg.appendChild(li);
   });
 
-  // L'éditeur se préremplit avec ce qui est déclaré — jamais avec les clés
-  // PlaylistApp, qui ne sont pas des missions à réécrire.
-  var ta = $("mi-texte");
-  if (ta && g.declarees && !ta.dataset.touche) {
-    ta.value = cols.map(function(m){
-      return (NIVEAUX[m.niveau] ? NIVEAUX[m.niveau] + " " : "") + m.libelle +
-             (m.verbe ? " [" + m.verbe + "]" : "");
-    }).join("\n");
-  }
+  // L'éditeur ne vit plus ici : il est dans la fiche de la séance, sous
+  // Préparer (28/09), qui se préremplit avec lignesMissions().
+}
+
+// Les missions déclarées, dans la syntaxe de l'éditeur — jamais les clés
+// PlaylistApp, qui ne sont pas des missions à réécrire.
+function lignesMissions(cols){
+  return (cols || []).map(function(m){
+    return (NIVEAUX[m.niveau] ? NIVEAUX[m.niveau] + " " : "") + m.libelle +
+           (m.verbe ? " [" + m.verbe + "]" : "");
+  });
 }
 
 // Une phrase, dans l'ordre où l'on agit : qui a fini, qui est arrêté, qui n'a
@@ -281,9 +283,11 @@ function resume(cols, eleves, g){
 function enregistrerMissions(){
   var ta = $("mi-texte");
   var b = $("b-mi-creer");
-  if (!suivi.seanceId) return;
+  // La séance PRÉPARÉE (fiche de Préparer), à défaut la séance suivie.
+  var cible = suivi.prep || suivi.seanceId;
+  if (!cible) return;
   b.disabled = true;
-  sb.rpc("definir_missions", { p_seance_id: Number(suivi.seanceId), p_texte: ta.value })
+  sb.rpc("definir_missions", { p_seance_id: Number(cible), p_texte: ta.value })
     .then(function(r){
       b.disabled = false;
       if (r.error || !r.data || !r.data.ok) {
@@ -296,7 +300,7 @@ function enregistrerMissions(){
       erreur("err-mi-neuf", r.data.missions + " mission" + (r.data.missions > 1 ? "s" : "") +
              " enregistrée" + (r.data.missions > 1 ? "s" : "") +
              " — les jalons de la séance suivent.", true);
-      suivi.jalons = r.data.missions || suivi.jalons;
+      if (String(cible) === String(suivi.seanceId)) suivi.jalons = r.data.missions || suivi.jalons;
       chargerMissions();
     });
 }
@@ -304,9 +308,6 @@ function enregistrerMissions(){
 function brancherMissions(){
   var b = $("b-mi-creer");
   if (b) b.addEventListener("click", enregistrerMissions);
-  var ta = $("mi-texte");
-  // Une saisie en cours ne doit pas être écrasée par le tour suivant de la boucle.
-  if (ta) ta.addEventListener("input", function(){ ta.dataset.touche = "1"; });
 }
 
-export { chargerMissionsEtu, chargerMissions, rendreGrille, brancherMissions, resume };
+export { chargerMissionsEtu, chargerMissions, rendreGrille, brancherMissions, resume, lignesMissions };

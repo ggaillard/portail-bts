@@ -173,18 +173,14 @@ function rendreControleEns(d){
 
   var r = $("ct-resume");
   if (!d.notions) {
-    r.textContent = "Aucune notion pour cette séance. Pour en écrire, dépliez " +
-      "« Écrire le contrôle » : les étudiants y répondront avant de venir.";
+    r.textContent = "Aucune notion pour cette séance. Il s'écrit dans la fiche " +
+      "de la séance, sous Préparer : les étudiants y répondent avant de venir.";
     $("ct-lignes").innerHTML = "";
-    // Plus déplié d'office (28/09) : en séance, un éditeur ouvert de 350 px
-    // sous chaque séance sans contrôle passait devant tout le reste.
-    $("ct-neuf").open = false;
     return;
   }
   var bouts = [d.notions + (d.notions > 1 ? " notions" : " notion"),
                d.termines + " / " + d.inscrits + " ont répondu"];
   r.textContent = bouts.join(" · ");
-  $("ct-neuf").open = false;
 
   var z = $("ct-lignes");
   z.innerHTML = "";
@@ -290,8 +286,8 @@ function rendreControles(liste){
     // Le vide se dit avec le chemin pour en sortir, sinon il se lit comme une
     // panne — c'est ce qui s'est passé le 15/09, dans l'autre sens.
     z.innerHTML = '<p class="hint" style="margin:0">Aucun contrôle écrit pour ' +
-      "l'instant. Ils s'écrivent juste en dessous, dans <b>La séance</b> : choisissez la " +
-      'classe et la séance, puis « Écrire le contrôle de cette séance ».</p>';
+      "l'instant. Ils s'écrivent dans la fiche de chaque séance, juste au-dessus, dans <b>Les séances</b> : choisissez la " +
+      'séance, puis son onglet « Contrôle ».</p>';
     return;
   }
   liste.forEach(function(c){ z.appendChild(ligneControleGlobal(c)); });

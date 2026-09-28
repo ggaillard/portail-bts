@@ -76,6 +76,7 @@ for (const w of [360, 390, 620, 1280]) {
       coupee: v.scrollWidth > v.clientWidth,
       colonnes: getComputedStyle(document.getElementById('tuiles')).gridTemplateColumns.split(' ').length,
       ouCtrl: dansVolet('carte-controles'),
+      ouEditeur: dansVolet('ct-texte'),
       debord: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     };
   });
@@ -110,8 +111,9 @@ for (const w of [360, 390, 620, 1280]) {
   if (r.colonnes !== (w >= 544 ? 4 : 2)) {
     rates.push(`${w} px : ${r.colonnes} colonnes de tuiles, attendu ${w >= 544 ? 4 : 2}`);
   }
-  if (r.ouCtrl !== 'volet-appel') {
-    rates.push(`l'inventaire des contrôles est dans « ${r.ouCtrl} » et non à côté du suivi de la séance, dans En cours (B2)`);
+  if (r.ouCtrl !== r.ouEditeur) {
+    rates.push(`l'inventaire des contrôles est dans « ${r.ouCtrl} » et leur éditeur dans « ${r.ouEditeur} » : ` +
+               `on ne sait plus lequel fait autorité (B2)`);
   }
   if (r.debord > 0) rates.push(`${w} px : la page déborde de ${r.debord} px`);
   if (erreurs.length) rates.push(`${w} px : erreur JS — ${erreurs[0]}`);

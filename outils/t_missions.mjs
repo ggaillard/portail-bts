@@ -158,7 +158,6 @@ for (const w of [360, 1280]) {
         lignes: [...document.querySelectorAll('#mi-grille tbody tr')].map((x) => x.className).join(','),
         coches: [...document.querySelectorAll('#mi-grille tbody tr:nth-child(2) td.mi-ok')].length,
         resume: document.getElementById('mi-resume').textContent,
-        texte: document.getElementById('mi-texte').value.split('\n'),
         barres: document.querySelectorAll('#mi-barres .pa-e').length,
         debord: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       }));
@@ -173,36 +172,13 @@ for (const w of [360, 1280]) {
   if (!/1 fini/.test(r.resume) || !/1 sans aucune case/.test(r.resume) || !/1 arrêté/.test(r.resume)) {
     rates.push(`${w} px : résumé « ${r.resume} »`);
   }
-  if (r.texte.length !== 5 || !r.texte[0].startsWith('🟢') || !r.texte[4].includes('[Mesurer]')) {
-    rates.push(`${w} px : l'éditeur n'est pas prérempli avec les missions (${r.texte.length} lignes)`);
-  }
   if (r.barres !== 5) rates.push(`${w} px : ${r.barres} barres, attendu 5`);
   if (r.debord > 0) rates.push(`${w} px : la grille fait déborder la page de ${r.debord} px`);
 
-  // Enregistrer, puis un refus de la base.
-  await p.evaluate(() => {
-    window.__reponses.definir_missions = { ok: true, missions: 2 };
-    document.getElementById('mi-neuf').open = true;
-    const ta = document.getElementById('mi-texte');
-    ta.value = '🟢 Une [Concevoir]\n🔴 Deux';
-    ta.dispatchEvent(new Event('input'));
-  });
-  await p.click('#b-mi-creer');
-  await pause(p);
-  const envoi = await p.evaluate(() => {
-    const a = window.__appels.filter((x) => x.nom === 'definir_missions').pop();
-    return { texte: a && a.args.p_texte, msg: document.getElementById('err-mi-neuf').textContent };
-  });
-  if (envoi.texte !== '🟢 Une [Concevoir]\n🔴 Deux') rates.push(`${w} px : texte envoyé « ${envoi.texte} »`);
-  if (!/2 missions enregistrées/.test(envoi.msg)) rates.push(`${w} px : confirmation « ${envoi.msg} »`);
-  await p.evaluate(() => {
-    window.__reponses.definir_missions = { ok: false, motif: 'cochee',
-      detail: 'Mission(s) déjà cochée(s), impossibles à retirer : tp11-m5' };
-  });
-  await p.click('#b-mi-creer');
-  await pause(p);
-  const refus = await p.evaluate(() => document.getElementById('err-mi-neuf').textContent);
-  if (!/tp11-m5/.test(refus)) rates.push(`${w} px : le refus ne dit pas quelle mission (« ${refus} »)`);
+  // L'éditeur des missions n'est plus ici (28/09) : il vit dans la fiche de
+  // la séance, sous Préparer — section 7. Le direct ne garde qu'un lien.
+  const lien = await p.evaluate(() => !!document.querySelector('#bloc-missions .vers-prep[data-onglet="missions"]'));
+  if (!lien) rates.push(`${w} px : la grille n'offre pas le chemin vers l'éditeur des missions (Préparer)`);
 
   if (erreurs.length) rates.push(`${w} px (grille) : ${erreurs.join(' | ')}`);
   console.log(`── ${w} px · grille : ${r.lignes}`);
@@ -476,7 +452,10 @@ for (const w of [360, 1280]) {
     rates.push(`séances par module : ranger_seance ${JSON.stringify(rg)}`);
   }
 
-  // Modifier la séance 11 sans changer son module : aucun rangement.
+  // Modifier la séance 11 sans changer son module : aucun rangement. Après un
+  // enregistrement, la fiche reste ouverte sur la séance (28/09) : sur un
+  // téléphone, on revient d'abord à la liste.
+  if (await p.isVisible('#b-gs-retour')) await p.click('#b-gs-retour');
   const l2 = await p.$$('#gs-liste .gs-l .gs-b');
   await l2[1].click();
   await pause(p);
@@ -500,6 +479,99 @@ for (const w of [360, 1280]) {
   await fermer();
 }
 
+// ─── 7. Préparer : la fiche d'une séance ───────────────────────────────────
+// Liste + détail : Modifier ouvre la fiche, ses onglets suivent la nature,
+// « Prête à démarrer ? » dit ce qui manque, les éditeurs se préremplissent
+// avec la base et écrivent sur la séance PRÉPARÉE — jamais sur celle qu'on
+// suit en direct.
+for (const w of [390, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  await p.evaluate(({ m }) => {
+    window.__reponses = {
+      seances_de_classe: { ok: true, liste: [
+        { id: 25, numero: 11, titre: 'IA 1', nature: 'projet', jalons: 5, module_id: 3, echeance: null,
+          ouverte: false, publiee: false, missions: 5, corriges: 0, reponses: 3 },
+        { id: 26, numero: 3, titre: 'Séance 3', nature: 'cours', jalons: null, module_id: null,
+          ouverte: false, publiee: false, missions: 0, corriges: 10, reponses: 0 },
+      ] },
+      preflight_seance: { ok: true, nature: 'projet', jalons: 5, echeance: null, questions: 0 },
+      controle_seance: { ok: true, notions: 2, ouvert: false, termines: 0, inscrits: 13, lignes: [
+        { cle: 'pre-02', intitule: 'Deux ?', options: ['a', 'b', 'c'], bonne: 'C' },
+        { cle: 'pre-01', intitule: 'Un ?', options: ['x', 'y'], bonne: 'A' } ] },
+      grille_missions: { ok: true, declarees: true, missions: m.map((x) => ({ cle: x.cle, libelle: x.libelle, niveau: x.niveau, verbe: x.verbe })) },
+      debriefing: { ok: true, concepts: [{ intitule: 'Client', detail: 'il demande', questions: [1, 2] }] },
+      definir_missions: { ok: true, missions: 2 },
+      ouvrir_controle: { ok: true },
+    };
+    let e = document.getElementById('volet-quest');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    window.__e.suivi.seanceId = 999;   // la séance suivie en direct : elle ne doit pas bouger
+    window.__e.chargerGestion([{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }]);
+  }, { m: MISSIONS });
+  await pause(p, 200);
+  await p.click('#gs-liste .gs-l:nth-of-type(1) .gs-b');
+  await pause(p, 250);
+  const f = await p.evaluate(() => ({
+    ouverte: !document.getElementById('gs-fiche').hidden,
+    listeCachee: getComputedStyle(document.querySelector('.gs-colonne')).display === 'none',
+    onglets: ['infos', 'controle', 'concepts', 'missions'].map((k) => document.getElementById('gsb-' + k).hidden ? 0 : 1).join(''),
+    pret: document.getElementById('gs-pret').textContent,
+    mi: document.getElementById('mi-texte').value.split('\n'),
+    ct: document.getElementById('ct-texte').value.split('\n'),
+    prep: window.__e.suivi.prep,
+    debord: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  }));
+  if (!f.ouverte) rates.push(`${w} px (préparer) : la fiche ne s'ouvre pas`);
+  if (w === 390 && !f.listeCachee) rates.push('390 px (préparer) : sur un téléphone, la fiche ne prend pas la place de la liste');
+  if (w === 1280 && f.listeCachee) rates.push('1280 px (préparer) : au bureau, la liste disparaît quand la fiche s\'ouvre');
+  if (f.onglets !== '1101') rates.push(`${w} px (préparer) : onglets d'un projet ${f.onglets}, attendu Infos, Contrôle, Missions`);
+  if (!/Prête à démarrer/.test(f.pret) || !/Pas d'échéance/.test(f.pret) || !/pas encore proposé/.test(f.pret)) {
+    rates.push(`${w} px (préparer) : « Prête à démarrer ? » dit « ${f.pret} »`);
+  }
+  if (f.mi.length !== 5 || !f.mi[0].startsWith('🟢') || !f.mi[4].includes('[Mesurer]')) rates.push(`${w} px (préparer) : missions préremplies ${f.mi.length} ligne(s)`);
+  if (f.ct[0] !== 'Un ? · *x · y' || f.ct[1] !== 'Deux ? · a · b · *c') rates.push(`${w} px (préparer) : contrôle prérempli « ${f.ct.join(' / ')} »`);
+  if (String(f.prep) !== '25') rates.push(`${w} px (préparer) : suivi.prep = ${f.prep}`);
+  if (f.debord > 0) rates.push(`${w} px (préparer) : la page déborde de ${f.debord} px`);
+
+  // Enregistrer les missions : sur la séance préparée (25), pas sur la suivie (999).
+  await p.click('#gsb-missions');
+  await p.fill('#mi-texte', '🟢 Une [Concevoir]\n🔴 Deux');
+  await p.click('#b-mi-creer');
+  await pause(p, 150);
+  const env = await p.evaluate(() => {
+    const a = window.__appels.filter((x) => x.nom === 'definir_missions').pop();
+    return { id: a && a.args.p_seance_id, texte: a && a.args.p_texte, msg: document.getElementById('err-mi-neuf').textContent,
+             suivie: window.__e.suivi.seanceId };
+  });
+  if (env.id !== 25 || env.texte !== '🟢 Une [Concevoir]\n🔴 Deux') rates.push(`${w} px (préparer) : definir_missions(${env.id}, « ${env.texte} »)`);
+  if (!/2 missions enregistrées/.test(env.msg)) rates.push(`${w} px (préparer) : confirmation « ${env.msg} »`);
+  if (env.suivie !== 999) rates.push(`${w} px (préparer) : la séance suivie a changé (${env.suivie})`);
+  await p.evaluate(() => { window.__reponses.definir_missions = { ok: false, motif: 'cochee',
+    detail: 'Mission(s) déjà cochée(s), impossibles à retirer : tp11-m5' }; });
+  await p.click('#b-mi-creer');
+  await pause(p, 150);
+  const refus = await p.evaluate(() => document.getElementById('err-mi-neuf').textContent);
+  if (!/tp11-m5/.test(refus)) rates.push(`${w} px (préparer) : le refus ne dit pas quelle mission (« ${refus} »)`);
+
+  // Proposer le contrôle depuis la fiche.
+  await p.click('#gsb-controle');
+  await p.click('#b-pr-ctl');
+  await pause(p, 150);
+  const ctl = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'ouvrir_controle').map((x) => x.args).pop());
+  if (!ctl || ctl.p_seance_id !== 25 || ctl.p_ouvert !== true) rates.push(`${w} px (préparer) : ouvrir_controle ${JSON.stringify(ctl)}`);
+
+  // Retour à la liste.
+  if (w === 390) {
+    await p.click('#b-gs-retour');
+    const retour = await p.evaluate(() => ({ fiche: document.getElementById('gs-fiche').hidden, prep: window.__e.suivi.prep }));
+    if (!retour.fiche || retour.prep) rates.push(`390 px (préparer) : « ‹ Les séances » laisse la fiche ${JSON.stringify(retour)}`);
+  }
+  if (erreurs.length) rates.push(`${w} px (préparer) : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · préparer : onglets ${f.onglets} · missions ${f.mi.length} · contrôle ${f.ct.length} notions`);
+  await fermer();
+}
+
 await nav.close();
 if (rates.length) {
   console.log('\n✗ ' + rates.length + ' défaut(s) :');
@@ -509,4 +581,5 @@ if (rates.length) {
 console.log('\n✓ Missions : cocher, décocher, séance fermée, grille par élève, éditeur ;\n' +
             '  séances : liste, formulaire prérempli, verrous, échéance envoyée ;\n' +
             '  modules : par module des deux côtés, sans dépôt enseignant chez l\'étudiant,\n' +
-            '  rangement d\'une séance seulement quand son module change.');
+            '  rangement d\'une séance seulement quand son module change ;\n' +
+            '  préparer : fiche liste + détail, éditeurs préremplis sur la séance préparée.');

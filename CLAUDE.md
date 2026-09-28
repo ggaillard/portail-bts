@@ -38,6 +38,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `pilote.js` | l'écran de la séance : en-tête collant, quatre vues, filtres et recherche d'élèves, Pause, « Clore » différé |
 | `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
 | `toast.js` | les confirmations passagères, avec « Annuler » pour un geste différé |
+| `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -68,8 +69,8 @@ semestre »). Refondu **par moment** :
 | Onglet (clé) | La question | Ce qu'on y trouve |
 |---|---|---|
 | Ligne épinglée — **Ce qui bloque** | *Est-ce que je peux faire cours ?* | `a_faire()`, **repliée sur une ligne** avec sa pastille ; dépliée d'office dès qu'un point est **bloquant**, jamais repliée d'autorité. |
-| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | L'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte**, sinon la dernière **démarrée** (`js/encours.js`) — puis l'inventaire des contrôles d'entrée, replié. |
-| **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | Les séances (groupées par module), les questionnaires, les modules (replié). |
+| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | L'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte**, sinon la dernière **démarrée** (`js/encours.js`). |
+| **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | Les séances (groupées par module) en **liste + fiche** — infos, contrôle d'entrée, concepts, missions, « Prête à démarrer ? » —, l'inventaire des contrôles (replié), les questionnaires, les modules (replié). |
 | **Bilan** (`#ensemble`) | *Où en est-on ?* | Le semestre, module par module ; les classes ; « Faisons connaissance » et « Recherche de stage », repliés. |
 
 Règles de cette refonte :
@@ -77,9 +78,10 @@ Règles de cette refonte :
 - **Les clés de l'adresse restent** `#appel`, `#quest`, `#ensemble` ; un
   ancien favori **`#seance` ouvre En cours** (alias dans `js/navigation.js`,
   vérifié par `t_navigation.mjs`) et l'adresse se réécrit en `#appel`.
-- **L'inventaire des contrôles reste dans le même onglet que le suivi qui
-  porte leur éditeur** (B2) — En cours, juste après la séance. Ne pas le
-  déplacer dans Préparer : c'est exactement la moitié-ailleurs du 15/09.
+- **L'inventaire des contrôles reste dans le même onglet que leur éditeur**
+  (B2). Depuis le lot « Préparer » du 28/09, les deux sont dans **Préparer** :
+  l'éditeur dans la fiche de la séance, l'inventaire juste en dessous.
+  `t_suivi.mjs` vérifie qu'ils sont dans le même volet, quel qu'il soit.
 - **Dans la carte de la séance, ce qui se relit après coup est replié** :
   élève par élève, réussite par question, notion par notion du contrôle,
   concept par concept du débriefing, la grille des missions. « À aller voir »,
@@ -124,6 +126,35 @@ La carte « La séance » d'En cours a le motif des applications de suivi :
 
 `outils/t_suivi.mjs` vérifie tout cela, « Clore » compris : sans « Annuler »,
 un appel à `clore_seance` après 5 s ; avec, aucun.
+
+### Préparer — la fiche d'une séance (28/09)
+
+« Les séances » est une **liste + fiche** : Modifier (ou Nouvelle séance)
+ouvre la fiche à droite — à la place de la liste sur un téléphone, avec
+« ‹ Les séances ». Tout ce qui se RÈGLE sur une séance est là, et plus dans
+l'écran du direct, qui ne garde que des liens « Écrire … › » (`.vers-prep`,
+`preparerSeance()` dans gestion.js) :
+
+| Onglet | Contenu |
+|---|---|
+| Infos | le formulaire de `gestion.js` (titre, module, nature, jalons, échéance…) |
+| Contrôle | l'état (badge, qui a répondu), **Le proposer / Éteindre**, l'éditeur `ct-*` |
+| Concepts | l'éditeur `db-*` — séance de cours seulement |
+| Missions | l'éditeur `mi-*` — séance de projet seulement |
+
+- **La séance préparée n'est pas la séance suivie** : `suivi.prep` porte la
+  première. Les trois éditeurs écrivent sur `suivi.prep || suivi.seanceId` ;
+  préparer la 12 pendant le cours de la 11 ne change rien au direct.
+  `t_missions.mjs` le vérifie (séance suivie 999, écriture sur 25).
+- **Les éditeurs se préremplissent avec la base**, dans leur propre syntaxe
+  (étoile devant la bonne option, `[1 2]` pour les questions d'un concept) :
+  on corrige une ligne au lieu de tout retaper. Un contrôle déjà répondu est
+  verrouillé, et la fiche le dit.
+- **« Prête à démarrer ? »** en tête : corrigés ou missions, échéance
+  (projet), concepts (cours), contrôle écrit et proposé, module. Chaque point
+  à régler est un lien vers l'onglet qui le règle.
+- Après un enregistrement, **la fiche reste ouverte** sur la séance (même une
+  séance qu'on vient de créer : on écrit ensuite son contrôle).
 
 ### Les finitions d'application (28/09)
 

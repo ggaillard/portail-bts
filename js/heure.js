@@ -219,16 +219,12 @@ function rendreDebriefEns(d){
   var r = $("db-resume");
 
   if (!liste.length) {
-    r.textContent = "Aucun concept écrit pour cette séance. Dépliez « Écrire les " +
-      "concepts » pour recopier la section « Concepts à connaître » de la trace écrite : " +
-      "c'est elle qu'on projette en fin d'heure.";
+    r.textContent = "Aucun concept écrit pour cette séance. Ils s'écrivent dans la " +
+      "fiche de la séance, sous Préparer : c'est eux qu'on projette en fin d'heure.";
     $("db-lignes").innerHTML = "";
-    // Plus déplié d'office (28/09) — voir le contrôle d'entrée, même raison.
-    $("db-neuf").open = false;
     $("b-db-ecran").disabled = true;
     return;
   }
-  $("db-neuf").open = false;
   $("b-db-ecran").disabled = false;
 
   var faibles = liste.filter(function(c){ return c.verdict === "a_revoir"; });
@@ -279,7 +275,7 @@ function enregistrerConcepts(){
   if (!texte.trim()) { erreur("err-db-neuf", "Collez au moins un concept."); return; }
   var b = $("b-db-creer");
   b.disabled = true;
-  sb.rpc("definir_concepts", { p_seance_id: Number(suivi.seanceId),
+  sb.rpc("definir_concepts", { p_seance_id: Number(suivi.prep || suivi.seanceId),
                                p_texte: texte }).then(function(r){
     b.disabled = false;
     var d = r && r.data;

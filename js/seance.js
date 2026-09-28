@@ -48,7 +48,7 @@ import { rendreEcran } from './ecran.js';
 import { chargerAppelToutesClasses } from './appel.js';
 import { chargerSemestre } from './ensemble.js';
 import { chargerMissions } from './missions.js';
-import { majPilote, marquerEleve } from './pilote.js';
+import { majPilote, marquerEleve, ouvrirVue } from './pilote.js';
 
 let chargerAFaire = function(){};
 export function brancherSeance(liens){ chargerAFaire = liens.chargerAFaire; }
@@ -660,6 +660,7 @@ function allerAuControle(c){
         break;
       }
     }
+    ouvrirVue("questions");   // le contrôle d'entrée vit dans la vue Questions
     var b = $("bloc-controle");
     if (b) b.scrollIntoView({ behavior: "smooth", block: "start" });
   });

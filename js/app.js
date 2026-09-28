@@ -271,7 +271,7 @@ $("b-ct-creer").addEventListener("click", function(){
   if (!texte.trim()) { erreur("err-ct-neuf", "Collez au moins une notion."); return; }
   var b = $("b-ct-creer");
   b.disabled = true;
-  sb.rpc("creer_controle", { p_seance_id: Number(suivi.seanceId),
+  sb.rpc("creer_controle", { p_seance_id: Number(suivi.prep || suivi.seanceId),
                              p_texte: texte }).then(function(r){
     b.disabled = false;
     var d = r && r.data;

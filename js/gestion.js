@@ -30,6 +30,8 @@
 import { $, sb, suivi, erreur, typo } from './socle.js';
 import { chargerSeancesDe, activerSeance } from './seance.js';
 import { lireModules, modulesDe } from './modules.js';
+import { ouvrirFichePrep, fermerFichePrep } from './preparer.js';
+import { ouvrirOnglet } from './navigation.js';
 
 let apres = function(){};
 export function brancherGestion(liens){ apres = liens.apres || apres; }
@@ -53,6 +55,11 @@ function chargerGestion(classes){
     $("b-gs-neuve").addEventListener("click", function(){ ouvrirFormulaire(null); });
     $("b-gs-annuler").addEventListener("click", fermerFormulaire);
     $("f-gs").addEventListener("submit", function(e){ e.preventDefault(); enregistrer(); });
+    // Depuis l'écran du direct : « Écrire ou modifier … — Préparer ›».
+    document.addEventListener("click", function(e){
+      var b = e.target.closest && e.target.closest(".vers-prep");
+      if (b && suivi.classeId && suivi.seanceId) preparerSeance(suivi.classeId, suivi.seanceId, b.dataset.onglet);
+    });
   }
   if (!sel.value) return;
   lireSeances(sel.value);
@@ -161,7 +168,8 @@ function prochainNumero(){
   return "";
 }
 
-function ouvrirFormulaire(s){
+function ouvrirFormulaire(s, onglet){
+  ouvrirFichePrep(s, onglet);
   var f = $("f-gs");
   f.hidden = false;
   f.dataset.id = s ? s.id : "";
@@ -184,7 +192,7 @@ function ouvrirFormulaire(s){
   // Une séance qui a des réponses garde son numéro : autant le dire avant.
   $("gs-numero").disabled = !!(s && s.reponses);
   erreur("err-gs", "");
-  $("gs-titre").focus();
+  if (!onglet || onglet === "infos") $("gs-titre").focus();
 }
 
 // Le sélecteur n'existe que s'il y a des modules. Une séance nouvelle dans
@@ -214,6 +222,22 @@ function remplirModules(s){
 function fermerFormulaire(){
   var f = $("f-gs");
   if (f) f.hidden = true;
+  fermerFichePrep();
+}
+
+// Ouvrir la fiche d'une séance dans Préparer, sur un onglet : c'est le chemin
+// depuis l'écran du direct, où les éditeurs ne sont plus.
+function preparerSeance(classeId, seanceId, onglet){
+  ouvrirOnglet("quest");
+  var sel = $("gs-classe");
+  if (sel) sel.value = String(classeId);
+  return lireSeances(classeId).then(function(){
+    var s = seances.filter(function(x){ return String(x.id) === String(seanceId); })[0];
+    if (!s) return;
+    ouvrirFormulaire(s, onglet);
+    var f = $("gs-fiche");
+    if (f && f.scrollIntoView) f.scrollIntoView({ block: "start" });
+  });
 }
 
 function enregistrer(){
@@ -260,9 +284,13 @@ function enregistrer(){
       if (r.recharger) lireSeances(classeGestion).then(function(){ erreur("err-gs-liste", r.data.detail); });
       return;
     }
-    var cree = r.data.cree;
+    var cree = r.data.cree, idv = r.data.id;
     lireSeances(classeGestion).then(function(){
       erreur("err-gs-liste", cree ? "Séance créée." : "Séance enregistrée.", true);
+      // La fiche reste ouverte sur la séance qu'on vient d'enregistrer — ou
+      // de créer : c'est là qu'on écrira ensuite son contrôle et ses concepts.
+      var s = seances.filter(function(x){ return String(x.id) === String(idv); })[0];
+      if (s) ouvrirFormulaire(s);
     });
     // Les sélecteurs du suivi et « À faire » lisent les mêmes lignes.
     // On garde la séance qu'on suivait : recharger le sélecteur ne doit pas
@@ -281,4 +309,4 @@ function enregistrer(){
   });
 }
 
-export { chargerGestion, lireSeances, relireGestion, prochainNumero, suivre };
+export { chargerGestion, lireSeances, relireGestion, prochainNumero, suivre, preparerSeance };
