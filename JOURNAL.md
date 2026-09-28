@@ -34,6 +34,13 @@ en cours. Détail dans CLAUDE.md.
 |---|---|
 | `20260928090000_donnees_reelles.sql` | le BTS2 reprend le nom « BTS SIO 2 - SLAM » (il portait « PlaylistApp C# », un nom de module) ; les séances déjà démarrées ou répondues par un vrai étudiant sont rendues **visibles** (séances 1-2 du BTS1, TP0 du BTS2 étaient « Cachée ») |
 
+**Opération faite à la main le même jour, avec l'accord de l'enseignant** : le
+BTS2 compte **13 étudiants**, la base en portait 25. Les fiches **14 à 25** ont
+été supprimées depuis la session enseignante du portail (onze sans aucune
+réponse ; la 25 portait une seule case `tp1-m1` cochée le 03/09, avant la
+rentrée — un essai). Restent 01-13 et le compte d'essai n° 99. Les
+dénominateurs (« x/13 », appel, taux) sont justes depuis.
+
 ---
 
 ## 28 septembre 2026 — les modules
