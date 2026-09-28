@@ -22,6 +22,17 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 28 septembre 2026 — la séance IA 2 du BTS2
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20260928060000_bts2_ia_seance2.sql` | crée la séance **12** du BTS2 (projet, 5 jalons, échéance 06/11 à régler dans Le semestre → Les séances), son contrôle d'entrée (6 notions + 6 certitudes, **éteint**, réponses B D A C D B) et ses 5 missions `tp12-m1` à `tp12-m5` ; séance **non publiée et fermée** |
+
+Rejouée deux fois sur une base neuve avec le socle de `supabase.yml` : 0
+bloquant, une attention attendue (« Contrôle d'entrée éteint — séance 12 »).
+
+---
+
 ## 27 septembre 2026 — la séance IA 1 du BTS2, les missions, et la gestion des séances
 
 | Migration | Ce qu'elle fait |
