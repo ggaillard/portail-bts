@@ -676,7 +676,7 @@ Après la refonte « par moment » (28/09) — hors plan, voir §10 :
 | onglets enseignant | 4 (Aujourd'hui, Le semestre, Ma bibliothèque, La séance) | **3** — En cours, Préparer, Bilan ; `#seance` reste compris |
 | modules | 18 | **19** — `encours.js` : ouvrir sur la séance du jour |
 | feuilles de style | 11 | **12** — `moments.css`, ajoutée en dernier : classes neuves seulement |
-| `index.html` | 640 | **630** |
+| `index.html` | 640 | **634** |
 | « Ce qui bloque » | 486 px dépliée, toujours | **une ligne**, dépliée d'office dès qu'un point bloque |
 
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin

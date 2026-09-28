@@ -337,8 +337,12 @@
       </div>
       <p class="sous-hint" id="mi-resume"></p>
       <div id="mi-barres"></div>
-      <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
-      <ol class="mi-legende" id="mi-legende"></ol>
+      <!-- Replié depuis le 28/09 : 25 lignes × N missions faisaient 1 000 px ;
+           le résumé et les barres au-dessus disent déjà qui est arrêté. -->
+      <details class="plie-in" id="mi-detail"><summary>La grille, élève par élève</summary>
+        <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
+        <ol class="mi-legende" id="mi-legende"></ol>
+      </details>
       <details id="mi-neuf">
         <summary>Écrire les missions de cette séance</summary>
         <p class="sous-hint">Une mission par ligne. Devant, facultatif, le niveau :

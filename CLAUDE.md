@@ -78,8 +78,10 @@ Règles de cette refonte :
   déplacer dans Préparer : c'est exactement la moitié-ailleurs du 15/09.
 - **Dans la carte de la séance, ce qui se relit après coup est replié** :
   élève par élève, réussite par question, notion par notion du contrôle,
-  concept par concept du débriefing. « À aller voir » et le parcours de l'heure
-  restent dépliés : ce sont eux qu'on lit debout.
+  concept par concept du débriefing, la grille des missions. « À aller voir »,
+  le parcours de l'heure et les barres des missions restent dépliés : ce sont
+  eux qu'on lit debout. Les éditeurs (contrôle, concepts) ne se déplient plus
+  d'office sur une séance qui n'en a pas.
 - En-tête et bandeau d'identité ramassés dans l'espace enseignant
   (`styles/moments.css`) : l'accroche « Identifiez-vous une fois » s'adresse
   aux étudiants.

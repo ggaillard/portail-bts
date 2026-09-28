@@ -173,10 +173,12 @@ function rendreControleEns(d){
 
   var r = $("ct-resume");
   if (!d.notions) {
-    r.textContent = "Aucune notion pour cette séance. Écrivez-les ci-dessous : " +
-      "les étudiants y répondront avant de venir.";
+    r.textContent = "Aucune notion pour cette séance. Pour en écrire, dépliez " +
+      "« Écrire le contrôle » : les étudiants y répondront avant de venir.";
     $("ct-lignes").innerHTML = "";
-    $("ct-neuf").open = true;
+    // Plus déplié d'office (28/09) : en séance, un éditeur ouvert de 350 px
+    // sous chaque séance sans contrôle passait devant tout le reste.
+    $("ct-neuf").open = false;
     return;
   }
   var bouts = [d.notions + (d.notions > 1 ? " notions" : " notion"),

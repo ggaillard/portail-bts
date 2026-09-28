@@ -219,11 +219,12 @@ function rendreDebriefEns(d){
   var r = $("db-resume");
 
   if (!liste.length) {
-    r.textContent = "Aucun concept écrit pour cette séance. Recopiez ci-dessous la " +
-      "section « Concepts à connaître » de la trace écrite : c'est elle qu'on projette " +
-      "en fin d'heure.";
+    r.textContent = "Aucun concept écrit pour cette séance. Dépliez « Écrire les " +
+      "concepts » pour recopier la section « Concepts à connaître » de la trace écrite : " +
+      "c'est elle qu'on projette en fin d'heure.";
     $("db-lignes").innerHTML = "";
-    $("db-neuf").open = true;
+    // Plus déplié d'office (28/09) — voir le contrôle d'entrée, même raison.
+    $("db-neuf").open = false;
     $("b-db-ecran").disabled = true;
     return;
   }
