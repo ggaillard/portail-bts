@@ -251,6 +251,8 @@
       <div class="gs-champs">
         <label>Numéro <input id="gs-numero" type="number" min="0" max="89" required></label>
         <label class="gs-large">Titre <input id="gs-titre" type="text" required autocomplete="off"></label>
+        <label class="gs-large" id="gs-module-l" hidden>Module
+          <select id="gs-module"></select></label>
         <label>Nature
           <select id="gs-nature"><option value="cours">Cours (une cadence)</option>
             <option value="projet">Projet (des jalons)</option></select></label>
@@ -278,11 +280,39 @@
     </table></div>
   </div>
 
-  <div class="card">
-    <h2>Les dépôts, par classe</h2>
-    <p class="hint">Chaque projet est rattaché à une classe : c'est ce que ses
+  <!-- Les modules (depuis le 28/09) : un module appartient à une classe et a
+       son dépôt GitHub. Tant que modules_enseignant() n'est pas déployée, la
+       carte garde son titre d'avant et montre la table projets (js/modules.js). -->
+  <div class="card" id="carte-modules">
+    <h2 id="md-carte-titre">Les dépôts, par classe</h2>
+    <p class="hint" id="md-carte-hint">Chaque projet est rattaché à une classe : c'est ce que ses
       étudiants trouvent dans « Vos projets » après s'être identifiés.</p>
+    <div aria-live="polite" id="err-md-liste"></div>
     <div id="tous-projets"></div>
+    <form id="f-md" class="gs-form" hidden>
+      <h3 class="sous-titre" id="md-f-titre">Nouveau module</h3>
+      <div class="gs-champs">
+        <label class="gs-large">Titre <input id="md-titre" type="text" required autocomplete="off"></label>
+        <label>Code <input id="md-code" type="text" required autocomplete="off"
+          pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="ia-meca-forez"></label>
+        <label>Icône <input id="md-icone" type="text" maxlength="4" autocomplete="off"></label>
+        <label>Ordre <input id="md-ordre" type="number" min="0" max="99"></label>
+        <label class="gs-large">Description <input id="md-description" type="text" autocomplete="off"></label>
+        <label class="gs-large">Dépôt GitHub étudiant <input id="md-depot" type="url" required
+          placeholder="https://github.com/compte/depot" autocomplete="off"></label>
+        <label class="gs-large">Dépôt enseignant (privé, jamais montré aux étudiants)
+          <input id="md-depot-enseignant" type="url" placeholder="https://github.com/compte/depot-prof" autocomplete="off"></label>
+        <label class="gs-large">Site du cours <input id="md-site" type="url"
+          placeholder="https://compte.github.io/depot/" autocomplete="off"></label>
+      </div>
+      <div class="pick">
+        <button class="btn" id="b-md-ok" type="submit">Enregistrer</button>
+        <button class="btn btn-sec" id="b-md-annuler" type="button">Annuler</button>
+        <button class="btn btn-sec" id="b-md-suppr" type="button" hidden>Supprimer ce module</button>
+      </div>
+      <p class="sous-hint" id="md-suppr-note"></p>
+      <div aria-live="polite" id="err-md"></div>
+    </form>
   </div>
   </div>
 

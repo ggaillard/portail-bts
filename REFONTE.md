@@ -659,6 +659,16 @@ Après les missions et la gestion des séances (27/09) — hors plan, voir §10 
 | fonctions RPC appelées | 38 | **44** — `mes_missions`, `valider_mission`, `definir_missions`, `grille_missions`, `seances_de_classe`, `enregistrer_seance` |
 | `aria-live` | 22 | **25** |
 
+Après les modules (28/09) — hors plan, voir §10 :
+
+| | après le 27/09 | après le 28/09 |
+|---|---|---|
+| modules | 17 | **18** — `modules.js` 294 ; `gestion.js` 192 → 277 (le groupement par module et le sélecteur) |
+| `index.html` | 610 | **640** (la carte « Les modules, par classe » et son formulaire, le sélecteur de module) |
+| `js/app.js` | 587 | **583** — le chargement des projets est parti dans `modules.js` |
+| fonctions RPC appelées | 44 | **49** — `mes_modules`, `modules_enseignant`, `enregistrer_module`, `supprimer_module`, `ranger_seance` |
+| `aria-live` | 25 | **27** |
+
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
 Le style dans

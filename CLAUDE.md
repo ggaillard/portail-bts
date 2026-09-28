@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**509 lignes**) + `styles/` (dix feuilles) + `js/` :
+`index.html` (**640 lignes**) + `styles/` (dix feuilles) + `js/` :
 
 | module | ce qu'il porte |
 |---|---|
@@ -32,13 +32,14 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `bibliotheque.js` | les questionnaires côté enseignant : modèles, affectations, réglages |
 | `quiz.js` | les trois modes de rendu côté étudiant |
 | `missions.js` | les missions d'une séance de projet : la carte étudiante qui les coche, la grille élèves × missions et son éditeur |
-| `gestion.js` | la carte « Les séances » : créer une séance, régler titre, nature, jalons, échéance, publication |
+| `gestion.js` | la carte « Les séances » : créer une séance, régler titre, nature, jalons, échéance, publication, **module** — la liste groupée par module |
+| `modules.js` | les modules : « Vos projets » module par module côté étudiant, la carte « Les modules, par classe » et son formulaire côté enseignant |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
 
 1. **Identifier** l'étudiant — code de classe, numéro, PIN à 4 chiffres, avatar.
-2. **Orienter** — la liste des projets de sa classe, lus dans `public.projets`.
+2. **Orienter** — les modules de sa classe (`mes_modules()`), chacun avec son cours en ligne et son dépôt ; la table `projets` en repli.
 3. **Suivre** — l'espace enseignant : progression, classement, répartition, en direct.
 
 Tous les sites de cours vivent sous `ggaillard.github.io`, donc **même origine** :
@@ -143,6 +144,9 @@ en service : un script poussé sur GitHub n'est pas un script joué sur Supabase
 | `projets` | `classe_id`, `titre`, `description`, `url`, `icone`, `ordre` |
 | `enseignants` | comptes autorisés à ouvrir l'espace enseignant |
 | `missions` | `seance_id`, `cle` (`tpN-mK`), `ordre`, `libelle`, `niveau`, `verbe` — lue seulement par fonctions |
+| `modules` | `classe_id`, `code`, `titre`, `description`, `icone`, `depot` (**obligatoire**, GitHub), `depot_enseignant`, `site`, `ordre` — lue seulement par fonctions |
+
+`seances.module_id` range une séance de cours ou de projet (< 90) dans un module de sa classe.
 
 Fonctions : `rejoindre()`, `repondre()`, `qui_suis_je()`, `avatars_pris()`,
 `choisir_avatar()`, `est_enseignant()`, `purger_annee()`. RLS actif partout.
@@ -1046,13 +1050,52 @@ codes changent chaque année, la convention non.
 
 ---
 
-## Un projet appartient à une classe
+## Le contenu s'organise par module — depuis le 28/09
 
-`projets.classe_id` : c'est ce qui décide de ce qu'un étudiant trouve dans
-« Vos projets » après s'être identifié. L'espace enseignant les affiche donc
-**groupés sous leur classe** (« Les dépôts, par classe »), et une classe sans
-projet le dit à sa place — ses étudiants s'identifieraient pour ne rien
-trouver. `a_faire()` le signale par ailleurs comme un point de vigilance.
+**Un module appartient à une classe, et chaque module a son dépôt GitHub.**
+C'est la règle posée le 28/09 : le BTS2 suivait deux enseignements (PlaylistApp
+et les séances IA Méca Forez) que rien ne séparait, et le dépôt Méca Forez
+n'existait que sur le poste de l'enseignant.
+
+| Module | Classe | Dépôt étudiant | Dépôt enseignant (privé) | Séances |
+|---|---|---|---|---|
+| `bloc1-dev` — Bloc 1 DEV | BTS1-DEV-2026 | `BTS1_S1_B1_DEV` | `BTS1_S1_B1_DEV_Prof` | 1-14 |
+| `playlistapp` — PlaylistApp C# | BTS2-SLAM-2026 | `playlist-csharp` | `playlist-csharp-prof` | 0-4 |
+| `ia-meca-forez` — IA Méca Forez | BTS2-SLAM-2026 | `BTS2-IA-MecaForez` | `BTS2-IA-MecaForez-Prof` | 11-16 |
+
+Migration `20260928080000_modules.sql`. Les fonctions :
+
+| Fonction | Ce qu'elle fait |
+|---|---|
+| `mes_modules()` | côté étudiant : les modules de sa classe, **sans le dépôt enseignant** |
+| `modules_enseignant()` | tous les modules par classe, leurs trois liens, leurs séances, et `sans_module` |
+| `enregistrer_module(…)` | crée ou règle ; refuse un dépôt qui n'est pas `https://github.com/compte/depot` |
+| `supprimer_module(id)` | refuse tant qu'une séance y est rangée |
+| `ranger_seance(seance_id, module_id)` | range (ou sort, avec null) une séance |
+
+Règles qui ne se devinent pas :
+
+- **La table `modules` n'a aucune politique.** Lisible par anon, elle livrerait
+  le dépôt enseignant avec la ligne. Tout passe par les fonctions, et c'est
+  `mes_modules()` qui décide de ce qui sort — la page, en plus, n'affiche
+  jamais de dépôt enseignant côté étudiant (`t_missions.mjs` le vérifie en le
+  glissant exprès dans la réponse).
+- **Le déclencheur `module_coherent` tient la cohérence** : même classe, et
+  jamais la bande 90-99, qui appartient à la classe entière. Il range aussi
+  d'office une séance **créée** sans module dans une classe qui n'en a
+  **qu'un** (le BTS1) ; avec deux modules ou plus, on ne devine pas — elle
+  reste « Sans module », et « Les séances » comme « Les modules » le disent.
+- **Ranger est un geste à part**, `ranger_seance()`, appelé par le formulaire
+  des séances **seulement si le module change**. Un paramètre de plus à
+  `enregistrer_seance()` aurait changé sa signature, donc obligé à la
+  réécrire en entier.
+- ⚠️ `seances_de_classe()` est **réécrite en entier** dans la migration des
+  modules (elle gagne `module_id`). C'est cette définition qui gagne.
+- **Une séance IA créée plus tard par une migration pose son `module_id`
+  elle-même** : le rangement des séances existantes ne passe qu'une fois.
+- `projets` **reste**, en repli tant que `mes_modules()` / `modules_enseignant()`
+  ne sont pas déployées — même principe que `connaissance()` pour la
+  bibliothèque. `a_faire()` lit encore `projets` pour « classe sans projet ».
 
 ---
 

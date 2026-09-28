@@ -57,7 +57,8 @@ import { chargerParcours, rendreParcours, chargerDebrief,
          enregistrerConcepts } from './heure.js';
 import { chargerAFaire, rendreAFaire } from './afaire.js';
 import { chargerMissionsEtu, brancherMissions } from './missions.js';
-import { brancherGestion, chargerGestion } from './gestion.js';
+import { brancherGestion, chargerGestion, relireGestion } from './gestion.js';
+import { brancherModules, chargerModules, chargerModulesEtu } from './modules.js';
 
 (function(){
 "use strict";
@@ -153,9 +154,7 @@ function ouvrirEspaceEtudiant(moi){
   chargerQuestionnairesEtu();
   chargerMissionsEtu();
 
-  sb.from("projets").select("titre,description,url,icone,ordre")
-    .eq("classe_id", moi.classe_id).order("ordre")
-    .then(function(r){ afficherProjets("mes-projets", r.data); });
+  chargerModulesEtu(moi.classe_id);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -427,13 +426,9 @@ function ouvrirEspaceEnseignant(){
       });
     });
 
-    // Un projet appartient à une classe : on l'affiche sous elle, et non dans
-    // une liste à plat où le code de classe était collé devant la description.
-    sb.from("projets").select("titre,description,url,icone,ordre,classe_id")
-      .order("classe_id").order("ordre")
-      .then(function(rp){
-        rendreProjetsParClasse(classes, rp.data || []);
-      });
+    // Les modules, sous leur classe (js/modules.js) ; la table projets en
+    // repli tant que modules_enseignant() n'est pas déployée.
+    chargerModules(classes);
   });
 }
 
@@ -555,6 +550,7 @@ brancherBibliotheque({ chargerAFaire: chargerAFaire,
                        remplirConnaissanceClasse: remplirConnaissanceClasse });
 brancherMissions();
 brancherGestion({ apres: function(){ chargerAFaire(); chargerSemestre(); } });
+brancherModules({ apres: relireGestion });
 
 
 // ── Démarrage ──────────────────────────────────────────────────────────────

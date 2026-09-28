@@ -19,15 +19,24 @@
 // Après chaque enregistrement, les sélecteurs du suivi et « À faire » sont
 // relus : une échéance posée ici doit éteindre la ligne « Projet sans
 // échéance » sans qu'on recharge la page.
+//
+// Depuis le 28/09, les séances se lisent MODULE PAR MODULE (js/modules.js),
+// et c'est ici qu'on range une séance : un sélecteur « Module » dans le
+// formulaire, qui appelle ranger_seance() après enregistrer_seance(). Deux
+// appels plutôt qu'un paramètre de plus : changer la signature de
+// enregistrer_seance() obligeait à la réécrire en entier. Tant que
+// modules_enseignant() n'est pas déployée, la liste reste à plat, comme avant.
 
 import { $, sb, suivi, erreur, typo } from './socle.js';
 import { chargerSeancesDe, activerSeance } from './seance.js';
+import { lireModules, modulesDe } from './modules.js';
 
 let apres = function(){};
 export function brancherGestion(liens){ apres = liens.apres || apres; }
 
 let classeGestion = null;
 let seances = [];
+let modules = null;   // null = pas de modules en base : liste à plat
 
 function chargerGestion(classes){
   var carte = $("carte-seances");
@@ -52,14 +61,25 @@ function chargerGestion(classes){
 function lireSeances(classeId){
   classeGestion = classeId;
   fermerFormulaire();
-  return sb.rpc("seances_de_classe", { p_classe_id: Number(classeId) }).then(function(r){
+  return Promise.all([
+    sb.rpc("seances_de_classe", { p_classe_id: Number(classeId) }),
+    lireModules()
+  ]).then(function(rr){
+    var r = rr[0];
     var carte = $("carte-seances");
     // Fonction pas déployée : la carte reste cachée, comme avant qu'elle existe.
     if (!r || r.error || !r.data || !r.data.ok) { carte.hidden = true; return; }
     carte.hidden = false;
     seances = r.data.liste || [];
+    var m = modulesDe(rr[1], classeId);
+    modules = m && m.length ? m : null;
     rendreListe();
   });
+}
+
+// Relire la classe affichée — après qu'un module a été créé ou renommé.
+function relireGestion(){
+  if (classeGestion) return lireModules().then(function(){ return lireSeances(classeGestion); });
 }
 
 function etat(s){
@@ -88,7 +108,29 @@ function rendreListe(){
     t.appendChild(p);
     return;
   }
-  seances.forEach(function(s){
+  if (!modules) { seances.forEach(function(s){ t.appendChild(ligne(s)); }); return; }
+
+  // Un groupe par module, dans l'ordre des modules ; puis celles qui ne sont
+  // rangées nulle part, nommées comme telles — c'est ce qu'il reste à faire.
+  var groupes = modules.map(function(m){
+    return { titre: (m.icone ? m.icone + " " : "") + m.titre, liste: seances.filter(function(s){
+      return String(s.module_id) === String(m.id); }) };
+  });
+  var connus = modules.map(function(m){ return String(m.id); });
+  groupes.push({ titre: "Sans module", sans: true, liste: seances.filter(function(s){
+    return connus.indexOf(String(s.module_id)) < 0; }) });
+  groupes.forEach(function(g){
+    if (!g.liste.length && g.sans) return;
+    var h = document.createElement("h3");
+    h.className = "sous-titre gs-module" + (g.sans ? " gs-sans" : "");
+    h.textContent = typo(g.titre) + " — " + (g.liste.length
+      ? g.liste.length + (g.liste.length > 1 ? " séances" : " séance") : "aucune séance");
+    t.appendChild(h);
+    g.liste.forEach(function(s){ t.appendChild(ligne(s)); });
+  });
+}
+
+function ligne(s){
     var l = document.createElement("div");
     l.className = "gs-l" + (s.nature === "projet" ? " gs-projet" : "");
     l.innerHTML = '<span class="gs-num"></span><span class="gs-txt"><span class="gs-titre"></span>' +
@@ -99,8 +141,7 @@ function rendreListe(){
       " · " + suivre(s) + " · " + etat(s) + (s.reponses ? " · " + s.reponses + " réponses" : "");
     l.querySelector(".gs-b").setAttribute("aria-label", "Modifier la séance " + s.numero);
     l.querySelector(".gs-b").addEventListener("click", function(){ ouvrirFormulaire(s); });
-    t.appendChild(l);
-  });
+    return l;
 }
 
 // Le numéro qui suit la dernière séance ; s'il dépasse la bande autorisée,
@@ -117,9 +158,11 @@ function ouvrirFormulaire(s){
   var f = $("f-gs");
   f.hidden = false;
   f.dataset.id = s ? s.id : "";
+  f.dataset.module = s && s.module_id ? String(s.module_id) : "";
   $("gs-f-titre").textContent = s ? "Modifier la séance " + s.numero : "Nouvelle séance";
   $("gs-numero").value   = s ? s.numero : prochainNumero();
   $("gs-titre").value    = s ? s.titre : "";
+  remplirModules(s);
   $("gs-nature").value   = s ? (s.nature || "cours") : "projet";
   $("gs-jalons").value   = s && s.jalons ? s.jalons : "";
   $("gs-echeance").value = s && s.echeance ? String(s.echeance).slice(0, 10) : "";
@@ -135,6 +178,30 @@ function ouvrirFormulaire(s){
   $("gs-numero").disabled = !!(s && s.reponses);
   erreur("err-gs", "");
   $("gs-titre").focus();
+}
+
+// Le sélecteur n'existe que s'il y a des modules. Une séance nouvelle dans
+// une classe à un seul module y entre d'office (la base le ferait de toute
+// façon) ; avec plusieurs, on ne devine pas : « Choisir… » est obligatoire.
+function remplirModules(s){
+  var l = $("gs-module-l"), sel = $("gs-module");
+  l.hidden = !modules;
+  sel.required = !!modules;
+  sel.innerHTML = "";
+  if (!modules) return;
+  var vide = document.createElement("option");
+  vide.value = "";
+  vide.textContent = s ? "— sans module —" : "Choisir le module…";
+  sel.appendChild(vide);
+  modules.forEach(function(m){
+    var o = document.createElement("option");
+    o.value = m.id;
+    o.textContent = (m.icone ? m.icone + " " : "") + m.titre;
+    sel.appendChild(o);
+  });
+  sel.value = s ? (s.module_id || "") : (modules.length === 1 ? String(modules[0].id) : "");
+  // Une séance existante peut rester sans module ; une nouvelle, non.
+  sel.required = !s;
 }
 
 function fermerFormulaire(){
@@ -160,11 +227,30 @@ function enregistrer(){
     p_publiee:   $("gs-publiee").checked,
     p_ouverte:   $("gs-ouverte").checked
   }).then(function(r){
+    if (r.error || !r.data || !r.data.ok) return r;
+    // Ranger, seulement si le module a changé : un appel de moins, et aucun
+    // risque d'écrire sur une séance qu'on n'a pas voulu déplacer.
+    var avant = f.dataset.module || "";
+    var voulu = modules ? $("gs-module").value : avant;
+    if (voulu === avant) return r;
+    return sb.rpc("ranger_seance", { p_seance_id: r.data.id,
+                                     p_module_id: voulu === "" ? null : Number(voulu) })
+      .then(function(rg){
+        if (rg.error || !rg.data || !rg.data.ok) {
+          return { recharger: true, data: { ok: false, detail: "Séance enregistrée, mais pas rangée : " +
+            ((rg.data && rg.data.detail) || "le module a été refusé.") } };
+        }
+        return r;
+      });
+  }).then(function(r){
     b.disabled = false;
     if (r.error || !r.data || !r.data.ok) {
       erreur("err-gs", (r.data && r.data.detail) ||
         (r.data && r.data.motif === "refus" ? "Réservé à l'enseignant." :
          "La séance n'a pas été enregistrée."));
+      // La séance, elle, est enregistrée : la liste doit le montrer, et le
+      // message passe au-dessus d'elle, le formulaire se refermant.
+      if (r.recharger) lireSeances(classeGestion).then(function(){ erreur("err-gs-liste", r.data.detail); });
       return;
     }
     var cree = r.data.cree;
@@ -188,4 +274,4 @@ function enregistrer(){
   });
 }
 
-export { chargerGestion, lireSeances, prochainNumero, suivre };
+export { chargerGestion, lireSeances, relireGestion, prochainNumero, suivre };

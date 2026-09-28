@@ -22,6 +22,21 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 28 septembre 2026 — les modules
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20260928080000_modules.sql` | table `modules` (un module = une classe + un dépôt GitHub obligatoire), `seances.module_id`, déclencheur `module_coherent`, trois modules (Bloc 1 DEV, PlaylistApp, IA Méca Forez) et le rangement des séances existantes ; cinq fonctions (`mes_modules`, `modules_enseignant`, `enregistrer_module`, `supprimer_module`, `ranger_seance`) ; `seances_de_classe()` réécrite |
+
+Dépôts créés le même jour : `ggaillard/BTS2-IA-MecaForez` (public) et
+`ggaillard/BTS2-IA-MecaForez-Prof` (privé), remplis avec les séances 1 et 2.
+
+Rejouée deux fois sur une base neuve avec le socle de `supabase.yml` : 0
+bloquant ; ses huit vérifications ont chacune été cassées exprès pour voir
+qu'elles échouent.
+
+---
+
 ## 28 septembre 2026 — la séance IA 2 du BTS2
 
 | Migration | Ce qu'elle fait |

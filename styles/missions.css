@@ -1,10 +1,11 @@
 /* ── missions ─────────────────────────────────────────
    Les missions d'une séance de projet (côté étudiant et grille enseignante),
-   et la carte « Les séances » de l'onglet Le semestre.
+   et la carte « Les séances » de l'onglet Le semestre ; depuis le 28/09, les
+   modules (md-*) des deux côtés de l'écran.
 
    Feuille ajoutée le 27/09/2026, EN DERNIER dans index.html : elle ne
    redéfinit aucune règle des feuilles précédentes, seulement des classes
-   neuves (mi-*, gs-*). Sa position ne change donc rien à l'ordre de cascade
+   neuves (mi-*, gs-*, md-*). Sa position ne change donc rien à l'ordre de cascade
    que outils/comparer.mjs surveille.
    ───────────────────────────────────────────────────────────────────────── */
 
@@ -78,3 +79,23 @@
   .gs-txt{flex-basis:calc(100% - 2.9rem)}
   .gs-b{margin-left:2.9rem}
 }
+
+/* ── Les modules (28/09) ──
+   Un bloc par module : son titre, sa description, ses liens en cartes. Côté
+   étudiant, « Vos projets » perd sa grille de premier niveau — ce sont les
+   liens de chaque module qui se rangent en grille, pas les modules. */
+.projets.md-etu{display:block}
+.md-bloc{padding:.9rem 0 .4rem;border-top:1px solid var(--rule)}
+.md-bloc:first-child{border-top:0;padding-top:0}
+.md-titre{display:flex;align-items:baseline;gap:.5rem;font-size:1.02rem;margin:0 0 .2rem}
+.md-ico{flex:0 0 auto}
+.md-nom{flex:1 1 auto;min-width:0}
+.md-desc{margin:0 0 .6rem;font-size:.88rem;color:var(--ink-soft)}
+.md-pied{display:flex;align-items:center;gap:.7rem;margin-top:.5rem}
+.md-meta{flex:1 1 auto;font-family:var(--f-mono);font-size:.8rem;color:var(--ink-soft)}
+.md-b{flex:0 0 auto;min-height:44px}
+.md-neuf{margin:.6rem 0 .4rem}
+.md-reste{margin:0 0 .6rem;font-size:.87rem;color:#8A5A16}
+.gs-module{margin-top:1.1rem}
+.gs-module:first-child{margin-top:.2rem}
+.gs-sans{color:#8A5A16}

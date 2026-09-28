@@ -23,6 +23,14 @@
 //   · LA CARTE « LES SÉANCES » PRÉREMPLIT CE QU'ELLE MODIFIE, verrouille les
 //     jalons quand des missions les fixent et le numéro quand des réponses
 //     existent, et envoie l'échéance saisie.
+//
+//   · LES MODULES (28/09). L'étudiant lit « Vos projets » module par module,
+//     sans jamais le dépôt enseignant, et retombe sur la table projets quand
+//     mes_modules() ne rend rien. L'enseignant voit les modules sous leur
+//     classe, sans les démos, avec ce qui reste à ranger ; le formulaire
+//     s'ouvre SOUS le module qu'on modifie, prérempli, et refuse de supprimer
+//     un module occupé. « Les séances » se groupe par module, et ranger une
+//     séance appelle ranger_seance() — seulement quand le module change.
 
 import { chromium } from 'playwright';
 import { ouvrir } from './portail.mjs';
@@ -281,6 +289,213 @@ for (const w of [360, 1280]) {
   await fermer();
 }
 
+// ─── 4. Les modules, côté étudiant ─────────────────────────────────────────
+const MOD_PL = { id: 2, code: 'playlistapp', titre: 'PlaylistApp — C# et .NET 10', icone: '🎵',
+  description: 'Les 5 TP du projet.', depot: 'https://github.com/ggaillard/playlist-csharp',
+  site: 'https://ggaillard.github.io/playlist-csharp/' };
+const MOD_IA = { id: 3, code: 'ia-meca-forez', titre: 'IA Méca Forez — concevoir, piloter, mesurer, sécuriser',
+  icone: '🏭', description: 'Six séances de stage.', depot: 'https://github.com/ggaillard/BTS2-IA-MecaForez',
+  site: null };
+for (const w of [360, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  const r = await p.evaluate(({ a, b }) => {
+    // Le dépôt enseignant ne doit pas sortir de mes_modules() — la base y
+    // veille. On le glisse quand même ici : la page ne doit pas l'afficher
+    // pour autant, c'est la seconde ceinture.
+    window.__reponses = { mes_modules: { ok: true, liste: [a,
+      Object.assign({}, b, { depot_enseignant: b.depot + '-Prof' })] } };
+    document.getElementById('chargement').hidden = true;
+    document.getElementById('espace-etu').hidden = false;
+    return window.__e.chargerModulesEtu(2).then(() => {
+      const blocs = [...document.querySelectorAll('#mes-projets .md-bloc')];
+      const out = {
+        blocs: blocs.map((x) => x.dataset.module).join(','),
+        liens: blocs.map((x) => x.querySelectorAll('a.projet').length).join(','),
+        hrefs: [...document.querySelectorAll('#mes-projets a.projet')].map((x) => x.href),
+        titre: blocs[1] && blocs[1].querySelector('.md-nom').textContent,
+        debord: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        petites: [...document.querySelectorAll('#mes-projets a.projet')]
+          .map((x) => Math.round(x.getBoundingClientRect().height)).filter((h) => h < 44),
+      };
+      window.__reponses.mes_modules = { ok: true, liste: [] };
+      return window.__e.chargerModulesEtu(2).then(() => {
+        out.repli = document.getElementById('mes-projets').textContent;
+        out.appelProjets = true;
+        return out;
+      });
+    });
+  }, { a: MOD_PL, b: MOD_IA });
+  if (r.blocs !== 'playlistapp,ia-meca-forez') rates.push(`${w} px (modules étudiant) : blocs « ${r.blocs} »`);
+  if (r.liens !== '2,1') rates.push(`${w} px (modules étudiant) : liens par module « ${r.liens} », attendu 2,1 (site + dépôt, puis dépôt seul)`);
+  if (!r.hrefs.includes('https://github.com/ggaillard/BTS2-IA-MecaForez')) rates.push(`${w} px (modules étudiant) : le dépôt Méca Forez n'est pas proposé`);
+  if (r.hrefs.some((h) => /Prof|prof/.test(h))) rates.push(`${w} px (modules étudiant) : un dépôt enseignant est proposé à l'étudiant`);
+  if (!/Méca\u202f?\s?Forez|Méca Forez/.test(r.titre || '')) rates.push(`${w} px (modules étudiant) : titre « ${r.titre} »`);
+  if (r.debord > 0) rates.push(`${w} px (modules étudiant) : la page déborde de ${r.debord} px`);
+  if (r.petites.length) rates.push(`${w} px (modules étudiant) : liens sous 44 px (${r.petites.join(', ')})`);
+  if (!/Aucun projet/.test(r.repli)) rates.push(`${w} px (modules étudiant) : sans module, pas de repli sur les projets (« ${r.repli.slice(0, 60)} »)`);
+  if (erreurs.length) rates.push(`${w} px (modules étudiant) : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · modules étudiant : ${r.blocs} (${r.liens})`);
+  await fermer();
+}
+
+// ─── 5. Les modules, côté enseignant ───────────────────────────────────────
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const ens = (m, n) => Object.assign({}, m, { seances: n, ordre: 1,
+    depot_enseignant: m.depot + '-Prof' });
+  const CLASSES = [
+    { classe_id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM', sans_module: 1,
+      modules: [ens(MOD_PL, 5), ens(MOD_IA, 2)] },
+    { classe_id: 9, code: 'DEMO-2026', nom: 'Démonstration', sans_module: 0, modules: [] },
+  ];
+  const r = await p.evaluate((classes) => {
+    window.__reponses = { modules_enseignant: { ok: true, classes: classes },
+                          enregistrer_module: { ok: true, id: 3, cree: false } };
+    let e = document.getElementById('volet-ensemble');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    return window.__e.chargerModules([{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }]).then(() => ({
+      titre: document.getElementById('md-carte-titre').textContent,
+      classes: [...document.querySelectorAll('#tous-projets > h3')].map((x) => x.textContent).join(','),
+      blocs: document.querySelectorAll('#tous-projets .md-bloc').length,
+      ens: [...document.querySelectorAll('#tous-projets a.projet')].filter((a) => /Prof$/.test(a.href)).length,
+      reste: (document.querySelector('#tous-projets .md-reste') || {}).textContent || '',
+      metas: [...document.querySelectorAll('#tous-projets .md-meta')].map((x) => x.textContent),
+    }));
+  }, CLASSES);
+  if (r.titre !== 'Les modules, par classe') rates.push(`modules enseignant : titre de carte « ${r.titre} »`);
+  if (r.classes !== 'BTS SIO 2 - SLAM') rates.push(`modules enseignant : classes affichées « ${r.classes} » (les démos doivent être écartées)`);
+  if (r.blocs !== 2) rates.push(`modules enseignant : ${r.blocs} blocs, attendu 2`);
+  if (r.ens !== 2) rates.push(`modules enseignant : ${r.ens} dépôt(s) enseignant affiché(s), attendu 2`);
+  if (!/1 séance n'est rangée dans aucun module/.test(r.reste)) rates.push(`modules enseignant : reste à ranger « ${r.reste} »`);
+  if (!/ia-meca-forez · 2 séances/.test(r.metas[1] || '')) rates.push(`modules enseignant : ligne du module IA « ${r.metas[1]} »`);
+
+  // Modifier le module IA : le formulaire s'ouvre juste sous lui, prérempli.
+  await p.click('#tous-projets .md-bloc:nth-of-type(2) .md-b');
+  await pause(p);
+  const f = await p.evaluate(() => {
+    const form = document.getElementById('f-md');
+    const prec = form.previousElementSibling;
+    return { visible: !form.hidden, sous: prec && prec.dataset.module,
+      depot: document.getElementById('md-depot').value,
+      ens: document.getElementById('md-depot-enseignant').value,
+      suppr: document.getElementById('b-md-suppr').disabled,
+      note: document.getElementById('md-suppr-note').textContent };
+  });
+  if (!f.visible) rates.push('modules enseignant : le formulaire ne s\'ouvre pas');
+  if (f.sous !== 'ia-meca-forez') rates.push(`modules enseignant : le formulaire s'ouvre sous « ${f.sous} », pas sous le module modifié`);
+  if (f.depot !== MOD_IA.depot || !/Prof$/.test(f.ens)) rates.push(`modules enseignant : préremplissage « ${f.depot} » / « ${f.ens} »`);
+  if (!f.suppr || !/2 séances/.test(f.note)) rates.push('modules enseignant : supprimer reste possible sur un module qui porte des séances');
+
+  await p.fill('#md-site', 'https://ggaillard.github.io/BTS2-IA-MecaForez/');
+  await p.click('#b-md-ok');
+  await pause(p, 150);
+  const envoi = await p.evaluate(() => {
+    const a = window.__appels.filter((x) => x.nom === 'enregistrer_module').pop();
+    return { a: a && a.args, msg: document.getElementById('err-md-liste').textContent,
+             encore: !!document.getElementById('f-md') };
+  });
+  if (!envoi.a || envoi.a.p_module_id !== 3 || envoi.a.p_classe_id !== 2 ||
+      envoi.a.p_site !== 'https://ggaillard.github.io/BTS2-IA-MecaForez/' || envoi.a.p_code !== 'ia-meca-forez') {
+    rates.push(`modules enseignant : envoi ${JSON.stringify(envoi.a)}`);
+  }
+  if (!/Module enregistré/.test(envoi.msg)) rates.push(`modules enseignant : confirmation « ${envoi.msg} »`);
+  if (!envoi.encore) rates.push('modules enseignant : le formulaire a disparu avec la liste redessinée');
+
+  // Un refus de la base s'affiche avec SA phrase.
+  await p.evaluate(() => { window.__reponses.enregistrer_module = { ok: false, motif: 'depot',
+    detail: 'Chaque module a son dépôt GitHub : https://github.com/compte/depot.' }; });
+  await p.click('#tous-projets .md-neuf');
+  await pause(p);
+  await p.fill('#md-titre', 'Essai');
+  await p.fill('#md-code', 'essai');
+  await p.fill('#md-depot', 'https://github.com/x/y');
+  await p.click('#b-md-ok');
+  await pause(p);
+  const refus = await p.evaluate(() => document.getElementById('err-md').textContent);
+  if (!/dépôt GitHub/.test(refus)) rates.push(`modules enseignant : refus affiché « ${refus} »`);
+
+  if (erreurs.length) rates.push(`modules enseignant : ${erreurs.join(' | ')}`);
+  console.log(`── modules enseignant : ${r.blocs} modules, ${r.reste}`);
+  await fermer();
+}
+
+// ─── 6. « Les séances », groupées par module ───────────────────────────────
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  await p.evaluate(({ a, b }) => {
+    window.__reponses = {
+      modules_enseignant: { ok: true, classes: [{ classe_id: 2, code: 'BTS2-SLAM-2026',
+        nom: 'BTS SIO 2 - SLAM', sans_module: 1, modules: [a, b] }] },
+      seances_de_classe: { ok: true, liste: [
+        { id: 1, numero: 0, titre: 'TP0', nature: 'projet', jalons: 3, module_id: 2,
+          ouverte: true, publiee: true, missions: 0, corriges: 8, reponses: 40 },
+        { id: 25, numero: 11, titre: 'IA 1', nature: 'projet', jalons: 5, module_id: 3,
+          ouverte: false, publiee: false, missions: 5, corriges: 0, reponses: 3 },
+        { id: 30, numero: 13, titre: 'IA 3 - RAG', nature: 'projet', jalons: 0, module_id: null,
+          ouverte: false, publiee: false, missions: 0, corriges: 0, reponses: 0 },
+      ] },
+      enregistrer_seance: { ok: true, id: 30, cree: false },
+      ranger_seance: { ok: true },
+    };
+    let e = document.getElementById('volet-ensemble');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    window.__e.chargerGestion([{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }]);
+  }, { a: MOD_PL, b: MOD_IA });
+  await pause(p, 150);
+  const g = await p.evaluate(() => ({
+    titres: [...document.querySelectorAll('#gs-liste .gs-module')].map((x) => x.textContent),
+    ordre: [...document.querySelectorAll('#gs-liste .gs-num')].map((x) => x.textContent).join(','),
+  }));
+  if (g.titres.length !== 3 || !/PlaylistApp.*1 séance/.test(g.titres[0]) ||
+      !/Méca.*1 séance/.test(g.titres[1]) || !/^Sans module — 1 séance/.test(g.titres[2])) {
+    rates.push(`séances par module : groupes « ${g.titres.join(' | ')} »`);
+  }
+  if (g.ordre !== '0,11,13') rates.push(`séances par module : ordre « ${g.ordre} »`);
+
+  // Ranger la séance 13 dans Méca Forez.
+  const lignes = await p.$$('#gs-liste .gs-l .gs-b');
+  await lignes[2].click();
+  await pause(p);
+  const sel = await p.evaluate(() => ({
+    visible: !document.getElementById('gs-module-l').hidden,
+    valeur: document.getElementById('gs-module').value,
+    options: document.getElementById('gs-module').options.length,
+  }));
+  if (!sel.visible || sel.valeur !== '' || sel.options !== 3) rates.push(`séances par module : sélecteur ${JSON.stringify(sel)}`);
+  await p.selectOption('#gs-module', '3');
+  await p.click('#b-gs-ok');
+  await pause(p, 150);
+  const rg = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'ranger_seance').map((x) => x.args));
+  if (rg.length !== 1 || rg[0].p_seance_id !== 30 || rg[0].p_module_id !== 3) {
+    rates.push(`séances par module : ranger_seance ${JSON.stringify(rg)}`);
+  }
+
+  // Modifier la séance 11 sans changer son module : aucun rangement.
+  const l2 = await p.$$('#gs-liste .gs-l .gs-b');
+  await l2[1].click();
+  await pause(p);
+  const v11 = await p.evaluate(() => document.getElementById('gs-module').value);
+  if (v11 !== '3') rates.push(`séances par module : la séance 11 affiche le module « ${v11} », attendu 3`);
+  await p.click('#b-gs-ok');
+  await pause(p, 150);
+  const rg2 = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'ranger_seance').length);
+  if (rg2 !== 1) rates.push(`séances par module : ranger_seance appelée sans changement de module (${rg2} appels)`);
+
+  // Nouvelle séance, deux modules : le choix est obligatoire.
+  await p.click('#b-gs-neuve');
+  await pause(p);
+  const neuf = await p.evaluate(() => ({ req: document.getElementById('gs-module').required,
+    v: document.getElementById('gs-module').value,
+    t: document.getElementById('gs-module').options[0].textContent }));
+  if (!neuf.req || neuf.v !== '' || !/Choisir/.test(neuf.t)) rates.push(`séances par module : nouvelle séance ${JSON.stringify(neuf)}`);
+
+  if (erreurs.length) rates.push(`séances par module : ${erreurs.join(' | ')}`);
+  console.log(`── séances par module : ${g.titres.join(' | ')}`);
+  await fermer();
+}
+
 await nav.close();
 if (rates.length) {
   console.log('\n✗ ' + rates.length + ' défaut(s) :');
@@ -288,4 +503,6 @@ if (rates.length) {
   process.exit(1);
 }
 console.log('\n✓ Missions : cocher, décocher, séance fermée, grille par élève, éditeur ;\n' +
-            '  séances : liste, formulaire prérempli, verrous, échéance envoyée.');
+            '  séances : liste, formulaire prérempli, verrous, échéance envoyée ;\n' +
+            '  modules : par module des deux côtés, sans dépôt enseignant chez l\'étudiant,\n' +
+            '  rangement d\'une séance seulement quand son module change.');
