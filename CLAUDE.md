@@ -34,6 +34,10 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `missions.js` | les missions d'une séance de projet : la carte étudiante qui les coche, la grille élèves × missions et son éditeur |
 | `gestion.js` | la carte « Les séances » : créer une séance, régler titre, nature, jalons, échéance, publication, **module** — la liste groupée par module |
 | `modules.js` | les modules : « Vos projets » module par module côté étudiant, la carte « Les modules, par classe » et son formulaire côté enseignant |
+| `encours.js` | ouvrir En cours sur la séance du jour |
+| `pilote.js` | l'écran de la séance : en-tête collant, quatre vues, filtres et recherche d'élèves, Pause, « Clore » différé |
+| `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
+| `toast.js` | les confirmations passagères, avec « Annuler » pour un geste différé |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -89,6 +93,40 @@ Règles de cette refonte :
   séance » → **En cours** ; « Le semestre » → **Bilan** (sauf « Les séances »
   et les modules → **Préparer**) ; « Ma bibliothèque » → **Préparer** (les
   dépouillements de rentrée et de stage → **Bilan**).
+
+### L'écran de la séance — une application de pilotage (28/09)
+
+La carte « La séance » d'En cours a le motif des applications de suivi :
+
+- **Un en-tête collant** (`#sv-tete`) : classe › module › séance — un clic
+  ouvre les deux sélecteurs, choisir une séance les referme —, l'état en
+  badge, le chrono, « 10/13 actifs · 87 % juste », « mis à jour il y a 12 s »
+  avec **Pause** (`suivi.pause` : `rafraichir()` ne fait plus rien), et **une
+  action principale**, Démarrer ou Clore. Les boutons du pré-vol restent dans
+  le DOM (c'est eux qui portent les gestes) mais sont masqués.
+- **« Clore » est différé de cinq secondes avec « Annuler »** (`toast.js`) :
+  le geste coupe les réponses de toute la classe et ne se rattrape pas.
+  Démarrer part tout de suite — il se refait.
+- **Quatre vues** au lieu d'un défilement : *Maintenant* (pré-vol replié quand
+  tout est prêt, à aller voir, parcours, rythme, tuiles), *Élèves* (filtres,
+  recherche, tri, liste, grille des missions, élèves à suivre), *Questions*
+  (contrôle d'entrée, réussite par question, énoncés), *Fin d'heure*
+  (débriefing). La vue choisie se garde (`localStorage`). Les blocs gardent
+  leurs identifiants : les modules qui les remplissent n'ont pas changé.
+- **La liste des élèves se filtre** (pas commencé, en cours, terminé, en
+  difficulté < 40 %, inactif depuis 8 min) et se cherche par numéro ou prénom
+  local. `marquerEleve()` pose les `data-*` sur chaque ligne.
+- **Un clic sur un élève ouvre sa fiche** (`fiche.js`), en panneau latéral :
+  présence aux appels posés, séance par séance ce qu'il a fait et réussi,
+  séance suivie en évidence. Échap ou le fond la ferment et rendent le focus.
+  Calculée côté page avec les règles habituelles (`pre-`, `appel-`, `humeur-`
+  hors réussite ; un jalon = `tp…` à `'true'`).
+
+`outils/t_suivi.mjs` vérifie tout cela, « Clore » compris : sans « Annuler »,
+un appel à `clore_seance` après 5 s ; avec, aucun.
+
+⚠️ `lireModules()` ne garde plus un échec en mémoire : lu avant la connexion
+enseignante, il condamnait toutes les lectures suivantes à « pas de modules ».
 
 **Le libellé du bouton est la seule source, et le titre de la page le suit.**
 Les deux vivent dans deux fichiers — `index.html` et `js/navigation.js` —

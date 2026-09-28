@@ -1,0 +1,139 @@
+/* ── pilote ───────────────────────────────────────────
+   L'écran de la séance comme une application (28/09) : en-tête collant,
+   quatre vues, filtres, fiche élève, confirmations passagères, badges.
+
+   Feuille ajoutée EN DERNIER dans index.html : classes neuves seulement
+   (sv-*, badge, filtre, fiche*, fe-*, toast*, squelette, el-cache, el-nom,
+   pv-replie). Sa position ne change rien à l'ordre de cascade.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Les badges : une seule grammaire de couleurs partout ──
+   vert = fait, orange = à surveiller, rouge = bloquant, gris = pas posé. */
+.badge{display:inline-flex;align-items:center;font-size:.76rem;font-weight:600;
+  padding:.12rem .55rem;border-radius:999px;white-space:nowrap;line-height:1.5}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.att{background:var(--signal-soft);color:var(--signal)}
+.badge.ko{background:#FBE6E6;color:#963232}
+.badge.neutre{background:var(--surface-alt);color:var(--ink-soft)}
+
+/* ── L'en-tête de la séance ── */
+.sv-h2{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sv-tete{position:sticky;top:3.7rem;z-index:15;background:var(--surface);
+  margin:-.4rem -.4rem .6rem;padding:.5rem .4rem .55rem;border-bottom:1px solid var(--rule-soft)}
+.sv-fil{appearance:none;border:0;background:transparent;font:inherit;color:inherit;cursor:pointer;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .5rem;text-align:left;width:100%;
+  min-height:44px;padding:.2rem .1rem;border-radius:8px}
+.sv-fil:hover{background:var(--surface-alt)}
+.sv-fil:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sv-fil-ctx{flex:1 1 100%;font-size:.78rem;color:var(--ink-soft)}
+.sv-fil-seance{font-weight:650;font-size:1.05rem;line-height:1.3;flex:1 1 auto;min-width:0}
+.sv-fil-chg{font-size:.78rem;color:var(--accent-ink);white-space:nowrap}
+.sv-ligne{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem .7rem;margin-top:.25rem}
+.sv-chrono,.sv-kpi{font-family:var(--f-mono);font-size:.82rem;color:var(--ink)}
+.sv-chrono:empty,.sv-kpi:empty{display:none}
+.sv-maj{font-size:.76rem;color:var(--ink-faint)}
+.sv-maj.vieux{color:var(--signal)}
+.sv-maj.pause{color:var(--signal);font-weight:600}
+.sv-pause{appearance:none;border:1px solid var(--rule);background:var(--surface);color:var(--ink-soft);
+  font:inherit;font-size:.76rem;border-radius:999px;padding:.1rem .6rem;cursor:pointer;min-height:32px;position:relative}
+.sv-pause::after{content:"";position:absolute;inset:-6px}
+.sv-pause[aria-pressed="true"]{background:var(--signal-soft);color:var(--signal);border-color:transparent}
+.sv-action{margin-left:auto}
+.sv-choix{margin:0 0 .8rem;padding:.6rem .7rem;border:1px dashed var(--rule);border-radius:8px}
+.sv-choix .hint{margin-bottom:.4rem}
+
+/* ── Les quatre vues ── */
+.sv-vues{display:flex;gap:.25rem;padding:.25rem;border-radius:10px;background:var(--surface-alt);
+  margin:0 0 .9rem;overflow-x:auto;scrollbar-width:none}
+.sv-vues::-webkit-scrollbar{display:none}
+.sv-vue-b{appearance:none;border:0;background:transparent;font:inherit;font-size:.88rem;color:var(--ink-soft);
+  min-height:40px;padding:.4rem .75rem;border-radius:8px;cursor:pointer;flex:1 0 auto;
+  display:inline-flex;align-items:center;justify-content:center;gap:.35rem;position:relative}
+.sv-vue-b::after{content:"";position:absolute;inset:-2px 0}
+.sv-vue-b.actif{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.sv-vue-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sv-n{font-family:var(--f-mono);font-size:.72rem;min-width:1.2rem;padding:0 .3rem;border-radius:999px;
+  background:var(--rule-soft);color:var(--ink-soft);text-align:center}
+.sv-n:empty{display:none}
+#svn-maintenant{background:var(--signal-soft);color:var(--signal);font-weight:600}
+
+/* Le pré-vol replié : son titre et son état seulement, cliquable. */
+#prevol > .pick{display:none}
+#prevol.pv-replie{padding:.35rem .8rem}
+#prevol.pv-replie .prevol-tete{margin:0;cursor:pointer}
+#prevol.pv-replie .prevol-liste{display:none}
+
+/* ── Les élèves : filtres, recherche, lignes cliquables ── */
+.sv-filtres{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.6rem}
+.filtre{appearance:none;border:1px solid var(--rule);background:var(--surface);color:var(--ink-soft);
+  font:inherit;font-size:.82rem;border-radius:999px;padding:.3rem .8rem;min-height:36px;cursor:pointer;position:relative}
+.filtre::after{content:"";position:absolute;inset:-4px 0}
+.filtre.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.filtre:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sv-cherche input[type=search]{flex:1 1 12rem;min-width:0}
+.el{cursor:pointer}
+.el:hover{border-color:var(--accent)}
+.el:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.el.el-cache{display:none}
+.el-nom{font-size:.82rem;color:var(--ink);flex:0 1 6rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── La fiche élève : un panneau latéral ── */
+.fiche{position:fixed;inset:0;z-index:60}
+.fiche-fond{position:absolute;inset:0;background:rgba(10,20,30,.38)}
+.fiche-panneau{position:absolute;top:0;right:0;bottom:0;width:min(30rem,100%);background:var(--surface);
+  box-shadow:-8px 0 24px rgba(0,0,0,.18);overflow-y:auto;padding:1rem 1.1rem 2rem;
+  animation:fe-entre .18s ease-out}
+@keyframes fe-entre{from{transform:translateX(40px);opacity:.4}to{transform:none;opacity:1}}
+.fiche-tete{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;position:sticky;top:-1rem;
+  background:var(--surface);padding:.4rem 0}
+.fiche-tete h2{flex:1;margin:0;font-size:1.15rem}
+body.fiche-ouverte{overflow:hidden}
+.fe-tete{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem}
+.fe-av{font-size:2rem;line-height:1}
+.fe-meta{font-size:.85rem;color:var(--ink-soft)}
+.fe-bloc{border-top:1px solid var(--rule-soft);padding:.7rem 0}
+.fe-bloc h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin-bottom:.35rem}
+.fe-txt{font-size:.92rem}
+.fe-txt.att{color:var(--signal)}
+.fe-txt.ok{color:var(--ok)}
+.fe-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.fe-table th{text-align:left;font-weight:600;color:var(--ink-soft);font-size:.76rem;padding:.25rem .3rem;
+  border-bottom:1px solid var(--rule)}
+.fe-table td{padding:.3rem;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+.fe-table td:first-child,.fe-table td:nth-child(3),.fe-table td:nth-child(4){font-family:var(--f-mono);white-space:nowrap}
+.fe-table td.ok{color:var(--ok)}
+.fe-table td.att{color:var(--signal)}
+.fe-table td.ko{color:#963232}
+.fe-table tr.fe-courante td{background:var(--accent-soft);font-weight:600}
+.fe-table tr.fe-rien td{color:var(--ink-faint)}
+
+/* ── Les confirmations passagères ── */
+.toasts{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:70;
+  display:flex;flex-direction:column;gap:.5rem;width:min(28rem,calc(100% - 2rem))}
+.toast{position:relative;overflow:hidden;display:flex;align-items:center;gap:.8rem;
+  background:#1E2B36;color:#F2F5F8;border-radius:10px;padding:.7rem .9rem;font-size:.9rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);animation:toast-entre .18s ease-out}
+@keyframes toast-entre{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.toast-m{flex:1}
+.toast-b{appearance:none;border:0;background:transparent;color:#8FE0D9;font:inherit;font-weight:700;
+  cursor:pointer;min-height:44px;padding:0 .4rem;text-transform:uppercase;font-size:.8rem;letter-spacing:.04em}
+.toast-barre{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#8FE0D9;
+  transform-origin:left;animation:toast-barre linear forwards}
+@keyframes toast-barre{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* ── Les squelettes de chargement ── */
+.squelette{height:1rem;border-radius:6px;margin:.55rem 0;
+  background:linear-gradient(90deg,var(--surface-alt) 0,var(--rule-soft) 50%,var(--surface-alt) 100%);
+  background-size:200% 100%;animation:squelette 1.2s ease-in-out infinite}
+.squelette.court{width:55%}
+@keyframes squelette{from{background-position:100% 0}to{background-position:-100% 0}}
+@media (prefers-reduced-motion: reduce){
+  .squelette,.toast,.fiche-panneau,.toast-barre{animation:none}
+}
+
+/* Sur un téléphone, les quatre vues tiennent sur la largeur : libellés et
+   marges resserrés plutôt qu'un défilement latéral qui cacherait « Fin d'heure ». */
+@media (max-width: 30rem){
+  .sv-vue-b{font-size:.8rem;padding:.35rem .45rem;flex:1 1 auto}
+  .sv-vue-b .sv-n:not(#svn-maintenant){display:none}
+}

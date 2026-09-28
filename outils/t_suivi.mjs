@@ -157,10 +157,129 @@ for (const w of [360, 620]) {
   }
   await fermer();
 }
+
+// ── L'écran de la séance comme une application (28/09) ────────────────────
+// En-tête collant (fil d'Ariane, état, chiffres, action), quatre vues, liste
+// filtrable, fiche élève, « Clore » différé avec « Annuler », Pause.
+const JOUR_MS = 86400000;
+for (const w of [390, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  const r = await p.evaluate((JOUR_MS) => {
+    let e = document.getElementById('carte-suivi');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    const pc = document.getElementById('pk-classe'), ps = document.getElementById('pk-seance');
+    pc.innerHTML = '<option value="2">BTS SIO 2 - SLAM</option>';
+    ps.innerHTML = '<option value="">Choisir…</option><option value="14" data-titre="2 — TP2 EF Core" data-nature="cours">2 — TP2</option>';
+    ps.value = '14';
+    const s = window.__e.suivi;
+    s.classeId = 2; s.seanceId = 14; s.nature = 'cours';
+    s.classesConnues = [{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }];
+    s.prevol = { ok: true, nature: 'cours', ouverte: true, seance: 2, duree_min: 55,
+                 demarree_le: new Date(Date.now() - 20 * 60000).toISOString(), questions: 10 };
+    const il = (min) => new Date(Date.now() - min * 60000).toISOString();
+    window.__e.rendreSuivi({ total: 10, inscrits: 4, actifs: 3, reponses: 17, reussite: 70, avancement: 42,
+      questions: [{ nom: 'q1', n: 3, ok: 2, pct: 67, choix: {} }],
+      lignes: [
+        { id: 1, numero: '01', avatar: '🦊', n: 10, ev: 10, ok: 9, maj: il(1), pct: 100, reussite: 90 },
+        { id: 2, numero: '02', avatar: '🐢', n: 4, ev: 4, ok: 1, maj: il(15), pct: 40, reussite: 25 },
+        { id: 3, numero: '03', avatar: '🦉', n: 3, ev: 3, ok: 3, maj: il(2), pct: 30, reussite: 100 },
+        { id: 4, numero: '04', avatar: '🐙', n: 0, ev: 0, ok: 0, maj: null, pct: 0, reussite: null },
+      ] });
+    const tete = document.getElementById('sv-tete');
+    return {
+      sticky: getComputedStyle(tete).position,
+      fil: document.getElementById('sv-fil').textContent.replace(/\s+/g, ' ').trim(),
+      badge: document.getElementById('sv-badge').textContent,
+      kpi: document.getElementById('sv-kpi').textContent,
+      chrono: document.getElementById('sv-chrono').textContent,
+      action: document.getElementById('b-sv-action').hidden ? '' : document.getElementById('b-sv-action').textContent,
+      vues: ['maintenant', 'eleves', 'questions', 'fin'].map((v) => document.getElementById('sv-' + v).hidden ? 0 : 1).join(''),
+      nEleves: document.getElementById('svn-eleves').textContent,
+      debord: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  }, JOUR_MS);
+  if (r.sticky !== 'sticky') rates.push(`${w} px : l'en-tête de la séance n'est pas collant (${r.sticky})`);
+  if (!/BTS SIO 2 - SLAM/.test(r.fil) || !/TP2 EF Core/.test(r.fil)) rates.push(`${w} px : fil d'Ariane « ${r.fil} »`);
+  if (r.badge !== 'En cours') rates.push(`${w} px : badge « ${r.badge} », attendu En cours`);
+  if (!/^3\/4 actifs · 70 % juste$/.test(r.kpi)) rates.push(`${w} px : chiffres de l'en-tête « ${r.kpi} »`);
+  if (!/^2\d \/ 55 min$/.test(r.chrono)) rates.push(`${w} px : chrono « ${r.chrono} »`);
+  if (r.action !== 'Clore la séance') rates.push(`${w} px : action principale « ${r.action} »`);
+  if (r.vues !== '1000') rates.push(`${w} px : vues visibles ${r.vues}, attendu Maintenant seule`);
+  if (r.nEleves !== '4') rates.push(`${w} px : pastille Élèves « ${r.nEleves} »`);
+  if (r.debord > 0) rates.push(`${w} px : l'écran de la séance déborde de ${r.debord} px`);
+
+  // Les vues : clic, puis flèche droite.
+  await p.click('#svb-eleves');
+  const v1 = await p.evaluate(() => ['maintenant', 'eleves', 'questions', 'fin'].map((v) => document.getElementById('sv-' + v).hidden ? 0 : 1).join(''));
+  await p.press('#svb-eleves', 'ArrowRight');
+  const v2 = await p.evaluate(() => ({ vues: ['maintenant', 'eleves', 'questions', 'fin'].map((v) => document.getElementById('sv-' + v).hidden ? 0 : 1).join(''),
+    focus: document.activeElement.id }));
+  if (v1 !== '0100') rates.push(`${w} px : après un clic sur Élèves, vues ${v1}`);
+  if (v2.vues !== '0010' || v2.focus !== 'svb-questions') rates.push(`${w} px : la flèche droite mène à ${v2.vues} / ${v2.focus}`);
+  await p.click('#svb-eleves');
+
+  // Les filtres et la recherche.
+  const vis = () => p.evaluate(() => [...document.querySelectorAll('#liste-eleves .el')]
+    .filter((d) => d.offsetParent).map((d) => d.dataset.num).join(','));
+  await p.click('.filtre[data-f="rien"]');   const fRien = await vis();
+  await p.click('.filtre[data-f="faible"]'); const fFaible = await vis();
+  await p.click('.filtre[data-f="inactif"]'); const fInactif = await vis();
+  await p.click('.filtre[data-f="tous"]');
+  await p.fill('#sv-recherche', '03');       const fCherche = await vis();
+  const compte = await p.evaluate(() => document.getElementById('sv-compte-el').textContent);
+  await p.fill('#sv-recherche', '');
+  if (fRien !== '04') rates.push(`${w} px : filtre Pas commencé → ${fRien}`);
+  if (fFaible !== '02') rates.push(`${w} px : filtre En difficulté → ${fFaible}`);
+  if (fInactif !== '02,04') rates.push(`${w} px : filtre Inactif 8 min → ${fInactif}`);
+  if (fCherche !== '03' || compte !== '1 sur 4 élèves') rates.push(`${w} px : recherche « 03 » → ${fCherche} (${compte})`);
+
+  // La fiche élève : un clic l'ouvre, Échap la ferme et rend le focus.
+  await p.click('#liste-eleves .el[data-num="02"]');
+  await p.waitForTimeout(150);
+  const fiche = await p.evaluate(() => ({ ouverte: !document.getElementById('fiche-eleve').hidden,
+    titre: document.getElementById('fe-titre').textContent,
+    largeur: Math.round(document.querySelector('.fiche-panneau').getBoundingClientRect().width) }));
+  await p.keyboard.press('Escape');
+  const ferme = await p.evaluate(() => ({ cache: document.getElementById('fiche-eleve').hidden,
+    focus: document.activeElement && document.activeElement.dataset.num }));
+  if (!fiche.ouverte || fiche.titre !== 'Élève 02') rates.push(`${w} px : fiche « ${fiche.titre} » ouverte=${fiche.ouverte}`);
+  if (fiche.largeur > w) rates.push(`${w} px : la fiche fait ${fiche.largeur} px`);
+  if (!ferme.cache || ferme.focus !== '02') rates.push(`${w} px : Échap ferme=${ferme.cache}, focus rendu à ${ferme.focus}`);
+
+  // Pause.
+  await p.click('#b-sv-pause');
+  const pause = await p.evaluate(() => ({ p: window.__e.suivi.pause, t: document.getElementById('sv-maj').textContent }));
+  await p.click('#b-sv-pause');
+  if (!pause.p || pause.t !== 'en pause') rates.push(`${w} px : Pause → ${JSON.stringify(pause)}`);
+
+  // Clore : différé, et « Annuler » l'empêche de partir.
+  if (w === 390) {
+    await p.click('#b-sv-action');
+    await p.waitForTimeout(200);
+    const t1 = await p.evaluate(() => ({ toast: (document.querySelector('.toast') || {}).textContent || '',
+      appels: window.__appels.filter((a) => a.nom === 'clore_seance').length }));
+    await p.click('.toast-b');
+    await p.waitForTimeout(5500);
+    const t2 = await p.evaluate(() => window.__appels.filter((a) => a.nom === 'clore_seance').length);
+    if (!/va être close/.test(t1.toast) || t1.appels !== 0) rates.push(`clore : message « ${t1.toast} », ${t1.appels} appel(s) immédiat(s)`);
+    if (t2 !== 0) rates.push(`clore : « Annuler » n'a pas empêché la clôture (${t2} appel)`);
+    await p.click('#b-sv-action');
+    await p.waitForTimeout(5600);
+    const t3 = await p.evaluate(() => window.__appels.filter((a) => a.nom === 'clore_seance').length);
+    if (t3 !== 1) rates.push(`clore : sans « Annuler », ${t3} appel(s) à clore_seance après 5 s, attendu 1`);
+  }
+
+  if (erreurs.length) rates.push(`${w} px (écran de séance) : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · séance : « ${r.badge} » · ${r.kpi} · filtres ${fRien}/${fFaible}/${fInactif}`);
+  await fermer();
+}
+
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
 console.log('  ✓ Les quatre chiffres sont gros sur un téléphone, tiennent sur une');
 console.log('    ligne, ne cassent pas leur grille, et les contrôles d\'entrée');
-console.log('    sont dans le bon onglet.');
+console.log('    sont dans le bon onglet ; l\'écran de la séance a son en-tête collant,');
+console.log('    ses quatre vues, ses filtres, sa fiche élève, et « Clore » s\'annule.');

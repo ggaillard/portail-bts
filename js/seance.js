@@ -48,6 +48,7 @@ import { rendreEcran } from './ecran.js';
 import { chargerAppelToutesClasses } from './appel.js';
 import { chargerSemestre } from './ensemble.js';
 import { chargerMissions } from './missions.js';
+import { majPilote, marquerEleve } from './pilote.js';
 
 let chargerAFaire = function(){};
 export function brancherSeance(liens){ chargerAFaire = liens.chargerAFaire; }
@@ -290,9 +291,11 @@ function rendreSuivi(s){
     d.querySelector(".el-maj").textContent = l.maj
       ? new Date(l.maj).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
       : "";
+    marquerEleve(d, l, s.total);
     c.appendChild(d);
   });
 
+  majPilote(true);
   if (suivi.ecran) rendreEcran(s);
 }
 
@@ -318,6 +321,7 @@ function distracteurDominant(qu){
 }
 
 function rafraichir(){
+  if (suivi.pause) return Promise.resolve();   // « Pause » dans l'en-tête de la séance
   // « À aller voir » suit la même boucle de huit secondes que les tuiles :
   // une main levée qui attend la boucle suivante attend déjà trop.
   chargerVigilance(function(){ if (suivi.stats) rendreRythme(suivi.stats); });
@@ -440,6 +444,7 @@ function rendrePrevol(p){
   $("b-clore").hidden = projet || appel;
   $("b-demarrer").textContent = p.demarree_le && p.ouverte ? "Redémarrer le chrono" : "Démarrer la séance";
   $("b-clore").disabled = !p.ouverte;
+  majPilote();
 }
 
 function heureCourte(iso){
@@ -612,7 +617,7 @@ function chargerSeancesDe(classeId, voulue){
   $("stats-attente").hidden = false;
   $("stats-attente").textContent = "Sélectionnez une séance pour voir le détail élève par élève.";
 
-  return sb.from("seances").select("id,numero,titre,ouverte,notee,nature,jalons")
+  return sb.from("seances").select("id,numero,titre,ouverte,notee,nature,jalons,module_id")
     .eq("classe_id", classeId).order("numero").then(function(r){
       var sel = $("pk-seance");
       sel.innerHTML = '<option value="">Choisir une séance…</option>';
@@ -625,6 +630,7 @@ function chargerSeancesDe(classeId, voulue){
         o.dataset.ouverte = s.ouverte ? "1" : "";
         o.dataset.nature  = s.nature || "cours";
         if (s.jalons) o.dataset.jalons = s.jalons;
+        if (s.module_id) o.dataset.module = s.module_id;
         sel.appendChild(o);
       });
       // Une séance est chargée d'office : le panneau n'est jamais vide à l'arrivée.

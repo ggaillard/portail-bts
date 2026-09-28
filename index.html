@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="styles/ecran.css">
 <link rel="stylesheet" href="styles/missions.css">
 <link rel="stylesheet" href="styles/moments.css">
+<link rel="stylesheet" href="styles/pilote.css">
 </head>
 <body>
 <!-- WCAG 2.4.1 : sans ce lien, un usage au clavier retraverse l'en-tête à
@@ -215,185 +216,237 @@
 
 
   <div class="card" id="carte-suivi">
-    <h2>La séance</h2>
-    <p class="hint">Celle qui est en cours, ou la dernière jouée. <span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
-    <div class="pick">
-      <label class="suivi-lbl" for="pk-classe" hidden>Classe</label>
-      <select id="pk-classe" aria-label="Classe"></select>
-      <select id="pk-seance" aria-label="Séance"></select>
-    </div>
-    <!-- Ce qu'une séance ne voit pas : la répétition. Replié, parce qu'on le
-         lit en préparant la semaine, pas pendant l'heure. -->
-    <details id="bloc-asuivre" class="vg-semestre" hidden>
-      <summary id="as-titre">Sur le semestre</summary>
-      <div id="as-liste"></div>
-    </details>
-    <div id="prevol" class="prevol" hidden>
-      <div class="prevol-tete">
-        <h3 class="sous-titre" style="margin:0">Avant de commencer</h3>
-        <span class="prevol-etat" id="prevol-etat"></span>
+    <!-- L'écran d'une séance, organisé comme une application de pilotage
+         (28/09) : un EN-TÊTE COLLANT qui dit toujours où l'on est et quoi
+         faire — classe › module › séance, état, chrono, chiffres, l'action
+         principale — puis QUATRE VUES au lieu d'un défilement de 3 000 px.
+         Les blocs n'ont pas changé d'identifiant : seance.js, heure.js,
+         vigilance.js et missions.js les remplissent comme avant. js/pilote.js
+         tient l'en-tête, les vues, les filtres et la fiche élève. -->
+    <h2 class="sv-h2">La séance</h2>
+    <div class="sv-tete" id="sv-tete">
+      <button class="sv-fil" id="sv-fil" type="button" aria-expanded="false" aria-controls="sv-choix">
+        <span class="sv-fil-ctx" id="sv-fil-ctx"></span>
+        <span class="sv-fil-seance" id="sv-fil-seance">Choisir une séance</span>
+        <span class="sv-fil-chg" aria-hidden="true">Changer ▾</span>
+      </button>
+      <div class="sv-ligne">
+        <span class="badge neutre" id="sv-badge">—</span>
+        <span class="sv-chrono" id="sv-chrono"></span>
+        <span class="sv-kpi" id="sv-kpi"></span>
+        <span class="sv-maj" id="sv-maj"></span>
+        <button class="sv-pause" id="b-sv-pause" type="button" aria-pressed="false"
+          title="Suspendre la mise à jour automatique">Pause</button>
+        <button class="btn sv-action" id="b-sv-action" type="button" hidden></button>
       </div>
-      <ul class="prevol-liste" id="prevol-liste"></ul>
+    </div>
+    <div class="sv-choix" id="sv-choix" hidden>
+      <p class="hint"><span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
+
       <div class="pick">
-        <button class="btn" id="b-demarrer" type="button">Démarrer la séance</button>
-        <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
+        <label class="suivi-lbl" for="pk-classe" hidden>Classe</label>
+        <select id="pk-classe" aria-label="Classe"></select>
+        <select id="pk-seance" aria-label="Séance"></select>
       </div>
-      <div aria-live="polite" id="err-prevol"></div>
     </div>
 
-    <!-- « À aller voir ». Vient AVANT le parcours : le parcours dit où en
-         est chacun, celui-ci dit qui aider maintenant, et pourquoi — c'est la
-         question qu'on se pose debout. Des raisons, jamais un score ; et
-         jamais projeté, puisque c'est nominatif. -->
-    <div id="bloc-vigilance" class="pa-bloc vg-bloc" hidden>
-      <div class="ct-tete">
-        <h3>À aller voir <span class="vg-compte" id="vg-compte" aria-live="polite"></span></h3>
-      </div>
-      <div id="vg-liste"></div>
-      <p class="sous-hint" id="vg-vide"></p>
-      <div id="vg-actes" hidden></div>
-      <p class="sous-hint vg-seuils" id="vg-seuils"></p>
-      <div aria-live="polite" id="err-vigilance"></div>
-    </div>
+    <nav class="sv-vues" id="sv-vues" role="tablist" aria-label="Vues de la séance">
+      <button class="sv-vue-b actif" type="button" role="tab" id="svb-maintenant" data-vue="maintenant"
+        aria-controls="sv-maintenant" aria-selected="true">Maintenant<span class="sv-n" id="svn-maintenant"></span></button>
+      <button class="sv-vue-b" type="button" role="tab" id="svb-eleves" data-vue="eleves"
+        aria-controls="sv-eleves" aria-selected="false" tabindex="-1">Élèves<span class="sv-n" id="svn-eleves"></span></button>
+      <button class="sv-vue-b" type="button" role="tab" id="svb-questions" data-vue="questions"
+        aria-controls="sv-questions" aria-selected="false" tabindex="-1">Questions<span class="sv-n" id="svn-questions"></span></button>
+      <button class="sv-vue-b" type="button" role="tab" id="svb-fin" data-vue="fin"
+        aria-controls="sv-fin" aria-selected="false" tabindex="-1">Fin d'heure</button>
+    </nav>
 
-    <!-- Le parcours de l'heure. Le pré-vol dit « cette séance est-elle
-         prête » ; celui-ci dit « où en est chacun ». Il vient juste après,
-         parce que c'est la question suivante, et avant le contrôle d'entrée
-         qui n'est qu'une de ses quatre étapes. -->
-    <div id="bloc-parcours" class="pa-bloc" hidden>
-      <div class="ct-tete">
-        <h3>Le parcours de l'heure</h3>
-        <button class="btn btn-sec" id="b-pa-ecran" type="button"
-          title="Projeter l'avancement au tableau">Projeter</button>
-      </div>
-      <div id="pa-entonnoir"></div>
-      <p class="sous-hint" id="pa-bloques"></p>
-      <details id="pa-detail">
-        <summary>Étudiant par étudiant</summary>
-        <div id="pa-lignes"></div>
-      </details>
-      <div aria-live="polite" id="err-parcours"></div>
-    </div>
-
-    <!-- Le contrôle d'entrée se lit AVANT la séance : il vient donc juste
-         après le pré-vol, et non au milieu des chiffres de fin d'heure. -->
-    <div id="bloc-controle" class="ct-bloc" hidden>
-      <div class="ct-tete">
-        <h3 class="sous-titre" style="margin:0">Contrôle d'entrée</h3>
-        <button class="qa-b" id="b-controle" type="button">
-          <span class="pt"></span><span class="et"></span></button>
-      </div>
-      <p class="sous-hint" id="ct-resume"></p>
-      <details class="plie-in" id="ct-detail"><summary>Notion par notion</summary>
-        <div id="ct-lignes"></div></details>
-      <div aria-live="polite" id="err-controle"></div>
-      <details id="ct-neuf">
-        <summary>Écrire le contrôle de cette séance</summary>
-        <p class="sous-hint">Une notion par ligne : l'intitulé puis deux à quatre
-          options séparées par « · ». <b>Une étoile devant la bonne option.</b>
-          La question de certitude est ajoutée toute seule après chaque notion.</p>
-        <textarea id="ct-texte" rows="6" spellcheck="true"
-          placeholder="Que signifie un code 404 ? · la page a changé · *la ressource est introuvable · le serveur a planté · l'accès est refusé&#10;Qui parle en premier dans un échange HTTP ? · *le client · le serveur · les deux · aucun"></textarea>
-        <div class="pick" style="margin-top:.7rem">
-          <button class="btn" id="b-ct-creer" type="button">Enregistrer le contrôle</button>
+    <!-- MAINTENANT : ce qu'on lit debout. Qui aider, où en est le groupe. -->
+    <section class="sv-vue" id="sv-maintenant" role="tabpanel" aria-labelledby="svb-maintenant">
+      <div id="prevol" class="prevol" hidden>
+        <div class="prevol-tete">
+          <h3 class="sous-titre" style="margin:0">Avant de commencer</h3>
+          <span class="prevol-etat" id="prevol-etat"></span>
         </div>
-        <div aria-live="polite" id="err-ct-neuf"></div>
-      </details>
-    </div>
-
-    <!-- Le débriefing : les cinq dernières minutes. Le contrôle d'entrée dit
-         ce qu'ils avaient gardé ; celui-ci dit ce qu'ils emportent. -->
-    <div id="bloc-debrief" class="ct-bloc" hidden>
-      <div class="ct-tete">
-        <h3 class="sous-titre" style="margin:0">Débriefing de fin d'heure</h3>
-        <button class="btn btn-sec" id="b-db-ecran" type="button"
-          style="margin-left:auto">Projeter</button>
-      </div>
-      <p class="sous-hint" id="db-resume"></p>
-      <details class="plie-in" id="db-detail"><summary>Concept par concept</summary>
-        <div id="db-lignes"></div></details>
-      <div aria-live="polite" id="err-debrief"></div>
-      <details id="db-neuf">
-        <summary>Écrire les concepts de cette séance</summary>
-        <p class="sous-hint">Un concept par ligne : l'intitulé, un tiret, puis ce
-          qu'il faut pouvoir en dire. Entre crochets à la fin, <b>les numéros des
-          questions du quiz</b> qui le mesurent — c'est ce qui donne son chiffre au
-          concept. Recopiez la section « Concepts à connaître » de la trace écrite.</p>
-        <textarea id="db-texte" rows="6" spellcheck="true"
-          placeholder="Client et serveur — le client demande toujours en premier, le serveur répond. [1 2]&#10;Les codes de statut — 4xx le client s'est trompé, 5xx le serveur a échoué. [3 4 5]"></textarea>
-        <div class="pick" style="margin-top:.7rem">
-          <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
+        <ul class="prevol-liste" id="prevol-liste"></ul>
+        <div class="pick">
+          <button class="btn" id="b-demarrer" type="button">Démarrer la séance</button>
+          <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
         </div>
-        <div aria-live="polite" id="err-db-neuf"></div>
-      </details>
-    </div>
-
-    <!-- Les missions d'une séance de projet, élève par élève. Visible sur une
-         séance de projet seulement ; vaut aussi pour les TP PlaylistApp, dont
-         les colonnes sont alors les clés cochées sur leur tableau de bord. -->
-    <div id="bloc-missions" class="ct-bloc" hidden>
-      <div class="ct-tete">
-        <h3 class="sous-titre" style="margin:0">Missions, élève par élève</h3>
+        <div aria-live="polite" id="err-prevol"></div>
       </div>
-      <p class="sous-hint" id="mi-resume"></p>
-      <div id="mi-barres"></div>
-      <!-- Replié depuis le 28/09 : 25 lignes × N missions faisaient 1 000 px ;
-           le résumé et les barres au-dessus disent déjà qui est arrêté. -->
-      <details class="plie-in" id="mi-detail"><summary>La grille, élève par élève</summary>
-        <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
-        <ol class="mi-legende" id="mi-legende"></ol>
-      </details>
-      <details id="mi-neuf">
-        <summary>Écrire les missions de cette séance</summary>
-        <p class="sous-hint">Une mission par ligne. Devant, facultatif, le niveau :
-          🟢 guidé, 🟡 semi-guidé, 🔴 autonome. À la fin, facultatif, le verbe entre
-          crochets. <b>Les jalons de la séance suivent le nombre de missions.</b>
-          Une mission déjà cochée par un étudiant ne peut plus être retirée.</p>
-        <textarea id="mi-texte" rows="6" spellcheck="true"
-          placeholder="🟢 Règles de gestion et questions au tuteur [Concevoir]&#10;🟡 Agent lancé, livraison relue [Piloter]"></textarea>
-        <div class="pick" style="margin-top:.7rem">
-          <button class="btn" id="b-mi-creer" type="button">Enregistrer les missions</button>
-        </div>
-        <div aria-live="polite" id="err-mi-neuf"></div>
-      </details>
-    </div>
 
-    <div id="stats-zone" hidden>
-      <div class="msg" id="stats-guide" hidden></div>
-      <div class="rythme" id="rythme" hidden></div>
-      <div class="tuiles" id="tuiles"></div>
-      <div class="pick">
-        <button class="btn" id="b-ecran" type="button">Afficher au tableau</button>
-        <button class="btn btn-sec" id="b-rafraichir" type="button">Rafraîchir</button>
+      <!-- « À aller voir ». Vient AVANT le parcours : le parcours dit où en
+           est chacun, celui-ci dit qui aider maintenant, et pourquoi — c'est la
+           question qu'on se pose debout. Des raisons, jamais un score ; et
+           jamais projeté, puisque c'est nominatif. -->
+      <div id="bloc-vigilance" class="pa-bloc vg-bloc" hidden>
+        <div class="ct-tete">
+          <h3>À aller voir <span class="vg-compte" id="vg-compte" aria-live="polite"></span></h3>
+        </div>
+        <div id="vg-liste"></div>
+        <p class="sous-hint" id="vg-vide"></p>
+        <div id="vg-actes" hidden></div>
+        <p class="sous-hint vg-seuils" id="vg-seuils"></p>
+        <div aria-live="polite" id="err-vigilance"></div>
+      </div>
+
+      <!-- Le parcours de l'heure. Le pré-vol dit « cette séance est-elle
+           prête » ; celui-ci dit « où en est chacun ». Il vient juste après,
+           parce que c'est la question suivante, et avant le contrôle d'entrée
+           qui n'est qu'une de ses quatre étapes. -->
+      <div id="bloc-parcours" class="pa-bloc" hidden>
+        <div class="ct-tete">
+          <h3>Le parcours de l'heure</h3>
+          <button class="btn btn-sec" id="b-pa-ecran" type="button"
+            title="Projeter l'avancement au tableau">Projeter</button>
+        </div>
+        <div id="pa-entonnoir"></div>
+        <p class="sous-hint" id="pa-bloques"></p>
+        <details id="pa-detail">
+          <summary>Étudiant par étudiant</summary>
+          <div id="pa-lignes"></div>
+        </details>
+        <div aria-live="polite" id="err-parcours"></div>
+      </div>
+
+      <div id="stats-zone" hidden>
+        <div class="msg" id="stats-guide" hidden></div>
+        <div class="rythme" id="rythme" hidden></div>
+        <div class="tuiles" id="tuiles"></div>
+        <div class="pick">
+          <button class="btn" id="b-ecran" type="button">Afficher au tableau</button>
+          <button class="btn btn-sec" id="b-rafraichir" type="button">Rafraîchir</button>
+        </div>
+      </div>
+      <p class="hint" id="stats-attente">Sélectionnez une séance pour voir le détail élève par élève.</p>
+    </section>
+
+    <!-- ÉLÈVES : la liste, filtrable et cherchable ; un clic ouvre la fiche. -->
+    <section class="sv-vue" id="sv-eleves" role="tabpanel" aria-labelledby="svb-eleves" hidden>
+      <div class="sv-filtres" id="sv-filtres" role="group" aria-label="Filtrer les élèves">
+        <button class="filtre on" type="button" data-f="tous" aria-pressed="true">Tous</button>
+        <button class="filtre" type="button" data-f="rien" aria-pressed="false">Pas commencé</button>
+        <button class="filtre" type="button" data-f="cours" aria-pressed="false">En cours</button>
+        <button class="filtre" type="button" data-f="fini" aria-pressed="false">Terminé</button>
+        <button class="filtre" type="button" data-f="faible" aria-pressed="false">En difficulté</button>
+        <button class="filtre" type="button" data-f="inactif" aria-pressed="false">Inactif 8 min</button>
+      </div>
+      <div class="pick sv-cherche">
+        <input id="sv-recherche" type="search" placeholder="Numéro ou prénom" aria-label="Chercher un élève" autocomplete="off">
         <select id="pk-tri" aria-label="Trier les élèves">
           <option value="numero">Trier par numéro</option>
           <option value="avancement">Les moins avancés d'abord</option>
           <option value="reussite">Les plus en difficulté d'abord</option>
         </select>
       </div>
-
-      <!-- Repliés depuis le 28/09 : « À aller voir » et le parcours de
-           l'heure disent déjà qui aider ; ces deux listes se relisent en fin
-           d'heure, pas debout entre deux rangs. Ensemble elles faisaient
-           2 000 px au-dessus des questions de la séance. -->
-      <details class="plie-in" id="bloc-eleves">
-        <summary>Élève par élève — qui avance, qui décroche</summary>
-        <div class="eleves" id="liste-eleves"></div>
+      <p class="sous-hint" id="sv-compte-el" aria-live="polite"></p>
+      <div class="eleves" id="liste-eleves"></div>
+      <!-- Les missions d'une séance de projet, élève par élève. Visible sur une
+           séance de projet seulement ; vaut aussi pour les TP PlaylistApp, dont
+           les colonnes sont alors les clés cochées sur leur tableau de bord. -->
+      <div id="bloc-missions" class="ct-bloc" hidden>
+        <div class="ct-tete">
+          <h3 class="sous-titre" style="margin:0">Missions, élève par élève</h3>
+        </div>
+        <p class="sous-hint" id="mi-resume"></p>
+        <div id="mi-barres"></div>
+        <!-- Replié depuis le 28/09 : 25 lignes × N missions faisaient 1 000 px ;
+             le résumé et les barres au-dessus disent déjà qui est arrêté. -->
+        <details class="plie-in" id="mi-detail"><summary>La grille, élève par élève</summary>
+          <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
+          <ol class="mi-legende" id="mi-legende"></ol>
+        </details>
+        <details id="mi-neuf">
+          <summary>Écrire les missions de cette séance</summary>
+          <p class="sous-hint">Une mission par ligne. Devant, facultatif, le niveau :
+            🟢 guidé, 🟡 semi-guidé, 🔴 autonome. À la fin, facultatif, le verbe entre
+            crochets. <b>Les jalons de la séance suivent le nombre de missions.</b>
+            Une mission déjà cochée par un étudiant ne peut plus être retirée.</p>
+          <textarea id="mi-texte" rows="6" spellcheck="true"
+            placeholder="🟢 Règles de gestion et questions au tuteur [Concevoir]&#10;🟡 Agent lancé, livraison relue [Piloter]"></textarea>
+          <div class="pick" style="margin-top:.7rem">
+            <button class="btn" id="b-mi-creer" type="button">Enregistrer les missions</button>
+          </div>
+          <div aria-live="polite" id="err-mi-neuf"></div>
+        </details>
+      </div>
+      <!-- Ce qu'une séance ne voit pas : la répétition. Replié, parce qu'on le
+           lit en préparant la semaine, pas pendant l'heure. -->
+      <details id="bloc-asuivre" class="vg-semestre" hidden>
+        <summary id="as-titre">Sur le semestre</summary>
+        <div id="as-liste"></div>
       </details>
-      <details class="plie-in" id="bloc-questions">
-        <summary>Réussite par question — les moins réussies d'abord</summary>
-        <div class="questions" id="liste-questions"></div>
-      </details>
-    </div>
-    <p class="hint" id="stats-attente">Sélectionnez une séance pour voir le détail élève par élève.</p>
+    </section>
 
-    <!-- Les énoncés viennent APRÈS les chiffres, et repliés : dépliés et placés
-         avant, ils faisaient deux mille pixels à franchir sur un téléphone
-         avant d'atteindre la moindre information sur la classe. -->
-    <details id="bloc-corriges" class="corriges" hidden>
-      <summary id="corriges-titre">Les questions de cette séance</summary>
-      <div id="liste-corriges"></div>
-    </details>
+    <!-- QUESTIONS : le contrôle d'entrée, la réussite par question, les énoncés. -->
+    <section class="sv-vue" id="sv-questions" role="tabpanel" aria-labelledby="svb-questions" hidden>
+      <!-- Le contrôle d'entrée se lit AVANT la séance : il vient donc juste
+           après le pré-vol, et non au milieu des chiffres de fin d'heure. -->
+      <div id="bloc-controle" class="ct-bloc" hidden>
+        <div class="ct-tete">
+          <h3 class="sous-titre" style="margin:0">Contrôle d'entrée</h3>
+          <button class="qa-b" id="b-controle" type="button">
+            <span class="pt"></span><span class="et"></span></button>
+        </div>
+        <p class="sous-hint" id="ct-resume"></p>
+        <details class="plie-in" id="ct-detail"><summary>Notion par notion</summary>
+          <div id="ct-lignes"></div></details>
+        <div aria-live="polite" id="err-controle"></div>
+        <details id="ct-neuf">
+          <summary>Écrire le contrôle de cette séance</summary>
+          <p class="sous-hint">Une notion par ligne : l'intitulé puis deux à quatre
+            options séparées par « · ». <b>Une étoile devant la bonne option.</b>
+            La question de certitude est ajoutée toute seule après chaque notion.</p>
+          <textarea id="ct-texte" rows="6" spellcheck="true"
+            placeholder="Que signifie un code 404 ? · la page a changé · *la ressource est introuvable · le serveur a planté · l'accès est refusé&#10;Qui parle en premier dans un échange HTTP ? · *le client · le serveur · les deux · aucun"></textarea>
+          <div class="pick" style="margin-top:.7rem">
+            <button class="btn" id="b-ct-creer" type="button">Enregistrer le contrôle</button>
+          </div>
+          <div aria-live="polite" id="err-ct-neuf"></div>
+        </details>
+      </div>
+      <h3 class="sous-titre">Réussite par question</h3>
+      <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
+      <div class="questions" id="liste-questions"></div>
+      <!-- Les énoncés viennent APRÈS les chiffres, et repliés : dépliés et placés
+           avant, ils faisaient deux mille pixels à franchir sur un téléphone
+           avant d'atteindre la moindre information sur la classe. -->
+      <details id="bloc-corriges" class="corriges" hidden>
+        <summary id="corriges-titre">Les questions de cette séance</summary>
+        <div id="liste-corriges"></div>
+      </details>
+    </section>
+
+    <!-- FIN D'HEURE : le débriefing, à projeter. -->
+    <section class="sv-vue" id="sv-fin" role="tabpanel" aria-labelledby="svb-fin" hidden>
+      <!-- Le débriefing : les cinq dernières minutes. Le contrôle d'entrée dit
+           ce qu'ils avaient gardé ; celui-ci dit ce qu'ils emportent. -->
+      <div id="bloc-debrief" class="ct-bloc" hidden>
+        <div class="ct-tete">
+          <h3 class="sous-titre" style="margin:0">Débriefing de fin d'heure</h3>
+          <button class="btn btn-sec" id="b-db-ecran" type="button"
+            style="margin-left:auto">Projeter</button>
+        </div>
+        <p class="sous-hint" id="db-resume"></p>
+        <details class="plie-in" id="db-detail"><summary>Concept par concept</summary>
+          <div id="db-lignes"></div></details>
+        <div aria-live="polite" id="err-debrief"></div>
+        <details id="db-neuf">
+          <summary>Écrire les concepts de cette séance</summary>
+          <p class="sous-hint">Un concept par ligne : l'intitulé, un tiret, puis ce
+            qu'il faut pouvoir en dire. Entre crochets à la fin, <b>les numéros des
+            questions du quiz</b> qui le mesurent — c'est ce qui donne son chiffre au
+            concept. Recopiez la section « Concepts à connaître » de la trace écrite.</p>
+          <textarea id="db-texte" rows="6" spellcheck="true"
+            placeholder="Client et serveur — le client demande toujours en premier, le serveur répond. [1 2]&#10;Les codes de statut — 4xx le client s'est trompé, 5xx le serveur a échoué. [3 4 5]"></textarea>
+          <div class="pick" style="margin-top:.7rem">
+            <button class="btn" id="b-db-creer" type="button">Enregistrer les concepts</button>
+          </div>
+          <div aria-live="polite" id="err-db-neuf"></div>
+        </details>
+      </div>
+    </section>
   </div>
 
   <!-- L'inventaire des contrôles vit À CÔTÉ du suivi de la séance, qui porte
@@ -580,6 +633,21 @@
   <span>Données hébergées dans l'Union européenne (Francfort). Suppression en fin d'année scolaire.</span>
 </footer>
 
+</div>
+
+<!-- Les confirmations passagères (js/toast.js), en bas de l'écran. -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- ══════════ FICHE ÉLÈVE — panneau latéral (js/fiche.js) ══════════ -->
+<div class="fiche" id="fiche-eleve" hidden>
+  <div class="fiche-fond" id="fe-fond"></div>
+  <aside class="fiche-panneau" role="dialog" aria-modal="true" aria-labelledby="fe-titre">
+    <div class="fiche-tete">
+      <h2 id="fe-titre">Élève</h2>
+      <button class="btn btn-sec" id="fe-fermer" type="button" aria-label="Fermer la fiche">Fermer</button>
+    </div>
+    <div id="fe-corps" aria-live="polite"></div>
+  </aside>
 </div>
 
 <!-- ══════════ MODE CLASSE — projection au tableau ══════════ -->

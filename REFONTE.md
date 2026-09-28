@@ -679,6 +679,15 @@ Après la refonte « par moment » (28/09) — hors plan, voir §10 :
 | `index.html` | 640 | **634** |
 | « Ce qui bloque » | 486 px dépliée, toujours | **une ligne**, dépliée d'office dès qu'un point bloque |
 
+Lot « le direct » (28/09) — l'écran de la séance comme une application :
+
+| | avant | après |
+|---|---|---|
+| modules | 19 | **22** — `pilote.js` (en-tête, vues, filtres), `fiche.js` (fiche élève), `toast.js` |
+| feuilles de style | 12 | **13** — `pilote.css`, ajoutée en dernier : classes neuves seulement |
+| `js/seance.js` | 666 | **672** — trois appels à `pilote.js` et la garde de Pause, rien de plus |
+| carte de la séance | un défilement de ~3 200 px | un en-tête collant et **quatre vues** (Maintenant, Élèves, Questions, Fin d'heure) |
+
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
 Le style dans

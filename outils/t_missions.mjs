@@ -143,6 +143,8 @@ for (const w of [360, 1280]) {
     };
     let e = document.getElementById('carte-suivi');
     while (e) { e.hidden = false; e = e.parentElement; }
+    // La grille vit dans la vue « Élèves » de la séance (28/09).
+    window.__e.ouvrirVue('eleves');
     document.getElementById('espace-ens').hidden = false;
     const s = window.__e.suivi;
     s.seanceId = 25; s.nature = 'cours';

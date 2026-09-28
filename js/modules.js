@@ -33,10 +33,15 @@ let classesEns = [];
 // n'est pas déployée — auquel cas chaque carte se comporte comme avant.
 function lireModules(forcer){
   if (!promesse || forcer) {
-    promesse = sb.rpc("modules_enseignant").then(function(r){
-      if (!r || r.error || !r.data || !r.data.ok || !Array.isArray(r.data.classes)) return null;
+    // Un échec ne se garde pas en mémoire : lu avant la connexion enseignante,
+    // il aurait condamné toutes les lectures suivantes à « pas de modules ».
+    var p = promesse = sb.rpc("modules_enseignant").then(function(r){
+      if (!r || r.error || !r.data || !r.data.ok || !Array.isArray(r.data.classes)) {
+        if (promesse === p) promesse = null;
+        return null;
+      }
       return r.data.classes;
-    }, function(){ return null; });
+    }, function(){ if (promesse === p) promesse = null; return null; });
   }
   return promesse;
 }
