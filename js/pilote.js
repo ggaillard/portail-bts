@@ -28,6 +28,8 @@ import { toast } from './toast.js';
 import { ouvrirFiche } from './fiche.js';
 
 var VUES = ["maintenant", "eleves", "questions", "fin"];
+var SQUELETTE = '<span class="vh">Chargement…</span><span class="squelette"></span>' +
+                '<span class="squelette"></span><span class="squelette court"></span>';
 var CLE_VUE = "tdc-vue-seance";
 var derniereMaj = 0;
 var filtre = "tous";
@@ -98,6 +100,24 @@ function majPilote(apresStats){
   $("svn-maintenant").textContent = vg && vg !== "0" ? vg : "";
   $("svn-eleves").textContent = s ? String(s.inscrits) : "";
   $("svn-questions").textContent = s && s.questions.length ? String(s.questions.length) : "";
+
+  // L'adresse suit la séance choisie (#appel/s/123) — seulement quand on est
+  // sur En cours : ailleurs, elle dit l'onglet ouvert, pas la séance.
+  if (aSeance && /^#appel(\/|$)/.test(location.hash || "") && location.hash !== "#appel/s/" + sel.value) {
+    try { history.replaceState(null, "", "#appel/s/" + sel.value); } catch (e) {}
+  }
+
+  // Pas de séance : l'état vide propose le geste, au lieu d'une phrase.
+  var sa = $("stats-attente");
+  if (!aSeance && sa && !sa.hidden && !sa.querySelector("button")) {
+    sa.innerHTML = "Aucune séance choisie. ";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec";
+    b.textContent = "Choisir une séance";
+    b.addEventListener("click", function(){ $("sv-choix").hidden = true; $("sv-fil").click(); });
+    sa.appendChild(b);
+  }
 
   appliquerFiltres();
   majDepuis();
@@ -237,11 +257,16 @@ function brancherPilote(){
     $("sv-fil").setAttribute("aria-expanded", ouvert ? "true" : "false");
     if (ouvert) $("pk-seance").focus();
   });
-  // Choisir une séance referme le sélecteur : on l'a ouvert pour ça.
+  // Choisir une séance referme le sélecteur : on l'a ouvert pour ça. Le
+  // squelette remplace « Chargement… » une fois activerSeance() passée.
   $("pk-seance").addEventListener("change", function(){
     if ($("pk-seance").value) { $("sv-choix").hidden = true; $("sv-fil").setAttribute("aria-expanded", "false"); }
     derniereMaj = 0;
-    majPilote();
+    setTimeout(function(){
+      var sa = $("stats-attente");
+      if (sa && sa.textContent === "Chargement…") sa.innerHTML = SQUELETTE;
+      majPilote();
+    }, 0);
   });
 
   VUES.forEach(function(v, i){

@@ -51,8 +51,18 @@ var ALIAS = { seance: "appel" };
 var TITRES = { appel: "En cours", quest: "Préparer", ensemble: "Bilan" };
 var TITRE_BASE = document.title;
 
+// Depuis le 28/09, l'adresse d'En cours peut porter la séance suivie :
+// « #appel/s/123 ». Un favori ou un raccourci sur le téléphone rouvre alors
+// cette séance-là. Qui gagne quand l'adresse et les sélecteurs divergent ?
+// L'ADRESSE au chargement (encours.js la lit), les SÉLECTEURS ensuite
+// (pilote.js réécrit l'adresse à chaque séance choisie).
+function seanceDeLAdresse(){
+  var m = /^#(?:appel|seance)\/s\/(\d+)$/.exec(location.hash || "");
+  return m ? m[1] : null;
+}
+
 function ongletDeLAdresse(){
-  var h = String(location.hash || "").replace(/^#/, "");
+  var h = String(location.hash || "").replace(/^#/, "").split("/")[0];
   h = ALIAS[h] || h;
   return ONGLETS.indexOf(h) >= 0 ? h : null;
 }
@@ -77,11 +87,13 @@ function ouvrirOnglet(cle, adresse){
   document.title = TITRES[cle] + " — " + TITRE_BASE;
 
   if (adresse === "aucun") return;
-  // Déjà à la bonne adresse — un alias (#seance) se réécrit, lui, en #appel.
-  if (ongletDeLAdresse() === cle && location.hash === "#" + cle) return;
+  // En cours garde la séance de l'adresse (#appel/s/123) ; un alias
+  // (#seance) se réécrit, lui, en #appel.
+  var cible = "#" + cle + (cle === "appel" && seanceDeLAdresse() ? "/s/" + seanceDeLAdresse() : "");
+  if (location.hash === cible) return;
   try {
-    if (adresse === "remplacer") history.replaceState(null, "", "#" + cle);
-    else history.pushState(null, "", "#" + cle);
+    if (adresse === "remplacer") history.replaceState(null, "", cible);
+    else history.pushState(null, "", cible);
   } catch (e) {
     // Certains contextes refusent l'écriture d'historique (page ouverte depuis
     // le disque, navigation privée verrouillée). L'onglet s'ouvre quand même :
@@ -153,4 +165,4 @@ CONNEXION.forEach(function(cle, i){
   });
 });
 
-export { ONGLETS, ouvrirOnglet, ongletDeLAdresse, onglet };
+export { ONGLETS, ouvrirOnglet, ongletDeLAdresse, seanceDeLAdresse, onglet };

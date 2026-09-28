@@ -104,7 +104,14 @@ function rendreListe(){
   if (!seances.length) {
     var p = document.createElement("p");
     p.className = "sous-hint";
-    p.textContent = "Aucune séance dans cette classe.";
+    p.textContent = "Aucune séance dans cette classe. ";
+    // L'état vide propose le geste qui en sort.
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sec";
+    b.textContent = "Créer la première séance";
+    b.addEventListener("click", function(){ ouvrirFormulaire(null); });
+    p.appendChild(b);
     t.appendChild(p);
     return;
   }

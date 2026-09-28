@@ -137,3 +137,59 @@ body.fiche-ouverte{overflow:hidden}
   .sv-vue-b{font-size:.8rem;padding:.35rem .45rem;flex:1 1 auto}
   .sv-vue-b .sv-n:not(#svn-maintenant){display:none}
 }
+
+/* ── Lot « finitions » (28/09) ─────────────────────────────────────────── */
+
+/* Un texte pour les lecteurs d'écran, invisible à l'œil. */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.squelette{display:block}
+#chargement{max-width:28rem}
+
+/* Une seule grammaire de couleurs pour tous les états, clair ET sombre :
+   vert = fait, orange = à surveiller, rouge = bloquant, bleu = en cours,
+   gris = pas posé. Les pastilles d'avant avaient des couleurs en dur, pensées
+   pour le mode clair seulement. */
+:root{--ko:#963232;--ko-soft:#FBE6E6}
+@media (prefers-color-scheme: dark){:root{--ko:#EE8B8B;--ko-soft:#3A1C1E}}
+.badge.ko,.af-pastille.bloc{background:var(--ko-soft);color:var(--ko)}
+.af-pastille.rien,.prevol-etat.ok,.sem-e.jouee,.chip-fini{background:var(--ok-soft);color:var(--ok)}
+.af-pastille.att,.prevol-etat.ko{background:var(--signal-soft);color:var(--signal)}
+.sem-e.en_cours,.sem-e.prete,.chip-cours{background:var(--accent-soft);color:var(--accent-ink)}
+.sem-e.a_produire,.chip-rien{background:var(--surface-alt);color:var(--ink-soft);border-color:transparent}
+
+/* Sur un téléphone, la barre des trois onglets passe EN BAS de l'écran, sous
+   le pouce, comme dans les applications mobiles ; l'en-tête de la séance
+   remonte alors tout en haut. */
+@media (max-width: 30rem){
+  #onglets-ens{position:fixed;top:auto;bottom:0;left:0;right:0;margin:0;z-index:40;
+    border-radius:0;padding:.3rem .4rem calc(.3rem + env(safe-area-inset-bottom));
+    background:var(--surface);border-top:1px solid var(--rule);
+    box-shadow:0 -6px 14px -10px rgba(0,0,0,.25);mask-image:none;overflow:visible}
+  #onglets-ens .onglet{flex:1 1 0;flex-direction:column;gap:.05rem;justify-content:center;
+    font-size:.74rem;padding:.3rem .2rem;min-height:52px;position:relative}
+  #onglets-ens .onglet::before{font-size:1.15rem;line-height:1}
+  #ong-appel::before{content:"◉"}
+  #ong-quest::before{content:"✎"}
+  #ong-ensemble::before{content:"▤"}
+  #onglets-ens .ong-p{position:absolute;top:.15rem;right:calc(50% - 2rem)}
+  #espace-ens{padding-bottom:4.8rem}
+  .sv-tete{top:0}
+  .toasts{bottom:calc(5rem + env(safe-area-inset-bottom))}
+}
+
+/* L'en-tête collant, ramassé sur un téléphone : il reste à l'écran pendant
+   tout le défilement, il ne doit donc pas en manger le tiers. */
+.sv-vue-b{white-space:nowrap}
+@media (max-width: 30rem){
+  .sv-long{display:none}
+  .sv-tete{margin:-.4rem -.4rem .5rem;padding:.3rem .4rem .4rem}
+  .sv-fil{min-height:40px;flex-wrap:nowrap}
+  .sv-fil-ctx{display:none}
+  .sv-fil-seance{font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sv-fil-chg{font-size:0}
+  .sv-fil-chg::after{content:"▾";font-size:.9rem}
+  .sv-ligne{gap:.3rem .5rem;margin-top:.1rem}
+  .sv-kpi,.sv-chrono{font-size:.78rem}
+  .sv-maj{display:none}
+  .sv-action{min-height:38px;padding:.3rem .8rem;font-size:.85rem}
+}

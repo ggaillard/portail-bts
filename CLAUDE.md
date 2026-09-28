@@ -125,6 +125,28 @@ La carte « La séance » d'En cours a le motif des applications de suivi :
 `outils/t_suivi.mjs` vérifie tout cela, « Clore » compris : sans « Annuler »,
 un appel à `clore_seance` après 5 s ; avec, aucun.
 
+### Les finitions d'application (28/09)
+
+- **La séance dans l'adresse** : `#appel/s/123` rouvre cette séance (favori,
+  raccourci d'écran d'accueil). L'adresse gagne au chargement (`encours.js`
+  via `seanceDeLAdresse()`), les sélecteurs ensuite (`pilote.js` réécrit
+  l'adresse). `ouvrirOnglet("appel")` ne coupe pas le suffixe. Vérifié par
+  `t_navigation.mjs`, Précédent compris.
+- **Sur un téléphone, la barre des onglets est en bas** (≤ 30 rem), sous le
+  pouce, avec une icône ; l'en-tête de la séance remonte en haut et se
+  ramasse sur deux lignes. Pastille d'absents conservée.
+- **Installable** : `manifest.webmanifest`, `icones/`, `sw.js`. Le service
+  worker est **réseau d'abord** et ne met jamais en cache un appel à Supabase ;
+  il n'est pas enregistré pendant les contrôles (`navigator.webdriver`), sans
+  quoi il servirait ses fichiers à la place de ceux que les contrôles
+  substituent. **Changer la liste des fichiers ne demande rien** : il met en
+  cache ce qui passe. Changer sa logique : incrémenter `CACHE`.
+- **Squelettes** au chargement de la page et d'une séance ; **états vides avec
+  le geste** (« Choisir une séance », « Créer la première séance »).
+- **Une seule grammaire de couleurs** (`pilote.css`) pour les pastilles,
+  badges et états, en clair comme en sombre : vert fait, orange à surveiller,
+  rouge bloquant, bleu en cours, gris pas posé.
+
 ⚠️ `lireModules()` ne garde plus un échec en mémoire : lu avant la connexion
 enseignante, il condamnait toutes les lectures suivantes à « pas de modules ».
 

@@ -128,6 +128,42 @@ if (alias.actif !== 'ong-appel' || alias.volet !== 'volet-appel' || alias.hash !
   rates.push(`« #seance » n'ouvre pas En cours (${alias.actif} / ${alias.volet} / ${alias.hash})`);
 }
 
+// ── 3ter. La séance dans l'adresse (28/09) ────────────────────────────────
+// « #appel/s/123 » : En cours s'ouvre, l'adresse GARDE la séance (la
+// normalisation d'ouverture ne doit pas la couper), et Précédent y revient.
+await p.goto(url + '#appel/s/14', { waitUntil: 'load' });
+await p.reload({ waitUntil: 'load' });
+const lien = await p.evaluate(() => {
+  window.__e.ouvrirEspaceEnseignant();
+  return { actif: (document.querySelector('.onglet.actif') || {}).id, hash: location.hash };
+});
+await p.click('#ong-quest');
+await p.goBack();
+const retour = await p.evaluate(() => ({ actif: (document.querySelector('.onglet.actif') || {}).id, hash: location.hash }));
+console.log('── lien vers une séance :', lien.hash, '· après Préparer puis Précédent :', retour.hash);
+if (lien.actif !== 'ong-appel' || lien.hash !== '#appel/s/14') rates.push(`« #appel/s/14 » ouvre ${lien.actif} et devient « ${lien.hash} »`);
+if (retour.actif !== 'ong-appel' || retour.hash !== '#appel/s/14') rates.push(`Précédent depuis Préparer mène à ${retour.actif} « ${retour.hash} »`);
+
+// ── 3quater. Installable, et la barre sous le pouce sur un téléphone ──────
+const manifeste = await p.evaluate(() => fetch('manifest.webmanifest').then((r) => r.json()).then((m) =>
+  ({ nom: m.short_name, icones: m.icons.length, affichage: m.display })).catch((e) => ({ err: String(e) })));
+if (manifeste.err || manifeste.icones < 2 || manifeste.affichage !== 'standalone') rates.push(`manifeste : ${JSON.stringify(manifeste)}`);
+{
+  const { page: t, fermer: fermerT } = await ouvrir(nav, RACINE, { largeur: 390, hauteur: 800 });
+  const barre = await t.evaluate(() => {
+    ['chargement', 'connexion', 'espace-etu'].forEach((i) => { document.getElementById(i).hidden = true; });
+    document.getElementById('espace-ens').hidden = false;
+    const r = document.getElementById('onglets-ens').getBoundingClientRect();
+    return { pos: getComputedStyle(document.getElementById('onglets-ens')).position,
+             bas: Math.round(r.bottom), haut: Math.round(r.height), vh: innerHeight,
+             cibles: [...document.querySelectorAll('#onglets-ens .onglet')].map((b) => Math.round(b.getBoundingClientRect().height)) };
+  });
+  console.log('── téléphone : barre', barre.pos, 'bas', barre.bas, '/', barre.vh, '· cibles', barre.cibles.join('/'));
+  if (barre.pos !== 'fixed' || Math.abs(barre.bas - barre.vh) > 1) rates.push(`téléphone : la barre d'onglets n'est pas en bas (${JSON.stringify(barre)})`);
+  if (barre.cibles.some((h) => h < 44)) rates.push(`téléphone : onglet sous 44 px (${barre.cibles.join('/')})`);
+  await fermerT();
+}
+
 // ── 4. Les deux barres d'onglets suivent le même motif ───────────────────
 const motif = await p.evaluate(() => {
   const lire = (ids) => ids.map((id) => {

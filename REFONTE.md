@@ -688,6 +688,11 @@ Lot « le direct » (28/09) — l'écran de la séance comme une application :
 | `js/seance.js` | 666 | **672** — trois appels à `pilote.js` et la garde de Pause, rien de plus |
 | carte de la séance | un défilement de ~3 200 px | un en-tête collant et **quatre vues** (Maintenant, Élèves, Questions, Fin d'heure) |
 
+Lot « finitions » (28/09) : séance dans l'adresse (`#appel/s/123`), barre
+d'onglets en bas sur téléphone, portail installable (`manifest.webmanifest`,
+`sw.js`, `icones/`), squelettes, états vides avec leur geste, couleurs d'état
+unifiées et lisibles en mode sombre.
+
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
 Le style dans

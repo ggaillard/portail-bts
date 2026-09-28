@@ -10,11 +10,14 @@
 //   1. une séance OUVERTE — la plus récemment démarrée s'il y en a plusieurs ;
 //   2. sinon la dernière DÉMARRÉE — c'est celle qu'on relit en fin d'heure ;
 //   3. sinon la première classe, comme avant.
+// Avant tout cela, l'ADRESSE : « #appel/s/123 » (un favori, un raccourci)
+// désigne la séance à ouvrir, si elle existe dans une classe réelle.
 // Le choix se refait à chaque ouverture de l'espace ; les sélecteurs restent
 // là pour regarder une autre séance.
 
 import { $, sb } from './socle.js';
 import { chargerSeancesDe } from './seance.js';
+import { seanceDeLAdresse } from './navigation.js';
 
 function seanceDuJour(liste, idsReels){
   var l = (liste || []).filter(function(s){
@@ -33,7 +36,10 @@ function choisirSeanceDuJour(classes){
   var ids = classes.map(function(c){ return String(c.id); });
   return sb.from("seances").select("id,classe_id,numero,ouverte,demarree_le")
     .then(function(r){
-      var s = seanceDuJour(r && r.data, ids);
+      var voulue = seanceDeLAdresse();
+      var s = (voulue && (r && r.data || []).filter(function(x){
+        return String(x.id) === voulue && ids.indexOf(String(x.classe_id)) >= 0; })[0]) ||
+        seanceDuJour(r && r.data, ids);
       var classe = s ? s.classe_id : classes[0].id;
       var sel = $("pk-classe");
       if (sel) sel.value = String(classe);

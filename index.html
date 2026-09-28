@@ -9,6 +9,13 @@
      200 octets et supprime une requête perdue plus une erreur en console, où
      l'on ne veut voir que ce qui compte. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E6E6E'/%3E%3Ccircle cx='16' cy='16' r='7.5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23fff'/%3E%3C/svg%3E">
+<!-- Installable comme une application (28/09) : écran d'accueil du
+     téléphone, plein écran, raccourcis vers les trois onglets. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E6E6E">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Portail BTS">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -46,7 +53,10 @@
   <p class="sub">Identifiez-vous une fois : vous accédez ensuite à tous vos projets sans ressaisir quoi que ce soit.</p>
 </header>
 
-<p id="chargement" class="spin" aria-live="polite">Chargement…</p>
+<!-- Un squelette plutôt qu'un « Chargement… » : on voit la forme de ce qui
+     arrive. En cas d'échec, app.js remplace tout le contenu par le message. -->
+<div id="chargement" class="spin" aria-live="polite"><span class="vh">Chargement…</span>
+  <div class="squelette"></div><div class="squelette"></div><div class="squelette court"></div></div>
 
 <!-- La cible du lien d'évitement. tabindex="-1" la rend focalisable par
      programme sans l'ajouter à l'ordre de tabulation. -->
@@ -258,7 +268,7 @@
       <button class="sv-vue-b" type="button" role="tab" id="svb-questions" data-vue="questions"
         aria-controls="sv-questions" aria-selected="false" tabindex="-1">Questions<span class="sv-n" id="svn-questions"></span></button>
       <button class="sv-vue-b" type="button" role="tab" id="svb-fin" data-vue="fin"
-        aria-controls="sv-fin" aria-selected="false" tabindex="-1">Fin d'heure</button>
+        aria-controls="sv-fin" aria-selected="false" tabindex="-1">Fin<span class="sv-long">&nbsp;d'heure</span></button>
     </nav>
 
     <!-- MAINTENANT : ce qu'on lit debout. Qui aider, où en est le groupe. -->
@@ -698,5 +708,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script type="module" src="js/app.js"></script>
+<script>
+// Le service worker rend le portail installable (sw.js : réseau d'abord,
+// cache en secours seulement). Pas pendant les contrôles automatiques : il
+// servirait ses propres fichiers à la place de ceux que les contrôles
+// substituent au passage.
+if ("serviceWorker" in navigator && !navigator.webdriver) {
+  window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+}
+</script>
 </body>
 </html>
