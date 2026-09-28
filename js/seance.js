@@ -602,7 +602,7 @@ function activerSeance(){
   rafraichir().then(lancerBoucle);
 }
 
-function chargerSeancesDe(classeId){
+function chargerSeancesDe(classeId, voulue){
   suivi.classeId = classeId;
   chargerASuivre(classeId);
   suivi.seanceId = null;
@@ -630,6 +630,7 @@ function chargerSeancesDe(classeId){
       // Une séance est chargée d'office : le panneau n'est jamais vide à l'arrivée.
       if (sel.options.length > 1) {
         sel.selectedIndex = 1;
+        if (voulue && sel.querySelector('option[value="' + voulue + '"]')) sel.value = String(voulue);
         activerSeance();
       }
     });
@@ -639,7 +640,7 @@ function chargerSeancesDe(classeId){
 // Sans cela, on lit « séance 2 du BTS2 » et on doit refaire soi-même deux
 // sélections — c'est la moitié du problème qu'on vient de régler.
 function allerAuControle(c){
-  ouvrirOnglet("seance");
+  ouvrirOnglet("appel");
   var sc = $("pk-classe");
   if (String(sc.value) !== String(c.classe_id)) {
     sc.value = String(c.classe_id);

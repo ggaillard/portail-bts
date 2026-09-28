@@ -55,17 +55,37 @@ function afficherProjets(conteneur, liste){
 function chargerSemestre(){
   var carte = $("carte-semestre");
   carte.hidden = true;
-  sb.rpc("semestre").then(function(r){
+  // Depuis le 28/09, le semestre se lit module par module : semestre() ne
+  // connaît pas les modules, on les recoud ici avec deux lectures légères.
+  // Sans elles (fonctions pas déployées), la liste reste par classe.
+  Promise.all([
+    sb.rpc("semestre"),
+    sb.rpc("modules_enseignant"),
+    sb.from("seances").select("id,module_id")
+  ]).then(function(rr){
+    var r = rr[0];
     // Fonction pas déployée : la carte reste absente, comme les autres.
     if (!r || r.error || !r.data || !r.data.ok) return;
     // semestre() ne connaît pas la distinction : le tri se fait ici, comme
     // partout ailleurs dans l'espace enseignant.
-    rendreSemestre(classesReelles(r.data.classes || []));
+    rendreSemestre(classesReelles(r.data.classes || []), carteModules(rr[1], rr[2]));
     carte.hidden = false;
   });
 }
 
-function rendreSemestre(classes){
+// seance_id -> { titre, icone } ; null si l'une des deux lectures manque.
+function carteModules(rm, rs){
+  var m = rm && !rm.error && rm.data && rm.data.ok && rm.data.classes;
+  var s = rs && !rs.error && rs.data;
+  if (!m || !s || !s.length) return null;
+  var parId = {};
+  m.forEach(function(c){ (c.modules || []).forEach(function(x){ parId[x.id] = x; }); });
+  var out = {};
+  s.forEach(function(x){ if (x.module_id && parId[x.module_id]) out[x.id] = parId[x.module_id]; });
+  return out;
+}
+
+function rendreSemestre(classes, modules){
   var z = $("sem-classes");
   z.innerHTML = "";
   if (!classes.length) {
@@ -97,7 +117,20 @@ function rendreSemestre(classes){
                       (c.inscrits || 0) + " étudiants";
     bloc.appendChild(bilan);
 
-    seances.forEach(function(x){ bloc.appendChild(ligneSemestre(x)); });
+    // Un intertitre à chaque changement de module (les séances d'un module se
+    // suivent : TP 0-4 puis IA 11-16 au BTS2).
+    var courant;
+    seances.forEach(function(x){
+      var m = modules && x.seance_id ? modules[x.seance_id] : null;
+      if (modules && x.numero < 90 && (m ? m.id : 0) !== courant) {
+        courant = m ? m.id : 0;
+        var st = document.createElement("h4");
+        st.className = "sem-mod";
+        st.textContent = m ? (m.icone ? m.icone + " " : "") + m.titre : "Sans module";
+        bloc.appendChild(st);
+      }
+      bloc.appendChild(ligneSemestre(x));
+    });
     z.appendChild(bloc);
   });
 }

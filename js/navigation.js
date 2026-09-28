@@ -19,7 +19,11 @@ import { $ } from './socle.js';
 // « Ce qui bloque » reste épinglé au-dessus : c'est la seule carte qu'on ne
 // doit jamais avoir à aller chercher. Tout le reste vit dans un onglet, et
 // c'est l'appel qui est ouvert au départ — c'est le geste du début d'heure.
-var ONGLETS = ["appel", "ensemble", "quest", "seance"];
+// Trois onglets, trois moments, depuis le 28/09 : En cours, Préparer, Bilan.
+// L'ancienne clé #seance (le suivi d'une séance, qui vit désormais dans En
+// cours) reste comprise, pour qu'un favori ne tombe pas dans le vide.
+var ONGLETS = ["appel", "quest", "ensemble"];
+var ALIAS = { seance: "appel" };
 
 // ── L'onglet ouvert s'écrit dans l'adresse ────────────────────────────────
 //
@@ -44,12 +48,12 @@ var ONGLETS = ["appel", "ensemble", "quest", "seance"];
 // dit pas ce que dit le bouton, l'historique devient illisible. Les clés, elles,
 // sont celles de l'ADRESSE (#appel, #ensemble, #quest, #seance) et ne bougent
 // pas : un lien mis en favori le 16/09 doit continuer d'ouvrir le bon onglet.
-var TITRES = { appel: "Aujourd'hui", ensemble: "Le semestre",
-               quest: "Ma bibliothèque", seance: "La séance" };
+var TITRES = { appel: "En cours", quest: "Préparer", ensemble: "Bilan" };
 var TITRE_BASE = document.title;
 
 function ongletDeLAdresse(){
   var h = String(location.hash || "").replace(/^#/, "");
+  h = ALIAS[h] || h;
   return ONGLETS.indexOf(h) >= 0 ? h : null;
 }
 
@@ -58,6 +62,7 @@ function ongletDeLAdresse(){
 // sans créer d'entrée) ou "aucun" (on revient D'UN mouvement de l'historique,
 // il ne faut surtout pas en réécrire un).
 function ouvrirOnglet(cle, adresse){
+  cle = ALIAS[cle] || cle;
   if (ONGLETS.indexOf(cle) < 0) cle = "appel";
   ONGLETS.forEach(function(k){
     var o = $("ong-" + k), v = $("volet-" + k);
@@ -72,7 +77,8 @@ function ouvrirOnglet(cle, adresse){
   document.title = TITRES[cle] + " — " + TITRE_BASE;
 
   if (adresse === "aucun") return;
-  if (ongletDeLAdresse() === cle) return;          // déjà à la bonne adresse
+  // Déjà à la bonne adresse — un alias (#seance) se réécrit, lui, en #appel.
+  if (ongletDeLAdresse() === cle && location.hash === "#" + cle) return;
   try {
     if (adresse === "remplacer") history.replaceState(null, "", "#" + cle);
     else history.pushState(null, "", "#" + cle);

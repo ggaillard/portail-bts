@@ -40,7 +40,7 @@ const ouvrirEns = () => p.evaluate(() => {
 await ouvrirEns();
 
 const parcours = [];
-for (const [id, cle] of [['ong-quest', 'quest'], ['ong-seance', 'seance'], ['ong-ensemble', 'ensemble']]) {
+for (const [id, cle] of [['ong-quest', 'quest'], ['ong-ensemble', 'ensemble'], ['ong-appel', 'appel']]) {
   await p.click('#' + id);
   parcours.push({ clic: cle, hash: new URL(p.url()).hash, titre: await p.title(),
                   // Le texte du bouton lui-même, tel qu'il est écrit dans la page.
@@ -87,9 +87,9 @@ const apresRetour = await p.evaluate(() => ({
 console.log('\n── Précédent');
 console.log('   adresse :', apresRetour.hash, '· onglet actif :', apresRetour.actif,
             '· volet ouvert :', apresRetour.volet.join(', '));
-if (apresRetour.hash !== '#seance') rates.push(`Précédent mène à « ${apresRetour.hash} », attendu « #seance »`);
-if (apresRetour.actif !== 'ong-seance') rates.push(`Précédent laisse « ${apresRetour.actif} » actif — l'adresse et l'écran ne disent pas la même chose`);
-if (apresRetour.volet.join() !== 'volet-seance') rates.push(`Précédent montre ${apresRetour.volet.join(', ')}`);
+if (apresRetour.hash !== '#ensemble') rates.push(`Précédent mène à « ${apresRetour.hash} », attendu « #ensemble »`);
+if (apresRetour.actif !== 'ong-ensemble') rates.push(`Précédent laisse « ${apresRetour.actif} » actif — l'adresse et l'écran ne disent pas la même chose`);
+if (apresRetour.volet.join() !== 'volet-ensemble') rates.push(`Précédent montre ${apresRetour.volet.join(', ')}`);
 
 // ── 3. Un rafraîchissement garde l'onglet ────────────────────────────────
 //
@@ -110,7 +110,22 @@ const apresF5 = await p.evaluate(() => {
 });
 console.log('\n── rechargement sur #quest :', apresF5.actif, '·', apresF5.volet);
 if (apresF5.actif !== 'ong-quest' || apresF5.volet !== 'volet-quest') {
-  rates.push(`ouvrir « #quest » n'ouvre pas l'onglet « Ma bibliothèque » (${apresF5.actif} / ${apresF5.volet})`);
+  rates.push(`ouvrir « #quest » n'ouvre pas l'onglet « Préparer » (${apresF5.actif} / ${apresF5.volet})`);
+}
+
+// ── 3bis. Un ancien favori « #seance » ouvre En cours ─────────────────────
+// L'onglet « La séance » a disparu le 28/09 : son suivi vit dans En cours.
+// Un favori qui tomberait sur un écran vide se lirait comme une panne.
+await p.goto(url + '#seance', { waitUntil: 'load' });
+await p.reload({ waitUntil: 'load' });
+const alias = await p.evaluate(() => {
+  window.__e.ouvrirEspaceEnseignant();
+  return { actif: (document.querySelector('.onglet.actif') || {}).id, hash: location.hash,
+    volet: [...document.querySelectorAll('.volet')].filter((v) => !v.hidden).map((v) => v.id).join() };
+});
+console.log('── ancien favori #seance :', alias.actif, '·', alias.hash);
+if (alias.actif !== 'ong-appel' || alias.volet !== 'volet-appel' || alias.hash !== '#appel') {
+  rates.push(`« #seance » n'ouvre pas En cours (${alias.actif} / ${alias.volet} / ${alias.hash})`);
 }
 
 // ── 4. Les deux barres d'onglets suivent le même motif ───────────────────
@@ -121,7 +136,7 @@ const motif = await p.evaluate(() => {
              sel: b.getAttribute('aria-selected') };
   });
   return { connexion: lire(['t-etu', 't-ens']),
-           enseignant: lire(['ong-appel', 'ong-ensemble', 'ong-quest', 'ong-seance']) };
+           enseignant: lire(['ong-appel', 'ong-quest', 'ong-ensemble']) };
 });
 console.log('\n── le motif « Tabs », des deux côtés');
 for (const [ou, liste] of Object.entries(motif)) {

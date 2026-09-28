@@ -54,6 +54,10 @@ var AF_ICONE = { bloquant: "⛔", attention: "⚠️", info: "ℹ️" };
 function rendreAFaire(d){
   var b = Number(d.bloquants) || 0, a = Number(d.attentions) || 0;
   var etat = $("af-etat");
+  // Repliée sur une ligne tant que rien ne bloque ; dépliée d'office dès
+  // qu'un point bloque. On ne la replie jamais d'autorité : si on l'a ouverte
+  // pour lire, elle le reste.
+  if (b) $("carte-afaire").open = true;
   if (b) {
     etat.className = "af-pastille bloc";
     etat.textContent = b + (b > 1 ? " points bloquants" : " point bloquant");
@@ -140,7 +144,7 @@ var AF_ACTES = {
 
 // Les quatre onglets où l'on peut être emmené, quand aucune action n'est
 // possible. On ne supprime pas la décision — seulement le trajet.
-var AF_ONGLETS = { seance: "ong-seance", ensemble: "ong-ensemble",
+var AF_ONGLETS = { seance: "ong-appel", ensemble: "ong-ensemble",
                    quest: "ong-quest", appel: "ong-appel" };
 
 function garnirActes(ligne, t){

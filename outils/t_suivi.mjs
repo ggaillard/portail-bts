@@ -26,9 +26,10 @@
 //     cassée par la longueur d'une valeur. Vérifié plus bas avec une valeur
 //     volontairement absurde, ce qui est le seul moyen de vérifier un garde-fou.
 //
-//   · L'INVENTAIRE DES CONTRÔLES EST DANS CET ONGLET (B2). Il y a vécu à
-//     cheval sur deux onglets jusqu'au 17/09, avec deux libellés : on ne savait
-//     pas lequel faisait autorité, donc on regardait les deux.
+//   · L'INVENTAIRE DES CONTRÔLES EST DANS LE MÊME ONGLET QUE LE SUIVI (B2) —
+//     « En cours » depuis la refonte du 28/09. Il a vécu à cheval sur deux
+//     onglets jusqu'au 17/09, avec deux libellés : on ne savait pas lequel
+//     faisait autorité, donc on regardait les deux.
 
 import { chromium } from 'playwright';
 import { ouvrir } from './portail.mjs';
@@ -44,7 +45,7 @@ const nav = await chromium.launch();
 for (const w of [360, 390, 620, 1280]) {
   const { page: p, erreurs, police, fermer } = await ouvrir(nav, RACINE, { largeur: w });
   const r = await p.evaluate(() => {
-    let e = document.getElementById('volet-seance');
+    let e = document.getElementById('carte-suivi');
     while (e) { e.hidden = false; e = e.parentElement; }
     document.getElementById('espace-ens').hidden = false;
     document.getElementById('stats-zone').hidden = false;
@@ -109,8 +110,8 @@ for (const w of [360, 390, 620, 1280]) {
   if (r.colonnes !== (w >= 544 ? 4 : 2)) {
     rates.push(`${w} px : ${r.colonnes} colonnes de tuiles, attendu ${w >= 544 ? 4 : 2}`);
   }
-  if (r.ouCtrl !== 'volet-seance') {
-    rates.push(`l'inventaire des contrôles est dans « ${r.ouCtrl} » et non dans le suivi d'une séance (B2)`);
+  if (r.ouCtrl !== 'volet-appel') {
+    rates.push(`l'inventaire des contrôles est dans « ${r.ouCtrl} » et non à côté du suivi de la séance, dans En cours (B2)`);
   }
   if (r.debord > 0) rates.push(`${w} px : la page déborde de ${r.debord} px`);
   if (erreurs.length) rates.push(`${w} px : erreur JS — ${erreurs[0]}`);
@@ -127,7 +128,7 @@ const ABSURDE = '1234567/7654321';
 for (const w of [360, 620]) {
   const { page: p, fermer } = await ouvrir(nav, RACINE, { largeur: w });
   const r = await p.evaluate((val) => {
-    let e = document.getElementById('volet-seance');
+    let e = document.getElementById('carte-suivi');
     while (e) { e.hidden = false; e = e.parentElement; }
     document.getElementById('espace-ens').hidden = false;
     document.getElementById('stats-zone').hidden = false;

@@ -141,7 +141,7 @@ for (const w of [360, 1280]) {
           { numero: '03', avatar: '🐙', cases: {}, dernier: null },
         ] },
     };
-    let e = document.getElementById('volet-seance');
+    let e = document.getElementById('carte-suivi');
     while (e) { e.hidden = false; e = e.parentElement; }
     document.getElementById('espace-ens').hidden = false;
     const s = window.__e.suivi;
@@ -218,7 +218,7 @@ for (const w of [360, 1280]) {
         nature: 'projet', jalons: 5, echeance: '2026-10-16', duree_min: 180,
         ouverte: false, publiee: false, missions: 5, corriges: 0, reponses: 3 },
     ] }, enregistrer_seance: { ok: true, id: 25, cree: false } };
-    let e = document.getElementById('volet-ensemble');
+    let e = document.getElementById('volet-quest');
     while (e) { e.hidden = false; e = e.parentElement; }
     document.getElementById('espace-ens').hidden = false;
     window.__e.chargerGestion([{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }]);
@@ -351,9 +351,11 @@ for (const w of [360, 1280]) {
   const r = await p.evaluate((classes) => {
     window.__reponses = { modules_enseignant: { ok: true, classes: classes },
                           enregistrer_module: { ok: true, id: 3, cree: false } };
-    let e = document.getElementById('volet-ensemble');
+    let e = document.getElementById('volet-quest');
     while (e) { e.hidden = false; e = e.parentElement; }
     document.getElementById('espace-ens').hidden = false;
+    // Repliée depuis le 28/09 (on la règle rarement) : on la déplie comme on le ferait.
+    document.getElementById('carte-modules').open = true;
     return window.__e.chargerModules([{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }]).then(() => ({
       titre: document.getElementById('md-carte-titre').textContent,
       classes: [...document.querySelectorAll('#tous-projets > h3')].map((x) => x.textContent).join(','),
@@ -438,7 +440,7 @@ for (const w of [360, 1280]) {
       enregistrer_seance: { ok: true, id: 30, cree: false },
       ranger_seance: { ok: true },
     };
-    let e = document.getElementById('volet-ensemble');
+    let e = document.getElementById('volet-quest');
     while (e) { e.hidden = false; e = e.parentElement; }
     document.getElementById('espace-ens').hidden = false;
     window.__e.chargerGestion([{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }]);

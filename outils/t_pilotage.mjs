@@ -4,7 +4,7 @@
 //     npx playwright install chromium
 //     node outils/t_pilotage.mjs        # depuis la racine du dépôt
 //
-// « Ce qui bloque » et l'onglet Questionnaires ont la même contrainte : on les
+// « Ce qui bloque » et l'onglet Préparer ont la même contrainte : on les
 // touche debout, entre deux heures, sur un téléphone. Deux exigences donc, et
 // elles se mesurent :
 //
@@ -14,7 +14,7 @@
 //     Quatre gestes pour exécuter celui qui était écrit. Une carte qui nomme
 //     le geste sans le rendre possible informe ; elle ne débloque pas.
 //
-//   · l'onglet Questionnaires tenait sur 2 778 px à 390 px pour trois
+//   · l'onglet Préparer tenait sur 2 778 px à 390 px pour trois
 //     questionnaires — sept écrans — parce que chaque modèle affichait TOUTES
 //     les classes, y compris celles où il n'est pas donné. Les lignes des
 //     classes non concernées coûtaient plus cher que les autres.
@@ -138,7 +138,7 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     };
   }, { AFAIRE, BIB, CTRL });
 
-  console.log(`\n── ${nom} (${w} px) : onglet Questionnaires ${r.quest} px`);
+  console.log(`\n── ${nom} (${w} px) : onglet Préparer ${r.quest} px`);
   console.log('   carte « Ce qui bloque »      :', r.afaire, 'px ·', r.lignes,
               'ligne(s) de tâche ·', r.infos.length, 'information(s) en pied');
   console.log('   boutons de « Ce qui bloque » :', JSON.stringify(r.boutons));
@@ -177,7 +177,7 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   if (r.debord > 0) rates.push(`${nom} : la page déborde de ${r.debord} px`);
   if (err.length) rates.push(`${nom} : erreur JS — ${err[0]}`);
   if (w === 390 && r.quest > PLAFOND_390) {
-    rates.push(`téléphone : l'onglet Questionnaires fait ${r.quest} px, plafond ${PLAFOND_390}`);
+    rates.push(`téléphone : l'onglet Préparer fait ${r.quest} px, plafond ${PLAFOND_390}`);
   }
 
   await fermer();
@@ -187,4 +187,4 @@ await nav.close();
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
 console.log('  ✓ Les gestes de « Ce qui bloque » s\'exécutent depuis la carte,');
-console.log('    et l\'onglet Questionnaires ne montre que les classes concernées.');
+console.log('    et l\'onglet Préparer ne montre que les classes concernées.');

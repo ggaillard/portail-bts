@@ -52,57 +52,55 @@ Ancienne plateforme : `suivi.gaillard42.workers.dev` (Cloudflare Worker, base D1
 
 ---
 
-## L'espace enseignant — une zone épinglée, quatre onglets
+## L'espace enseignant — trois onglets, trois moments (depuis le 28/09)
 
-Les cartes ont d'abord été empilées en trois étages sur une seule page. Cinq
-cartes plus tard, l'appel — le geste de trente secondes qu'on fait chaque
-heure — se trouvait au milieu d'un défilement de trois écrans. Depuis le
-08/09, une seule chose reste toujours à l'écran, le reste vit dans un onglet.
+Le 28/09, relevé sur le portail en service : quatre onglets de 448, 4 122,
+5 970 et 5 293 px, « Ce qui bloque » déplié en permanence (486 px) au-dessus
+de chacun, le suivi qui s'ouvrait sur la séance 1 du BTS1 fermée depuis trois
+semaines, et une même séance rangée à trois endroits (l'appel dans
+« Aujourd'hui », son suivi dans « La séance », son réglage dans « Le
+semestre »). Refondu **par moment** :
 
-| Zone | La question | Ce qu'on y trouve |
+| Onglet (clé) | La question | Ce qu'on y trouve |
 |---|---|---|
-| **Épinglée** — Ce qui bloque | *Est-ce que je peux faire cours ?* | `a_faire()` — neuf règles, le geste à faire. Au-dessus des onglets, visible depuis n'importe lequel. Vert = fermer l'onglet. |
-| Onglet **Aujourd'hui** (`#appel`) | *Qui est là ?* | Les numéros absents en gros, toutes classes à la fois. **Ouvert par défaut** : c'est le geste du début d'heure. |
-| Onglet **Le semestre** (`#ensemble`) | *Où en est-on ?* | `semestre()` (les séances une par une), **Les séances** (créer et régler, depuis le 27/09), Vos classes, Tous les projets. |
-| Onglet **Ma bibliothèque** (`#quest`) | *Que leur ai-je posé, hors quiz de séance ?* | Les modèles, leurs affectations, puis les questionnaires ponctuels — Faisons connaissance, Recherche de stage. Les contrôles d'entrée n'y sont plus depuis le 17/09 (voir ci-dessous). |
-| Onglet **La séance** (`#seance`) | *Que s'est-il passé à la S2 ?* | L'**inventaire des contrôles d'entrée** (toutes classes, avec leur interrupteur), puis, pour **une séance choisie** : pré-vol, **parcours de l'heure**, cadence, réussite par question, élève par élève, contrôle d'entrée, débriefing, et sur un projet la **grille des missions**. |
+| Ligne épinglée — **Ce qui bloque** | *Est-ce que je peux faire cours ?* | `a_faire()`, **repliée sur une ligne** avec sa pastille ; dépliée d'office dès qu'un point est **bloquant**, jamais repliée d'autorité. |
+| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | L'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte**, sinon la dernière **démarrée** (`js/encours.js`) — puis l'inventaire des contrôles d'entrée, replié. |
+| **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | Les séances (groupées par module), les questionnaires, les modules (replié). |
+| **Bilan** (`#ensemble`) | *Où en est-on ?* | Le semestre, module par module ; les classes ; « Faisons connaissance » et « Recherche de stage », repliés. |
 
-**Les quatre libellés relèvent d'une seule taxonomie** (B6, 17/09) : trois
-échelles de **temps** — le jour, l'heure, le semestre — qui se déduisent l'une
-de l'autre, et un **lieu** à part, le matériel réutilisable. Avant, les quatre
-mélangeaient un geste (« Appel du jour »), un point de vue (« Vue d'ensemble »),
-un type d'objet (« Questionnaires ») et une tâche (« Suivi d'une séance ») :
-quatre catégories pour quatre onglets, donc aucune. Un cinquième onglet se
-range dans l'une des deux, ou ne se crée pas.
+Règles de cette refonte :
 
-**Les clés de l'adresse n'ont PAS été renommées** — `#appel`, `#ensemble`,
-`#quest`, `#seance` restent ce qu'elles étaient. Un lien mis en favori continue
-d'ouvrir le bon onglet, et les identifiants `ong-*` / `volet-*` avec eux. Le
-libellé est ce qu'on lit ; la clé est ce qui dure. Changer la seconde pour
-qu'elle ressemble au premier coûterait tous les liens existants, pour un
-bénéfice nul — personne ne lit un fragment d'URL.
+- **Les clés de l'adresse restent** `#appel`, `#quest`, `#ensemble` ; un
+  ancien favori **`#seance` ouvre En cours** (alias dans `js/navigation.js`,
+  vérifié par `t_navigation.mjs`) et l'adresse se réécrit en `#appel`.
+- **L'inventaire des contrôles reste dans le même onglet que le suivi qui
+  porte leur éditeur** (B2) — En cours, juste après la séance. Ne pas le
+  déplacer dans Préparer : c'est exactement la moitié-ailleurs du 15/09.
+- **Dans la carte de la séance, ce qui se relit après coup est replié** :
+  élève par élève, réussite par question, notion par notion du contrôle,
+  concept par concept du débriefing. « À aller voir » et le parcours de l'heure
+  restent dépliés : ce sont eux qu'on lit debout.
+- En-tête et bandeau d'identité ramassés dans l'espace enseignant
+  (`styles/moments.css`) : l'accroche « Identifiez-vous une fois » s'adresse
+  aux étudiants.
+- Dans le reste de ce document, les anciens noms se lisent ainsi : « La
+  séance » → **En cours** ; « Le semestre » → **Bilan** (sauf « Les séances »
+  et les modules → **Préparer**) ; « Ma bibliothèque » → **Préparer** (les
+  dépouillements de rentrée et de stage → **Bilan**).
 
 **Le libellé du bouton est la seule source, et le titre de la page le suit.**
 Les deux vivent dans deux fichiers — `index.html` et `js/navigation.js` —
-`outils/t_navigation.mjs` refuse qu'ils divergent : sans lui, on renomme un
-onglet et l'historique du navigateur continue de parler d'un onglet qui
-n'existe plus.
+`outils/t_navigation.mjs` refuse qu'ils divergent.
 
-**Ne pas ajouter une carte sans décider de son onglet** — ou sans décider
-qu'elle est bloquante, auquel cas elle rejoint `a_faire()` plutôt que de
-devenir une carte de plus. La zone épinglée ne contient qu'`a_faire()`, et doit
-le rester : c'est sa brièveté qui fait qu'on la lit.
+**Ne pas ajouter une carte sans décider de son moment** — ou sans décider
+qu'elle est bloquante, auquel cas elle rejoint `a_faire()`. Une carte qu'on
+relit une fois par semaine se replie (`details.card.plie`).
 
 Détails qui comptent, et qu'on retire par erreur en refactorant :
 
-- la barre d'onglets est **collante** (`position:sticky`) — la carte d'appel
-  est longue, et perdre le chemin du retour au milieu d'une liste d'absents est
-  exactement le problème qu'on essayait de régler ;
-- l'onglet Appel porte une **pastille** avec le nombre d'absents du jour, toutes
-  classes confondues. Elle disparaît à zéro absent : un « 0 » rouge se lirait
-  comme un incident ;
-- le titre « Ce qui bloque » se **masque avec sa carte** quand `a_faire()` n'est
-  pas déployée. Un intertitre au-dessus de rien se lit comme une panne ;
+- la barre d'onglets est **collante** (`position:sticky`) ;
+- l'onglet En cours porte une **pastille** avec le nombre d'absents du jour,
+  toutes classes confondues. Elle disparaît à zéro absent ;
 - flèches gauche/droite entre les onglets, un seul dans l'ordre de tabulation
   (`role="tablist"`, `aria-selected`, `tabindex`).
 

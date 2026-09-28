@@ -280,11 +280,15 @@ function chargerControles(){
 function rendreControles(liste){
   var z = $("ctl-liste");
   z.innerHTML = "";
+  // La carte est repliée (28/09) : son titre dit l'essentiel sans l'ouvrir.
+  var cpt = $("ctl-compte"), allumes = liste.filter(function(c){ return c.ouvert; }).length;
+  if (cpt) cpt.textContent = liste.length ? "— " + liste.length + " écrit" + (liste.length > 1 ? "s" : "") +
+    ", " + allumes + " proposé" + (allumes > 1 ? "s" : "") : "";
   if (!liste.length) {
     // Le vide se dit avec le chemin pour en sortir, sinon il se lit comme une
     // panne — c'est ce qui s'est passé le 15/09, dans l'autre sens.
     z.innerHTML = '<p class="hint" style="margin:0">Aucun contrôle écrit pour ' +
-      "l'instant. Ils s'écrivent ici même, dans <b>La séance</b> : choisissez la " +
+      "l'instant. Ils s'écrivent juste en dessous, dans <b>La séance</b> : choisissez la " +
       'classe et la séance, puis « Écrire le contrôle de cette séance ».</p>';
     return;
   }

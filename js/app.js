@@ -59,6 +59,7 @@ import { chargerAFaire, rendreAFaire } from './afaire.js';
 import { chargerMissionsEtu, brancherMissions } from './missions.js';
 import { brancherGestion, chargerGestion, relireGestion } from './gestion.js';
 import { brancherModules, chargerModules, chargerModulesEtu } from './modules.js';
+import { choisirSeanceDuJour } from './encours.js';
 
 (function(){
 "use strict";
@@ -406,7 +407,7 @@ function ouvrirEspaceEnseignant(){
     chargerControles();
     chargerAFaire();
     chargerSemestre();
-    if (classes.length) chargerSeancesDe(classes[0].id);
+    choisirSeanceDuJour(classes);
     chargerGestion(classes);
 
     classes.forEach(function(c){

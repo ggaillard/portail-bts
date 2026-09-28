@@ -22,6 +22,20 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 28 septembre 2026 — le tableau de bord refondu par moment
+
+Trois onglets au lieu de quatre — **En cours** (appel + la séance du jour +
+contrôles), **Préparer** (séances par module, questionnaires, modules),
+**Bilan** (semestre par module, classes, questionnaires de rentrée et de stage
+repliés) ; « Ce qui bloque » sur une ligne ; le suivi s'ouvre sur la séance
+en cours. Détail dans CLAUDE.md.
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20260928090000_donnees_reelles.sql` | le BTS2 reprend le nom « BTS SIO 2 - SLAM » (il portait « PlaylistApp C# », un nom de module) ; les séances déjà démarrées ou répondues par un vrai étudiant sont rendues **visibles** (séances 1-2 du BTS1, TP0 du BTS2 étaient « Cachée ») |
+
+---
+
 ## 28 septembre 2026 — les modules
 
 | Migration | Ce qu'elle fait |

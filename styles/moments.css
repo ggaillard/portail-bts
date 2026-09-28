@@ -1,0 +1,46 @@
+/* ── moments ──────────────────────────────────────────
+   La refonte du 28/09 : trois onglets par moment (En cours, Préparer, Bilan),
+   « Ce qui bloque » réduit à une ligne, et ce qui se relit après coup replié.
+
+   Feuille ajoutée EN DERNIER dans index.html : elle ne redéfinit aucune règle
+   des feuilles précédentes, seulement des classes neuves (plie, plie-in,
+   af-carte, af-nom). Sa position ne change donc rien à l'ordre de cascade.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* « Ce qui bloque » : une ligne quand rien ne bloque. Le résumé est la cible
+   du pouce, il fait donc 44 px au moins. */
+.af-carte{padding-top:.35rem;padding-bottom:.35rem}
+.af-carte > summary{cursor:pointer;min-height:44px;align-items:center;margin:0;
+  list-style:none}
+.af-carte > summary::-webkit-details-marker{display:none}
+.af-carte > summary::after{content:"▸";margin-left:auto;color:var(--ink-faint);font-size:.9rem}
+.af-carte[open] > summary::after{content:"▾"}
+.af-carte[open] > summary{border-bottom:1px solid var(--rule-soft);margin-bottom:.5rem}
+.af-nom{font-weight:700;font-size:1.02rem}
+
+/* Une carte qu'on relit une fois par semaine : son titre seul, et on déplie. */
+details.card.plie > summary{cursor:pointer;min-height:44px;display:flex;align-items:center;
+  list-style:none}
+details.card.plie > summary::-webkit-details-marker{display:none}
+details.card.plie > summary h2{margin:0;flex:1 1 auto}
+details.card.plie > summary::after{content:"▸";color:var(--ink-faint)}
+details.card.plie[open] > summary::after{content:"▾"}
+details.card.plie[open] > summary{margin-bottom:.4rem}
+
+/* Un bloc replié à l'intérieur de la carte de la séance. */
+.plie-in{margin:.6rem 0 0}
+.plie-in > summary{cursor:pointer;font-size:.9rem;font-weight:600;min-height:44px;
+  display:flex;align-items:center}
+.plie-in[open] > summary{margin-bottom:.3rem}
+
+/* Le semestre, module par module. */
+.sem-mod{margin:.8rem 0 .15rem;font-size:.86rem;font-weight:600;color:var(--accent-ink)}
+.ctl-compte{font-size:.85rem;font-weight:500;color:var(--ink-soft)}
+
+/* En-tête et bandeau d'identité, ramassés dans l'espace enseignant : l'accroche
+   « Identifiez-vous une fois » s'adresse aux étudiants, et les deux blocs
+   prenaient 360 px d'un téléphone avant le premier onglet. */
+body:has(#espace-ens:not([hidden])) header{padding:1rem 0 .6rem;margin-bottom:1rem}
+body:has(#espace-ens:not([hidden])) header .sub{display:none}
+#espace-ens > .ident{padding:.3rem .3rem .3rem .9rem;margin-bottom:.8rem}
+#espace-ens > .ident .ident-txt{font-size:.85rem}

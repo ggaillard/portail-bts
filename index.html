@@ -28,6 +28,7 @@
 <link rel="stylesheet" href="styles/suivi.css">
 <link rel="stylesheet" href="styles/ecran.css">
 <link rel="stylesheet" href="styles/missions.css">
+<link rel="stylesheet" href="styles/moments.css">
 </head>
 <body>
 <!-- WCAG 2.4.1 : sans ce lien, un usage au clavier retraverse l'en-tête à
@@ -156,42 +157,34 @@
 <!-- ══════════ ENSEIGNANT CONNECTÉ ══════════ -->
 <section id="espace-ens" hidden>
   <div class="ident">
-    <span class="ident-txt">Connecté en <b>enseignant</b>. Vous voyez toutes les classes.</span>
+    <span class="ident-txt">Connecté en <b>enseignant</b> · toutes les classes</span>
     <button class="btn btn-sec" id="b-sortie-ens">Se déconnecter</button>
   </div>
-    <div class="epingle">
-    <h2>Ce qui bloque</h2>
-    <p>Toujours visible, quel que soit l'onglet. Si c'est vert, vous pouvez fermer l'onglet.</p>
-  </div>
-
-  <div class="card" id="carte-afaire" hidden>
-    <h2 class="af-t">À faire <span class="af-pastille" id="af-etat" aria-live="polite"></span></h2>
-    <p class="hint">Recalculé depuis la base à chaque affichage : rien n'y reste par oubli,
-      et rien n'y manque. Ce qui est rouge empêchera quelque chose de marcher en séance.</p>
+  <!-- « Ce qui bloque » : une ligne quand tout va bien, dépliée d'office dès
+       qu'un point est BLOQUANT. Jusqu'au 28/09 elle occupait 486 px au-dessus
+       de chaque onglet, pour deux rappels de vigilance qu'on avait déjà lus. -->
+  <details class="card af-carte" id="carte-afaire" hidden>
+    <summary class="af-t"><span class="af-nom">Ce qui bloque</span>
+      <span class="af-pastille" id="af-etat" aria-live="polite"></span></summary>
     <div id="af-liste"></div>
-  </div>
+  </details>
 
-  <!-- Les quatre libellés relèvent d'une seule taxonomie (B6 de REFONTE.md) :
-       trois échelles de TEMPS — le jour, l'heure, le semestre — qui se
-       déduisent l'une de l'autre, et un LIEU à part, le matériel réutilisable.
-       Avant, les quatre mélangeaient un geste (« Appel du jour »), un point de
-       vue (« Vue d'ensemble »), un type d'objet (« Questionnaires ») et une
-       tâche (« Suivi d'une séance ») : quatre catégories pour quatre onglets,
-       donc aucune.
+  <!-- Trois onglets, trois MOMENTS (refonte du 28/09) : ce qui se passe
+       maintenant, ce qu'on prépare, ce qu'on relit. Avant, quatre onglets
+       rangeaient la même séance à trois endroits — l'appel dans « Aujourd'hui »,
+       son suivi dans « La séance », son réglage dans « Le semestre » — et le
+       plus long faisait 6 000 px.
 
-       L'ORDRE N'A PAS CHANGÉ, volontairement : le renommage se fait en cours
-       d'année, et déplacer sous la main un onglet dont on vient de changer le
-       nom, c'est deux repères perdus d'un coup au lieu d'un. L'ordre des trois
-       échelles de temps est une question à part, notée dans REFONTE.md. -->
+       Les CLÉS de l'adresse ne changent pas de sens pour les deux qui restent
+       proches (#appel = En cours, #ensemble = Bilan, #quest = Préparer) ; un
+       ancien favori #seance ouvre En cours, où vit désormais le suivi. -->
   <nav class="onglets" id="onglets-ens" role="tablist" aria-label="Espace enseignant">
     <button class="onglet actif" type="button" role="tab" id="ong-appel" aria-controls="volet-appel"
-            aria-selected="true">Aujourd'hui<span class="ong-p" id="ong-appel-n" hidden></span></button>
-    <button class="onglet" type="button" role="tab" id="ong-ensemble" aria-controls="volet-ensemble"
-            aria-selected="false" tabindex="-1">Le semestre</button>
+            aria-selected="true">En cours<span class="ong-p" id="ong-appel-n" hidden></span></button>
     <button class="onglet" type="button" role="tab" id="ong-quest" aria-controls="volet-quest"
-            aria-selected="false" tabindex="-1">Ma bibliothèque</button>
-    <button class="onglet" type="button" role="tab" id="ong-seance" aria-controls="volet-seance"
-            aria-selected="false" tabindex="-1">La séance</button>
+            aria-selected="false" tabindex="-1">Préparer</button>
+    <button class="onglet" type="button" role="tab" id="ong-ensemble" aria-controls="volet-ensemble"
+            aria-selected="false" tabindex="-1">Bilan</button>
   </nav>
 
   <div class="volet" id="volet-appel" role="tabpanel" aria-labelledby="ong-appel">
@@ -219,194 +212,11 @@
       <div aria-live="polite" id="err-noms"></div>
     </details>
   </div>
-  </div>
 
-  <div class="volet" id="volet-ensemble" role="tabpanel" aria-labelledby="ong-ensemble" hidden>
-    <p class="volet-hint">Où en est le semestre, et qui s'est déjà connecté. Rien à faire ici en séance.</p>
-  <div class="card" id="carte-semestre" hidden>
-    <h2>Le semestre</h2>
-    <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »
-      signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
-      jamais être évaluées.</p>
-    <div id="sem-classes"></div>
-    <div aria-live="polite" id="err-semestre"></div>
-  </div>
 
-  <!-- Créer et régler les séances sans passer par une migration. Les corrigés,
-       contrôles et missions ne s'écrivent pas ici : chacun s'écrit dans
-       l'onglet La séance, en regardant la séance qu'il prépare. -->
-  <div class="card" id="carte-seances" hidden>
-    <h2>Les séances</h2>
-    <p class="hint">Titre, nature, jalons, échéance, publication. Une séance
-      <b>non publiée</b> n'apparaît pas aux étudiants ; <b>fermée</b>, elle
-      n'accepte plus de réponse. Les numéros 90 à 99 sont réservés.</p>
-    <div class="pick">
-      <select id="gs-classe" aria-label="Classe dont on règle les séances"></select>
-      <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>
-    </div>
-    <div aria-live="polite" id="err-gs-liste"></div>
-    <div id="gs-liste"></div>
-    <form id="f-gs" class="gs-form" hidden>
-      <h3 class="sous-titre" id="gs-f-titre">Nouvelle séance</h3>
-      <div class="gs-champs">
-        <label>Numéro <input id="gs-numero" type="number" min="0" max="89" required></label>
-        <label class="gs-large">Titre <input id="gs-titre" type="text" required autocomplete="off"></label>
-        <label class="gs-large" id="gs-module-l" hidden>Module
-          <select id="gs-module"></select></label>
-        <label>Nature
-          <select id="gs-nature"><option value="cours">Cours (une cadence)</option>
-            <option value="projet">Projet (des jalons)</option></select></label>
-        <label>Jalons <input id="gs-jalons" type="number" min="0" max="60">
-          <span class="sous-hint" id="gs-jalons-note"></span></label>
-        <label>Échéance <input id="gs-echeance" type="date"></label>
-        <label>Durée (min) <input id="gs-duree" type="number" min="5" max="600"></label>
-        <label class="gs-case"><input id="gs-publiee" type="checkbox"> Publiée</label>
-        <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
-      </div>
-      <div class="pick">
-        <button class="btn" id="b-gs-ok" type="submit">Enregistrer</button>
-        <button class="btn btn-sec" id="b-gs-annuler" type="button">Annuler</button>
-      </div>
-      <div aria-live="polite" id="err-gs"></div>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Vos classes</h2>
-    <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
-    <div class="scroll"><table id="t-classes">
-      <thead><tr><th>Classe</th><th>Code</th><th>Étudiants</th><th>Connectés</th><th>Unités</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-  </div>
-
-  <!-- Les modules (depuis le 28/09) : un module appartient à une classe et a
-       son dépôt GitHub. Tant que modules_enseignant() n'est pas déployée, la
-       carte garde son titre d'avant et montre la table projets (js/modules.js). -->
-  <div class="card" id="carte-modules">
-    <h2 id="md-carte-titre">Les dépôts, par classe</h2>
-    <p class="hint" id="md-carte-hint">Chaque projet est rattaché à une classe : c'est ce que ses
-      étudiants trouvent dans « Vos projets » après s'être identifiés.</p>
-    <div aria-live="polite" id="err-md-liste"></div>
-    <div id="tous-projets"></div>
-    <form id="f-md" class="gs-form" hidden>
-      <h3 class="sous-titre" id="md-f-titre">Nouveau module</h3>
-      <div class="gs-champs">
-        <label class="gs-large">Titre <input id="md-titre" type="text" required autocomplete="off"></label>
-        <label>Code <input id="md-code" type="text" required autocomplete="off"
-          pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="ia-meca-forez"></label>
-        <label>Icône <input id="md-icone" type="text" maxlength="4" autocomplete="off"></label>
-        <label>Ordre <input id="md-ordre" type="number" min="0" max="99"></label>
-        <label class="gs-large">Description <input id="md-description" type="text" autocomplete="off"></label>
-        <label class="gs-large">Dépôt GitHub étudiant <input id="md-depot" type="url" required
-          placeholder="https://github.com/compte/depot" autocomplete="off"></label>
-        <label class="gs-large">Dépôt enseignant (privé, jamais montré aux étudiants)
-          <input id="md-depot-enseignant" type="url" placeholder="https://github.com/compte/depot-prof" autocomplete="off"></label>
-        <label class="gs-large">Site du cours <input id="md-site" type="url"
-          placeholder="https://compte.github.io/depot/" autocomplete="off"></label>
-      </div>
-      <div class="pick">
-        <button class="btn" id="b-md-ok" type="submit">Enregistrer</button>
-        <button class="btn btn-sec" id="b-md-annuler" type="button">Annuler</button>
-        <button class="btn btn-sec" id="b-md-suppr" type="button" hidden>Supprimer ce module</button>
-      </div>
-      <p class="sous-hint" id="md-suppr-note"></p>
-      <div aria-live="polite" id="err-md"></div>
-    </form>
-  </div>
-  </div>
-
-  <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
-    <p class="volet-hint">Tout ce que vous posez aux étudiants en dehors du quiz de séance : les contrôles d'entrée, notion par notion, avant une séance ; les questionnaires ponctuels, quelques fois dans l'année.</p>
-
-  <!-- Les contrôles d'entrée s'écrivent dans « La séance », parce
-       qu'ils appartiennent à la séance qu'ils précèdent. Mais on les cherche
-       ici : c'est l'onglet des questions qu'on pose à une classe. D'où cette
-       carte, qui montre et allume sans dupliquer la rédaction. -->
-  <div class="card" id="carte-qactifs" hidden>
-    <h2>Vos questionnaires</h2>
-    <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une ou
-      plusieurs classes. Chaque classe garde ses propres réponses. Deux gestes,
-      à ne pas confondre : <b>« Donner à cette classe »</b> le prépare sans le
-      montrer, <b>l'interrupteur Proposé / Éteint</b> décide si les étudiants le
-      voient. Éteindre n'efface rien et se refait autant de fois qu'on veut ;
-      <b>retirer</b> supprime l'affectation, et devient impossible dès qu'une
-      réponse existe. Enfin, <b>« Avec la séance… »</b> le rattache à un moment du
-      semestre : il s'allume alors quand cette séance démarre, et s'éteint quand
-      elle se clot.</p>
-    <div id="qa-liste"></div>
-    <div aria-live="polite" id="err-qactifs"></div>
-    <details class="qn-neuf" id="qn-neuf">
-      <summary>Écrire un nouveau questionnaire</summary>
-      <p class="sous-hint">Une question par ligne : l'intitulé puis deux à quatre
-        options, séparés par « · ». Les lignes vides sont ignorées.</p>
-      <label class="qn-lbl" for="qn-titre">Titre</label>
-      <input id="qn-titre" type="text" placeholder="Bilan de mi-semestre" autocomplete="off">
-      <label class="qn-lbl" for="qn-intro">Phrase d'introduction (facultative)</label>
-      <input id="qn-intro" type="text" placeholder="Trois questions, deux minutes." autocomplete="off">
-      <label class="qn-lbl" for="qn-mode">Affichage</label>
-      <select id="qn-mode">
-        <option value="sequentiel">Une question à la fois — sans retour en arrière</option>
-        <option value="revisable">Tout à l'écran — modifiable à volonté</option>
-        <option value="revision">Révision — la correction s'affiche après chaque réponse</option>
-      </select>
-      <p class="sous-hint" id="qn-aide-revision" hidden>En révision, chaque ligne
-        porte une <b>étoile devant la bonne option</b> et, après une flèche
-        « → », l'explication que l'étudiant lit une fois qu'il a répondu. Une
-        ligne sans étoile fait échouer la création, en disant laquelle : un
-        questionnaire de révision dont une question n'a pas de bonne réponse
-        compterait la classe entière fausse sans que personne ne le voie.</p>
-      <label class="qn-lbl" for="qn-texte">Les questions</label>
-      <textarea id="qn-texte" rows="7" spellcheck="true"
-        placeholder="Ce semestre, le rythme vous a paru : · Trop lent · Juste · Trop rapide · Intenable&#10;Ce qui vous a le plus aidé : · Les séances · Le quiz · Les corrigés · Le travail à deux"></textarea>
-      <div class="pick" style="margin-top:.7rem">
-        <button class="btn" id="b-qn-creer" type="button">Créer le questionnaire</button>
-      </div>
-      <div aria-live="polite" id="err-qn-neuf"></div>
-    </details>
-  </div>
-
-  <div class="card" id="carte-connaissance" hidden>
-    <h2>Faisons connaissance</h2>
-    <p class="hint">Le questionnaire de rentrée. Aucune réponse n'est juste ou fausse :
-      ce sont des faits sur le groupe, pas une note.</p>
-    <div id="conn-classes"></div>
-  </div>
-
-  <div class="card" id="carte-stage" hidden>
-    <h2>Recherche de stage</h2>
-    <p class="hint">Où en est chacun, d'après ce qu'il a déclaré lui-même. Une réponse
-      ancienne ne dit plus rien de vrai : la date de mise à jour est à côté du numéro.</p>
-    <div id="stage-classes"></div>
-  </div>
-  </div>
-
-  <div class="volet" id="volet-seance" role="tabpanel" aria-labelledby="ong-seance" hidden>
-  <!-- Les contrôles d'entrée vivaient dans l'onglet de la bibliothèque, et leur
-       éditeur dans celui-ci : même objet, deux endroits, deux libellés
-       (« Contrôles » / « Contrôle »), deux niveaux de titre. On ne savait pas
-       lequel faisait autorité, donc on regardait les deux. Un contrôle
-       appartient à la vie d'une séance ; il est donc ici, en entier.
-
-       La carte et le bloc plus bas ne font pas la même chose, et c'est pour
-       cela qu'on garde les deux : celle-ci est l'INVENTAIRE — ce qui existe,
-       pour quelle classe, les étudiants le voient-ils — et elle ne sait pas
-       écrire un contrôle, volontairement. Le bloc, lui, écrit celui de la
-       séance choisie. Deux endroits pour le même geste, c'est la garantie que
-       l'un des deux divergera. -->
-  <div class="card" id="carte-controles" hidden>
-    <h2>Contrôles d'entrée</h2>
-    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
-      qu'ils en avaient gardé. Ici, tout ce qui est écrit, pour toutes les
-      classes, avec son interrupteur. <b>Éteint, aucun étudiant ne le voit.</b>
-      Pour en écrire un, choisissez sa séance ci-dessous.</p>
-    <div id="ctl-liste"></div>
-    <div aria-live="polite" id="err-controles"></div>
-  </div>
-
-  <div class="card">
-    <h2>Suivi d'une séance</h2>
-    <p class="hint">Choisissez la classe puis la séance. <span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
+  <div class="card" id="carte-suivi">
+    <h2>La séance</h2>
+    <p class="hint">Celle qui est en cours, ou la dernière jouée. <span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
     <div class="pick">
       <label class="suivi-lbl" for="pk-classe" hidden>Classe</label>
       <select id="pk-classe" aria-label="Classe"></select>
@@ -474,7 +284,8 @@
           <span class="pt"></span><span class="et"></span></button>
       </div>
       <p class="sous-hint" id="ct-resume"></p>
-      <div id="ct-lignes"></div>
+      <details class="plie-in" id="ct-detail"><summary>Notion par notion</summary>
+        <div id="ct-lignes"></div></details>
       <div aria-live="polite" id="err-controle"></div>
       <details id="ct-neuf">
         <summary>Écrire le contrôle de cette séance</summary>
@@ -499,7 +310,8 @@
           style="margin-left:auto">Projeter</button>
       </div>
       <p class="sous-hint" id="db-resume"></p>
-      <div id="db-lignes"></div>
+      <details class="plie-in" id="db-detail"><summary>Concept par concept</summary>
+        <div id="db-lignes"></div></details>
       <div aria-live="polite" id="err-debrief"></div>
       <details id="db-neuf">
         <summary>Écrire les concepts de cette séance</summary>
@@ -556,14 +368,18 @@
         </select>
       </div>
 
-      <h3 class="sous-titre">Élève par élève</h3>
-      <p class="sous-hint">Qui avance, qui décroche. Sur un téléphone c'est la
-        première chose qu'on veut voir : elle passe donc avant le reste.</p>
-      <div class="eleves" id="liste-eleves"></div>
-
-      <h3 class="sous-titre">Réussite par question</h3>
-      <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
-      <div class="questions" id="liste-questions"></div>
+      <!-- Repliés depuis le 28/09 : « À aller voir » et le parcours de
+           l'heure disent déjà qui aider ; ces deux listes se relisent en fin
+           d'heure, pas debout entre deux rangs. Ensemble elles faisaient
+           2 000 px au-dessus des questions de la séance. -->
+      <details class="plie-in" id="bloc-eleves">
+        <summary>Élève par élève — qui avance, qui décroche</summary>
+        <div class="eleves" id="liste-eleves"></div>
+      </details>
+      <details class="plie-in" id="bloc-questions">
+        <summary>Réussite par question — les moins réussies d'abord</summary>
+        <div class="questions" id="liste-questions"></div>
+      </details>
     </div>
     <p class="hint" id="stats-attente">Sélectionnez une séance pour voir le détail élève par élève.</p>
 
@@ -575,6 +391,180 @@
       <div id="liste-corriges"></div>
     </details>
   </div>
+
+  <!-- L'inventaire des contrôles vit À CÔTÉ du suivi de la séance, qui porte
+       leur éditeur : un contrôle se lit et s'écrit au même endroit (B2 de
+       REFONTE.md), juste APRÈS lui. Replié : « Ce qui bloque » signale déjà un contrôle éteint ;
+       il reste ici pour la vue d'ensemble, toutes classes confondues. -->
+  <details class="card plie" id="carte-controles" hidden>
+    <summary><h2>Contrôles d'entrée <span class="ctl-compte" id="ctl-compte"></span></h2></summary>
+    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
+      qu'ils en avaient gardé. Ici, tout ce qui est écrit, pour toutes les
+      classes, avec son interrupteur. <b>Éteint, aucun étudiant ne le voit.</b>
+      Pour en écrire un, choisissez sa séance ci-dessous.</p>
+    <div id="ctl-liste"></div>
+    <div aria-live="polite" id="err-controles"></div>
+  </details>
+  </div>
+
+  <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
+    <p class="volet-hint">Avant l'heure : les séances de chaque module, leurs contrôles d'entrée, les questionnaires, les modules eux-mêmes.</p>
+  <!-- Créer et régler les séances sans passer par une migration. Les corrigés,
+       contrôles et missions ne s'écrivent pas ici : chacun s'écrit dans
+       l'onglet La séance, en regardant la séance qu'il prépare. -->
+  <div class="card" id="carte-seances" hidden>
+    <h2>Les séances</h2>
+    <p class="hint">Titre, nature, jalons, échéance, publication. Une séance
+      <b>non publiée</b> n'apparaît pas aux étudiants ; <b>fermée</b>, elle
+      n'accepte plus de réponse. Les numéros 90 à 99 sont réservés.</p>
+    <div class="pick">
+      <select id="gs-classe" aria-label="Classe dont on règle les séances"></select>
+      <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>
+    </div>
+    <div aria-live="polite" id="err-gs-liste"></div>
+    <div id="gs-liste"></div>
+    <form id="f-gs" class="gs-form" hidden>
+      <h3 class="sous-titre" id="gs-f-titre">Nouvelle séance</h3>
+      <div class="gs-champs">
+        <label>Numéro <input id="gs-numero" type="number" min="0" max="89" required></label>
+        <label class="gs-large">Titre <input id="gs-titre" type="text" required autocomplete="off"></label>
+        <label class="gs-large" id="gs-module-l" hidden>Module
+          <select id="gs-module"></select></label>
+        <label>Nature
+          <select id="gs-nature"><option value="cours">Cours (une cadence)</option>
+            <option value="projet">Projet (des jalons)</option></select></label>
+        <label>Jalons <input id="gs-jalons" type="number" min="0" max="60">
+          <span class="sous-hint" id="gs-jalons-note"></span></label>
+        <label>Échéance <input id="gs-echeance" type="date"></label>
+        <label>Durée (min) <input id="gs-duree" type="number" min="5" max="600"></label>
+        <label class="gs-case"><input id="gs-publiee" type="checkbox"> Publiée</label>
+        <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
+      </div>
+      <div class="pick">
+        <button class="btn" id="b-gs-ok" type="submit">Enregistrer</button>
+        <button class="btn btn-sec" id="b-gs-annuler" type="button">Annuler</button>
+      </div>
+      <div aria-live="polite" id="err-gs"></div>
+    </form>
+  </div>
+
+
+  <!-- Les contrôles d'entrée s'écrivent dans « La séance », parce
+       qu'ils appartiennent à la séance qu'ils précèdent. Mais on les cherche
+       ici : c'est l'onglet des questions qu'on pose à une classe. D'où cette
+       carte, qui montre et allume sans dupliquer la rédaction. -->
+  <div class="card" id="carte-qactifs" hidden>
+    <h2>Vos questionnaires</h2>
+    <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une ou
+      plusieurs classes. Chaque classe garde ses propres réponses. Deux gestes,
+      à ne pas confondre : <b>« Donner à cette classe »</b> le prépare sans le
+      montrer, <b>l'interrupteur Proposé / Éteint</b> décide si les étudiants le
+      voient. Éteindre n'efface rien et se refait autant de fois qu'on veut ;
+      <b>retirer</b> supprime l'affectation, et devient impossible dès qu'une
+      réponse existe. Enfin, <b>« Avec la séance… »</b> le rattache à un moment du
+      semestre : il s'allume alors quand cette séance démarre, et s'éteint quand
+      elle se clot.</p>
+    <div id="qa-liste"></div>
+    <div aria-live="polite" id="err-qactifs"></div>
+    <details class="qn-neuf" id="qn-neuf">
+      <summary>Écrire un nouveau questionnaire</summary>
+      <p class="sous-hint">Une question par ligne : l'intitulé puis deux à quatre
+        options, séparés par « · ». Les lignes vides sont ignorées.</p>
+      <label class="qn-lbl" for="qn-titre">Titre</label>
+      <input id="qn-titre" type="text" placeholder="Bilan de mi-semestre" autocomplete="off">
+      <label class="qn-lbl" for="qn-intro">Phrase d'introduction (facultative)</label>
+      <input id="qn-intro" type="text" placeholder="Trois questions, deux minutes." autocomplete="off">
+      <label class="qn-lbl" for="qn-mode">Affichage</label>
+      <select id="qn-mode">
+        <option value="sequentiel">Une question à la fois — sans retour en arrière</option>
+        <option value="revisable">Tout à l'écran — modifiable à volonté</option>
+        <option value="revision">Révision — la correction s'affiche après chaque réponse</option>
+      </select>
+      <p class="sous-hint" id="qn-aide-revision" hidden>En révision, chaque ligne
+        porte une <b>étoile devant la bonne option</b> et, après une flèche
+        « → », l'explication que l'étudiant lit une fois qu'il a répondu. Une
+        ligne sans étoile fait échouer la création, en disant laquelle : un
+        questionnaire de révision dont une question n'a pas de bonne réponse
+        compterait la classe entière fausse sans que personne ne le voie.</p>
+      <label class="qn-lbl" for="qn-texte">Les questions</label>
+      <textarea id="qn-texte" rows="7" spellcheck="true"
+        placeholder="Ce semestre, le rythme vous a paru : · Trop lent · Juste · Trop rapide · Intenable&#10;Ce qui vous a le plus aidé : · Les séances · Le quiz · Les corrigés · Le travail à deux"></textarea>
+      <div class="pick" style="margin-top:.7rem">
+        <button class="btn" id="b-qn-creer" type="button">Créer le questionnaire</button>
+      </div>
+      <div aria-live="polite" id="err-qn-neuf"></div>
+    </details>
+  </div>
+
+  <!-- Les modules (depuis le 28/09) : un module appartient à une classe et a
+       son dépôt GitHub. Tant que modules_enseignant() n'est pas déployée, la
+       carte garde son titre d'avant et montre la table projets (js/modules.js). -->
+  <details class="card plie" id="carte-modules">
+    <summary><h2 id="md-carte-titre">Les dépôts, par classe</h2></summary>
+    <p class="hint" id="md-carte-hint">Chaque projet est rattaché à une classe : c'est ce que ses
+      étudiants trouvent dans « Vos projets » après s'être identifiés.</p>
+    <div aria-live="polite" id="err-md-liste"></div>
+    <div id="tous-projets"></div>
+    <form id="f-md" class="gs-form" hidden>
+      <h3 class="sous-titre" id="md-f-titre">Nouveau module</h3>
+      <div class="gs-champs">
+        <label class="gs-large">Titre <input id="md-titre" type="text" required autocomplete="off"></label>
+        <label>Code <input id="md-code" type="text" required autocomplete="off"
+          pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="ia-meca-forez"></label>
+        <label>Icône <input id="md-icone" type="text" maxlength="4" autocomplete="off"></label>
+        <label>Ordre <input id="md-ordre" type="number" min="0" max="99"></label>
+        <label class="gs-large">Description <input id="md-description" type="text" autocomplete="off"></label>
+        <label class="gs-large">Dépôt GitHub étudiant <input id="md-depot" type="url" required
+          placeholder="https://github.com/compte/depot" autocomplete="off"></label>
+        <label class="gs-large">Dépôt enseignant (privé, jamais montré aux étudiants)
+          <input id="md-depot-enseignant" type="url" placeholder="https://github.com/compte/depot-prof" autocomplete="off"></label>
+        <label class="gs-large">Site du cours <input id="md-site" type="url"
+          placeholder="https://compte.github.io/depot/" autocomplete="off"></label>
+      </div>
+      <div class="pick">
+        <button class="btn" id="b-md-ok" type="submit">Enregistrer</button>
+        <button class="btn btn-sec" id="b-md-annuler" type="button">Annuler</button>
+        <button class="btn btn-sec" id="b-md-suppr" type="button" hidden>Supprimer ce module</button>
+      </div>
+      <p class="sous-hint" id="md-suppr-note"></p>
+      <div aria-live="polite" id="err-md"></div>
+    </form>
+  </details>
+  </div>
+
+  <div class="volet" id="volet-ensemble" role="tabpanel" aria-labelledby="ong-ensemble" hidden>
+    <p class="volet-hint">Après coup : où en est le semestre, qui s'est connecté, ce que les classes ont déclaré. Rien à faire ici en séance.</p>
+  <div class="card" id="carte-semestre" hidden>
+    <h2>Le semestre</h2>
+    <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »
+      signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
+      jamais être évaluées.</p>
+    <div id="sem-classes"></div>
+    <div aria-live="polite" id="err-semestre"></div>
+  </div>
+
+  <div class="card">
+    <h2>Vos classes</h2>
+    <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
+    <div class="scroll"><table id="t-classes">
+      <thead><tr><th>Classe</th><th>Code</th><th>Étudiants</th><th>Connectés</th><th>Unités</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <details class="card plie" id="carte-connaissance" hidden>
+    <summary><h2>Faisons connaissance</h2></summary>
+    <p class="hint">Le questionnaire de rentrée. Aucune réponse n'est juste ou fausse :
+      ce sont des faits sur le groupe, pas une note.</p>
+    <div id="conn-classes"></div>
+  </details>
+
+  <details class="card plie" id="carte-stage" hidden>
+    <summary><h2>Recherche de stage</h2></summary>
+    <p class="hint">Où en est chacun, d'après ce qu'il a déclaré lui-même. Une réponse
+      ancienne ne dit plus rien de vrai : la date de mise à jour est à côté du numéro.</p>
+    <div id="stage-classes"></div>
+  </details>
   </div>
 
 </section>
