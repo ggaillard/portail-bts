@@ -277,6 +277,90 @@ for (const w of [390, 1280]) {
   await fermer();
 }
 
+// ── Après la séance (28/09) : le compte rendu, le carnet, l'export ────────
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const cr = await p.evaluate(() => {
+    let e = document.getElementById('carte-suivi');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    document.getElementById('pk-seance').innerHTML = '<option value="14" data-titre="3 — Où vit la donnée" selected>3</option>';
+    const s = window.__e.suivi;
+    s.seanceId = 14; s.classeId = 1;
+    s.prevol = { ok: true, nature: 'cours', ouverte: false, seance: 3, demarree_le: '2026-09-30T08:00:00Z', duree_min: 55 };
+    s.parcours = { eleves: [{ numero: '01', appel: true }, { numero: '02', appel: true }, { numero: '03', appel: false }] };
+    s.debrief = { concepts: [{ rang: 1, intitule: 'Client et serveur', taux: 90, verdict: 'acquis' },
+                             { rang: 2, intitule: 'Les codes', taux: 30, verdict: 'a_revoir' }] };
+    window.__e.rendreSuivi({ total: 10, inscrits: 3, actifs: 2, reponses: 14, reussite: 64, avancement: 47, questions: [],
+      lignes: [{ id: 1, numero: '01', avatar: '•', n: 10, ev: 10, ok: 9, maj: null, pct: 100, reussite: 90 },
+               { id: 2, numero: '02', avatar: '•', n: 4, ev: 4, ok: 1, maj: null, pct: 40, reussite: 25 },
+               { id: 3, numero: '03', avatar: '•', n: 0, ev: 0, ok: 0, maj: null, pct: 0, reussite: null }] });
+    window.__e.ouvrirVue('fin');
+    return { visible: !document.getElementById('bloc-cr').hidden, texte: document.getElementById('cr-corps').textContent };
+  });
+  if (!cr.visible) rates.push('compte rendu : absent de la vue Fin d\'heure');
+  for (const attendu of ['Présents : 2/3 — absents : 03', 'Réussite : 64 %', 'Acquis : 1. Client et serveur (90 %)',
+                         'À reprendre : 2. Les codes (30 %)', 'À revoir : 02 (25 % de réussite)']) {
+    if (!cr.texte.includes(attendu)) rates.push(`compte rendu : « ${attendu} » manque (${cr.texte.replace(/\n/g, ' | ')})`);
+  }
+  if (/03 \(rien fait\)/.test(cr.texte)) rates.push('compte rendu : un absent est compté « à revoir » au lieu d\'absent');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#b-cr-csv')]);
+  const csv = String(await (await import('fs')).promises.readFile(await dl.path(), 'utf8'));
+  if (!csv.startsWith('\ufeffNuméro;Prénom (local);Présent')) rates.push(`compte rendu : en-tête CSV « ${csv.slice(0, 40)} »`);
+  if (!/\r\n03;;non;0;0;;absent/.test(csv)) rates.push(`compte rendu : ligne CSV de l'absent introuvable`);
+  if (erreurs.length) rates.push(`compte rendu : ${erreurs.join(' | ')}`);
+  console.log('── compte rendu :', cr.texte.split('\n').length, 'lignes · CSV', csv.split('\r\n').length, 'lignes');
+  await fermer();
+}
+for (const w of [390, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  const r = await p.evaluate(() => {
+    window.__reponses = { carnet_classe: { ok: true, appels: 4,
+      seances: [{ id: 10, numero: 1, titre: 'Panorama', nature: 'cours', questions: 10, module_id: 1 },
+                { id: 11, numero: 2, titre: 'Web', nature: 'cours', questions: 10, module_id: 1 },
+                { id: 12, numero: 11, titre: 'IA 1', nature: 'projet', jalons: 5, module_id: 3 }],
+      eleves: [
+        { id: 1, numero: '01', presents: 4, cases: { 10: { n: 10, ev: 10, ok: 9, jal: 0 }, 11: { n: 8, ev: 8, ok: 4, jal: 0 }, 12: { n: 5, ev: 0, ok: 0, jal: 5 } } },
+        { id: 2, numero: '02', presents: 2, cases: { 10: { n: 3, ev: 3, ok: 1, jal: 0 } } },
+      ] } };
+    let e = document.getElementById('carte-carnet');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    return window.__e.chargerCarnet([{ id: 1, code: 'BTS1-DEV-2026', nom: 'BTS SIO 1' }]).then(() => {
+      const lignes = [...document.querySelectorAll('#cn-table tbody tr')];
+      const cells = (tr) => [...tr.querySelectorAll('.cn-c')].map((c) => c.textContent + ':' + c.className.split(' ')[1]).join(' ');
+      return { l1: cells(lignes[0]), l2: cells(lignes[1]), dec: !!lignes[1].querySelector('.cn-dec'), dec1: !!lignes[0].querySelector('.cn-dec'),
+               pres: lignes[1].querySelector('.cn-pres').className, resume: document.getElementById('cn-resume').textContent,
+               debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    });
+  });
+  if (r.l1 !== '100:ok 80:ok 100:ok') rates.push(`${w} px carnet : ligne 01 « ${r.l1} »`);
+  if (r.l2 !== '30:ko —:rien —:rien') rates.push(`${w} px carnet : ligne 02 « ${r.l2} »`);
+  if (!r.dec || r.dec1) rates.push(`${w} px carnet : « décroche » mal posé (02=${r.dec}, 01=${r.dec1})`);
+  if (!/att/.test(r.pres)) rates.push(`${w} px carnet : 2 appels manqués sans alerte de présence`);
+  if (!/1 élève décroche/.test(r.resume)) rates.push(`${w} px carnet : résumé « ${r.resume} »`);
+  if (r.debord > 0) rates.push(`${w} px carnet : la page déborde de ${r.debord} px (le tableau doit défiler seul)`);
+  await p.click('#cn-mode .filtre[data-mode="reussite"]');
+  const reu = await p.evaluate(() => [...document.querySelectorAll('#cn-table tbody tr:first-child .cn-c')].map((c) => c.textContent).join(' '));
+  if (reu !== '90 50 100') rates.push(`${w} px carnet : en réussite, ligne 01 « ${reu} » (un projet reste en jalons)`);
+  await p.click('#cn-table tbody tr:nth-child(2) .cn-el');
+  await p.waitForTimeout(150);
+  const fiche = await p.evaluate(() => ({ o: !document.getElementById('fiche-eleve').hidden, t: document.getElementById('fe-titre').textContent }));
+  if (!fiche.o || fiche.t !== 'Élève 02') rates.push(`${w} px carnet : le clic n'ouvre pas la fiche (${JSON.stringify(fiche)})`);
+  await p.keyboard.press('Escape');
+  if (w === 1280) {
+    const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#b-cn-csv')]);
+    const csv = String(await (await import('fs')).promises.readFile(await dl.path(), 'utf8'));
+    const l = csv.replace(/^\ufeff/, '').split('\r\n');
+    if (!/^Numéro;Prénom \(local\);Présence;S1 Panorama \(réussite %\);S2 Web \(réussite %\);S11 IA 1 \(jalons %\)$/.test(l[0]) || l[2] !== '02;;2/4;33;;') {
+      rates.push(`carnet CSV : « ${l[0]} » / « ${l[2]} »`);
+    }
+  }
+  if (erreurs.length) rates.push(`${w} px carnet : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · carnet : ${r.l1} | ${r.l2}`);
+  await fermer();
+}
+
 await nav.close();
 
 console.log();
@@ -284,4 +368,5 @@ if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exi
 console.log('  ✓ Les quatre chiffres sont gros sur un téléphone, tiennent sur une');
 console.log('    ligne, ne cassent pas leur grille, et les contrôles d\'entrée');
 console.log('    sont dans le bon onglet ; l\'écran de la séance a son en-tête collant,');
-console.log('    ses quatre vues, ses filtres, sa fiche élève, et « Clore » s\'annule.');
+console.log('    ses quatre vues, ses filtres, sa fiche élève, et « Clore » s\'annule ;');
+console.log('    le compte rendu et le carnet de la classe disent juste, et s\'exportent.');

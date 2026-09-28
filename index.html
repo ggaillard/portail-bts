@@ -421,6 +421,18 @@
         <div aria-live="polite" id="err-debrief"></div>
       <button class="qa-b vers-prep" type="button" data-onglet="concepts">Écrire les concepts ›</button>
       </div>
+      <!-- Le compte rendu (28/09) : ce qu'on recopie dans le cahier de textes.
+           Assemblé par js/compterendu.js à partir de ce que l'écran a lu. -->
+      <div id="bloc-cr" class="ct-bloc" hidden>
+        <div class="ct-tete">
+          <h3 class="sous-titre" style="margin:0">Compte rendu de la séance</h3>
+        </div>
+        <div id="cr-corps" aria-live="polite"></div>
+        <div class="pick">
+          <button class="btn btn-sec" id="b-cr-copier" type="button">Copier</button>
+          <button class="btn btn-sec" id="b-cr-csv" type="button">Télécharger (CSV)</button>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -650,6 +662,25 @@
       jamais être évaluées.</p>
     <div id="sem-classes"></div>
     <div aria-live="polite" id="err-semestre"></div>
+  </div>
+
+  <!-- Le carnet de la classe (28/09) : élèves × séances, comme un carnet de
+       notes. Un clic sur un élève ouvre sa fiche. js/carnet.js. -->
+  <div class="card" id="carte-carnet" hidden>
+    <h2>Le carnet de la classe</h2>
+    <p class="hint">Une ligne par élève, une colonne par séance jouée. Vert au-dessus
+      de 70 %, orange de 40 à 69 %, rouge en dessous, « — » quand rien n'a été fait.
+      Un clic sur un élève ouvre sa fiche.</p>
+    <div class="pick">
+      <select id="cn-classe" aria-label="Classe du carnet"></select>
+      <div class="sv-filtres" id="cn-mode" role="group" aria-label="Ce que disent les cases">
+        <button class="filtre on" type="button" data-mode="avancement" aria-pressed="true">Avancement</button>
+        <button class="filtre" type="button" data-mode="reussite" aria-pressed="false">Réussite</button>
+      </div>
+      <button class="btn btn-sec" id="b-cn-csv" type="button">Exporter (CSV)</button>
+    </div>
+    <p class="sous-hint" id="cn-resume" aria-live="polite"></p>
+    <div class="scroll cn-cadre"><table class="cn-table" id="cn-table"></table></div>
   </div>
 
   <div class="card">

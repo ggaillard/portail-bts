@@ -26,6 +26,7 @@ import { $, suivi, typo, nomDe, prenomSeul, codeClasseCourante } from './socle.j
 import { lireModules } from './modules.js';
 import { toast } from './toast.js';
 import { ouvrirFiche } from './fiche.js';
+import { rendreCompteRendu } from './compterendu.js';
 
 var VUES = ["maintenant", "eleves", "questions", "fin"];
 var SQUELETTE = '<span class="vh">Chargement…</span><span class="squelette"></span>' +
@@ -119,6 +120,7 @@ function majPilote(apresStats){
     sa.appendChild(b);
   }
 
+  if (!$("sv-fin").hidden) rendreCompteRendu();
   appliquerFiltres();
   majDepuis();
 }
@@ -173,6 +175,7 @@ function ouvrirVue(v, focus){
     p.hidden = !actif;
   });
   if (focus) $("svb-" + v).focus();
+  if (v === "fin") rendreCompteRendu();
   try { localStorage.setItem(CLE_VUE, v); } catch (e) {}
 }
 
@@ -318,7 +321,9 @@ function brancherPilote(){
       var b = $("b-sv-action");
       b.disabled = true;
       toast("La séance va être close : plus aucune réponse ne sera acceptée.", {
-        apres: function(){ b.disabled = false; $("b-clore").click(); },
+        // Une fois close, on va d'office au compte rendu : c'est ce qu'on
+        // fait ensuite, et il est prêt.
+        apres: function(){ b.disabled = false; $("b-clore").click(); ouvrirVue("fin"); },
         annuler: function(){ b.disabled = false; toast("Clôture annulée. La séance reste ouverte."); }
       });
     }

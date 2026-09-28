@@ -225,3 +225,30 @@ body.fiche-ouverte{overflow:hidden}
   text-decoration:underline;cursor:pointer;padding:.3rem 0;text-align:left;min-height:32px}
 .vers-prep{margin-top:.5rem;white-space:normal;max-width:100%}
 .gs-onglet #gs-f-titre{display:none}
+
+/* ── Le carnet de la classe (28/09) ── */
+.cn-cadre{max-height:70vh}
+.cn-table{border-collapse:separate;border-spacing:0;font-size:.82rem;width:max-content;min-width:100%}
+.cn-table th,.cn-table td{padding:.3rem .4rem;text-align:center;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+.cn-table thead th{position:sticky;top:0;background:var(--surface);font-family:var(--f-mono);font-weight:600;
+  color:var(--ink-soft);z-index:1}
+.cn-table .cn-el{position:sticky;left:0;background:var(--surface);text-align:left;font-weight:500;z-index:1;
+  font-family:var(--f-mono)}
+.cn-table thead th:first-child{left:0;z-index:2}
+.cn-table tbody tr{cursor:pointer}
+.cn-table tbody tr:hover .cn-el,.cn-table tbody tr:focus-visible .cn-el{color:var(--accent-ink)}
+.cn-table tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cn-c{font-family:var(--f-mono);min-width:2.4rem}
+.cn-c.ok{background:var(--ok-soft);color:var(--ok)}
+.cn-c.att{background:var(--signal-soft);color:var(--signal)}
+.cn-c.ko{background:var(--ko-soft);color:var(--ko)}
+.cn-c.rien{color:var(--ink-faint)}
+.cn-sep{border-left:2px solid var(--rule)}
+.cn-pres{font-family:var(--f-mono);color:var(--ink-soft)}
+.cn-pres.att{color:var(--signal);font-weight:600}
+.cn-dec{margin-left:.4rem;font-family:var(--f-sans);font-size:.68rem}
+#cn-mode{margin:0}
+
+/* ── Le compte rendu ── */
+.cr-texte{white-space:pre-wrap;font-family:var(--f-sans);font-size:.88rem;line-height:1.55;
+  background:var(--surface-alt);border-radius:8px;padding:.7rem .8rem;margin:.4rem 0 .6rem}

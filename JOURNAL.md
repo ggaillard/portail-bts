@@ -33,6 +33,7 @@ en cours. Détail dans CLAUDE.md.
 | Migration | Ce qu'elle fait |
 |---|---|
 | `20260928090000_donnees_reelles.sql` | le BTS2 reprend le nom « BTS SIO 2 - SLAM » (il portait « PlaylistApp C# », un nom de module) ; les séances déjà démarrées ou répondues par un vrai étudiant sont rendues **visibles** (séances 1-2 du BTS1, TP0 du BTS2 étaient « Cachée ») |
+| `20260928100000_carnet.sql` | `carnet_classe(classe_id)` : élèves × séances jouées, réponses, réussite, jalons, présence — pour le carnet de Bilan. Une fonction, aucune donnée touchée ; refus hors session enseignante vérifié |
 
 **Opération faite à la main le même jour, avec l'accord de l'enseignant** : le
 BTS2 compte **13 étudiants**, la base en portait 25. Les fiches **14 à 25** ont

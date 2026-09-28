@@ -698,6 +698,11 @@ d'onglets en bas sur téléphone, portail installable (`manifest.webmanifest`,
 `sw.js`, `icones/`), squelettes, états vides avec leur geste, couleurs d'état
 unifiées et lisibles en mode sombre.
 
+Lot « après la séance » (28/09) : compte rendu de fin d'heure (`compterendu.js`,
+« Clore » y mène), carnet de la classe élèves × séances dans Bilan
+(`carnet.js`, RPC `carnet_classe()`), export CSV des deux (`exporter.js`).
+`app.js` n'y gagne qu'un import et un appel.
+
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).
 Le style dans

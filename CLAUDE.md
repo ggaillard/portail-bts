@@ -39,6 +39,9 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
 | `toast.js` | les confirmations passagères, avec « Annuler » pour un geste différé |
 | `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis |
+| `compterendu.js` | le compte rendu d'une séance, sous « Fin d'heure » : texte à copier, CSV |
+| `carnet.js` | le carnet de la classe dans Bilan : élèves × séances jouées, « décroche », CSV |
+| `exporter.js` | le CSV qu'un tableur français ouvre sans question (point-virgule, BOM) |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -155,6 +158,30 @@ l'écran du direct, qui ne garde que des liens « Écrire … › » (`.vers-pre
   à régler est un lien vers l'onglet qui le règle.
 - Après un enregistrement, **la fiche reste ouverte** sur la séance (même une
   séance qu'on vient de créer : on écrit ensuite son contrôle).
+
+### Après la séance — compte rendu et carnet (28/09)
+
+- **Le compte rendu** (`compterendu.js`), dans la vue *Fin d'heure* sous le
+  débriefing : présents / absents, réussite ou avancement, concepts acquis,
+  fragiles, à reprendre, élèves à revoir (rien fait ou < 40 %). Les absents
+  sont à part : on ne revoit pas quelqu'un qui n'était pas là, on le rattrape.
+  **« Clore » y amène d'office.** « Copier » pour le cahier de textes, « CSV »
+  une ligne par élève. Rien de nouveau en base : il relit ce que l'écran a lu.
+- **Le carnet** (`carnet.js`, carte de Bilan) : une ligne par élève, une
+  colonne par séance jouée, cases colorées ; **Avancement** ou **Réussite**
+  (un projet se lit toujours en jalons) ; « — » quand rien n'est fait, jamais
+  un zéro ; **« décroche »** quand les deux dernières séances jouées sont
+  vides ; présence en tête, orange à deux absences. Un clic ouvre la fiche.
+- Tout vient de **`carnet_classe(classe_id)`**
+  (`20260928100000_carnet.sql`), calculé en base : une classe sur un semestre
+  dépasse les 1 000 lignes qu'une lecture REST rend d'un coup, et une page qui
+  compterait elle-même compterait faux sans le dire. Règles habituelles :
+  `pre-`/`appel-`/`humeur-` hors réussite, jalon `tp…` à `true`/`ok`, n° 99
+  exclu, séances < 90 seulement.
+- **Les CSV ne partent nulle part** : fabriqués dans la page (`exporter.js`,
+  adresse `data:`), les prénoms locaux qu'ils contiennent restent sur
+  l'appareil. Pas de `"` dans une expression régulière de ces fichiers : le
+  contrôle « fonctions appelées » du workflow s'y égare.
 
 ### Les finitions d'application (28/09)
 

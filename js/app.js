@@ -60,6 +60,7 @@ import { chargerMissionsEtu, brancherMissions } from './missions.js';
 import { brancherGestion, chargerGestion, relireGestion } from './gestion.js';
 import { brancherModules, chargerModules, chargerModulesEtu } from './modules.js';
 import { choisirSeanceDuJour } from './encours.js';
+import { chargerCarnet } from './carnet.js';
 
 (function(){
 "use strict";
@@ -407,6 +408,7 @@ function ouvrirEspaceEnseignant(){
     chargerControles();
     chargerAFaire();
     chargerSemestre();
+    chargerCarnet(classes);
     choisirSeanceDuJour(classes);
     chargerGestion(classes);
 
