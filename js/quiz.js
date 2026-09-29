@@ -201,21 +201,29 @@ function rendreRevision(d){
   var errId = "err-qn-" + d.seance_id;
   erreur(errId, "");
 
+  // Un « tour » : après « Tout recommencer », les réponses déjà en base
+  // restent (elles seront remplacées une à une), mais l'écran les tient pour
+  // non répondues tant qu'on ne les a pas refaites dans ce tour. Sans cela,
+  // « vous pouvez tout refaire » était une promesse : une question répondue
+  // restait figée sur sa correction.
+  var faiteIci = function(q){ return d._tour ? !!d._tour[q.question] : !!q.ma_reponse; };
+
   // On reprend là où l'étudiant s'est arrêté, pas au début : revenir sur ce
   // qu'il a déjà fait pour atteindre la suite est ce qui fait abandonner.
   if (d._i === undefined) {
     var i = 0;
-    while (i < d.questions.length && d.questions[i].ma_reponse) i++;
+    while (i < d.questions.length && faiteIci(d.questions[i])) i++;
     d._i = i < d.questions.length ? i : 0;
   }
   if (d._i >= d.questions.length) d._i = 0;
 
   var q = d.questions[d._i];
-  var justes = d.questions.filter(function(x){ return x.juste === true; }).length;
-  var faites = d.questions.filter(function(x){ return x.ma_reponse; }).length;
+  var faites = d.questions.filter(faiteIci).length;
+  var justes = d.questions.filter(function(x){ return faiteIci(x) && x.juste === true; }).length;
 
   var av = zoneQ(d, ".qn-av");
   av.textContent = "Question " + (d._i + 1) + " sur " + d.questions.length +
+    (q.theme ? " · " + q.theme : "") +
     (faites ? " — " + justes + " juste" + (justes > 1 ? "s" : "") +
               " sur " + faites + " répondue" + (faites > 1 ? "s" : "") + "." : ".");
 
@@ -225,12 +233,12 @@ function rendreRevision(d){
   choix.className = "appel-choix";
   choix.innerHTML = "";
 
-  var repondu = !!q.ma_reponse;
+  var repondu = faiteIci(q);
   ["A","B","C","D"].forEach(function(lettre, i){
     if (!q.options || !q.options[i]) return;
     var b = document.createElement("button");
     b.type = "button";
-    b.className = "btn btn-sec appel-opt rv-opt";
+    b.className = "btn btn-sec appel-opt rv-opt" + (d._choix === lettre && !repondu ? " pris" : "");
     b.textContent = q.options[i];
     if (repondu) {
       b.disabled = true;
@@ -238,21 +246,11 @@ function rendreRevision(d){
       else if (q.ma_reponse === lettre) b.className += " rate";
     } else {
       b.addEventListener("click", function(){
-        var tous = choix.querySelectorAll("button");
-        Array.prototype.forEach.call(tous, function(x){ x.disabled = true; });
-        sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
-                             p_reponse: lettre }).then(function(rr){
-          if (rr.error) {
-            erreur(errId, texteEnvoi(rr.error));
-            signalerSessionPerimee(rr.error);
-            Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
-            return;
-          }
-          // La correction ne s'invente pas ici : on redemande la liste, et la
-          // base décide de ce qu'elle livre. Deviner la bonne réponse côté
-          // page voudrait dire l'y avoir envoyée — donc l'avoir publiée.
-          rafraichirRevision(d);
-        });
+        // Avec la certitude, choisir ne suffit pas : on dit d'abord à quel
+        // point on était sûr, PUIS on voit la correction. Dans l'autre ordre
+        // la réponse ne vaudrait plus rien.
+        if (d.certitude) { d._choix = lettre; rendreRevision(d); return; }
+        envoyerRevision(d, q, lettre, null, choix);
       });
     }
     choix.appendChild(b);
@@ -269,6 +267,24 @@ function rendreRevision(d){
   }
   apres.innerHTML = "";
 
+  if (!repondu && d.certitude && d._choix) {
+    var qc = document.createElement("p");
+    qc.className = "rv-cert-q";
+    qc.textContent = "Avant de voir la correction : vous étiez…";
+    apres.appendChild(qc);
+    var cz = document.createElement("div");
+    cz.className = "rv-suite rv-cert";
+    [["S", "Sûr·e"], ["H", "J'hésitais"], ["X", "Au hasard"]].forEach(function(c){
+      var bc = document.createElement("button");
+      bc.type = "button";
+      bc.className = "btn btn-sec";
+      bc.textContent = c[1];
+      bc.addEventListener("click", function(){ envoyerRevision(d, q, d._choix, c[0], cz); });
+      cz.appendChild(bc);
+    });
+    apres.appendChild(cz);
+  }
+
   var suite = document.createElement("div");
   suite.className = "rv-suite";
 
@@ -276,6 +292,9 @@ function rendreRevision(d){
     var v = document.createElement("p");
     v.className = "rv-verdict " + (q.juste ? "juste" : "rate");
     v.textContent = q.juste ? "Juste." : "Ce n'était pas ça.";
+    if (!q.juste && q.ma_certitude === "S") {
+      v.textContent += " Vous étiez sûr·e : c'est le point à relire en premier.";
+    }
     apres.appendChild(v);
     if (q.explication) {
       var e = document.createElement("p");
@@ -294,17 +313,10 @@ function rendreRevision(d){
       rendreRevision(d);
     });
     suite.appendChild(b1);
-
-    if (faites >= d.questions.length) {
-      var s = document.createElement("span");
-      s.className = "rv-score";
-      s.textContent = justes + " sur " + d.questions.length +
-        ". Vous pouvez tout refaire : rien n'est noté ici.";
-      suite.appendChild(s);
-    }
   }
-
   apres.appendChild(suite);
+
+  if (faites >= d.questions.length) apres.appendChild(bilanRevision(d, justes));
 
   // La file d'attente ne compte pas la révision : elle n'a pas de fin, et un
   // bandeau qui réclame indéfiniment une carte qu'on peut refaire à volonté se
@@ -320,6 +332,90 @@ function rendreRevision(d){
   majFile();
 }
 
+// Le bilan d'un tour complet : le score, puis une ligne par thème — c'est ce
+// qui dit quoi relire. Les chiffres viennent de la base (`bilan`), qui seule
+// connaît `correct`. Un seul thème « Sans thème » n'apprend rien : on s'en
+// tient alors au score.
+function bilanRevision(d, justes){
+  var z = document.createElement("div");
+  z.className = "rv-bilan";
+  var t = document.createElement("p");
+  t.className = "rv-score";
+  t.textContent = justes + " sur " + d.questions.length +
+    ". Vous pouvez tout refaire : rien n'est noté ici.";
+  z.appendChild(t);
+
+  var themes = (d.bilan || []).filter(function(b){ return b.theme !== "Sans thème"; });
+  if (themes.length) {
+    var h = document.createElement("h3");
+    h.textContent = "Votre bilan, thème par thème";
+    z.appendChild(h);
+    var ul = document.createElement("ul");
+    ul.className = "rv-themes";
+    var surs = 0;
+    themes.forEach(function(b){
+      surs += b.surs_faux || 0;
+      var li = document.createElement("li");
+      var taux = b.repondues ? Math.round(100 * b.justes / b.repondues) : null;
+      var n = document.createElement("span");
+      n.className = "rv-th-n";
+      n.textContent = b.theme;
+      var c = document.createElement("span");
+      c.className = "badge " + (taux === null ? "neutre" : (taux >= 75 ? "ok" : (taux >= 45 ? "att" : "ko")));
+      c.textContent = b.justes + " / " + b.questions +
+        (taux === null ? "" : (taux >= 75 ? " · acquis" : (taux >= 45 ? " · fragile" : " · à revoir")));
+      li.appendChild(n); li.appendChild(c);
+      ul.appendChild(li);
+    });
+    z.appendChild(ul);
+    if (surs) {
+      var s = document.createElement("p");
+      s.className = "rv-expl";
+      s.textContent = surs + (surs > 1 ? " réponses fausses" : " réponse fausse") +
+        " alors que vous étiez sûr·e : ce sont les points à relire en premier.";
+      z.appendChild(s);
+    }
+  }
+
+  var r = document.createElement("button");
+  r.type = "button";
+  r.className = "btn btn-sec";
+  r.textContent = "Tout recommencer";
+  r.addEventListener("click", function(){
+    d._tour = {}; d._i = 0; d._choix = null;
+    rendreRevision(d);
+  });
+  z.appendChild(r);
+  return z;
+}
+
+function envoyerRevision(d, q, lettre, certitude, zone){
+  var errId = "err-qn-" + d.seance_id;
+  var tous = zone.parentNode.querySelectorAll("button");
+  Array.prototype.forEach.call(tous, function(x){ x.disabled = true; });
+  sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question,
+                       p_reponse: lettre }).then(function(rr){
+    if (rr.error) {
+      erreur(errId, texteEnvoi(rr.error));
+      signalerSessionPerimee(rr.error);
+      Array.prototype.forEach.call(tous, function(x){ x.disabled = false; });
+      return;
+    }
+    if (d._tour) d._tour[q.question] = true;
+    d._choix = null;
+    // La certitude part après la réponse, jamais avant : si elle échoue, la
+    // réponse est déjà là, et c'est elle qui compte.
+    var ensuite = certitude
+      ? sb.rpc("repondre", { p_seance_id: d.seance_id, p_question: q.question + "-c",
+                             p_reponse: certitude }).then(function(){}, function(){})
+      : Promise.resolve();
+    // La correction ne s'invente pas ici : on redemande la liste, et la base
+    // décide de ce qu'elle livre. Deviner la bonne réponse côté page voudrait
+    // dire l'y avoir envoyée — donc l'avoir publiée.
+    ensuite.then(function(){ rafraichirRevision(d); });
+  });
+}
+
 function rafraichirRevision(d){
   sb.rpc("mes_questionnaires").then(function(r){
     var frais = null;
@@ -332,8 +428,10 @@ function rafraichirRevision(d){
     d.questions = frais.questions;
     d.faites = frais.faites;
     d.justes = frais.justes;
+    d.bilan = frais.bilan;
+    d.certitude = frais.certitude;
     rendreRevision(d);
   });
 }
 
-export { chargerQuestionnairesEtu, rendreQuestionnairesEtu, rendreRevision };
+export { chargerQuestionnairesEtu, rendreQuestionnairesEtu, rendreRevision, bilanRevision };

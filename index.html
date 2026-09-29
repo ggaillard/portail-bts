@@ -503,6 +503,12 @@
           </div>
           <div aria-live="polite" id="err-gs"></div>
         </form>
+        <div class="gs-qn" id="gs-qn" hidden>
+          <h3 class="sous-titre">Questionnaires de cette séance</h3>
+          <div id="gs-qn-liste"></div>
+          <label class="gs-qn-aj">Rattacher <select id="gs-qn-ajout"></select></label>
+          <div aria-live="polite" id="err-gs-qn"></div>
+        </div>
       </div>
       <div class="gs-onglet" id="gso-controle" role="tabpanel" aria-labelledby="gsb-controle" hidden>
         <div class="pick gs-ctl-etat">
@@ -606,7 +612,11 @@
         « → », l'explication que l'étudiant lit une fois qu'il a répondu. Une
         ligne sans étoile fait échouer la création, en disant laquelle : un
         questionnaire de révision dont une question n'a pas de bonne réponse
-        compterait la classe entière fausse sans que personne ne le voie.</p>
+        compterait la classe entière fausse sans que personne ne le voie.
+        Un thème entre crochets en tête de ligne — <code>[TP2] …</code> — donne
+        à l'étudiant un bilan thème par thème, et à vous la liste des fragiles.</p>
+      <label class="qn-cert" id="qn-cert-l" hidden><input type="checkbox" id="qn-certitude">
+        Demander « sûr / j'hésitais / au hasard » avant chaque correction</label>
       <label class="qn-lbl" for="qn-texte">Les questions</label>
       <textarea id="qn-texte" rows="7" spellcheck="true"
         placeholder="Ce semestre, le rythme vous a paru : · Trop lent · Juste · Trop rapide · Intenable&#10;Ce qui vous a le plus aidé : · Les séances · Le quiz · Les corrigés · Le travail à deux"></textarea>

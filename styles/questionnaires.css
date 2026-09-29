@@ -144,3 +144,20 @@
    Ils collent en haut au défilement — la carte « Appel » est longue, et perdre
    le chemin du retour au milieu d'une liste d'absents est exactement le
    problème qu'on essaie de régler. */
+/* Lecture par thème d'une révision (29/09). */
+.qn-cert{display:flex;gap:.5rem;align-items:center;min-height:44px;font-size:.9rem;margin-top:.4rem}
+.qn-cert input{width:1.2rem;height:1.2rem;min-height:0}
+.qn-themes{margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--rule-soft)}
+.qn-th{padding:.45rem 0;border-top:1px solid var(--rule-soft)}
+.qn-th:first-of-type{border-top:0}
+.qn-th-tete{display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap}
+.qn-th-l{margin:.25rem 0 0;font-size:.86rem;color:var(--ink-soft)}
+.qn-th-sf{color:var(--signal)}
+/* Rattacher, des deux côtés (29/09). */
+.qn-comp{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.4rem}
+.gs-qn{margin-top:1.2rem;padding-top:.8rem;border-top:1px solid var(--rule-soft)}
+.gs-qn-l{display:flex;justify-content:space-between;align-items:center;gap:.6rem;
+  padding:.45rem 0;border-bottom:1px solid var(--rule-soft)}
+.gs-qn-t{display:flex;flex-direction:column;min-width:0}
+.gs-qn-t b{overflow-wrap:anywhere}
+.gs-qn-aj{display:flex;flex-direction:column;gap:.25rem;margin-top:.6rem;font-size:.9rem}

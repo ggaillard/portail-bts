@@ -314,7 +314,7 @@ $("b-ct-creer").addEventListener("click", function(){
 // L'aide du mode révision n'apparaît que sur ce mode : l'étoile et la flèche
 // n'ont aucun sens dans les deux autres, où elles sont d'ailleurs refusées.
 $("qn-mode").addEventListener("change", function(){
-  $("qn-aide-revision").hidden = $("qn-mode").value !== "revision";
+  $("qn-aide-revision").hidden = $("qn-cert-l").hidden = $("qn-mode").value !== "revision";
   $("qn-texte").placeholder = $("qn-mode").value === "revision"
     ? "Un objet, c'est : · le modèle écrit une fois · *l'exemplaire fabriqué "
       + "· une méthode → La classe est le moule, l'objet le gâteau."
@@ -330,7 +330,7 @@ $("b-qn-creer").addEventListener("click", function(){
   var b = $("b-qn-creer");
   b.disabled = true;
   sb.rpc("creer_modele", { p_titre: titre, p_intro: $("qn-intro").value,
-                           p_mode: $("qn-mode").value, p_texte: texte }).then(function(r){
+                           p_mode: $("qn-mode").value, p_texte: texte, p_certitude: $("qn-mode").value === "revision" && $("qn-certitude").checked }).then(function(r){
     b.disabled = false;
     var d = r && r.data;
     if (!r || r.error || !d || !d.ok) {
@@ -339,7 +339,7 @@ $("b-qn-creer").addEventListener("click", function(){
       // Les refus qui nomment une ligne se disent tous de la même façon : le
       // rang, la raison, et la ligne. C'est ce qui permet de corriger sans
       // relire les vingt autres.
-      var parLigne = { ligne: 1, sans_etoile: 1, deux_etoiles: 1,
+      var parLigne = { ligne: 1, sans_etoile: 1, deux_etoiles: 1, theme: 1,
                        etoile_inutile: 1, explication_inutile: 1 };
       erreur("err-qn-neuf", (d && parLigne[d.motif])
         ? "Ligne " + d.rang + " : " + d.detail + " — « " + d.texte + " »"

@@ -23,6 +23,7 @@
 
 import { $, sb, suivi, erreur, typo } from './socle.js';
 import { lignesMissions } from './missions.js';
+import { chargerQuestionnaires, texteRattachement } from './bibliotheque.js';
 
 var ONGLETS_P = ["infos", "controle", "concepts", "missions"];
 var courante = null;       // la ligne de seances_de_classe ouverte, ou null (nouvelle)
@@ -50,7 +51,9 @@ function ouvrirFichePrep(s, onglet){
   });
   ["err-ct-neuf", "err-db-neuf", "err-mi-neuf", "err-pr-ctl"].forEach(function(id){ erreur(id, ""); });
   $("gs-pret").innerHTML = "";
+  $("gs-qn").hidden = true;
   if (!s) return Promise.resolve();
+  lireQuestionnairesPrep(s);
   return lireEtat(s);
 }
 
@@ -197,6 +200,98 @@ function prerempliMissions(g){
   var t = $("mi-texte");
   if (!t || t.dataset.touche || !g || !g.declarees || !g.missions) return;
   t.value = lignesMissions(g.missions).join("\n");
+}
+
+// ── Les questionnaires qui accompagnent la séance (29/09) ────────────────
+// L'autre moitié du rattachement : depuis la séance, on voit ce qui
+// l'accompagne, on détache, on rattache un questionnaire de la classe. Même
+// base (`bibliotheque()`), même phrase (`texteRattachement()`) que la carte
+// des questionnaires — deux endroits qui liraient deux choses différentes
+// feraient douter des deux.
+function lireQuestionnairesPrep(s){
+  var classeId = String(($("gs-classe") || {}).value || "");
+  return sb.rpc("bibliotheque").then(function(r){
+    if (!courante || String(courante.id) !== String(s.id)) return;
+    if (!r || r.error || !r.data || !r.data.ok) return;     // pas déployée : rien
+    var ici = [], autres = [];
+    (r.data.modeles || []).forEach(function(m){
+      (m.affectations || []).forEach(function(a){
+        if (String(a.classe_id) !== classeId) return;
+        (String(a.rattachee_a) === String(s.id) ? ici : autres).push({ m: m, a: a });
+      });
+    });
+    rendreQuestionnairesPrep(s, ici, autres);
+  });
+}
+
+function rendreQuestionnairesPrep(s, ici, autres){
+  var z = $("gs-qn-liste"), sel = $("gs-qn-ajout");
+  $("gs-qn").hidden = false;
+  z.innerHTML = "";
+  if (!ici.length) {
+    var v = document.createElement("p");
+    v.className = "sous-hint";
+    v.textContent = "Aucun questionnaire ne suit cette séance.";
+    z.appendChild(v);
+  }
+  ici.forEach(function(x){
+    var l = document.createElement("div");
+    l.className = "gs-qn-l";
+    var t = document.createElement("span");
+    t.className = "gs-qn-t";
+    var b = document.createElement("b");
+    b.textContent = typo(x.m.titre);
+    var e = document.createElement("span");
+    e.className = "sous-hint";
+    e.textContent = texteRattachement(x.a);
+    t.appendChild(b); t.appendChild(e);
+    var d = document.createElement("button");
+    d.type = "button";
+    d.className = "btn btn-sec";
+    d.textContent = "Détacher";
+    d.setAttribute("aria-label", "Détacher « " + x.m.titre + " » de cette séance");
+    d.addEventListener("click", function(){ d.disabled = true; rattacherPrep(s, x, null); });
+    l.appendChild(t); l.appendChild(d);
+    z.appendChild(l);
+  });
+
+  sel.innerHTML = "";
+  var o0 = document.createElement("option");
+  o0.value = "";
+  o0.textContent = autres.length ? "— un questionnaire de la classe —"
+                                 : "— aucun autre questionnaire donné à cette classe —";
+  sel.appendChild(o0);
+  sel.disabled = !autres.length;
+  autres.forEach(function(x, i){
+    var o = document.createElement("option");
+    o.value = String(i);
+    o.textContent = x.m.titre + (x.a.rattachee_a ? "  ·  suit la séance " + x.a.rattachee_numero : "");
+    sel.appendChild(o);
+  });
+  sel.onchange = function(){
+    if (sel.value === "") return;
+    sel.disabled = true;
+    rattacherPrep(s, autres[Number(sel.value)], s.id);
+  };
+}
+
+function rattacherPrep(s, x, cible){
+  erreur("err-gs-qn", "");
+  sb.rpc("rattacher_questionnaire", { p_seance_id: Number(x.a.seance_id),
+                                      p_cible: cible === null ? null : Number(cible) }).then(function(r){
+    var d = r && r.data;
+    if (!r || r.error || !d || !d.ok) {
+      erreur("err-gs-qn", "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+    } else if (cible === null) {
+      erreur("err-gs-qn", "« " + x.m.titre + " » ne suit plus cette séance. Son état n'a pas " +
+             "changé : c'est l'interrupteur qui décide de ce que voient les étudiants.", true);
+    } else {
+      erreur("err-gs-qn", "« " + x.m.titre + " » suit maintenant cette séance" +
+             (d.allume_maintenant ? " — elle est en cours, il vient d'être proposé." : "."), true);
+    }
+    lireQuestionnairesPrep(s);
+    chargerQuestionnaires(true);
+  });
 }
 
 // ── Branchements ─────────────────────────────────────────────────────────

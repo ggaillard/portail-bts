@@ -34,6 +34,9 @@ en cours. Détail dans CLAUDE.md.
 |---|---|
 | `20260928090000_donnees_reelles.sql` | le BTS2 reprend le nom « BTS SIO 2 - SLAM » (il portait « PlaylistApp C# », un nom de module) ; les séances déjà démarrées ou répondues par un vrai étudiant sont rendues **visibles** (séances 1-2 du BTS1, TP0 du BTS2 étaient « Cachée ») |
 | `20260928100000_carnet.sql` | `carnet_classe(classe_id)` : élèves × séances jouées, réponses, réussite, jalons, présence — pour le carnet de Bilan. Une fonction, aucune donnée touchée ; refus hors session enseignante vérifié |
+| `20260929055000_rattachement_lisible.sql` | `seances.reste_ouvert` et `visible_jusqu_au`, `regler_questionnaire()` ; le déclencheur de suivi ne ferme plus un questionnaire « reste ouvert » ; `bibliotheque()` réécrite (réglages, module des séances candidates, « terminé » sans les clés de certitude) |
+| `20260929060000_questionnaire_themes.sql` | thème par question, certitude (`<clé>-c`), bilan par thème ; `creer_modele()` (une seule signature, `p_certitude`), `mes_questionnaires()` (masque après l'échéance), `depouiller_questionnaire()` réécrites ; déclencheur `corrige_prend_theme` |
+| `20260929070000_revision_playlistapp.sql` | le questionnaire « Réviser PlaylistApp » : 24 questions, 4 thèmes × 6, certitude, affecté au BTS2 **fermé** |
 
 **Opération faite à la main le même jour, avec l'accord de l'enseignant** : le
 BTS2 compte **13 étudiants**, la base en portait 25. Les fiches **14 à 25** ont

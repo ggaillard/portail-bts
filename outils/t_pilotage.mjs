@@ -182,9 +182,106 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
 
   await fermer();
 }
+
+// ── Rattacher, détacher — des deux côtés (29/09) ───────────────────────────
+// Le geste était rangé dans un tiroir, et on ne le trouvait pas. Désormais :
+//   · la ligne d'une classe porte « Détacher » (rattaché) ou « Rattacher… »
+//     (qui ouvre le tiroir sur le bon sélecteur) ;
+//   · le tiroir règle ce que fait le rattachement à la fin de la séance, et
+//     une date de visibilité — regler_questionnaire(), en un appel ;
+//   · la fiche de la séance, sous Préparer, dit ce qui l'accompagne et
+//     permet de détacher ou de rattacher sans quitter la séance.
+{
+  const BIB2 = JSON.parse(JSON.stringify(BIB));
+  BIB2.modeles[2].affectations[0] = { ...BIB2.modeles[2].affectations[0],
+    rattachee_a: 3, rattachee_numero: 2, rattachee_titre: 'TP2', reste_ouvert: true,
+    visible_jusqu_au: '2026-10-12' };
+  const { page: p, erreurs: err, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const r = await p.evaluate(async ({ BIB2 }) => {
+    const attendre = (ms) => new Promise(ok => setTimeout(ok, ms));
+    let e = document.getElementById('volet-quest');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('carte-qactifs').hidden = false;
+    // Chaque geste relit la bibliothèque : elle doit rendre la même chose.
+    window.__reponses = { bibliotheque: BIB2 };
+    window.__e.BIB.classes = BIB2.classes;
+    window.__e.rendreBibliotheque(BIB2.modeles);
+    const lignes = [...document.querySelectorAll('.qn-c')];
+    if (lignes.length < 3) return { casse: 'lignes de classe : ' + lignes.length + ' — ' + document.getElementById('qa-liste').textContent.slice(0, 200) };
+    const gestes = lignes.map(l => [...l.querySelectorAll('.qn-actes .btn')].map(b => b.textContent));
+    const etat = (lignes[2].querySelector('.qn-cd') || {}).textContent || '';
+    window.__appels.length = 0;
+    const det = [...lignes[2].querySelectorAll('.btn')].find(b => b.textContent === 'Détacher');
+    if (det) det.click();
+    await attendre(30);
+    const detache = window.__appels.map(a => a.nom + ' ' + JSON.stringify(a.args)).join(' | ');
+    // « Rattacher… » ouvre le tiroir de SON questionnaire, sur son sélecteur.
+    await attendre(100);
+    window.__e.rendreBibliotheque(BIB2.modeles);
+    const l0 = document.querySelectorAll('.qn-c')[0];
+    const rat = [...l0.querySelectorAll('.btn')].find(b => b.textContent === 'Rattacher…');
+    if (rat) rat.click();
+    const tiroir = l0.closest('.qn-m').querySelector('.qn-reg');
+    const ouvert = !!(tiroir && tiroir.open);
+    const focus = document.activeElement && document.activeElement.dataset.seance;
+    const selT = tiroir && tiroir.querySelector('select[data-seance]');
+    const candidates = selT ? [...selT.options].filter(o => o.value).length : 0;
+    const bloque = selT ? selT.disabled : true;
+    // Le comportement se règle d'un changement, sans bouton à oublier.
+    const t2 = document.querySelectorAll('.qn-m')[2].querySelector('.qn-comp');
+    window.__appels.length = 0;
+    const sel = t2 && t2.querySelector('select');
+    if (sel) { sel.value = ''; sel.dispatchEvent(new Event('change')); }
+    await attendre(30);
+    const regle = window.__appels.map(a => a.nom + ' ' + JSON.stringify(a.args)).join(' | ');
+
+    // La fiche de la séance TP2 (id 3) de la classe 2.
+    const gs = document.getElementById('gs-classe');
+    if (gs && !gs.options.length) { const o = document.createElement('option'); o.value = '2'; gs.appendChild(o); }
+    if (gs) gs.value = '2';
+    let v = document.getElementById('gs-fiche');
+    while (v) { v.hidden = false; v = v.parentElement; }
+    await window.__e.ouvrirFichePrep({ id: 3, numero: 2, titre: 'TP2', nature: 'projet', module_id: 1 }, 'infos');
+    await attendre(80);
+    const fiche = [...document.querySelectorAll('#gs-qn-liste .gs-qn-l')].map(x => x.textContent);
+    const choix = [...document.querySelectorAll('#gs-qn-ajout option')].map(o => o.textContent);
+    window.__appels.length = 0;
+    const fd = document.querySelector('#gs-qn-liste .btn');
+    if (fd) fd.click();
+    await attendre(30);
+    const ficheDet = window.__appels.filter(a => a.nom === 'rattacher_questionnaire')
+      .map(a => JSON.stringify(a.args)).join(' | ');
+    return { gestes, etat, detache, ouvert, focus, candidates, bloque, regle, fiche, choix, ficheDet,
+             debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+  }, { BIB2 });
+  if (r.casse) { rates.push('rattacher : ' + r.casse); await fermer(); await nav.close(); rates.forEach(x => console.log('  ✗ ' + x)); process.exit(1); }
+  console.log('\n── rattacher / détacher (390 px)');
+  console.log('   gestes par ligne :', JSON.stringify(r.gestes));
+  console.log('   état affiché     :', r.etat);
+  console.log('   « Détacher »     :', r.detache);
+  console.log('   « Rattacher… »   : tiroir ouvert', r.ouvert, '· focus sur la séance', r.focus);
+  console.log('   comportement     :', r.regle);
+  console.log('   fiche de séance  :', r.fiche.join(' | '), '· à rattacher :', r.choix.length - 1);
+  console.log('   détacher (fiche) :', r.ficheDet);
+  if (!r.gestes[2].includes('Détacher')) rates.push('rattacher : un questionnaire rattaché n\'offre pas « Détacher » sur sa ligne');
+  if (!r.gestes[0].includes('Rattacher…')) rates.push('rattacher : un questionnaire libre n\'offre pas « Rattacher… » sur sa ligne');
+  if (!/reste ouvert/.test(r.etat) || !/12 octobre/.test(r.etat)) rates.push(`rattacher : la ligne ne dit pas ce que fait le rattachement — « ${r.etat} »`);
+  if (!/rattacher_questionnaire \{"p_seance_id":34,"p_cible":null\}/.test(r.detache)) rates.push(`rattacher : « Détacher » n'appelle pas rattacher_questionnaire(34, null) — ${r.detache}`);
+  if (r.bloque || r.candidates !== 1) rates.push(`rattacher : le sélecteur de séance du tiroir est ${r.bloque ? 'désactivé' : 'actif'} avec ${r.candidates} séance(s) — attendu actif, 1 séance`);
+  if (!r.ouvert || r.focus !== '31') rates.push('rattacher : « Rattacher… » n\'ouvre pas le tiroir sur le sélecteur de sa séance');
+  if (!/regler_questionnaire \{"p_seance_id":34,"p_reste_ouvert":false,"p_jusqu_au":"2026-10-12"\}/.test(r.regle)) rates.push(`rattacher : le comportement ne part pas en un appel complet — ${r.regle}`);
+  if (r.fiche.length !== 1 || !/Réviser/.test(r.fiche[0])) rates.push(`fiche : la séance ne dit pas quel questionnaire l'accompagne — ${r.fiche.join(' | ')}`);
+  if (r.choix.length - 1 !== 1) rates.push(`fiche : ${r.choix.length - 1} questionnaire(s) proposés au rattachement, attendu 1 (le stage du BTS2)`);
+  if (!/"p_seance_id":34,"p_cible":null/.test(r.ficheDet)) rates.push(`fiche : « Détacher » n'appelle pas rattacher_questionnaire(34, null) — ${r.ficheDet}`);
+  if (r.debord > 0) rates.push(`rattacher : la page déborde de ${r.debord} px`);
+  if (err.length) rates.push('rattacher : erreur JS — ' + err[0]);
+  await fermer();
+}
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
 console.log('  ✓ Les gestes de « Ce qui bloque » s\'exécutent depuis la carte,');
 console.log('    et l\'onglet Préparer ne montre que les classes concernées.');
+console.log('  ✓ Rattacher et détacher se font depuis la ligne du questionnaire comme');
+console.log('    depuis la fiche de la séance, et le comportement se règle d\'un geste.');

@@ -53,3 +53,12 @@
 .et-2 .et-tete b,.et-2 .et-nums{color:#24507F}
 .et-3 .et-tete b,.et-3 .et-nums{color:#1B6B42}
 .et-x .et-tete b,.et-x .et-nums{color:var(--ink-soft)}
+/* Révision par thème (29/09) : certitude avant la correction, bilan par thème. */
+.rv-opt.pris{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.rv-cert-q{margin-top:.7rem;font-size:.9rem;font-weight:600}
+.rv-bilan{margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--rule-soft)}
+.rv-bilan h3{font-size:.95rem;margin:.6rem 0 .3rem}
+.rv-themes{list-style:none;margin:0 0 .6rem;padding:0;display:grid;gap:.3rem}
+.rv-themes li{display:flex;justify-content:space-between;gap:.6rem;padding:.4rem .6rem;
+  border-radius:8px;background:var(--surface-alt);font-size:.9rem}
+.rv-th-n{min-width:0;overflow-wrap:anywhere}

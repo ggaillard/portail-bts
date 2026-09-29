@@ -38,7 +38,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `pilote.js` | l'écran de la séance : en-tête collant, quatre vues, filtres et recherche d'élèves, Pause, « Clore » différé |
 | `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
 | `toast.js` | les confirmations passagères, avec « Annuler » pour un geste différé |
-| `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis |
+| `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis, les questionnaires qui l'accompagnent |
 | `compterendu.js` | le compte rendu d'une séance, sous « Fin d'heure » : texte à copier, CSV |
 | `carnet.js` | le carnet de la classe dans Bilan : élèves × séances jouées, « décroche », CSV |
 | `exporter.js` | le CSV qu'un tableur français ouvre sans question (point-virgule, BOM) |
@@ -992,6 +992,34 @@ Règles qui ne se devinent pas :
   chaque affectation et la liste `seances` des cibles possibles, `en_cours`
   marquant la séance du jour. C'est cette définition qui gagne.
 
+#### Rattacher, détacher — des deux côtés, et pour combien de temps (29/09)
+
+Jusqu'au 29/09, **rattacher était impossible depuis l'écran** : le tiroir des
+réglages passait à `choixSeance()` une classe reconstruite sans ses séances,
+et le sélecteur restait désactivé sur « aucune séance de cours pour cette
+classe ». Personne ne l'avait vu, parce qu'aucun contrôle ne l'ouvrait.
+`t_pilotage.mjs` vérifie maintenant que le sélecteur est actif et peuplé.
+
+- **La ligne d'une classe** porte « Détacher » (un clic, rien ne se perd,
+  l'état ne change pas) ou « Rattacher… » (ouvre le tiroir sur le bon
+  sélecteur), et dit en clair ce que fait le rattachement.
+- **La fiche de la séance** (Préparer, onglet Infos) liste les questionnaires
+  qui l'accompagnent, avec « Détacher », et propose ceux de la classe à
+  rattacher. Même base (`bibliotheque()`), même phrase
+  (`texteRattachement()`) que la carte : deux endroits qui diraient deux
+  choses feraient douter des deux.
+- **Deux réglages**, `regler_questionnaire(seance_id, reste_ouvert, jusqu_au)`
+  (`20260929055000_rattachement_lisible.sql`) :
+
+  | Colonne | Ce qu'elle décide |
+  |---|---|
+  | `seances.reste_ouvert` | rattaché, il s'ouvre avec sa séance et **ne se ferme pas** avec elle. Faux par défaut : rien ne change pour ce qui était déjà rattaché |
+  | `seances.visible_jusqu_au` | au-delà, `mes_questionnaires()` ne le montre plus. **Masquage, pas verrou** : aucune tâche planifiée n'éteint à minuit, l'interrupteur reste le geste |
+
+  Une date déjà passée est refusée : elle masquerait sur-le-champ.
+- ⚠️ `questionnaire_suit_sa_seance()` et `bibliotheque()` sont **réécrites en
+  entier** dans cette migration, et ce sont ces définitions qui gagnent.
+
 ### Le mode « révision » — le seul écran étudiant qui dise « faux »
 
 Le 16/09, un questionnaire de révision a été cherché pour préparer l'interro
@@ -1066,6 +1094,51 @@ de la séance 2, délibérément : réviser sur les huit mêmes notions, correct
 affichée, viderait le contrôle de son sens. Elles couvrent en revanche les cinq
 exercices de l'interro — vocabulaire, choix `List` / `Dictionary`, requêtes
 LINQ, trace console, lecture de code.
+
+
+#### Le bilan par thème et la certitude (29/09)
+
+`20260929060000_questionnaire_themes.sql`. Réviser un module entier demande
+de savoir **où** l'on est fragile : « 14 sur 24 » ne dit pas quoi relire,
+« EF Core : 2 sur 6 » le dit.
+
+- **Un thème par question** : `[TP2 · EF Core] Intitulé · …` en tête de ligne
+  (1 à 40 caractères). Rangé dans `modele_questions.theme` (lisible par tous :
+  il ne dit rien de la réponse) et recopié dans `corriges.theme` par le
+  déclencheur `corrige_prend_theme` — pas par une réécriture de
+  `affecter_questionnaire()`.
+- **La certitude**, facultative (`modeles.certitude`, case « Demander sûr /
+  j'hésitais / au hasard ») : l'étudiant choisit, **dit s'il était sûr, puis
+  seulement** voit la correction. Dans l'autre ordre la réponse ne vaudrait
+  rien. Elle s'écrit sous `<clé>-c` (S · H · X), **sans corrigé** — un corrigé
+  la ferait apparaître comme une question de plus. **Toute fonction qui compte
+  des réponses de questionnaire ne compte que les clés qui ont un corrigé**,
+  sinon « 26 sur 24 » arrive au bout de treize réponses.
+- **Côté étudiant** : le thème dans la ligne d'avancée, puis au bout du tour
+  un bilan thème par thème (mêmes seuils que le débriefing, 75 / 45) et le
+  nombre de réponses fausses données avec assurance. **« Tout recommencer »**
+  rouvre les questions — auparavant une question répondue restait figée sur
+  sa correction, et « vous pouvez tout refaire » était une promesse vide.
+- **Côté enseignant** : « Réponses » s'ouvre sur **Par thème** — taux de la
+  classe, numéros sous la moitié, numéros **sûrs et faux** (prénoms locaux
+  collés quand ils sont chargés).
+- ⚠️ `creer_modele()` (qui gagne `p_certitude` ; l'ancienne signature est
+  supprimée pour qu'il n'en reste qu'une), `mes_questionnaires()` et
+  `depouiller_questionnaire()` sont **réécrites en entier** ici, et ces
+  définitions gagnent.
+
+#### « Réviser PlaylistApp — l'évaluation sur table »
+
+`revision-playlistapp` (`20260929070000_revision_playlistapp.sql`) : 24
+questions, **six par TP** (Console & POO, EF Core, API REST, Événements),
+certitude demandée, affecté au BTS2 SLAM, **créé fermé et rattaché à rien**
+— il vit jusqu'à l'évaluation, pas jusqu'à la fin d'une séance. Tirées des
+fiches `cours/*.md` et du code du TP3/TP4, **relues par un second lecteur
+contre ces sources** (un énoncé appelait un constructeur à deux arguments qui
+n'existe pas au TP1 ; deux autres filtraient sur `Note`, absente du TP1).
+Aucune ne reprend le contrôle d'entrée ni la révision POO, et une assertion
+le tient. Lettres : six de chaque ; la bonne option n'est la plus longue que
+dans cinq questions.
 
 ---
 

@@ -81,9 +81,117 @@ for (const w of [390, 1280]) {
   }
   await fermer();
 }
+
+// ── Le tour thème par thème, avec la certitude (29/09) ─────────────────────
+// Trois choses qu'on casserait sans le voir :
+//   · avec la certitude, choisir une option N'ENVOIE RIEN : on dit d'abord à
+//     quel point on était sûr, puis la réponse part, puis la certitude — dans
+//     cet ordre, sous la clé <question>-c ;
+//   · le bilan d'un tour complet s'affiche thème par thème, et nomme les
+//     réponses fausses données avec assurance ;
+//   · « Tout recommencer » rend les questions de nouveau cliquables — sans
+//     lui, « vous pouvez tout refaire » était une promesse vide.
+{
+  const qt = (n, theme, rep, juste, cert) => ({
+    question:'rv-'+String(n).padStart(2,'0'), intitule:'Question '+n+' ?',
+    options:['Un','Deux','Trois','Quatre'], theme,
+    ma_reponse:rep, ma_certitude:cert||null, bonne:rep?'B':null,
+    explication:rep?'Parce que.':null, juste:rep?juste:null });
+  const vierge = { seance_id:41, numero:91, titre:'Réviser PlaylistApp', intro:'',
+    mode:'revision', corrige:true, certitude:true, total:3, faites:0, justes:0,
+    questions:[qt(1,'TP1',null), qt(2,'TP2',null), qt(3,'TP2',null)],
+    bilan:[{theme:'TP1',questions:1,repondues:0,justes:0,surs_faux:0},
+           {theme:'TP2',questions:2,repondues:0,justes:0,surs_faux:0}] };
+  const fini = { ...vierge, faites:3, justes:1,
+    questions:[qt(1,'TP1','B',true,'S'), qt(2,'TP2','A',false,'S'), qt(3,'TP2','C',false,'X')],
+    bilan:[{theme:'TP1',questions:1,repondues:1,justes:1,surs_faux:0},
+           {theme:'TP2',questions:2,repondues:2,justes:0,surs_faux:1}] };
+
+  for (const w of [360, 1280]) {
+    const { page: p, erreurs: err, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+    const r = await p.evaluate(async ({ vierge, fini }) => {
+      let e = document.getElementById('espace-etu');
+      while (e) { e.hidden = false; e = e.parentElement; }
+      const attendre = (ms) => new Promise(ok => setTimeout(ok, ms));
+      window.__reponses = { mes_questionnaires: { ok:true, liste:[vierge] } };
+      window.__e.rendreQuestionnairesEtu([JSON.parse(JSON.stringify(vierge))]);
+      const c = document.getElementById('qn-41');
+      const av = c.querySelector('.qn-av').textContent;
+      window.__appels.length = 0;
+      c.querySelectorAll('.rv-opt')[1].click();
+      await attendre(50);
+      const apresChoix = window.__appels.filter(a => a.nom === 'repondre').length;
+      const certs = [...c.querySelectorAll('.rv-cert button')].map(b => b.textContent);
+      // La base, désormais, a les trois réponses.
+      window.__reponses.mes_questionnaires = { ok:true, liste:[fini] };
+      const cb = c.querySelector('.rv-cert button'); if (cb) cb.click();
+      await attendre(300);
+      const envois = window.__appels.filter(a => a.nom === 'repondre')
+        .map(a => a.args.p_question + '=' + a.args.p_reponse);
+      const themes = [...c.querySelectorAll('.rv-themes li')].map(li => li.textContent);
+      const surs = (c.querySelector('.rv-bilan .rv-expl') || {}).textContent || '';
+      const larg = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+      const recom = [...c.querySelectorAll('button')].find(b => b.textContent === 'Tout recommencer');
+      if (recom) recom.click();
+      await attendre(50);
+      const cliquables = [...c.querySelectorAll('.rv-opt')].filter(b => !b.disabled).length;
+      return { av, apresChoix, certs, envois, themes, surs, larg, recom: !!recom, cliquables };
+    }, { vierge, fini });
+    console.log(`\n══ thèmes et certitude, ${w} px`);
+    console.log('   avancée        :', r.av);
+    console.log('   envois au choix:', r.apresChoix, '· certitude :', r.certs.join(' / '));
+    console.log('   envois         :', r.envois.join(', '));
+    console.log('   bilan          :', r.themes.join(' | '));
+    console.log('   sûr et faux    :', r.surs);
+    console.log('   recommencer    :', r.recom, '· options cliquables ensuite :', r.cliquables);
+    if (!/TP1/.test(r.av)) rates.push(`${w} px : le thème de la question n'est pas annoncé`);
+    if (r.apresChoix !== 0) rates.push(`${w} px : choisir une option envoie la réponse avant la certitude`);
+    if (r.certs.length !== 3) rates.push(`${w} px : ${r.certs.length} boutons de certitude, attendu 3`);
+    if (r.envois.join(',') !== 'rv-01=B,rv-01-c=S')
+      rates.push(`${w} px : envois « ${r.envois.join(',')} », attendu la réponse puis la certitude`);
+    if (r.themes.length !== 2 || !/TP2.*0 \/ 2.*à revoir/.test(r.themes[1]))
+      rates.push(`${w} px : bilan par thème absent ou faux — ${r.themes.join(' | ')}`);
+    if (!/1 réponse fausse/.test(r.surs)) rates.push(`${w} px : la réponse fausse donnée avec assurance n'est pas signalée`);
+    if (!r.recom || r.cliquables !== 4) rates.push(`${w} px : « Tout recommencer » ne rend pas les options cliquables`);
+    if (r.larg > 0) rates.push(`${w} px : débordement horizontal de ${r.larg} px`);
+    if (err.length) rates.push(`${w} px : erreur JS — ${err[0]}`);
+    await fermer();
+  }
+}
+
+// ── Le même tour, lu par l'enseignant ──────────────────────────────────────
+// Le taux par thème, les numéros fragiles, les sûrs-et-faux — et les prénoms
+// de la table locale collés aux numéros quand elle en a.
+{
+  const { page: p, erreurs: err, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const r = await p.evaluate(() => {
+    try { localStorage.setItem('tdc-noms', JSON.stringify({ 'BTS2-SLAM-2026': { '05': 'DUPONT Léa' } })); } catch (e) {}
+    const d = { themes: [
+      { theme:'TP1', questions:6, reponses:40, justes:34, taux:85, fragiles:[], surs_faux:[] },
+      { theme:'TP2', questions:6, reponses:36, justes:14, taux:39, fragiles:['05','11'], surs_faux:['05'] },
+      { theme:'TP4', questions:6, reponses:0, justes:0, taux:null, fragiles:[], surs_faux:[] }] };
+    const z = window.__e.lectureParTheme(d, 'BTS2-SLAM-2026');
+    document.body.appendChild(z);
+    return { badges: [...z.querySelectorAll('.badge')].map(b => b.className.replace('badge ', '') + ':' + b.textContent),
+             lignes: [...z.querySelectorAll('.qn-th-l')].map(x => x.textContent) };
+  });
+  console.log('\n══ lecture enseignant par thème');
+  console.log('   badges :', r.badges.join(' | '));
+  console.log('   lignes :', r.lignes.join(' | '));
+  if (r.badges.join('|') !== 'ok:85 % juste · 40 réponses|ko:39 % juste · 36 réponses|neutre:pas encore de réponse')
+    rates.push('lecture par thème : badges inattendus — ' + r.badges.join(' | '));
+  if (!r.lignes.some(l => /fragile|moitié/.test(l) && /05/.test(l) && /11/.test(l)))
+    rates.push('lecture par thème : les fragiles ne sont pas nommés');
+  if (!r.lignes.some(l => /Sûrs d'eux/.test(l) && /05/.test(l)))
+    rates.push('lecture par thème : les sûrs-et-faux ne sont pas nommés');
+  if (err.length) rates.push('lecture par thème : erreur JS — ' + err[0]);
+  await fermer();
+}
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach(x => console.log('  ✗ ' + x)); process.exit(1); }
 console.log("  ✓ La carte de révision est ouverte, ses options sont cliquables,");
 console.log('    et la file d\'attente ne la réclame pas.');
+console.log('  ✓ La certitude passe avant la correction, le bilan se lit par thème,');
+console.log('    et « Tout recommencer » rouvre les questions.');

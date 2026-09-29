@@ -16,7 +16,7 @@
 // bloque », « Faisons connaissance » et « Recherche de stage », qui lisent les
 // mêmes séances. Les importer ferait un cycle.
 
-import { $, sb, suivi, erreur, typo } from './socle.js';
+import { $, sb, suivi, erreur, typo, nomDe, prenomSeul } from './socle.js';
 
 let chargerAFaire = function(){};
 let chargerConnaissance = function(){};
@@ -192,7 +192,7 @@ function reglagesModele(m, autres, parClasse){
   if (autres.length) bouts.push("donner à " + autres.length + " autre" +
                                 (autres.length > 1 ? "s classes" : " classe"));
   var posees = Object.keys(parClasse).length;
-  if (posees) bouts.push("rattacher, retirer");
+  if (posees) bouts.push("rattacher, échéance, retirer");
   bouts.push("supprimer");
   som.textContent = "Réglages — " + bouts.join(", ");
   det.appendChild(som);
@@ -208,6 +208,7 @@ function reglagesModele(m, autres, parClasse){
     t.textContent = a.nom;
     bloc.appendChild(t);
     bloc.appendChild(choixSeance(m, { classe_id: a.classe_id, nom: a.nom, code: a.code }, a));
+    bloc.appendChild(reglageComportement(m, { classe_id: a.classe_id, nom: a.nom }, a));
     bloc.appendChild(boutonRetirer(m, { classe_id: a.classe_id, nom: a.nom }, a, bloc));
     corps.appendChild(bloc);
   });
@@ -286,9 +287,64 @@ function deplientReponses(m, a){
         // Même sortie que connaissance_classe() : on réutilise son rendu
         // plutôt que d'en écrire un second qui divergerait.
         remplirConnaissanceClasse(corps, { nom: a.nom, code: a.code }, r.data);
+        // Une révision se lit d'abord par thème : c'est ce qu'on reprend
+        // avant l'évaluation, et avec qui. Posé en tête, avant la répartition
+        // question par question qu'on ne lit qu'ensuite.
+        if (r.data.themes && r.data.themes.length) {
+          corps.insertBefore(lectureParTheme(r.data, a.code), corps.firstChild);
+        }
       });
   });
   return det;
+}
+
+// La lecture par thème d'un questionnaire de révision : le taux de la classe,
+// les numéros fragiles, les numéros sûrs et faux — ceux-là ne poseront pas de
+// question, ils ne savent pas qu'ils ont tort. Mêmes seuils que le
+// débriefing (75 / 45), pour que deux écrans ne disent pas deux choses.
+// Les prénoms viennent de la table locale et ne quittent pas l'appareil.
+function lectureParTheme(d, code){
+  var z = document.createElement("div");
+  z.className = "qn-themes";
+  var h = document.createElement("h3");
+  h.textContent = "Par thème";
+  z.appendChild(h);
+  var nomme = function(nums){
+    return nums.map(function(n){
+      var p = nomDe(code, n);
+      return p ? n + " " + prenomSeul(p) : n;
+    }).join(", ");
+  };
+  d.themes.forEach(function(t){
+    var l = document.createElement("div");
+    l.className = "qn-th";
+    var tete = document.createElement("div");
+    tete.className = "qn-th-tete";
+    var n = document.createElement("b");
+    n.textContent = t.theme;
+    var b = document.createElement("span");
+    var taux = t.taux;
+    b.className = "badge " + (taux === null || taux === undefined ? "neutre"
+      : (taux >= 75 ? "ok" : (taux >= 45 ? "att" : "ko")));
+    b.textContent = taux === null || taux === undefined ? "pas encore de réponse"
+      : taux + " % juste · " + t.reponses + " réponse" + (t.reponses > 1 ? "s" : "");
+    tete.appendChild(n); tete.appendChild(b);
+    l.appendChild(tete);
+    if (t.fragiles && t.fragiles.length) {
+      var f = document.createElement("p");
+      f.className = "qn-th-l";
+      f.textContent = "Moins de la moitié juste : " + nomme(t.fragiles);
+      l.appendChild(f);
+    }
+    if (t.surs_faux && t.surs_faux.length) {
+      var s2 = document.createElement("p");
+      s2.className = "qn-th-l qn-th-sf";
+      s2.textContent = "Sûrs d'eux, et faux : " + nomme(t.surs_faux);
+      l.appendChild(s2);
+    }
+    z.appendChild(l);
+  });
+  return z;
 }
 
 function caseClasse(m, c, a){
@@ -314,8 +370,9 @@ function caseClasse(m, c, a){
 
   // Donné. L'interrupteur d'abord : c'est le geste courant, celui qu'on refait.
   // Retirer est rare et destructeur, il vient après.
-  var bouts = [a.ouvert ? "visible par les étudiants" : "préparé, pas encore visible"];
-  if (a.rattachee_a) bouts.push("suit la séance " + a.rattachee_numero);
+  var bouts = [a.expire ? "échéance passée — masqué aux étudiants"
+               : a.ouvert ? "visible par les étudiants" : "préparé, pas encore visible"];
+  bouts.push(texteRattachement(a));
   if (a.inscrits) {
     bouts.push(a.termines + " / " + a.inscrits + " terminé" + (a.termines > 1 ? "s" : ""));
   }
@@ -332,10 +389,106 @@ function caseClasse(m, c, a){
   b.addEventListener("click", function(){ basculer(m, c, a, b); });
   actes.appendChild(b);
 
+  // Rattacher ou détacher se voit sur la ligne, et plus seulement dans le
+  // tiroir (29/09) : c'est ce qu'on cherchait, et on ne le trouvait pas.
+  // Détacher part d'un clic — rien ne se perd, et l'état ne change pas.
+  // Rattacher demande de choisir la séance : le bouton ouvre le tiroir sur
+  // le bon sélecteur.
+  var r = document.createElement("button");
+  r.type = "button";
+  r.className = "btn btn-sec qn-aff";
+  if (a.rattachee_a) {
+    r.textContent = "Détacher";
+    r.setAttribute("aria-label", "Détacher « " + m.titre + " » de la séance " +
+                   a.rattachee_numero + " pour " + c.nom);
+    r.addEventListener("click", function(){
+      r.disabled = true;
+      var faux = { value: "", disabled: false };
+      rattacher(m, c, a, faux);
+    });
+  } else {
+    r.textContent = "Rattacher…";
+    r.setAttribute("aria-label", "Rattacher « " + m.titre + " » à une séance pour " + c.nom);
+    r.addEventListener("click", function(){
+      var carte = l.closest(".qn-m");
+      var tiroir = carte && carte.querySelector(".qn-reg");
+      if (!tiroir) return;
+      tiroir.open = true;
+      var sel = tiroir.querySelector('select[data-seance="' + a.seance_id + '"]');
+      if (sel) sel.focus();
+    });
+  }
+  actes.appendChild(r);
+
   // « Retirer » et « Avec la séance… » vivent désormais dans le tiroir des
   // réglages : ce sont des gestes qu'on fait assis, pas en séance. Ce qui
   // reste ici est ce qu'on touche debout — le nom, l'état, l'interrupteur.
   return l;
+}
+
+// La phrase qui dit ce que fait le rattachement — la même partout, pour que
+// la ligne du questionnaire et la fiche de la séance ne disent pas deux choses.
+function texteRattachement(a){
+  var t = !a.rattachee_a ? "rattaché à aucune séance"
+    : a.reste_ouvert ? "s'ouvre avec la séance " + a.rattachee_numero + ", reste ouvert ensuite"
+    : "s'ouvre et se ferme avec la séance " + a.rattachee_numero;
+  if (a.visible_jusqu_au) {
+    t += " · jusqu'au " + new Date(a.visible_jusqu_au + "T12:00:00")
+      .toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  }
+  return t;
+}
+
+// Ce que fait le rattachement, et jusqu'à quand. Deux réglages, un seul
+// appel : regler_questionnaire(). Chaque changement part tout de suite — pas
+// de bouton « Enregistrer » qu'on oublie.
+function reglageComportement(m, c, a){
+  var z = document.createElement("div");
+  z.className = "qn-comp";
+  var l1 = document.createElement("label");
+  l1.className = "qn-rat";
+  var t1 = document.createElement("span");
+  t1.textContent = "À la fin de la séance";
+  var sel = document.createElement("select");
+  sel.setAttribute("aria-label", "Ce que fait « " + m.titre + " » à la fin de sa séance, pour " + c.nom);
+  [["", "il se ferme avec elle"], ["1", "il reste ouvert"]].forEach(function(o){
+    var op = document.createElement("option");
+    op.value = o[0]; op.textContent = o[1];
+    if (!!a.reste_ouvert === !!o[0]) op.selected = true;
+    sel.appendChild(op);
+  });
+  l1.appendChild(t1); l1.appendChild(sel);
+  var l2 = document.createElement("label");
+  l2.className = "qn-rat";
+  var t2 = document.createElement("span");
+  t2.textContent = "Visible jusqu'au";
+  var d = document.createElement("input");
+  d.type = "date";
+  d.value = a.visible_jusqu_au || "";
+  d.setAttribute("aria-label", "Date au-delà de laquelle « " + m.titre + " » n'est plus montré à " + c.nom);
+  l2.appendChild(t2); l2.appendChild(d);
+  var envoyer = function(){
+    sel.disabled = d.disabled = true;
+    erreur("err-qactifs", "");
+    sb.rpc("regler_questionnaire", { p_seance_id: Number(a.seance_id),
+      p_reste_ouvert: sel.value === "1", p_jusqu_au: d.value || null }).then(function(r){
+      sel.disabled = d.disabled = false;
+      var x = r && r.data;
+      if (!r || r.error || !x || !x.ok) {
+        erreur("err-qactifs", (x && x.motif === "date_passee")
+          ? "Cette date est déjà passée : le questionnaire disparaîtrait tout de suite."
+          : "Réglage refusé. Vérifiez que vous êtes bien connecté en enseignant.");
+        return;
+      }
+      a.reste_ouvert = x.reste_ouvert; a.visible_jusqu_au = x.visible_jusqu_au;
+      erreur("err-qactifs", "« " + m.titre + " » pour " + c.nom + " : " + texteRattachement(a) + ".", true);
+      rafraichirQuestionnaires();
+    });
+  };
+  sel.addEventListener("change", envoyer);
+  d.addEventListener("change", envoyer);
+  z.appendChild(l1); z.appendChild(l2);
+  return z;
 }
 
 function choixSeance(m, c, a){
@@ -345,7 +498,17 @@ function choixSeance(m, c, a){
   txt.textContent = "Avec la séance";
   lig.appendChild(txt);
 
+  // Les séances candidates viennent de la classe telle que la base l'a
+  // rendue (BIB.classes). Jusqu'au 29/09 le tiroir passait une classe
+  // reconstruite sans elles : le sélecteur était TOUJOURS désactivé, sur
+  // « aucune séance de cours pour cette classe », et rattacher était
+  // impossible depuis l'écran. t_pilotage.mjs le vérifie désormais.
+  var seances = c.seances || (BIB.classes.filter(function(k){
+    return String(k.classe_id) === String(c.classe_id); })[0] || {}).seances || [];
+  c = { classe_id: c.classe_id, nom: c.nom, code: c.code, seances: seances };
+
   var sel = document.createElement("select");
+  sel.dataset.seance = a.seance_id;
   sel.setAttribute("aria-label", "Séance accompagnée par « " + m.titre +
                    " » pour " + c.nom);
   var aucune = document.createElement("option");
@@ -356,7 +519,7 @@ function choixSeance(m, c, a){
   (c.seances || []).forEach(function(s){
     var o = document.createElement("option");
     o.value = String(s.seance_id);
-    o.textContent = s.numero + " — " + s.titre + (s.en_cours ? "  ·  en cours" : "");
+    o.textContent = s.numero + " — " + s.titre + (s.module_titre ? "  ·  " + s.module_titre : "") + (s.en_cours ? "  ·  en cours" : "");
     if (String(a.rattachee_a) === String(s.seance_id)) o.selected = true;
     sel.appendChild(o);
   });
@@ -484,4 +647,4 @@ function rafraichirQuestionnaires(){
   chargerAFaire();
 }
 
-export { chargerQuestionnaires, chargerQuestionsSeance, rendreBibliotheque };
+export { chargerQuestionnaires, chargerQuestionsSeance, rendreBibliotheque, lectureParTheme, texteRattachement };
