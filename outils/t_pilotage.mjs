@@ -251,7 +251,21 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     await attendre(30);
     const ficheDet = window.__appels.filter(a => a.nom === 'rattacher_questionnaire')
       .map(a => JSON.stringify(a.args)).join(' | ');
+    // « Réviser cette séance » (30/09) : caché sur un projet (pas de quiz),
+    // visible sur un cours, et un clic part en UN appel qui fabrique ET propose.
+    const revProjet = document.getElementById('gs-rev').hidden;
+    await window.__e.ouvrirFichePrep({ id: 3, numero: 2, titre: 'TP2', nature: 'cours', module_id: 1 }, 'infos');
+    await attendre(80);
+    const revCours = !document.getElementById('gs-rev').hidden;
+    const revTexte = document.getElementById('b-gs-rev').textContent;
+    const revH = document.getElementById('b-gs-rev').getBoundingClientRect().height;
+    window.__appels.length = 0;
+    document.getElementById('b-gs-rev').click();
+    await attendre(30);
+    const revAppel = window.__appels.filter(a => a.nom === 'reviser_seance')
+      .map(a => JSON.stringify(a.args)).join(' | ');
     return { gestes, etat, detache, ouvert, focus, candidates, bloque, regle, fiche, choix, ficheDet,
+             revProjet, revCours, revTexte, revH, revAppel,
              debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   }, { BIB2 });
   if (r.casse) { rates.push('rattacher : ' + r.casse); await fermer(); await nav.close(); rates.forEach(x => console.log('  ✗ ' + x)); process.exit(1); }
@@ -272,6 +286,11 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   if (!/regler_questionnaire \{"p_seance_id":34,"p_reste_ouvert":false,"p_jusqu_au":"2026-10-12"\}/.test(r.regle)) rates.push(`rattacher : le comportement ne part pas en un appel complet — ${r.regle}`);
   if (r.fiche.length !== 1 || !/Réviser/.test(r.fiche[0])) rates.push(`fiche : la séance ne dit pas quel questionnaire l'accompagne — ${r.fiche.join(' | ')}`);
   if (r.choix.length - 1 !== 1) rates.push(`fiche : ${r.choix.length - 1} questionnaire(s) proposés au rattachement, attendu 1 (le stage du BTS2)`);
+  console.log('   réviser (fiche)  : caché sur un projet', r.revProjet, '· visible sur un cours', r.revCours, '·', r.revTexte, '·', r.revAppel);
+  if (!r.revProjet) rates.push('réviser : le bouton « Réviser cette séance » apparaît sur un projet, qui n\'a pas de quiz');
+  if (!r.revCours || !/Proposer la révision/.test(r.revTexte)) rates.push(`réviser : le bouton manque sur un cours — « ${r.revTexte} »`);
+  if (r.revH < 44) rates.push(`réviser : bouton de ${r.revH} px, sous les 44 px`);
+  if (r.revAppel !== '{"p_seance_id":3,"p_ouvrir":true}') rates.push(`réviser : le clic n'appelle pas reviser_seance(3, vrai) — ${r.revAppel}`);
   if (!/"p_seance_id":34,"p_cible":null/.test(r.ficheDet)) rates.push(`fiche : « Détacher » n'appelle pas rattacher_questionnaire(34, null) — ${r.ficheDet}`);
   if (r.debord > 0) rates.push(`rattacher : la page déborde de ${r.debord} px`);
   if (err.length) rates.push('rattacher : erreur JS — ' + err[0]);

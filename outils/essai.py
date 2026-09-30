@@ -70,7 +70,7 @@ ESSAIS = [
      'dans la trace'),
 
     ("un numéro de question inexistant", 'fiche',
-     lambda b: (_migration(b, '*_debriefing.sql'), r"\[8 9\]", '[8 14]'),
+     lambda b: (_migration(b, '*_debriefing.sql'), r"\[7 8\]", '[7 14]'),
      'question 14'),
 
     ("un acte sans point de passage", 'fiche',
@@ -95,7 +95,7 @@ ESSAIS = [
 
     # ── pédagogie ──────────────────────────────────────────────────────────
     ("des actes qui débordent de l'heure", 'pedagogie',
-     lambda b: (_trace(b, 3), r'\(≈ 17 min\)', '(≈ 40 min)'),
+     lambda b: (_trace(b, 3), r'\(≈ 14 min\)', '(≈ 40 min)'),
      "min d'actes annoncées"),
 
     ("un prérequis qui ne nomme pas la séance d'avant", 'pedagogie',

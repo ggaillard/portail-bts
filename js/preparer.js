@@ -52,6 +52,7 @@ function ouvrirFichePrep(s, onglet){
   ["err-ct-neuf", "err-db-neuf", "err-mi-neuf", "err-pr-ctl"].forEach(function(id){ erreur(id, ""); });
   $("gs-pret").innerHTML = "";
   $("gs-qn").hidden = true;
+  if ($("gs-rev")) $("gs-rev").hidden = true;
   if (!s) return Promise.resolve();
   lireQuestionnairesPrep(s);
   return lireEtat(s);
@@ -213,15 +214,77 @@ function lireQuestionnairesPrep(s){
   return sb.rpc("bibliotheque").then(function(r){
     if (!courante || String(courante.id) !== String(s.id)) return;
     if (!r || r.error || !r.data || !r.data.ok) return;     // pas déployée : rien
-    var ici = [], autres = [];
+    var ici = [], autres = [], revision = null;
     (r.data.modeles || []).forEach(function(m){
+      if (m.cle === "revision-seance-" + s.id) {
+        (m.affectations || []).forEach(function(a){
+          if (String(a.classe_id) === classeId) revision = { m: m, a: a };
+        });
+      }
       (m.affectations || []).forEach(function(a){
         if (String(a.classe_id) !== classeId) return;
         (String(a.rattachee_a) === String(s.id) ? ici : autres).push({ m: m, a: a });
       });
     });
     rendreQuestionnairesPrep(s, ici, autres);
+    rendreRevisionPrep(s, revision);
   });
+}
+
+// ── Réviser cette séance (30/09) ─────────────────────────────────────────
+// Un geste : `reviser_seance()` fabrique, depuis le quiz et les concepts de
+// la séance, un questionnaire de révision (correction après chaque réponse,
+// bilan par concept) et le propose à la classe. Un seul par séance — sa clé
+// est `revision-seance-<id>` — donc rappuyer rallume, sans doublon. Ensuite
+// c'est un questionnaire comme les autres : il apparaît dans la carte
+// « Questionnaires », avec son interrupteur et sa lecture par thème.
+function rendreRevisionPrep(s, x){
+  var z = $("gs-rev"), b = $("b-gs-rev"), e = $("gs-rev-etat");
+  if (!z) return;
+  z.hidden = s.nature === "projet";          // un projet n'a pas de quiz
+  if (z.hidden) return;
+  b.disabled = false;
+  b.dataset.eteindre = "";
+  if (!x) {
+    b.textContent = "Proposer la révision";
+    e.textContent = "Le quiz de la séance, correction après chaque réponse, bilan concept par concept. " +
+                    "À ouvrir après le contrôle d'entrée, pas avant.";
+  } else if (x.a.ouvert) {
+    b.textContent = "Éteindre la révision";
+    b.dataset.eteindre = "oui";
+    e.textContent = "Proposée aux étudiants — " + x.m.questions + " questions · " +
+                    (x.a.commences || 0) + " commencé(s), " + (x.a.termines || 0) + " terminé(s).";
+  } else {
+    b.textContent = "Proposer la révision";
+    e.textContent = "Prête, éteinte — " + x.m.questions + " questions" +
+                    (x.a.commences ? " · " + x.a.commences + " l'ont déjà commencée." : ".");
+  }
+  b.onclick = function(){
+    b.disabled = true;
+    erreur("err-gs-qn", "");
+    var appel = b.dataset.eteindre
+      ? sb.rpc("ouvrir_questionnaire", { p_classe_id: Number(x.a.classe_id),
+                                         p_numero: Number(x.a.numero), p_ouvert: false })
+      : sb.rpc("reviser_seance", { p_seance_id: Number(s.id), p_ouvrir: true });
+    appel.then(function(r){
+      var d = r && r.data;
+      if (!r || r.error || !d || !d.ok) {
+        var pourquoi = d && d.detail ? d.detail
+                     : (r && r.error && /reviser_seance/.test(r.error.message || "")
+                        ? "La base ne connaît pas encore cette fonction : la migration du 30/09 n'est pas appliquée."
+                        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+        erreur("err-gs-qn", pourquoi);
+        b.disabled = false;
+        return;
+      }
+      erreur("err-gs-qn", b.dataset.eteindre
+        ? "Révision éteinte : les étudiants ne la voient plus. Leurs réponses sont gardées."
+        : "« " + d.titre + " » est proposée à la classe — " + d.questions + " questions." +
+          (d.fige ? " Des étudiants y avaient déjà répondu : le texte n'a pas été réécrit." : ""), true);
+      lireQuestionnairesPrep(s);
+      chargerQuestionnaires(true);
+    });
+  };
 }
 
 function rendreQuestionnairesPrep(s, ici, autres){

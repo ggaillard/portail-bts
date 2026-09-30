@@ -159,5 +159,8 @@
 .gs-qn-l{display:flex;justify-content:space-between;align-items:center;gap:.6rem;
   padding:.45rem 0;border-bottom:1px solid var(--rule-soft)}
 .gs-qn-t{display:flex;flex-direction:column;min-width:0}
+.gs-rev{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;
+  padding:.6rem 0;margin-bottom:.4rem;border-bottom:1px solid var(--rule-soft)}
+.gs-rev .btn{min-height:44px}
 .gs-qn-t b{overflow-wrap:anywhere}
 .gs-qn-aj{display:flex;flex-direction:column;gap:.25rem;margin-top:.6rem;font-size:.9rem}

@@ -22,6 +22,21 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 30 septembre 2026 — la base vectorielle en séance 3, et réviser une séance au choix
+
+La séance 3 du BTS1 (« 60, 47, 72 ») gagne un acte IV « La base qui cherche par
+le sens » ; la séance 4 n'en garde que l'angle « l'index se versionne ». Dans la
+fiche d'une séance de cours (Préparer), un bouton **« Proposer la révision »**
+fabrique depuis son quiz et ses concepts un questionnaire de révision
+(correction après chaque réponse, certitude, bilan par concept) et le propose
+à la classe ; le même bouton l'éteint ensuite.
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20260930060000_bts1_seance3_vectoriel.sql` | séance 3 : la question 9 (le marécage) devient la question sur la base vectorielle, bonne réponse D ; refuse d'écrire si le quiz a déjà une réponse |
+| `20260930061000_bts1_seance3_vectoriel_debriefing.sql` | séance 3 : six concepts, dont « Une base vectorielle » [9] ; « Lac et entrepôt » passe à [7 8] |
+| `20260930070000_reviser_une_seance.sql` | `reviser_seance(seance, ouvrir)` (enseignant) et `_reviser_seance()` (fermée à l'API) ; clé `revision-seance-<id>`, un seul par séance, texte figé dès la première réponse ; pose « Réviser la séance 2 » au BTS1, **fermé** |
+
 ## 28 septembre 2026 — le tableau de bord refondu par moment
 
 Trois onglets au lieu de quatre — **En cours** (appel + la séance du jour +
