@@ -36,6 +36,8 @@ fabrique depuis son quiz et ses concepts un questionnaire de révision
 | `20260930060000_bts1_seance3_vectoriel.sql` | séance 3 : la question 9 (le marécage) devient la question sur la base vectorielle, bonne réponse D ; refuse d'écrire si le quiz a déjà une réponse |
 | `20260930061000_bts1_seance3_vectoriel_debriefing.sql` | séance 3 : six concepts, dont « Une base vectorielle » [9] ; « Lac et entrepôt » passe à [7 8] |
 | `20260930070000_reviser_une_seance.sql` | `reviser_seance(seance, ouvrir)` (enseignant) et `_reviser_seance()` (fermée à l'API) ; clé `revision-seance-<id>`, un seul par séance, texte figé dès la première réponse ; pose « Réviser la séance 2 » au BTS1, **fermé** |
+| `20260930080000_activer_revision_seance2_bts1.sql` | « Réviser la séance 2 » rattaché à la séance 3 du BTS1 et proposé |
+| `20260930090000_seance4_cachee_et_coherence.sql` | BTS1 : contrôle de la séance 4 éteint (la carte « Séance 4 » se montrait pendant la 3), séances 1-2 jouées republiées, titre de la 3 accentué ; `a_faire()` réécrite — « contrôle éteint » ne vise plus que la prochaine séance de cours, nouvelle règle « contrôle proposé trop tôt » |
 
 ## 28 septembre 2026 — le tableau de bord refondu par moment
 
