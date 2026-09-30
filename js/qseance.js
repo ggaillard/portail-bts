@@ -45,11 +45,11 @@ function majQuestionnairesSeance(seanceId, classeId, numero, force){
         (String(a.rattachee_a) === String(seanceId) ? ici : autres).push({ m: m, a: a });
       });
     });
-    rendre(seanceId, classeId, ici, autres);
+    qsRendre(seanceId, classeId, ici, autres);
   });
 }
 
-function rendre(seanceId, classeId, ici, autres){
+function qsRendre(seanceId, classeId, ici, autres){
   var z = $("bloc-qseance"), liste = $("qs-liste"), sel = $("qs-ajout");
   z.hidden = false;
   $("qs-compte").textContent = ici.length ? String(ici.length) : "";
@@ -60,7 +60,7 @@ function rendre(seanceId, classeId, ici, autres){
     v.textContent = "Aucun questionnaire n'accompagne cette séance.";
     liste.appendChild(v);
   }
-  ici.forEach(function(x){ liste.appendChild(ligne(seanceId, classeId, x)); });
+  ici.forEach(function(x){ liste.appendChild(qsLigne(seanceId, classeId, x)); });
 
   sel.innerHTML = "";
   var o0 = document.createElement("option");
@@ -81,7 +81,7 @@ function rendre(seanceId, classeId, ici, autres){
     if (sel.value === "") return;
     var x = autres[Number(sel.value)];
     sel.disabled = true;
-    geste("rattacher_questionnaire",
+    qsGeste("rattacher_questionnaire",
       { p_seance_id: Number(x.a.seance_id), p_cible: Number(seanceId) },
       function(d){
         return "« " + typo(x.m.titre) + " » accompagne maintenant cette séance" +
@@ -91,7 +91,7 @@ function rendre(seanceId, classeId, ici, autres){
   };
 }
 
-function ligne(seanceId, classeId, x){
+function qsLigne(seanceId, classeId, x){
   var l = document.createElement("div");
   l.className = "qs-l";
   var t = document.createElement("span");
@@ -120,7 +120,7 @@ function ligne(seanceId, classeId, x){
   sw.addEventListener("click", function(){
     sw.disabled = true;
     var vise = !x.a.ouvert;
-    geste("ouvrir_questionnaire",
+    qsGeste("ouvrir_questionnaire",
       { p_classe_id: Number(classeId), p_numero: Number(x.a.numero), p_ouvert: vise },
       function(){
         return vise ? "« " + typo(x.m.titre) + " » est proposé aux étudiants."
@@ -134,7 +134,7 @@ function ligne(seanceId, classeId, x){
   de.setAttribute("aria-label", "Détacher « " + x.m.titre + " » de cette séance");
   de.addEventListener("click", function(){
     de.disabled = true;
-    geste("rattacher_questionnaire", { p_seance_id: Number(x.a.seance_id), p_cible: null },
+    qsGeste("rattacher_questionnaire", { p_seance_id: Number(x.a.seance_id), p_cible: null },
       function(){
         return "« " + typo(x.m.titre) + " » ne suit plus cette séance. Son état n'a pas changé : " +
                "c'est « Proposer / Éteindre » qui décide de ce que voient les étudiants.";
@@ -145,7 +145,7 @@ function ligne(seanceId, classeId, x){
   return l;
 }
 
-function geste(rpc, args, texte, seanceId, classeId){
+function qsGeste(rpc, args, texte, seanceId, classeId){
   erreur("err-qseance", "");
   sb.rpc(rpc, args).then(function(r){
     var d = r && r.data;
