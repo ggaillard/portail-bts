@@ -286,6 +286,18 @@
         <div aria-live="polite" id="err-prevol"></div>
       </div>
 
+      <!-- Les questionnaires qui accompagnent la séance (30/09) : ce qui
+           s'allume avec elle, et le choix de ce qu'on y associe. -->
+      <div id="bloc-qseance" class="pa-bloc qs-bloc" hidden>
+        <div class="ct-tete">
+          <h3>Questionnaires de la séance <span class="vg-compte" id="qs-compte"></span></h3>
+        </div>
+        <div id="qs-liste"></div>
+        <label class="qs-aj"><span class="vh">Associer un questionnaire à cette séance</span>
+          <select id="qs-ajout"></select></label>
+        <div aria-live="polite" id="err-qseance"></div>
+      </div>
+
       <!-- « À aller voir ». Vient AVANT le parcours : le parcours dit où en
            est chacun, celui-ci dit qui aider maintenant, et pourquoi — c'est la
            question qu'on se pose debout. Des raisons, jamais un score ; et

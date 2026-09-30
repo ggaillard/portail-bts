@@ -38,7 +38,8 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `pilote.js` | l'écran de la séance : en-tête collant, quatre vues, filtres et recherche d'élèves, Pause, « Clore » différé |
 | `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
 | `toast.js` | les confirmations passagères, avec « Annuler » pour un geste différé |
-| `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis, les questionnaires qui l'accompagnent |
+| `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis, les questionnaires qui l'accompagnent, « Proposer la révision » |
+| `qseance.js` | sur l'écran du direct (vue Maintenant), les questionnaires qui accompagnent la séance : les voir, Proposer / Éteindre, Détacher, « Associer un questionnaire… » |
 | `compterendu.js` | le compte rendu d'une séance, sous « Fin d'heure » : texte à copier, CSV |
 | `carnet.js` | le carnet de la classe dans Bilan : élèves × séances jouées, « décroche », CSV |
 | `exporter.js` | le CSV qu'un tableur français ouvre sans question (point-virgule, BOM) |

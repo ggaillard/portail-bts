@@ -705,6 +705,8 @@ Lot « après la séance » (28/09) : compte rendu de fin d'heure (`compterendu.
 
 Réviser une séance (30/09) : bouton « Proposer la révision » dans la fiche
 d'une séance de cours (`preparer.js`, RPC `reviser_seance()`).
+Les questionnaires de la séance sur l'écran du direct (30/09) : bloc de la
+vue Maintenant, voir, proposer / éteindre, détacher, associer (`qseance.js`).
 
 **Le chantier A est terminé.** `index.html` : 5 847 → 521 lignes (509 à la fin
 du chantier A ; les douze de plus sont le commentaire de taxonomie posé par B6).

@@ -264,7 +264,29 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     await attendre(30);
     const revAppel = window.__appels.filter(a => a.nom === 'reviser_seance')
       .map(a => JSON.stringify(a.args)).join(' | ');
+    // « Questionnaires de la séance » sur l'écran du direct (30/09) : on y
+    // VOIT ce qui accompagne la séance, et on y CHOISIT ce qu'on y associe.
+    let w = document.getElementById('bloc-qseance');
+    while (w) { w.hidden = false; w = w.parentElement; }
+    document.getElementById('bloc-qseance').hidden = true;
+    window.__e.majQuestionnairesSeance(3, 2, 2, true);
+    await attendre(80);
+    const qsVisible = !document.getElementById('bloc-qseance').hidden;
+    const qsLignes = [...document.querySelectorAll('#qs-liste .qs-l')].map(x => x.textContent);
+    const qsChoix = [...document.querySelectorAll('#qs-ajout option')].filter(o => o.value).length;
+    window.__appels.length = 0;
+    const qsSel = document.getElementById('qs-ajout');
+    qsSel.value = '0'; qsSel.dispatchEvent(new Event('change'));
+    await attendre(30);
+    const qsAssocie = window.__appels.filter(a => a.nom === 'rattacher_questionnaire')
+      .map(a => JSON.stringify(a.args)).join(' | ');
+    const qsBoutons = [...document.querySelectorAll('#qs-liste .btn')].map(x => x.textContent);
+    const qsH = Math.min(...[...document.querySelectorAll('#qs-liste .btn, #qs-ajout')]
+      .map(x => x.getBoundingClientRect().height));
+    window.__e.majQuestionnairesSeance(99, 2, 99, true);
+    const qsAppel = document.getElementById('bloc-qseance').hidden;
     return { gestes, etat, detache, ouvert, focus, candidates, bloque, regle, fiche, choix, ficheDet,
+             qsVisible, qsLignes, qsChoix, qsAssocie, qsBoutons, qsH, qsAppel,
              revProjet, revCours, revTexte, revH, revAppel,
              debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   }, { BIB2 });
@@ -286,6 +308,12 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   if (!/regler_questionnaire \{"p_seance_id":34,"p_reste_ouvert":false,"p_jusqu_au":"2026-10-12"\}/.test(r.regle)) rates.push(`rattacher : le comportement ne part pas en un appel complet — ${r.regle}`);
   if (r.fiche.length !== 1 || !/Réviser/.test(r.fiche[0])) rates.push(`fiche : la séance ne dit pas quel questionnaire l'accompagne — ${r.fiche.join(' | ')}`);
   if (r.choix.length - 1 !== 1) rates.push(`fiche : ${r.choix.length - 1} questionnaire(s) proposés au rattachement, attendu 1 (le stage du BTS2)`);
+  console.log('   séance (direct)  :', r.qsLignes.join(' | '), '· à associer :', r.qsChoix, '·', r.qsAssocie);
+  if (!r.qsVisible || r.qsLignes.length !== 1 || !/Réviser/.test(r.qsLignes[0])) rates.push(`direct : l'écran de la séance ne montre pas le questionnaire associé — ${r.qsLignes.join(' | ')}`);
+  if (!/Proposer|Éteindre/.test(r.qsBoutons.join(' ')) || !r.qsBoutons.includes('Détacher')) rates.push(`direct : gestes manquants sur le questionnaire associé — ${r.qsBoutons.join(', ')}`);
+  if (r.qsChoix < 1 || !/"p_cible":3/.test(r.qsAssocie)) rates.push(`direct : « Associer un questionnaire… » n'appelle pas rattacher_questionnaire(…, 3) — ${r.qsAssocie}`);
+  if (r.qsH < 44) rates.push(`direct : une cible du bloc questionnaires fait ${r.qsH} px, sous 44`);
+  if (!r.qsAppel) rates.push('direct : le bloc questionnaires s\'affiche sur la séance d\'appel (99)');
   console.log('   réviser (fiche)  : caché sur un projet', r.revProjet, '· visible sur un cours', r.revCours, '·', r.revTexte, '·', r.revAppel);
   if (!r.revProjet) rates.push('réviser : le bouton « Réviser cette séance » apparaît sur un projet, qui n\'a pas de quiz');
   if (!r.revCours || !/Proposer la révision/.test(r.revTexte)) rates.push(`réviser : le bouton manque sur un cours — « ${r.revTexte} »`);

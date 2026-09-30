@@ -252,3 +252,12 @@ body.fiche-ouverte{overflow:hidden}
 /* ── Le compte rendu ── */
 .cr-texte{white-space:pre-wrap;font-family:var(--f-sans);font-size:.88rem;line-height:1.55;
   background:var(--surface-alt);border-radius:8px;padding:.7rem .8rem;margin:.4rem 0 .6rem}
+
+/* Les questionnaires de la séance, vue Maintenant (30/09). */
+.qs-l{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;
+  padding:.45rem 0;border-bottom:1px solid var(--rule-soft)}
+.qs-t{display:flex;flex-direction:column;min-width:0;flex:1 1 14rem}
+.qs-t b{overflow-wrap:anywhere}
+.qs-actes{display:flex;gap:.4rem;flex-wrap:wrap}
+.qs-aj{display:block;margin-top:.6rem}
+.qs-aj select{width:100%}

@@ -113,27 +113,27 @@ const m = {
 // n'est pas une table à tenir à la main, c'est la photo du dépôt le jour où
 // l'on a mis REFONTE.md d'accord avec lui.
 const ATTENDU = {
-  'lignes de index.html': 809,
+  'lignes de index.html': 821,
   'feuilles de style': 13,
-  'modules': 26,
-  'lignes de CSS': 1556,
-  'lignes de JavaScript': 8119,
-  'règles CSS': 726,
-  'classes CSS': 445,
+  'modules': 27,
+  'lignes de CSS': 1565,
+  'lignes de JavaScript': 8287,
+  'règles CSS': 732,
+  'classes CSS': 449,
   'variables CSS définies': 19,
   'variables CSS inutilisées': 0,
   'var() jamais déclarées': 0,
   'media queries': 19,
   'seuils distincts': 8,
-  'fonctions de premier niveau': 264,
+  'fonctions de premier niveau': 268,
   'médiane des fonctions': 19,
   'plus longue fonction': 246,
   'fonctions RPC appelées': 52,
-  'innerHTML =': 147,
-  'textContent =': 351,
-  'createElement': 281,
+  'innerHTML =': 149,
+  'textContent =': 360,
+  'createElement': 292,
   'onclick= en chaîne': 0,
-  'aria-live': 35,
+  'aria-live': 36,
 };
 
 const large = Math.max(...Object.keys(m).map((k) => k.length));

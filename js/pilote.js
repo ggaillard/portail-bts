@@ -27,6 +27,7 @@ import { lireModules } from './modules.js';
 import { toast } from './toast.js';
 import { ouvrirFiche } from './fiche.js';
 import { rendreCompteRendu } from './compterendu.js';
+import { majQuestionnairesSeance } from './qseance.js';
 
 var VUES = ["maintenant", "eleves", "questions", "fin"];
 var SQUELETTE = '<span class="vh">Chargement…</span><span class="squelette"></span>' +
@@ -119,6 +120,10 @@ function majPilote(apresStats){
     b.addEventListener("click", function(){ $("sv-choix").hidden = true; $("sv-fil").click(); });
     sa.appendChild(b);
   }
+
+  // Les questionnaires qui accompagnent la séance : relus seulement quand
+  // la séance change (qseance.js garde la dernière lecture).
+  majQuestionnairesSeance(aSeance ? sel.value : "", cl && cl.value, p ? p.seance : 0);
 
   if (!$("sv-fin").hidden) rendreCompteRendu();
   appliquerFiltres();
