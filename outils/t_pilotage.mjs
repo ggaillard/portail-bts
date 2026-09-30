@@ -283,10 +283,22 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     const qsBoutons = [...document.querySelectorAll('#qs-liste .btn')].map(x => x.textContent);
     const qsH = Math.min(...[...document.querySelectorAll('#qs-liste .btn, #qs-ajout')]
       .map(x => x.getBoundingClientRect().height));
+    // « En cours » s'ouvre sur la séance du jour, pas sur un TP resté ouvert
+    // toute l'année (30/09 : il ouvrait un TP du BTS2 le jour de la séance 3).
+    const L = [
+      { id: 17, classe_id: 2, numero: 2, ouverte: true, demarree_le: null, nature: 'projet', publiee: true },
+      { id: 2, classe_id: 1, numero: 2, ouverte: false, demarree_le: '2026-09-23T10:19:00Z', nature: 'cours', publiee: true },
+      { id: 3, classe_id: 1, numero: 3, ouverte: false, demarree_le: null, nature: 'cours', publiee: true },
+      { id: 4, classe_id: 1, numero: 4, ouverte: false, demarree_le: null, nature: 'cours', publiee: false, controle_ouvert: true }];
+    const jour = window.__e.seanceDuJour(L, ['1', '2'], Date.parse('2026-09-30T11:40:00+02:00'));
+    const jourEnCours = window.__e.seanceDuJour(
+      L.map(x => x.id === 4 ? { ...x, ouverte: true, demarree_le: '2026-10-07T10:20:00Z' } : x),
+      ['1', '2'], Date.parse('2026-10-07T12:40:00+02:00'));
     window.__e.majQuestionnairesSeance(99, 2, 99, true);
     const qsAppel = document.getElementById('bloc-qseance').hidden;
     return { gestes, etat, detache, ouvert, focus, candidates, bloque, regle, fiche, choix, ficheDet,
              qsVisible, qsLignes, qsChoix, qsAssocie, qsBoutons, qsH, qsAppel,
+             jour: jour && jour.id, jourEnCours: jourEnCours && jourEnCours.id,
              revProjet, revCours, revTexte, revH, revAppel,
              debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   }, { BIB2 });
@@ -308,6 +320,9 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   if (!/regler_questionnaire \{"p_seance_id":34,"p_reste_ouvert":false,"p_jusqu_au":"2026-10-12"\}/.test(r.regle)) rates.push(`rattacher : le comportement ne part pas en un appel complet — ${r.regle}`);
   if (r.fiche.length !== 1 || !/Réviser/.test(r.fiche[0])) rates.push(`fiche : la séance ne dit pas quel questionnaire l'accompagne — ${r.fiche.join(' | ')}`);
   if (r.choix.length - 1 !== 1) rates.push(`fiche : ${r.choix.length - 1} questionnaire(s) proposés au rattachement, attendu 1 (le stage du BTS2)`);
+  console.log('   séance du jour   :', r.jour, '· une fois la 4 démarrée :', r.jourEnCours);
+  if (r.jour !== 3) rates.push(`En cours : s'ouvre sur la séance ${r.jour} au lieu de la prochaine séance de cours (3) — un TP ouvert toute l'année ne fait pas la séance du jour`);
+  if (r.jourEnCours !== 4) rates.push(`En cours : une séance démarrée et ouverte ne passe pas en premier (${r.jourEnCours})`);
   console.log('   séance (direct)  :', r.qsLignes.join(' | '), '· à associer :', r.qsChoix, '·', r.qsAssocie);
   if (!r.qsVisible || r.qsLignes.length !== 1 || !/Réviser/.test(r.qsLignes[0])) rates.push(`direct : l'écran de la séance ne montre pas le questionnaire associé — ${r.qsLignes.join(' | ')}`);
   if (!/Proposer|Éteindre/.test(r.qsBoutons.join(' ')) || !r.qsBoutons.includes('Détacher')) rates.push(`direct : gestes manquants sur le questionnaire associé — ${r.qsBoutons.join(', ')}`);

@@ -7,9 +7,17 @@
 //
 // L'ordre de préférence, parmi les séances de cours et de projet (< 90) des
 // classes réelles :
-//   1. une séance OUVERTE — la plus récemment démarrée s'il y en a plusieurs ;
-//   2. sinon la dernière DÉMARRÉE — c'est celle qu'on relit en fin d'heure ;
-//   3. sinon la première classe, comme avant.
+//   1. une séance OUVERTE ET DÉMARRÉE — l'heure en train de se jouer ;
+//   2. une séance démarrée AUJOURD'HUI (déjà close : on la relit) ;
+//   3. la PROCHAINE SÉANCE DE COURS à jouer : publiée ou contrôle proposé, pas
+//      encore démarrée — la plus petite par classe, celle de la classe qui a
+//      joué le plus récemment ;
+//   4. sinon la dernière DÉMARRÉE ;
+//   5. sinon la première classe, comme avant.
+// Le 30/09, « ouverte » seule suffisait : or un PROJET reste ouvert toute
+// l'année (les TP du BTS2 le sont tous, sans jamais avoir été démarrés).
+// En cours s'ouvrait donc sur un TP du BTS2 le matin de la séance 3 du BTS1,
+// et le questionnaire qu'on cherchait n'était pas sur cet écran-là.
 // Avant tout cela, l'ADRESSE : « #appel/s/123 » (un favori, un raccourci)
 // désigne la séance à ouvrir, si elle existe dans une classe réelle.
 // Le choix se refait à chaque ouverture de l'espace ; les sélecteurs restent
@@ -19,22 +27,43 @@ import { $, sb } from './socle.js';
 import { chargerSeancesDe } from './seance.js';
 import { seanceDeLAdresse } from './navigation.js';
 
-function seanceDuJour(liste, idsReels){
+function seanceDuJour(liste, idsReels, maintenant){
   var l = (liste || []).filter(function(s){
     return s.numero < 90 && idsReels.indexOf(String(s.classe_id)) >= 0;
   });
   var date = function(s){ return s.demarree_le ? Date.parse(s.demarree_le) : 0; };
   var recent = function(a, b){ return date(b) - date(a); };
-  var ouvertes = l.filter(function(s){ return s.ouverte; }).sort(recent);
-  if (ouvertes.length) return ouvertes[0];
+  var jour = new Date(maintenant || Date.now()).toDateString();
+
+  var enCours = l.filter(function(s){ return s.ouverte && s.demarree_le; }).sort(recent);
+  if (enCours.length) return enCours[0];
+
+  var duJour = l.filter(function(s){
+    return s.demarree_le && new Date(s.demarree_le).toDateString() === jour; }).sort(recent);
+  if (duJour.length) return duJour[0];
+
   var jouees = l.filter(function(s){ return s.demarree_le; }).sort(recent);
+
+  // La prochaine séance de cours : prête à être jouée, pas encore jouée.
+  var prochaines = l.filter(function(s){
+    return (s.nature || "cours") === "cours" && !s.demarree_le && (s.publiee || s.controle_ouvert);
+  });
+  if (prochaines.length) {
+    var derniereClasse = jouees.length ? String(jouees[0].classe_id) : null;
+    prochaines.sort(function(a, b){
+      var da = String(a.classe_id) === derniereClasse ? 0 : 1;
+      var db = String(b.classe_id) === derniereClasse ? 0 : 1;
+      return da - db || a.numero - b.numero;
+    });
+    return prochaines[0];
+  }
   return jouees[0] || null;
 }
 
 function choisirSeanceDuJour(classes){
   if (!classes || !classes.length) return Promise.resolve(null);
   var ids = classes.map(function(c){ return String(c.id); });
-  return sb.from("seances").select("id,classe_id,numero,ouverte,demarree_le")
+  return sb.from("seances").select("id,classe_id,numero,ouverte,demarree_le,nature,publiee,controle_ouvert")
     .then(function(r){
       var voulue = seanceDeLAdresse();
       var s = (voulue && (r && r.data || []).filter(function(x){

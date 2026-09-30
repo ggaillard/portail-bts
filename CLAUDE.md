@@ -73,7 +73,7 @@ semestre »). Refondu **par moment** :
 | Onglet (clé) | La question | Ce qu'on y trouve |
 |---|---|---|
 | Ligne épinglée — **Ce qui bloque** | *Est-ce que je peux faire cours ?* | `a_faire()`, **repliée sur une ligne** avec sa pastille ; dépliée d'office dès qu'un point est **bloquant**, jamais repliée d'autorité. |
-| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | L'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte**, sinon la dernière **démarrée** (`js/encours.js`). |
+| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | L'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte et démarrée**, sinon démarrée aujourd'hui, sinon la **prochaine séance de cours** (publiée ou contrôle proposé, pas encore démarrée), sinon la dernière démarrée (`js/encours.js`). Un projet ouvert toute l'année n'est pas « la séance du jour ». |
 | **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | Les séances (groupées par module) en **liste + fiche** — infos, contrôle d'entrée, concepts, missions, « Prête à démarrer ? » —, l'inventaire des contrôles (replié), les questionnaires, les modules (replié). |
 | **Bilan** (`#ensemble`) | *Où en est-on ?* | Le semestre, module par module ; les classes ; « Faisons connaissance » et « Recherche de stage », repliés. |
 
