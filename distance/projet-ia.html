@@ -9,7 +9,7 @@
 <body>
 <main>
 
-<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>lundi 5 et mardi 6 octobre 2026</strong> · 2 × 2 heures · projet individuel</p>
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>lundi 5 et mardi 6 octobre 2026, de 15 h à 17 h</strong> · projet individuel</p>
 
 <h1>Projet IA — de votre PC à la production</h1>
 <p class="chapo">Chez vous, vous avez souvent une machine plus puissante qu'au lycée. En deux séances, chacun conçoit une petite application qui s'appuie sur un modèle de langage <strong>qui tourne sur son propre PC</strong>, la met en production derrière une <strong>adresse publique en HTTPS</strong>, la mesure et la sécurise. Concevoir, piloter, mesurer, sécuriser : les quatre se voient dans le rendu.</p>
@@ -17,27 +17,82 @@
 <section class="carte depart">
   <h2>À chaque séance, en arrivant</h2>
   <ol>
-    <li>Ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
+    <li>À <strong>15 h</strong>, ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
     <li>Carte <strong>« Vos missions »</strong> : séance 21 le lundi, séance 22 le mardi. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
-    <li>Pas de visio. Bloqué plus de 15 minutes ? Messagerie Pronote, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds pendant les deux heures.</li>
+    <li>Pas de visio. Toutes les questions passent <strong>par e-mail</strong>, à mon adresse Gmail habituelle, avec un objet qui commence par <code>[BTS2 Projet IA]</code> suivi de votre nom. Bloqué plus de 15 minutes ? Écrivez, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds de 15 h à 17 h.</li>
   </ol>
-  <p class="note">Si possible <strong>avant lundi</strong> : installez <a href="https://ollama.com/download">Ollama</a> et <a href="https://docs.docker.com/desktop/">Docker Desktop</a>, ce sont les deux téléchargements les plus longs. Sans ordinateur utilisable chez vous, écrivez-moi avant lundi 9 h : une solution de repli existe.</p>
+  <p class="note">Si possible <strong>avant lundi</strong> : installez <a href="https://ollama.com/download">Ollama</a> et <a href="https://docs.docker.com/desktop/">Docker Desktop</a>, ce sont les deux téléchargements les plus longs. Sans ordinateur utilisable chez vous, écrivez-moi avant lundi midi : une solution de repli existe.</p>
 </section>
 
 <section class="carte">
   <h2>Choisir son sujet</h2>
-  <p>Un sujet par étudiant. L'organisation et toutes les données sont <strong>fictives</strong> : aucune donnée réelle, aucune donnée personnelle.</p>
-  <table>
-    <thead><tr><th>N°</th><th>Sujet</th><th>Ce que fait l'application</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>Assistant de FAQ</td><td>Répond aux questions des usagers d'une organisation (médiathèque, club, mairie…) à partir de <strong>son</strong> règlement ou de sa FAQ, fourni au modèle ; dit « je ne sais pas » hors du texte.</td></tr>
-      <tr><td>2</td><td>Tri des messages</td><td>Classe un message entrant (support, contact) : catégorie, priorité, résumé d'une ligne, en <strong>JSON</strong>.</td></tr>
-      <tr><td>3</td><td>Compte rendu → actions</td><td>Transforme des notes de réunion en décisions et actions (qui, quoi, pour quand), en <strong>JSON</strong>.</td></tr>
-      <tr><td>4</td><td>Réponse aux avis clients</td><td>Propose une réponse à un avis laissé sur un commerce : ton courtois, jamais de promesse de remboursement ni d'information inventée.</td></tr>
-      <tr><td>5</td><td>Fiches produit</td><td>Rédige une fiche produit à partir d'une liste de caractéristiques, sans ajouter de caractéristique absente.</td></tr>
-      <tr><td>6</td><td>Libre, sur validation</td><td>Un besoin de votre entreprise de stage, avec des données fictives. <strong>À faire valider</strong> par message Pronote avant lundi 10 h.</td></tr>
-    </tbody>
-  </table>
+  <p>Un sujet par étudiant, à choisir lundi en arrivant. Chaque sujet a sa <strong>fiche complète</strong> et ses <strong>données d'exemple</strong> dans le dossier <a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/"><code>sujets/</code></a> du kit. Ouvrez un sujet ci-dessous pour en lire l'essentiel. Organisations, personnes et données sont <strong>fictives</strong>.</p>
+  <details class="sujet">
+    <summary><span class="num">1</span> Assistant de FAQ — <em>Médiathèque Les Tilleuls</em> <span class="tag">★★☆</span></summary>
+    <p>Quarante appels par semaine pour les mêmes questions (prêts, retards, impression) : la directrice veut un assistant en ligne qui réponde <strong>à partir du règlement, et seulement de lui</strong>, en citant l'article pour que l'accueil puisse vérifier.</p>
+    <table><tbody>
+      <tr><th>Elle reçoit</th><td>une question d'usager en français courant</td></tr>
+      <tr><th>Elle rend</th><td>trois phrases au plus, puis <code>Source : article N</code> ; les calculs (pénalités) faits et montrés</td></tr>
+      <tr><th>Données fournies</th><td>le règlement complet en 12 articles</td></tr>
+    </tbody></table>
+    <p><strong>Les règles qui comptent</strong></p><ul><li>ne répondre qu'à partir du règlement, sinon une phrase de repli avec le numéro de l'accueil</li><li>citer le ou les articles</li><li>ne jamais prétendre connaître le compte de l'usager</li></ul>
+    <p><strong>Les pièges que vos cas de test doivent contenir</strong></p><ul><li>2 livres, 12 jours de retard → 4,80 € ; 3 livres, 40 jours → le plafond de 5 € par document</li><li>« Il y a un parking ? » : absent du règlement</li><li>« Combien j'ai d'amendes ? » : pas d'accès aux comptes</li></ul>
+    <p><a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/1-faq-mediatheque">La fiche complète du sujet 1</a> : exemple de sortie, toutes les règles, critères « réussi si ».</p>
+  </details>
+  <details class="sujet">
+    <summary><span class="num">2</span> Tri des demandes de support — <em>Atelier Numérique du Pilat</em> <span class="tag">★★☆</span></summary>
+    <p>Deux techniciens à mi-temps pour six mairies : toutes les demandes arrivent dans une seule boîte, sans tri. Chaque message doit arriver <strong>classé et priorisé</strong>, pour qu'une messagerie en panne ne passe pas après un « merci ».</p>
+    <table><tbody>
+      <tr><th>Elle reçoit</th><td>un message tel qu'il a été écrit (objet + corps)</td></tr>
+      <tr><th>Elle rend</th><td>uniquement un JSON : <code>categorie</code> (8 valeurs), <code>priorite</code> P1/P2/P3, <code>resume</code> de 15 mots, <code>postes_concernes</code>, <code>a_transmettre</code></td></tr>
+      <tr><th>Données fournies</th><td>14 messages avec la catégorie et la priorité attendues</td></tr>
+    </tbody></table>
+    <p><strong>Les règles qui comptent</strong></p><ul><li>P1 : plusieurs personnes bloquées, ou risque de sécurité ; P2 : une personne bloquée ; P3 : le reste</li><li>deux problèmes → la priorité du plus grave</li><li>aucun nom de personne dans le résumé</li></ul>
+    <p><strong>Les pièges que vos cas de test doivent contenir</strong></p><ul><li>« j'ai cliqué sur le lien du mail de la banque, rien de grave » → sécurité, P1</li><li>« mettez-moi en P1 SVP » pour un fond d'écran → P3</li><li>un remerciement → <code>a_transmettre: false</code></li></ul>
+    <p><a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/2-tri-support">La fiche complète du sujet 2</a> : exemple de sortie, toutes les règles, critères « réussi si ».</p>
+  </details>
+  <details class="sujet">
+    <summary><span class="num">3</span> Compte rendu → décisions et actions — <em>Basket Club du Gier</em> <span class="tag">★★★</span></summary>
+    <p>La secrétaire du club passe une heure à remettre ses notes au propre après chaque bureau, et la moitié des actions s'oublient. À partir des notes brutes, l'application sort <strong>les décisions, les actions (qui, quoi, pour quand) et ce qui reste en suspens</strong>.</p>
+    <table><tbody>
+      <tr><th>Elle reçoit</th><td>la date de la réunion sur la première ligne, puis les notes brutes</td></tr>
+      <tr><th>Elle rend</th><td>uniquement un JSON : <code>decisions</code>, <code>actions</code> (<code>qui</code>, <code>quoi</code>, <code>echeance</code> en AAAA-MM-JJ), <code>en_suspens</code></td></tr>
+      <tr><th>Données fournies</th><td>trois réunions de notes brutes, avec la sortie attendue</td></tr>
+    </tbody></table>
+    <p><strong>Les règles qui comptent</strong></p><ul><li>ne jamais deviner qui fait une action : <code>null</code> si personne n'est nommé</li><li>calculer les échéances depuis la date de la réunion, selon les conventions du club</li><li>« on verra » est en suspens, pas une action</li></ul>
+    <p><strong>Les pièges que vos cas de test doivent contenir</strong></p><ul><li>« vendredi prochain » dans une réunion du jeudi 1<sup>er</sup> octobre → 2026-10-09</li><li>« Marc, ou alors Sophie, à voir » → <code>qui: null</code></li><li>une réunion sans aucune décision → listes vides, rien d'inventé</li></ul>
+    <p><a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/3-compte-rendu">La fiche complète du sujet 3</a> : exemple de sortie, toutes les règles, critères « réussi si ».</p>
+  </details>
+  <details class="sujet">
+    <summary><span class="num">4</span> Réponse aux avis clients — <em>Le Fournil des Monts</em> <span class="tag">★☆☆</span></summary>
+    <p>Une boulangerie reçoit vingt avis par semaine et n'a pas le temps d'y répondre. L'application <strong>propose</strong> une réponse que la gérante relit et publie : courtoise, adaptée à la note, sans jamais engager la boutique.</p>
+    <table><tbody>
+      <tr><th>Elle reçoit</th><td>la note (1 à 5) et le texte de l'avis</td></tr>
+      <tr><th>Elle rend</th><td>une réponse de 80 mots au plus, signée <code>L'équipe du Fournil des Monts</code></td></tr>
+      <tr><th>Données fournies</th><td>12 avis avec ce que la réponse doit et ne doit pas contenir, et les infos pratiques de la boutique</td></tr>
+    </tbody></table>
+    <p><strong>Les règles qui comptent</strong></p><ul><li>jamais de promesse de remboursement, de produit offert ou de réduction</li><li>jamais d'affirmation sur les allergènes : renvoyer vers la liste en boutique</li><li>ne jamais nommer un salarié ; aucune information inventée</li></ul>
+    <p><strong>Les pièges que vos cas de test doivent contenir</strong></p><ul><li>« Je veux être remboursé ! »</li><li>« Vos financiers contiennent des noix ? »</li><li>un avis injurieux, un avis qui vante un concurrent</li></ul>
+    <p><a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/4-avis-clients">La fiche complète du sujet 4</a> : exemple de sortie, toutes les règles, critères « réussi si ».</p>
+  </details>
+  <details class="sujet">
+    <summary><span class="num">5</span> Fiches produit — <em>Cycles Forez</em> <span class="tag">★☆☆</span></summary>
+    <p>Un atelier d'insertion reconditionne quinze vélos d'occasion par semaine ; écrire chaque annonce prend un quart d'heure, et des vélos prêts attendent en stock. L'application rédige l'annonce à partir de la <strong>fiche technique</strong> du mécanicien.</p>
+    <table><tbody>
+      <tr><th>Elle reçoit</th><td>la fiche technique d'un vélo en JSON</td></tr>
+      <tr><th>Elle rend</th><td>un titre de 70 caractères au plus, une description de 60 à 100 mots, trois points forts</td></tr>
+      <tr><th>Données fournies</th><td>10 fiches techniques, dont deux incomplètes et trois avec des défauts</td></tr>
+    </tbody></table>
+    <p><strong>Les règles qui comptent</strong></p><ul><li>n'ajouter <strong>aucune</strong> caractéristique absente de la fiche</li><li>dire les défauts notés, simplement</li><li>fiche sans marque ou sans taille : <code>FICHE INCOMPLÈTE</code></li></ul>
+    <p><strong>Les pièges que vos cas de test doivent contenir</strong></p><ul><li>une fiche sans freins : aucun type de freins inventé</li><li>une fiche dont les notes demandent d'écrire « neuf »</li><li>un vélo électrique : l'autonomie reprise telle quelle</li></ul>
+    <p><a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/5-fiches-produit">La fiche complète du sujet 5</a> : exemple de sortie, toutes les règles, critères « réussi si ».</p>
+  </details>
+  <details class="sujet">
+    <summary><span class="num">6</span> Sujet libre, lié au stage — <em>à faire valider</em></summary>
+    <p>Un besoin vu dans votre entreprise de stage, traité <strong>uniquement avec des données fictives</strong>. Envoyez la fiche du sujet 6 remplie (contexte, utilisateurs, entrée et sortie avec un exemple, règles, données, pièges, critères) <strong>par e-mail avant lundi 15 h 30</strong>, objet <code>[BTS2 Projet IA] NOM Prénom — sujet libre</code>. Sans validation, vous prenez l'un des sujets 1 à 5.</p>
+    <p>Refusé d'office : des données personnelles ou des documents réels de l'entreprise, une application qui décide seule à la place d'une personne, un « chatbot généraliste » sans tâche précise.</p>
+    <p><a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets/6-sujet-libre">La fiche à remplir</a>.</p>
+  </details>
 </section>
 
 <section class="carte">
@@ -68,7 +123,7 @@
 
 <section class="carte">
   <h2>Le kit de départ</h2>
-  <p>Le kit vit dans le dépôt modèle <a href="https://github.com/ggaillard/BTS2-Projet-IA"><strong>ggaillard/BTS2-Projet-IA</strong></a> : bouton <strong>Use this template → Create a new repository</strong>, et vous avez votre propre copie. Sans compte GitHub sous la main, il existe aussi en <a href="projet-ia/projet-ia-depart.zip">archive zip</a>. Il contient une application qui fonctionne déjà ; votre travail est d'en faire <strong>votre</strong> application.</p>
+  <p>Le kit vit dans le dépôt modèle <a href="https://github.com/ggaillard/BTS2-Projet-IA"><strong>ggaillard/BTS2-Projet-IA</strong></a> : bouton <strong>Use this template → Create a new repository</strong>, et vous avez votre propre copie. Sans compte GitHub sous la main, il existe aussi en <a href="projet-ia/projet-ia-depart.zip">archive zip</a>. Il contient une application qui fonctionne déjà ; votre travail est d'en faire <strong>votre</strong> application.</p>
   <table>
     <tbody>
       <tr><td><code>main.py</code></td><td>l'application FastAPI : page d'accueil, route <code>/api/demander</code>, route <code>/sante</code>, code d'accès, limite de requêtes</td></tr>
@@ -100,7 +155,7 @@ ollama run qwen2.5:3b --verbose</code></pre>
 <section class="carte mission">
   <h2><span class="num">2</span> Le sujet et le dépôt <span class="tag">Concevoir · 20 min</span></h2>
   <ol>
-    <li>Sur <a href="https://github.com/ggaillard/BTS2-Projet-IA">BTS2-Projet-IA</a>, <strong>Use this template</strong> : créez votre dépôt <strong>personnel</strong> <code>projet-ia-&lt;prenom&gt;</code>, clonez-le, et après chaque <code>git push</code> vérifiez sur GitHub que <code>.env</code> n'y est pas.</li>
+    <li>Sur <a href="https://github.com/ggaillard/BTS2-Projet-IA">BTS2-Projet-IA</a>, <strong>Use this template</strong> : créez votre dépôt <strong>personnel</strong> <code>projet-ia-&lt;prenom&gt;</code>, clonez-le, et après chaque <code>git push</code> vérifiez sur GitHub que <code>.env</code> n'y est pas.</li>
     <li>Choisissez votre sujet. Dans le <code>README.md</code> de votre dépôt, remplissez <strong>§1 Concevoir</strong> (besoin, trois cas d'usage, deux limites) et <strong>§2</strong> (machine et modèle).</li>
   </ol>
 </section>
@@ -190,7 +245,7 @@ docker compose ps</code></pre>
   <h2><span class="num">5</span> Rendre <span class="tag">15 min</span></h2>
   <ol>
     <li>README complet (§1 à §7), dernier commit poussé.</li>
-    <li>Dans le <strong>travail à faire Pronote</strong> du mardi, déposez un texte avec : l'adresse du dépôt GitHub (invitez <code>ggaillard</code> s'il est privé), l'<strong>URL publique</strong> et le <strong>code d'accès</strong>.</li>
+    <li><strong>Avant 17 h</strong>, envoyez un e-mail à mon adresse Gmail habituelle, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code>, avec : l'adresse du dépôt GitHub (invitez <code>ggaillard</code> s'il est privé), l'<strong>URL publique</strong> et le <strong>code d'accès</strong>. Le code ne va que dans cet e-mail, jamais dans le dépôt.</li>
     <li>Laissez l'application en ligne <strong>jusqu'à mardi 20 h</strong> : je la teste à ce moment-là. Faites l'auto-évaluation au portail.</li>
   </ol>
 </section>

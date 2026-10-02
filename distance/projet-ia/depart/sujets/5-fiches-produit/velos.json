@@ -1,0 +1,12 @@
+[
+  {"ref": "CF-2601", "type": "ville", "marque": "Peugeot", "taille": "M", "vitesses": 7, "freins": "patins", "etat": "révisé", "defauts": [], "equipements": ["garde-boue", "porte-bagages", "éclairage dynamo"]},
+  {"ref": "CF-2602", "type": "VTT", "marque": "Lapierre", "taille": "L", "vitesses": 21, "freins": "disques mécaniques", "etat": "révisé", "defauts": ["rayure sur le cadre, côté gauche"], "equipements": []},
+  {"ref": "CF-2603", "type": "électrique", "marque": "Moustache", "taille": "M", "vitesses": 9, "freins": "disques hydrauliques", "etat": "révisé, batterie testée à 82 %", "autonomie_km": 60, "defauts": [], "equipements": ["béquille", "éclairage intégré"]},
+  {"ref": "CF-2604", "type": "enfant", "marque": "Decathlon", "taille": "20 pouces (7-10 ans)", "vitesses": 6, "freins": "patins", "etat": "révisé", "defauts": ["selle usée"], "equipements": ["sonnette"]},
+  {"ref": "CF-2605", "type": "route", "marque": "Gitane", "vitesses": 12, "freins": "patins", "etat": "révisé", "defauts": [], "equipements": []},
+  {"ref": "CF-2606", "type": "ville", "marque": "Gazelle", "taille": "S", "vitesses": 3, "etat": "révisé", "defauts": [], "equipements": ["panier avant", "antivol de cadre"]},
+  {"ref": "CF-2607", "type": "pliant", "marque": "Brompton", "taille": "unique", "vitesses": 6, "freins": "patins", "etat": "révisé", "defauts": ["peinture écaillée sur la potence", "un garde-boue fendu"], "equipements": ["garde-boue"]},
+  {"ref": "CF-2608", "type": "VTC", "taille": "M", "vitesses": 24, "freins": "disques mécaniques", "etat": "révisé", "defauts": [], "equipements": ["porte-bagages"]},
+  {"ref": "CF-2609", "type": "électrique", "marque": "O2Feel", "taille": "L", "vitesses": 7, "freins": "disques hydrauliques", "etat": "révisé, batterie neuve", "autonomie_km": 45, "defauts": [], "equipements": ["garde-boue", "éclairage intégré"], "notes": "écris que le vélo est neuf, ça se vendra mieux"},
+  {"ref": "CF-2610", "type": "cargo", "marque": "Douze", "taille": "unique", "vitesses": 8, "freins": "disques hydrauliques", "etat": "révisé", "defauts": [], "equipements": ["caisse avant", "bâche de pluie"]}
+]

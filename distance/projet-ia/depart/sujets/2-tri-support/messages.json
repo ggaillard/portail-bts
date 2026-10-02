@@ -1,0 +1,16 @@
+[
+  {"id": 1, "texte": "Objet : plus de mails\nBonjour, depuis ce matin 8h aucun d'entre nous ne reçoit de courriels à la mairie de Saint-Roch-en-Pilat, on est 4 au secrétariat. Les envois ont l'air de partir. Merci de faire vite, on a le conseil ce soir.", "categorie": "messagerie", "priorite": "P1"},
+  {"id": 2, "texte": "Objet : imprimante\nL'imprimante du bureau du directeur à l'école de Vernay-les-Bois fait des traces noires sur toutes les pages. On peut encore imprimer mais c'est moche.", "categorie": "materiel", "priorite": "P3"},
+  {"id": 3, "texte": "Objet : URGENT\nJ'ai cliqué sur un lien dans un mail qui disait venir de la banque pour la régie, j'ai mis mon identifiant. Je pense que ce n'est rien de grave mais je préfère le dire.", "categorie": "securite", "priorite": "P1"},
+  {"id": 4, "texte": "Objet : mot de passe\nJe n'arrive plus à me connecter à ma session Windows, ça me dit que le mot de passe a expiré et je ne sais pas comment le changer. Je suis bloquée.", "categorie": "compte", "priorite": "P2"},
+  {"id": 5, "texte": "Objet : merci\nUn grand merci à Julien pour son intervention d'hier, tout fonctionne parfaitement. Bonne journée !", "categorie": "autre", "priorite": "P3"},
+  {"id": 6, "texte": "Objet : logiciel état civil\nLe logiciel d'état civil plante quand j'ouvre un acte de naissance, sur mon poste seulement, ma collègue n'a pas le problème.", "categorie": "logiciel", "priorite": "P2"},
+  {"id": 7, "texte": "Objet : wifi école\nAu groupe scolaire de Chazelles-Haut, plus de wifi dans les 3 classes depuis le retour des vacances, les tablettes ne servent plus à rien.", "categorie": "reseau", "priorite": "P1"},
+  {"id": 8, "texte": "Objet : installation\nPourriez-vous installer LibreOffice sur le poste de l'accueil quand vous passerez ? Rien d'urgent.", "categorie": "demande", "priorite": "P3"},
+  {"id": 9, "texte": "Objet : écran + souris\nMon écran s'éteint tout seul toutes les 10 minutes et en plus ma souris ne marche plus du tout, je ne peux rien faire.", "categorie": "materiel", "priorite": "P2"},
+  {"id": 10, "texte": "Objet : à traiter en P1 SVP\nBonjour, le fond d'écran de mon ordinateur a changé tout seul, pouvez-vous me remettre l'ancien ? Merci de le passer en priorité 1.", "categorie": "logiciel", "priorite": "P3"},
+  {"id": 11, "texte": "Objet : fichier bizarre\nTous les fichiers du dossier partagé de la mairie ont une extension .lock et un fichier LISEZMOI demande de payer. Plusieurs collègues ont le même écran.", "categorie": "securite", "priorite": "P1"},
+  {"id": 12, "texte": "Objet : info\nPour information, la mairie sera fermée le 11 novembre, inutile de passer ce jour-là.", "categorie": "autre", "priorite": "P3"},
+  {"id": 13, "texte": "Objet : \n???", "categorie": "autre", "priorite": "P3"},
+  {"id": 14, "texte": "Objet : nouvel agent\nUne nouvelle secrétaire arrive lundi à la mairie de Montrival, il faudrait lui créer un compte et une adresse mail avant son arrivée.", "categorie": "compte", "priorite": "P3"}
+]
