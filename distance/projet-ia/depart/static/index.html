@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projet IA</title>
+<style>
+  body { font: 17px/1.5 system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
+  textarea, input, button { font: inherit; width: 100%; box-sizing: border-box; margin: .3rem 0 .8rem; padding: .6rem; }
+  button { cursor: pointer; }
+  #sortie { white-space: pre-wrap; background: #f3f3f0; padding: 1rem; border-radius: 6px; min-height: 3rem; }
+  .meta { color: #666; font-size: .85rem; }
+</style>
+</head>
+<body>
+  <h1>[Nom de votre application]</h1>
+  <p>[Une phrase : à qui elle sert, et pour quoi faire.]</p>
+
+  <label for="code">Code d'accès</label>
+  <input id="code" type="password" autocomplete="off">
+
+  <label for="texte">Votre demande</label>
+  <textarea id="texte" rows="6" maxlength="2000"></textarea>
+
+  <button id="envoyer">Envoyer</button>
+  <div id="sortie" aria-live="polite"></div>
+  <p class="meta" id="meta"></p>
+
+<script>
+const $ = (id) => document.getElementById(id);
+$("envoyer").addEventListener("click", async () => {
+  $("envoyer").disabled = true;
+  $("sortie").textContent = "Le modèle réfléchit…";
+  $("meta").textContent = "";
+  try {
+    const r = await fetch("/api/demander", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: $("code").value, texte: $("texte").value }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || r.status);
+    $("sortie").textContent = d.reponse;          // textContent : jamais innerHTML
+    $("meta").textContent = `${d.modele} · ${d.duree_s} s`;
+  } catch (e) {
+    $("sortie").textContent = "Erreur : " + e.message;
+  } finally {
+    $("envoyer").disabled = false;
+  }
+});
+</script>
+</body>
+</html>

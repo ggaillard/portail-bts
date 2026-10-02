@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projet IA à domicile</title>
+<link rel="stylesheet" href="distance.css">
+</head>
+<body>
+<main>
+
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>lundi 5 et mardi 6 octobre 2026</strong> · 2 × 2 heures · projet individuel</p>
+
+<h1>Projet IA — de votre PC à la production</h1>
+<p class="chapo">Chez vous, vous avez souvent une machine plus puissante qu'au lycée. En deux séances, chacun conçoit une petite application qui s'appuie sur un modèle de langage <strong>qui tourne sur son propre PC</strong>, la met en production derrière une <strong>adresse publique en HTTPS</strong>, la mesure et la sécurise. Concevoir, piloter, mesurer, sécuriser : les quatre se voient dans le rendu.</p>
+
+<section class="carte depart">
+  <h2>À chaque séance, en arrivant</h2>
+  <ol>
+    <li>Ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
+    <li>Carte <strong>« Vos missions »</strong> : séance 21 le lundi, séance 22 le mardi. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
+    <li>Pas de visio. Bloqué plus de 15 minutes ? Messagerie Pronote, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds pendant les deux heures.</li>
+  </ol>
+  <p class="note">Si possible <strong>avant lundi</strong> : installez <a href="https://ollama.com/download">Ollama</a> et <a href="https://docs.docker.com/desktop/">Docker Desktop</a>, ce sont les deux téléchargements les plus longs. Sans ordinateur utilisable chez vous, écrivez-moi avant lundi 9 h : une solution de repli existe.</p>
+</section>
+
+<section class="carte">
+  <h2>Choisir son sujet</h2>
+  <p>Un sujet par étudiant. L'organisation et toutes les données sont <strong>fictives</strong> : aucune donnée réelle, aucune donnée personnelle.</p>
+  <table>
+    <thead><tr><th>N°</th><th>Sujet</th><th>Ce que fait l'application</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Assistant de FAQ</td><td>Répond aux questions des usagers d'une organisation (médiathèque, club, mairie…) à partir de <strong>son</strong> règlement ou de sa FAQ, fourni au modèle ; dit « je ne sais pas » hors du texte.</td></tr>
+      <tr><td>2</td><td>Tri des messages</td><td>Classe un message entrant (support, contact) : catégorie, priorité, résumé d'une ligne, en <strong>JSON</strong>.</td></tr>
+      <tr><td>3</td><td>Compte rendu → actions</td><td>Transforme des notes de réunion en décisions et actions (qui, quoi, pour quand), en <strong>JSON</strong>.</td></tr>
+      <tr><td>4</td><td>Réponse aux avis clients</td><td>Propose une réponse à un avis laissé sur un commerce : ton courtois, jamais de promesse de remboursement ni d'information inventée.</td></tr>
+      <tr><td>5</td><td>Fiches produit</td><td>Rédige une fiche produit à partir d'une liste de caractéristiques, sans ajouter de caractéristique absente.</td></tr>
+      <tr><td>6</td><td>Libre, sur validation</td><td>Un besoin de votre entreprise de stage, avec des données fictives. <strong>À faire valider</strong> par message Pronote avant lundi 10 h.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="carte">
+  <h2>Les exigences communes</h2>
+  <p>Quel que soit le sujet, le projet rendu doit tenir <strong>les sept</strong> :</p>
+  <ol>
+    <li>Le modèle tourne <strong>en local</strong> avec Ollama, choisi selon votre carte graphique (tableau ci-dessous).</li>
+    <li>Une application web (le kit de départ, ou l'équivalent dans un autre langage) <strong>conteneurisée</strong> et lancée par <code>docker compose</code>, avec redémarrage automatique et vérification de santé.</li>
+    <li>Une <strong>URL publique en HTTPS</strong> par un tunnel sortant : aucun port ouvert sur votre box.</li>
+    <li>Un <strong>code d'accès</strong>, une <strong>limite de requêtes</strong> et une taille d'entrée bornée : votre PC n'est pas à la disposition de tout Internet.</li>
+    <li><strong>Ollama n'est jamais exposé</strong> : seule l'application parle au modèle.</li>
+    <li><strong>10 cas d'évaluation</strong> au moins, deux modèles comparés, trois essais par cas.</li>
+    <li>Un <strong>dépôt GitHub personnel</strong> avec le <code>README.md</code> rempli, et <strong>aucun secret</strong> commité (<code>.env</code> reste chez vous).</li>
+  </ol>
+
+  <h3>Quel modèle pour quelle machine ?</h3>
+  <table>
+    <thead><tr><th>Votre carte</th><th>Modèle de départ</th><th>À comparer avec</th></tr></thead>
+    <tbody>
+      <tr><td>Pas de carte dédiée, 8 Go de RAM ou plus</td><td><code>qwen2.5:1.5b</code></td><td><code>llama3.2:3b</code> (plus lent)</td></tr>
+      <tr><td>4 à 6 Go de VRAM</td><td><code>qwen2.5:3b</code></td><td><code>llama3.2:3b</code></td></tr>
+      <tr><td>8 à 10 Go de VRAM</td><td><code>qwen2.5:7b</code></td><td><code>llama3.1:8b</code></td></tr>
+      <tr><td>12 Go de VRAM et plus</td><td><code>qwen2.5:14b</code></td><td><code>qwen2.5:7b</code></td></tr>
+    </tbody>
+  </table>
+  <p class="note">Un modèle doit tenir <strong>entièrement</strong> dans la VRAM pour être rapide ; sinon une partie bascule sur le processeur. Les noms exacts et leurs tailles sont sur <a href="https://ollama.com/library">ollama.com/library</a>. Pour la VRAM : Windows, Gestionnaire des tâches → Performances → GPU → « Mémoire GPU dédiée » ; avec une carte NVIDIA, la commande <code>nvidia-smi</code>.</p>
+</section>
+
+<section class="carte">
+  <h2>Le kit de départ</h2>
+  <p>Le kit vit dans le dépôt modèle <a href="https://github.com/ggaillard/BTS2-Projet-IA"><strong>ggaillard/BTS2-Projet-IA</strong></a> : bouton <strong>Use this template → Create a new repository</strong>, et vous avez votre propre copie. Sans compte GitHub sous la main, il existe aussi en <a href="projet-ia/projet-ia-depart.zip">archive zip</a>. Il contient une application qui fonctionne déjà ; votre travail est d'en faire <strong>votre</strong> application.</p>
+  <table>
+    <tbody>
+      <tr><td><code>main.py</code></td><td>l'application FastAPI : page d'accueil, route <code>/api/demander</code>, route <code>/sante</code>, code d'accès, limite de requêtes</td></tr>
+      <tr><td><code>prompt.txt</code></td><td>la consigne donnée au modèle — <strong>à écrire pour votre sujet</strong></td></tr>
+      <tr><td><code>static/index.html</code></td><td>la page — à adapter</td></tr>
+      <tr><td><code>Dockerfile</code>, <code>compose.yaml</code></td><td>la mise en production : l'application et le tunnel</td></tr>
+      <tr><td><code>.env.example</code></td><td>les réglages, à copier en <code>.env</code></td></tr>
+      <tr><td><code>evaluer.py</code>, <code>cas.json</code></td><td>la mesure : rejouer vos cas et compter</td></tr>
+      <tr><td><code>README.md</code></td><td>votre dossier, à remplir au fil des deux séances</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<h2 class="jour">Lundi 5 octobre — séance 21 : concevoir et faire marcher</h2>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Votre machine et votre modèle <span class="tag">Concevoir · 25 min</span></h2>
+  <ol>
+    <li>Relevez carte graphique, VRAM et mémoire vive ; choisissez votre modèle dans le tableau.</li>
+    <li>Téléchargez-le et essayez-le :
+<pre><code>ollama pull qwen2.5:3b
+ollama run qwen2.5:3b --verbose</code></pre>
+      Posez deux questions. <code>--verbose</code> affiche la vitesse (<em>eval rate</em>, en tokens par seconde) : notez-la.</li>
+    <li>Vérifiez où tourne le modèle : <code>ollama ps</code> indique la part GPU et la part CPU.</li>
+  </ol>
+  <details><summary>Indice — « ollama » n'est pas reconnu</summary><p>Ollama tourne en arrière-plan après son installation (icône près de l'horloge sous Windows). Fermez puis rouvrez le terminal pour qu'il trouve la commande.</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Le sujet et le dépôt <span class="tag">Concevoir · 20 min</span></h2>
+  <ol>
+    <li>Sur <a href="https://github.com/ggaillard/BTS2-Projet-IA">BTS2-Projet-IA</a>, <strong>Use this template</strong> : créez votre dépôt <strong>personnel</strong> <code>projet-ia-&lt;prenom&gt;</code>, clonez-le, et après chaque <code>git push</code> vérifiez sur GitHub que <code>.env</code> n'y est pas.</li>
+    <li>Choisissez votre sujet. Dans le <code>README.md</code> de votre dépôt, remplissez <strong>§1 Concevoir</strong> (besoin, trois cas d'usage, deux limites) et <strong>§2</strong> (machine et modèle).</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Votre application, en local <span class="tag">Construire · 45 min</span></h2>
+  <ol>
+    <li>Écrivez <code>prompt.txt</code> pour votre sujet : rôle, tâche, règles, <strong>format de sortie avec un exemple</strong>. Adaptez le titre et la phrase de <code>static/index.html</code>.</li>
+    <li>Lancez l'application sans Docker, pour aller vite :
+<pre><code>python -m venv .venv
+.venv\Scripts\activate          (macOS / Linux : source .venv/bin/activate)
+pip install -r requirements.txt
+copy .env.example .env          (macOS / Linux : cp .env.example .env)</code></pre>
+      Dans <code>.env</code>, mettez <code>OLLAMA_URL=http://localhost:11434</code>, votre modèle et un code d'accès d'au moins 8 caractères. Puis :
+<pre><code>uvicorn main:app --env-file .env --reload</code></pre>
+      et ouvrez <a href="http://localhost:8000">http://localhost:8000</a>.</li>
+    <li>Essayez cinq demandes réalistes. Retouchez <code>prompt.txt</code> jusqu'à ce que le format de sortie soit tenu. Commitez.</li>
+  </ol>
+  <details><summary>Indice — sortie JSON</summary><p>Pour les sujets 2 et 3 : donnez dans <code>prompt.txt</code> un exemple complet de JSON attendu, et demandez « réponds uniquement par ce JSON ». Ollama accepte aussi <code>"format": "json"</code> dans le corps de la requête : cherchez où l'ajouter dans <code>main.py</code>.</p></details>
+  <details><summary>Indice — sujet 1, le texte de référence</summary><p>Un règlement de deux pages tient dans la consigne : collez-le à la fin de <code>prompt.txt</code> entre deux balises, et demandez au modèle de ne répondre qu'à partir de ce texte. Pour un texte bien plus long, il faudrait une recherche par similarité (RAG) : c'est un bonus, pas une exigence.</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Le jeu d'évaluation <span class="tag">Mesurer · 25 min</span></h2>
+  <ol>
+    <li>Dans <code>cas.json</code>, écrivez <strong>10 cas</strong> au moins : sept demandes normales variées, deux hors sujet, une qui tente de faire ignorer les consignes. Pour chacun, ce que la réponse <strong>doit</strong> et <strong>ne doit pas</strong> contenir.</li>
+    <li>Premier passage :
+<pre><code>python evaluer.py http://localhost:8000 VOTRE_CODE</code></pre></li>
+    <li>Notez le taux et le temps médian dans le README (§4), remplissez la ligne du lundi au §3, commitez et poussez.</li>
+  </ol>
+  <p class="note">Un cas qui réussit toujours ne mesure rien. Gardez au moins deux cas difficiles.</p>
+</section>
+
+<h2 class="jour">Mardi 6 octobre — séance 22 : mettre en production et mesurer</h2>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Conteneuriser <span class="tag">Piloter · 30 min</span></h2>
+  <ol>
+    <li>Dans <code>.env</code>, remettez <code>OLLAMA_URL=http://host.docker.internal:11434</code> (Ollama installé sur le PC). Sous Linux, suivez plutôt l'option B décrite en tête de <code>compose.yaml</code>.</li>
+    <li>Lancez :
+<pre><code>docker compose up -d --build
+docker compose ps</code></pre>
+      L'application doit passer à <strong>healthy</strong>. Sinon : <code>docker compose logs app</code>.</li>
+    <li>Prouvez le redémarrage automatique : <code>docker compose restart app</code>, puis attendez qu'elle repasse <em>healthy</em>.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> L'URL publique <span class="tag">Piloter · 20 min</span></h2>
+  <ol>
+    <li>Le service <code>tunnel</code> démarre avec l'application. Votre adresse publique est dans son journal :
+<pre><code>docker compose logs tunnel</code></pre>
+      Elle ressemble à <code>https://mots-au-hasard.trycloudflare.com</code>.</li>
+    <li>Testez-la <strong>depuis votre téléphone, en 4G</strong> (pas sur votre wifi) : sans le code, l'application refuse ; avec, elle répond.</li>
+    <li>Notez-la en tête du README.</li>
+  </ol>
+  <div class="regle">
+    <strong>Pourquoi un tunnel ?</strong> Il part de votre PC vers Cloudflare : rien n'est ouvert sur votre box, et seule l'application (port 8000) est joignable. Ce type d'adresse est gratuit mais <strong>change à chaque redémarrage du tunnel</strong> : si elle change, mettez à jour votre rendu. Quand vous avez fini d'être évalué, arrêtez tout avec <code>docker compose down</code>.
+  </div>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Mesurer et comparer <span class="tag">Mesurer · 30 min</span></h2>
+  <ol>
+    <li>Rejouez votre jeu <strong>sur l'URL publique</strong>, trois essais par cas :
+<pre><code>python evaluer.py https://….trycloudflare.com VOTRE_CODE --essais 3</code></pre></li>
+    <li>Changez <code>MODELE</code> dans <code>.env</code> pour le modèle de comparaison (<code>ollama pull</code> d'abord), relancez <code>docker compose up -d</code>, rejouez.</li>
+    <li>Remplissez le tableau du §4 et commentez <strong>deux échecs</strong> : pourquoi le modèle s'est trompé, et ce que vous avez changé (consigne, modèle, température…).</li>
+  </ol>
+  <p class="note">La limite de requêtes s'applique aussi à vous : avec 10 cas × 3 essais, passez <code>REQUETES_PAR_MINUTE</code> à 40 le temps de la mesure, puis remettez 10.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Sécuriser <span class="tag">Sécuriser · 20 min</span></h2>
+  <ol>
+    <li>Remplissez le tableau des risques du §5 : pour chaque ligne, ce qui pourrait arriver et <strong>la mesure qui est dans votre projet</strong> (fichier et ligne).</li>
+    <li>Vérifiez, et collez la preuve dans le README :
+      <ul>
+        <li><code>docker compose ps</code> : seul <code>127.0.0.1:8000</code> est publié, le port 11434 n'apparaît pas ;</li>
+        <li><code>git log --all --oneline -- .env</code> ne renvoie rien ;</li>
+        <li>votre cas « ignore les consignes » est bien refusé.</li>
+      </ul></li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Rendre <span class="tag">15 min</span></h2>
+  <ol>
+    <li>README complet (§1 à §7), dernier commit poussé.</li>
+    <li>Dans le <strong>travail à faire Pronote</strong> du mardi, déposez un texte avec : l'adresse du dépôt GitHub (invitez <code>ggaillard</code> s'il est privé), l'<strong>URL publique</strong> et le <strong>code d'accès</strong>.</li>
+    <li>Laissez l'application en ligne <strong>jusqu'à mardi 20 h</strong> : je la teste à ce moment-là. Faites l'auto-évaluation au portail.</li>
+  </ol>
+</section>
+
+<section class="carte depart">
+  <h2>Ce qui sera regardé</h2>
+  <table>
+    <tbody>
+      <tr><td>Concevoir : besoin, cas d'usage, limites, modèle justifié par la machine</td><td>3 pts</td></tr>
+      <tr><td>L'application fait ce que le sujet demande, format de sortie tenu</td><td>4 pts</td></tr>
+      <tr><td>Production : compose, santé, redémarrage, URL publique joignable mardi soir</td><td>5 pts</td></tr>
+      <tr><td>Mesurer : 10 cas, deux modèles, trois essais, deux échecs commentés</td><td>4 pts</td></tr>
+      <tr><td>Sécuriser : code, limite, Ollama non exposé, aucun secret, risques et preuves</td><td>4 pts</td></tr>
+    </tbody>
+  </table>
+  <p class="note">L'IA est autorisée pour vous aider à coder ou à déboguer. Dites au §7 ce que vous lui avez demandé et ce que vous avez gardé : un projet que vous ne savez pas expliquer ne sera pas compté.</p>
+</section>
+
+</main>
+</body>
+</html>

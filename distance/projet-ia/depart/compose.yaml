@@ -1,0 +1,58 @@
+# Projet IA — mise en production
+#
+#   docker compose up -d --build      démarrer (ou redémarrer après une modification)
+#   docker compose ps                 l'état : « healthy » attendu pour app
+#   docker compose logs -f app        le journal des requêtes et des temps de réponse
+#   docker compose logs tunnel        l'URL publique https://….trycloudflare.com
+#
+# Deux façons de servir le modèle :
+#   A. (par défaut, Windows et macOS) Ollama installé sur le PC, comme
+#      application. Le conteneur le joint par host.docker.internal.
+#   B. (Linux, ou si vous préférez tout en conteneurs) Ollama dans le compose :
+#      décommentez le service « ollama » plus bas, mettez
+#      OLLAMA_URL=http://ollama:11434 dans .env, puis
+#      docker compose --profile ollama up -d --build
+
+services:
+  app:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Le port n'est ouvert que sur la machine elle-même : Internet passe par le tunnel.
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/sante', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://app:8000
+    depends_on:
+      app:
+        condition: service_healthy
+
+  # ollama:
+  #   profiles: ["ollama"]
+  #   image: ollama/ollama:latest
+  #   restart: unless-stopped
+  #   volumes:
+  #     - modeles:/root/.ollama
+  #   # PAS de « ports: » : Ollama ne doit être joignable que par l'application.
+  #   # Carte NVIDIA (pilote + NVIDIA Container Toolkit installés) :
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+
+# volumes:
+#   modeles:

@@ -1,0 +1,51 @@
+/* Consignes des séances à distance — feuille commune, sans dépendance */
+:root {
+  --fond: #f7f6f2; --carte: #ffffff; --texte: #1d1f24; --doux: #5c616b;
+  --trait: #dedbd2; --accent: #1f5f8b; --accent-fond: #e7f0f7;
+  --alerte: #8a4b08; --alerte-fond: #fdf1e1; --code: #f0eee8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #16181c; --carte: #1f2228; --texte: #e8e6e1; --doux: #a3a8b2;
+    --trait: #353a43; --accent: #7fb8e0; --accent-fond: #1d2c39;
+    --alerte: #f0b673; --alerte-fond: #33261a; --code: #2a2e35;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fond); color: var(--texte);
+       font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+h1 { font-size: 1.7rem; line-height: 1.2; margin: .4rem 0 .6rem; }
+h2 { font-size: 1.2rem; margin: 0 0 .7rem; display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline; }
+h3 { font-size: 1rem; margin: 1.2rem 0 .4rem; }
+a { color: var(--accent); }
+.bandeau { font-size: .85rem; color: var(--doux); margin: 0; }
+.chapo { font-size: 1.05rem; color: var(--doux); margin: 0 0 1.5rem; }
+.carte { background: var(--carte); border: 1px solid var(--trait); border-radius: 10px;
+         padding: 1.1rem 1.2rem; margin: 0 0 1rem; }
+.carte.depart { border-left: 4px solid var(--accent); }
+.num { display: inline-grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%;
+       background: var(--accent); color: var(--carte); font-size: .95rem; }
+.tag { font-size: .8rem; font-weight: 500; color: var(--doux); }
+.note { font-size: .92rem; color: var(--doux); }
+.regle { background: var(--alerte-fond); color: var(--texte); border-left: 4px solid var(--alerte);
+         padding: .7rem .9rem; border-radius: 6px; margin: .8rem 0; font-size: .95rem; }
+blockquote { margin: 0; padding: .6rem 1rem; border-left: 3px solid var(--trait);
+             background: var(--accent-fond); border-radius: 0 6px 6px 0; }
+blockquote p { margin: .4rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; margin: .5rem 0; display: block; overflow-x: auto; }
+th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--trait); vertical-align: top; }
+th { color: var(--doux); font-weight: 600; }
+code, kbd { font-family: ui-monospace, Consolas, monospace; font-size: .88em;
+            background: var(--code); padding: .05rem .3rem; border-radius: 4px; }
+pre { background: var(--code); padding: .8rem; border-radius: 6px; overflow-x: auto; font-size: .85rem; }
+pre code { background: none; padding: 0; }
+details { margin: .6rem 0 0; border: 1px solid var(--trait); border-radius: 6px; padding: .4rem .7rem; }
+summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 44px; display: flex; align-items: center; }
+details p { margin: .3rem 0 .4rem; }
+h2.jour { font-size: 1.35rem; margin: 2.2rem 0 1rem; padding-top: 1rem; border-top: 2px solid var(--accent); display: block; }
+.carte ul { margin: .3rem 0; }
+code { overflow-wrap: anywhere; }
+pre { max-width: 100%; }
+pre code { overflow-wrap: normal; }
+li { min-width: 0; }
