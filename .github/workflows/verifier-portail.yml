@@ -250,6 +250,10 @@ jobs:
       # ajoutées le 27/09 avec js/missions.js et js/gestion.js.
       - name: "Cocher une mission, lire la grille, régler une séance"
         run: node outils/t_missions.mjs
+      # Lire avant de répondre, les alertes du téléphone, la courbe de l'heure,
+      # « Cette semaine » et les équipes — ajoutés le 02/10.
+      - name: "Les indicateurs : lecture, alertes, courbe, semaine, équipes"
+        run: node outils/t_indicateurs.mjs
 
   coherence:
     name: "🔗 La page et la base disent-elles la même chose ?"
