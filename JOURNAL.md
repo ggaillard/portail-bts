@@ -22,6 +22,23 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 2 octobre 2026 — les indicateurs : l'heure, la semaine, les équipes
+
+Demandé : « pas assez d'indicateurs de suivi, en temps réel et en fin de
+semaine ; suivre les avancements et détecter les étudiants en difficulté
+depuis le téléphone ». Détail et règles dans CLAUDE.md, « Les indicateurs ».
+
+| Migration | Ce qu'elle fait |
+|---|---|
+| `20261002060000_suivi_lecture_projets_courbe.sql` | `temps_lecture()` (3,5 mots/s, 4 à 25 s) et `gestes_lus()` ; `vigilance_seance()` **réécrite** : « sans le temps de lire » remplace « 3 réponses à moins de 5 s », projet en retard (≤ la moitié de la médiane du groupe) et bloqué (rien validé depuis 25 min pendant qu'un tiers avance), « fatigué » en information, humeur et médiane rendues ; `courbe_seance()` |
+| `20261002070000_semaine.sql` | `semaine_classe()`, `meteo_classe()`, `trajectoires_classe()`, et leurs briques `_semaine_eleves()` / `_raisons_semaine()` (fermées à l'API) |
+| `20261002080000_equipes.sql` | le module CPMS du BTS2 enregistré s'il manque ; tables `equipes`, `equipe_membres`, `equipe_jalons`, `journaux`, `appreciations`, `pairs` (aucune politique) ; `definir_equipes()`, `poser_jalon()`, `apprecier()`, `equipes_module()`, `modules_equipes()` ; côté étudiant `mon_equipe()`, `ecrire_journal()`, `repartir_points()` |
+| `20260928080000_modules.sql` (**déjà appliquée**, contrôle assoupli) | « exactement 3 modules » rendait la chaîne rouge au second passage dès le 4e module : on compte maintenant les trois que cette migration pose, et on cherche le doublon par dépôt. Effet en production : aucun, elle n'est pas rejouée |
+
+Côté sites de cours : `BTS1_S1_B1_DEV/docs/assets/suivi.js` (quiz et points
+de passage) et `playlist-csharp/docs/index.html` (quiz d'auto-évaluation)
+grisent les options le temps de lire, avec la même formule.
+
 ## 30 septembre 2026 — la base vectorielle en séance 3, et réviser une séance au choix
 
 La séance 3 du BTS1 (« 60, 47, 72 ») gagne un acte IV « La base qui cherche par

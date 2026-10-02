@@ -109,14 +109,29 @@ for (const w of [390, 1280]) {
 
   for (const w of [360, 1280]) {
     const { page: p, erreurs: err, fermer } = await ouvrir(nav, RACINE, { largeur: w });
-    const r = await p.evaluate(async ({ vierge, fini }) => {
+    // Lire avant de répondre (02/10) : les options restent grisées le temps
+    // de lire. L'horloge de la page est prise en main pour sauter ce temps
+    // au lieu de l'attendre — et pour vérifier qu'il existe.
+    await p.clock.install();
+    const lu = await p.evaluate(({ vierge }) => {
       let e = document.getElementById('espace-etu');
       while (e) { e.hidden = false; e = e.parentElement; }
-      const attendre = (ms) => new Promise(ok => setTimeout(ok, ms));
       window.__reponses = { mes_questionnaires: { ok:true, liste:[vierge] } };
       window.__e.rendreQuestionnairesEtu([JSON.parse(JSON.stringify(vierge))]);
       const c = document.getElementById('qn-41');
+      const grises = [...c.querySelectorAll('.rv-opt')].filter(b => b.disabled).length;
+      const decompte = (c.querySelector('.lecture-zone') || {}).textContent || '';
+      window.__appels.length = 0;
+      c.querySelectorAll('.rv-opt')[1].click();      // trop tôt : ne doit rien faire
+      return { grises, decompte };
+    }, { vierge });
+    const tropTot = await p.evaluate(() => window.__appels.filter(a => a.nom === 'repondre').length);
+    await p.clock.fastForward(30000);
+    const r = await p.evaluate(async ({ fini }) => {
+      const attendre = (ms) => new Promise(ok => setTimeout(ok, ms));
+      const c = document.getElementById('qn-41');
       const av = c.querySelector('.qn-av').textContent;
+      const libres = [...c.querySelectorAll('.rv-opt')].filter(b => !b.disabled).length;
       window.__appels.length = 0;
       c.querySelectorAll('.rv-opt')[1].click();
       await attendre(50);
@@ -134,9 +149,22 @@ for (const w of [390, 1280]) {
       const recom = [...c.querySelectorAll('button')].find(b => b.textContent === 'Tout recommencer');
       if (recom) recom.click();
       await attendre(50);
-      const cliquables = [...c.querySelectorAll('.rv-opt')].filter(b => !b.disabled).length;
-      return { av, apresChoix, certs, envois, themes, surs, larg, recom: !!recom, cliquables };
-    }, { vierge, fini });
+      return { av, libres, apresChoix, certs, envois, themes, surs, larg, recom: !!recom };
+    }, { fini });
+    // Un second tour se relit aussi : grisé, puis libre.
+    const grisesBis = await p.evaluate(() =>
+      [...document.querySelectorAll('#qn-41 .rv-opt')].filter(b => b.disabled).length);
+    await p.clock.fastForward(30000);
+    r.cliquables = await p.evaluate(() =>
+      [...document.querySelectorAll('#qn-41 .rv-opt')].filter(b => !b.disabled).length);
+    console.log(`\n══ lire avant de répondre, ${w} px`);
+    console.log('   grisées        :', lu.grises, '· décompte :', lu.decompte, '· clic trop tôt :', tropTot,
+                '· libres après :', r.libres, '· second tour grisé :', grisesBis);
+    if (lu.grises !== 4) rates.push(`${w} px : ${lu.grises} option(s) grisée(s) à l'affichage, attendu 4`);
+    if (!/Prenez le temps de lire… \d+ s/.test(lu.decompte)) rates.push(`${w} px : pas de décompte de lecture`);
+    if (tropTot !== 0) rates.push(`${w} px : un clic pendant la lecture a envoyé une réponse`);
+    if (r.libres !== 4) rates.push(`${w} px : ${r.libres} option(s) libre(s) après la lecture, attendu 4`);
+    if (grisesBis !== 4) rates.push(`${w} px : le second tour ne laisse pas le temps de relire`);
     console.log(`\n══ thèmes et certitude, ${w} px`);
     console.log('   avancée        :', r.av);
     console.log('   envois au choix:', r.apresChoix, '· certitude :', r.certs.join(' / '));

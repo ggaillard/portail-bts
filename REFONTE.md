@@ -1211,3 +1211,22 @@ elle annonçait toute la classe en retard pendant trois quarts d'heure.
   boucle reste en filet, 30 s en direct, 8 s si le canal tombe. « En direct »
   n'est affiché que canal ouvert. `points_passage`, qui porte les bonnes
   lettres, n'est ni lisible ni publiée.
+
+**Le 02/10, le lot « indicateurs »** (`20261002060000` à `20261002080000`) —
+demandé pour suivre l'heure ET la semaine depuis un téléphone :
+
+- cinq modules neufs, chacun sous son plafond : `lecture.js` (lire avant de
+  répondre), `alertes.js` (vibration, pastille, écran allumé), `courbe.js`
+  (la courbe de l'heure), `semaine.js` (« Cette semaine », en tête de Bilan),
+  `equipes.js` (les équipes d'un module, des deux côtés) ;
+- une feuille de plus, **en dernier** : `styles/indicateurs.css`, classes
+  neuves seulement, aucun seuil de rupture ajouté ;
+- `seance.js` (673 lignes) n'a pas grossi : la courbe et les alertes partent de
+  `vigilance.js`, qui les appelle à chaque lecture de « À aller voir » ;
+- `app.js` : trois appels et deux imports, rien d'autre ;
+- un contrôle de plus, `outils/t_indicateurs.mjs`, cassé six fois pour
+  vérifier qu'il voit ce qu'il annonce ; `t_revision.mjs` prend l'horloge en
+  main pour sauter le temps de lecture au lieu de l'attendre.
+
+Les chiffres de `mesurer.mjs` après ce lot : 881 lignes d'`index.html`, 14
+feuilles, 32 modules, 9 609 lignes de JavaScript, 63 fonctions RPC appelées.

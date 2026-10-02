@@ -61,6 +61,8 @@ import { brancherGestion, chargerGestion, relireGestion } from './gestion.js';
 import { brancherModules, chargerModules, chargerModulesEtu } from './modules.js';
 import { choisirSeanceDuJour } from './encours.js';
 import { chargerCarnet } from './carnet.js';
+import { chargerSemaine } from './semaine.js';
+import { chargerEquipes, chargerEquipeEtu } from './equipes.js';
 
 (function(){
 "use strict";
@@ -155,6 +157,7 @@ function ouvrirEspaceEtudiant(moi){
   chargerControlesEtu();
   chargerQuestionnairesEtu();
   chargerMissionsEtu();
+  chargerEquipeEtu();
 
   chargerModulesEtu(moi.classe_id);
 }
@@ -409,6 +412,8 @@ function ouvrirEspaceEnseignant(){
     chargerAFaire();
     chargerSemestre();
     chargerCarnet(classes);
+    chargerSemaine(classes);
+    chargerEquipes();
     choisirSeanceDuJour(classes);
     chargerGestion(classes);
 

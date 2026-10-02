@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**640 lignes**) + `styles/` (dix feuilles) + `js/` :
+`index.html` (**881 lignes**) + `styles/` (quatorze feuilles) + `js/` :
 
 | module | ce qu'il porte |
 |---|---|
@@ -43,6 +43,11 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `compterendu.js` | le compte rendu d'une séance, sous « Fin d'heure » : texte à copier, CSV |
 | `carnet.js` | le carnet de la classe dans Bilan : élèves × séances jouées, « décroche », CSV |
 | `exporter.js` | le CSV qu'un tableur français ouvre sans question (point-virgule, BOM) |
+| `lecture.js` | lire avant de répondre : les options grisées le temps de lire, avec décompte (02/10) |
+| `alertes.js` | vibration, « (n) » dans le titre, pastille d'icône, notification, écran allumé pendant la séance (02/10) |
+| `courbe.js` | la courbe de l'heure : avancement médian, attendu, actifs sur 5 min (02/10) |
+| `semaine.js` | « Cette semaine », en tête de Bilan, faite pour le téléphone (02/10) |
+| `equipes.js` | les équipes d'un module : jalons, appréciation, journal, points des pairs — des deux côtés (02/10) |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -1415,7 +1420,7 @@ différentes :
 | Workflow | Question |
 |---|---|
 | `verifier-portail.yml` · **syntaxe** | `index.html` s'affiche-t-il encore ? Syntaxe JS, `$("id")` existants, et **toute fonction appelée est-elle définie** |
-| `verifier-portail.yml` · **gabarits** | Les chiffres de `REFONTE.md` sont-ils ceux du dépôt (`mesurer.mjs`), et les neuf contrôles de navigateur passent-ils ? `t_chargement` · `t_appel` · `t_revision` · `t_pilotage` · `t_ecran` · `t_messages` · `t_navigation` · `t_suivi` · `t_etudiant` |
+| `verifier-portail.yml` · **gabarits** | Les chiffres de `REFONTE.md` sont-ils ceux du dépôt (`mesurer.mjs`), et les douze contrôles de navigateur passent-ils ? `t_chargement` · `t_appel` · `t_revision` · `t_pilotage` · `t_ecran` · `t_messages` · `t_navigation` · `t_suivi` · `t_vigilance` · `t_etudiant` · `t_missions` · `t_indicateurs` |
 | `verifier-portail.yml` · **coherence** | Les bonnes réponses de la base collent-elles aux supports ? |
 | `verifier-portail.yml` · **fiche** | **Cette séance est-elle prête ?** Douze points, appliqués à chaque `docs/seances/seance-*.md` trouvée |
 | `supabase.yml` · **verifier** | La chaîne de migrations se rejoue-t-elle deux fois sur une base vierge, et les invariants tiennent-ils ? |
@@ -1470,6 +1475,97 @@ divergent en silence et on débriefe sur des concepts que la trace écrite ne
 nomme pas.
 
 ---
+
+## Les indicateurs — l'heure, la semaine, les équipes (02/10)
+
+Demandé le 02/10 : suivre l'avancement et repérer les étudiants en difficulté
+**depuis le téléphone**, pendant l'heure ET en fin de semaine. Choisi par G :
+tout ce qui suit. Trois migrations (`20261002060000` à `080000`), cinq modules,
+une feuille (`styles/indicateurs.css`), un contrôle (`outils/t_indicateurs.mjs`).
+
+### Pendant l'heure
+
+- **Lire avant de répondre.** Une question s'affiche, ses options restent
+  grisées le temps de la lire — 3,5 mots par seconde, entre 4 et 25 s — avec un
+  décompte. **La même formule vit à quatre endroits** : `temps_lecture()` en
+  base, `js/lecture.js`, `suivi.js` du BTS1 et `index.html` de PlaylistApp.
+  Changer l'une, c'est changer les quatre ; la migration et `t_indicateurs.mjs`
+  posent la même question (30 mots → 9 s). Appliquée au quiz, au contrôle
+  d'entrée (pas à la certitude), aux points de passage et aux révisions ;
+  **jamais** à l'appel, à l'humeur ni aux questionnaires d'opinion. Le décompte
+  se recalcule sur l'heure à chaque tic : un onglet en arrière-plan voit ses
+  minuteurs ralentis. Une question redessinée garde son heure de fin.
+- **« Sans le temps de lire »** remplace « 3 réponses à moins de 5 s » dans
+  « À aller voir » : une réponse arrivée moins de `temps_lecture()` après le
+  geste précédent. Seules comptent les clés envoyées AU MOMENT de répondre —
+  `q1`…`q10`, `pre-NN`, les points de passage. **Pas le quiz de PlaylistApp
+  (`q-3-2`)** : son tableau de bord l'envoie par paquets, l'heure enregistrée
+  est celle de l'envoi. 2 réponses → à surveiller, 4 → à aller voir.
+- **Projets** : *en retard* = la moitié ou moins de la médiane des missions du
+  groupe présent, une fois qu'elle atteint 2 ; *bloqué* = rien validé depuis
+  25 min pendant qu'un tiers du groupe valide. Pas affiché avec le silence, qui
+  dit déjà tout. **Il faut démarrer la séance** : sans chrono, aucune règle de
+  temps ne s'allume (c'était déjà vrai du silence).
+- **Une ligne de classe** sous « À aller voir » : météo de l'appel, médiane des
+  missions, réponses sans lire.
+- **Les alertes** (`alertes.js`, bouton 🔔 de l'en-tête, gardé par appareil) :
+  vibration quand un cas URGENT apparaît — main levée non vue, « perdu » —,
+  jamais au premier affichage (ligne de base) ni deux fois pour le même ;
+  « (2) » devant le titre et pastille sur l'icône de l'application installée ;
+  notification si la page est en arrière-plan et qu'on l'a permise ; **écran
+  maintenu allumé** pendant une séance démarrée et ouverte, rendu ensuite.
+  Pas de vibreur sur iPhone : le titre et l'écran allumé restent.
+- **La courbe de l'heure** (`courbe_seance()`, `courbe.js`, sous la ligne de
+  rythme) : en haut l'avancement médian des présents et l'attendu (un axe, en
+  %), en dessous les actifs sur 5 min — c'est cette série qui montre un
+  décrochage, la médiane ne redescend jamais. Jamais deux axes. Dessinée à la
+  largeur réelle (260 à 640 px) pour que son texte reste lisible ; relue au
+  plus toutes les 30 s. Une phrase dit quoi retenir ; un tableau replié donne
+  les chiffres.
+
+### En fin de semaine — « Cette semaine », en tête de Bilan
+
+`semaine_classe(classe, jour)` : la semaine lundi → dimanche qui contient ce
+jour, ‹ › pour remonter. Dans l'ordre où l'on agit : quatre chiffres avec
+l'écart à la semaine d'avant · **À revoir lundi** (raisons, jamais un score ;
+« nouveau » = rien à redire la semaine d'avant) · **En progrès** (à dire à voix
+haute) · notions à reprendre (seuils du débriefing) · projets face à
+l'échéance · travail hors séance · météo · séances jouées. « Copier » donne un
+texte pour le cahier de textes. Une ligne ouvre la fiche.
+
+- **Hors séance** = un geste fait un jour sans appel, ou plus de 4 h après
+  l'appel du jour. Approximation assumée : les TP du BTS2 ne se démarrent pas,
+  seul l'appel date la présence.
+- **Trajectoire** (`trajectoires_classe()`) : pour chaque module de projet à
+  échéance, jalons faits / ce qu'une progression régulière aurait donné à
+  cette date (début = premier jalon franchi par quelqu'un). À jour ≥ 100 %,
+  juste ≥ 60 %, en retard ≥ 30 %, décroché en dessous ; personne n'est jugé
+  avant que l'attendu atteigne 2.
+- **Météo** (`meteo_classe()`) : un jour = un appel. ☀️ en forme · 🌤 ça va ·
+  🌧 fatigué · ⛈ perdu. Par jour pour la classe, par élève sur les douze
+  derniers appels (« Depuis la rentrée », chargé à la demande) et dans la fiche.
+- Les raisons de la semaine vivent dans `_raisons_semaine()`, appliquée aux
+  deux semaines : c'est ce qui permet de dire « nouveau ».
+
+### Les équipes — d'abord le module CPMS du BTS2
+
+Carte « Les équipes » de Bilan, utilisable en séance au téléphone. Composer :
+`Nom | sujet : 03 07 11`, une ligne par équipe, tout refusé si une ligne est
+fausse (numéro inconnu, étudiant dans deux équipes) ; recomposer retrouve une
+équipe par son nom ou sa place, et **ne supprime jamais une équipe qui a une
+histoire**. Trois lectures de la part de chacun, choisies par G :
+
+| | Qui l'écrit | Ce qu'on en tire |
+|---|---|---|
+| journal de fin de séance | l'étudiant, une ligne + l'artefact (C1…S3) | « pas de journal N fois alors qu'il était là » — un jour de travail = un jour où un membre a écrit |
+| appréciation du jour | l'enseignant : ✓ moteur · ~ présent · ✗ rien fourni | « rien fourni 2 fois » ; « moteur 2 fois » à valoriser |
+| points des pairs | chaque membre, 100 points à répartir, à chaque jalon posé | sous 60 % de la part égale → à aller voir ; au-dessus de 140 % → à valoriser ; se donner 15 points de plus que ses pairs → à surveiller |
+
+**Un étudiant ne voit jamais l'appréciation ni les points reçus** : aucune
+politique sur ces tables, `mon_equipe()` décide de ce qui sort, et la migration
+le vérifie. Ce sont des raisons pour savoir à qui parler ; **l'équipe se note
+sur ses livrables**. Les jalons (J1 Besoin validé · J2 Go/No-go · J3 Plan
+validé · J4 Bilan) se posent d'un toucher : pas posé → validé → à reprendre.
 
 ## Les missions d'une séance de projet — depuis le 27/09
 

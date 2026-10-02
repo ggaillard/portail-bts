@@ -380,10 +380,19 @@ begin
     return;
   end if;
 
-  -- 1. Trois modules, chacun avec un dépôt (la contrainte le garantit déjà ;
-  --    on compte pour attraper un doublon rejoué).
-  select count(*) into n from public.modules where classe_id in (v_bts1, v_bts2);
+  -- 1. Les trois modules de cette migration, chacun avec un dépôt (la
+  --    contrainte le garantit déjà), et aucun doublon rejoué.
+  --    Assoupli le 02/10 : « exactement 3 modules » rendait la chaîne rouge
+  --    dès qu'une migration suivante en ajoutait un quatrième (le CPMS du
+  --    BTS2) — un état normal pris pour une panne. On compte ce que CETTE
+  --    migration pose, et on cherche le doublon là où il se verrait : deux
+  --    modules d'une même classe sur le même dépôt.
+  select count(*) into n from public.modules
+   where classe_id in (v_bts1, v_bts2) and code in ('bloc1-dev', 'playlistapp', 'ia-meca-forez');
   if n <> 3 then raise exception 'modules des classes réelles = %, attendu 3', n; end if;
+  select count(*) into n from (select classe_id, lower(rtrim(depot, '/')) from public.modules
+                                 where classe_id in (v_bts1, v_bts2) group by 1, 2 having count(*) > 1) d;
+  if n > 0 then raise exception '% dépôt(s) déclarés deux fois dans une même classe', n; end if;
 
   -- 2. Plus aucune séance de cours sans module dans une classe réelle.
   select count(*) into n from public.seances s
@@ -442,9 +451,11 @@ begin
       update public.eleves set auth_id = null where auth_id = auth.uid();
       update public.eleves set auth_id = auth.uid()
        where id = (select min(id) from public.eleves where classe_id = v_bts2);
-      if jsonb_array_length(public.mes_modules()->'liste') <> 2 then
-        raise exception 'mes_modules() rend % module(s) à un étudiant du BTS2, attendu 2',
-          jsonb_array_length(public.mes_modules()->'liste');
+      -- Au moins les deux de cette migration (assoupli le 02/10, même raison).
+      if (select count(*) from jsonb_array_elements(public.mes_modules()->'liste') x
+           where x->>'code' in ('playlistapp', 'ia-meca-forez')) <> 2 then
+        raise exception 'mes_modules() rend % à un étudiant du BTS2, attendu playlistapp et ia-meca-forez',
+          public.mes_modules()->'liste';
       end if;
       if public.mes_modules()::text like '%Prof%' or public.mes_modules()::text like '%depot_enseignant%' then
         raise exception 'mes_modules() livre le dépôt enseignant';

@@ -17,6 +17,7 @@
 
 import { $, sb, suivi, erreur, typo, majFile, marquerEtape,
          texteEnvoi, signalerSessionPerimee } from './socle.js';
+import { lireAvantDeRepondre } from './lecture.js';
 
 function chargerQuestionnairesEtu(){
   $("questionnaires-etu").innerHTML = "";
@@ -255,6 +256,10 @@ function rendreRevision(d){
     }
     choix.appendChild(b);
   });
+  // Lire avant de répondre (02/10) : les options restent grisées le temps de
+  // lire la question. Un second tour (« Tout recommencer ») relit aussi.
+  if (!repondu) lireAvantDeRepondre("rv-" + d.seance_id + "-" + q.question + (d._tour ? "-bis" : ""),
+                                    q.intitule, q.options, choix);
 
   // Un seul bloc après les options, vidé à chaque rendu. Insérer verdict,
   // explication et boutons directement dans la carte les y empilerait : douze

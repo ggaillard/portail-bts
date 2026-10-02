@@ -30,6 +30,7 @@ import { $, sb, suivi, erreur, typo, codeClasseCourante, majFile, marquerEtape,
 // Le tableau de bord d'un contrôle affiche la rangée de numéros de ceux qui
 // n'y ont pas répondu — la même que celle de l'appel, et pour la même raison :
 // c'est elle qu'on lit à voix haute.
+import { lireAvantDeRepondre } from './lecture.js';
 import { ligneAbsents } from './appel.js';
 
 let allerAuControle = function(){};
@@ -136,6 +137,10 @@ function rendreControle(d){
     });
     choix.appendChild(b);
   });
+  // Lire avant de répondre (02/10) — la notion seulement : on ne fait pas
+  // attendre quelqu'un pour dire s'il se sentait sûr.
+  if (!certitude) lireAvantDeRepondre("ct-" + d.seance_id + "-" + q.question,
+                                      q.intitule, q.options, choix);
 }
 
 // Le second chiffre d'une étape n'est pas un nombre d'étudiants : ce sont ses

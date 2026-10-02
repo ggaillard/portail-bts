@@ -88,6 +88,29 @@ function rendreFiche(e, el, seances, reps, appels){
       (manques.length > 4 ? "…" : "") : " · toujours présent")
     : "Aucun appel posé pour l'instant.", !poses.length ? "" : (manques.length >= 2 ? "att" : (manques.length ? "" : "ok"))));
 
+  // ── L'humeur, appel par appel (02/10) ──
+  // La météo de l'élève : ce qu'il a répondu à « Comment ça va ? », du plus
+  // ancien au plus récent — une tendance se lit de gauche à droite.
+  var METEO = { A: "☀️", B: "🌤", C: "🌧", D: "⛈" };
+  var humeurs = reps.filter(function(r){ return /^humeur-\d{4}-\d{2}-\d{2}$/.test(r.question || ""); })
+    .sort(function(a, b){ return a.question < b.question ? -1 : 1; });
+  if (humeurs.length) {
+    var dur = humeurs.filter(function(r){ return /^[CD]/.test(r.reponse || ""); }).length;
+    var bh = bloc("Humeur, appel par appel", (dur ? dur + " fois fatigué ou perdu sur " : "") +
+      humeurs.length + " réponse" + (humeurs.length > 1 ? "s" : "") + " · ☀️ en forme · 🌤 ça va · 🌧 fatigué · ⛈ perdu",
+      dur >= 2 ? "att" : "");
+    var ligne = document.createElement("p");
+    ligne.className = "fe-meteo";
+    humeurs.slice(-14).forEach(function(r){
+      var s = document.createElement("span");
+      s.textContent = METEO[(r.reponse || "").charAt(0)] || "·";
+      s.title = jour(r.question.slice(7));
+      ligne.appendChild(s);
+    });
+    bh.appendChild(ligne);
+    z.appendChild(bh);
+  }
+
   // ── Séance par séance ──
   var par = {};
   reps.forEach(function(r){

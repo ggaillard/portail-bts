@@ -37,6 +37,7 @@
 <link rel="stylesheet" href="styles/missions.css">
 <link rel="stylesheet" href="styles/moments.css">
 <link rel="stylesheet" href="styles/pilote.css">
+<link rel="stylesheet" href="styles/indicateurs.css">
 </head>
 <body>
 <!-- WCAG 2.4.1 : sans ce lien, un usage au clavier retraverse l'en-tête à
@@ -160,6 +161,8 @@
   <!-- Les missions d'une séance de projet : ce n'est pas une étape de la file,
        c'est la séance elle-même (voir js/missions.js). -->
   <div id="missions-etu"></div>
+  <!-- Votre équipe (02/10) : journal de fin de séance, points des pairs. -->
+  <div id="equipe-etu"></div>
 
   <h2 style="margin-bottom:.9rem">Vos projets</h2>
   <div class="projets" id="mes-projets"></div>
@@ -247,6 +250,9 @@
         <span class="sv-maj" id="sv-maj"></span>
         <button class="sv-pause" id="b-sv-pause" type="button" aria-pressed="false"
           title="Suspendre la mise à jour automatique">Pause</button>
+        <!-- Vibrer, compter sur l'icône, garder l'écran allumé (js/alertes.js, 02/10). -->
+        <button class="sv-pause sv-alerte" id="b-sv-alerte" type="button" aria-pressed="true"
+          title="Alertes activées" aria-label="Alertes activées">🔔</button>
         <button class="btn sv-action" id="b-sv-action" type="button" hidden></button>
       </div>
     </div>
@@ -306,6 +312,8 @@
         <div class="ct-tete">
           <h3>À aller voir <span class="vg-compte" id="vg-compte" aria-live="polite"></span></h3>
         </div>
+        <!-- Humeur de l'appel, réponses sans lire, médiane des missions (02/10). -->
+        <p class="sous-hint vg-resume" id="vg-resume" hidden></p>
         <div id="vg-liste"></div>
         <p class="sous-hint" id="vg-vide"></p>
         <div id="vg-actes" hidden></div>
@@ -335,6 +343,19 @@
       <div id="stats-zone" hidden>
         <div class="msg" id="stats-guide" hidden></div>
         <div class="rythme" id="rythme" hidden></div>
+        <!-- La courbe de l'heure (js/courbe.js, 02/10) : avancement médian et
+             attendu, puis les actifs sur cinq minutes. Deux graphiques, un axe chacun. -->
+        <div id="bloc-courbe" class="pa-bloc cb-bloc" hidden>
+          <h3 class="cb-titre">La courbe de l'heure</h3>
+          <p class="cb-resume" id="cb-resume" aria-live="polite"></p>
+          <p class="cb-legende" aria-hidden="true"><span class="cb-l cb-l-avance">classe (médiane)</span>
+            <span class="cb-l cb-l-attendu">attendu</span><span class="cb-l cb-l-actifs">actifs sur 5 min</span></p>
+          <svg id="cb-svg" class="cb-svg" role="img"
+               aria-label="Avancement médian de la classe et attendu, minute par minute, puis le nombre d'étudiants actifs"></svg>
+          <p class="sous-hint cb-lu" id="cb-lu"></p>
+          <details class="plie-in"><summary>Les chiffres, cinq minutes par cinq minutes</summary>
+            <div class="scroll"><table class="cb-table" id="cb-table"></table></div></details>
+        </div>
         <div class="tuiles" id="tuiles"></div>
         <div class="pick">
           <button class="btn" id="b-ecran" type="button">Afficher au tableau</button>
@@ -681,7 +702,46 @@
   </div>
 
   <div class="volet" id="volet-ensemble" role="tabpanel" aria-labelledby="ong-ensemble" hidden>
-    <p class="volet-hint">Après coup : où en est le semestre, qui s'est connecté, ce que les classes ont déclaré. Rien à faire ici en séance.</p>
+    <p class="volet-hint">Après coup : la semaine, le semestre, les équipes, ce que les classes ont déclaré.</p>
+  <!-- Cette semaine (02/10) : la lecture de fin de semaine, faite pour le
+       téléphone — des listes, pas des tableaux. js/semaine.js. -->
+  <div class="card" id="carte-semaine" hidden>
+    <h2>Cette semaine</h2>
+    <div class="pick sm-pick">
+      <select id="sm-classe" aria-label="Classe"></select>
+      <div class="sm-nav">
+        <button class="btn btn-sec" id="b-sm-prec" type="button" aria-label="Semaine précédente">‹</button>
+        <span class="sm-periode" id="sm-periode" aria-live="polite"></span>
+        <button class="btn btn-sec" id="b-sm-suiv" type="button" aria-label="Semaine suivante">›</button>
+      </div>
+      <button class="btn btn-sec" id="b-sm-copier" type="button">Copier</button>
+    </div>
+    <div id="sm-corps"></div>
+    <div aria-live="polite" id="err-semaine"></div>
+  </div>
+
+  <!-- Les équipes d'un module (02/10), d'abord le CPMS du BTS2 : jalons,
+       appréciation du jour, journal, points des pairs. js/equipes.js. -->
+  <div class="card" id="carte-equipes" hidden>
+    <h2>Les équipes</h2>
+    <p class="hint">Jalons de l'équipe, et la part de chacun : son journal de fin de séance,
+      votre appréciation du jour (✓ moteur · ~ présent · ✗ rien fourni), les points que lui
+      donnent ses pairs à chaque jalon. Des raisons pour savoir à qui parler — l'équipe se
+      note sur ses livrables.</p>
+    <div class="pick"><select id="eq-module" aria-label="Module"></select></div>
+    <p class="sous-hint" id="eq-resume" aria-live="polite"></p>
+    <div id="eq-liste"></div>
+    <div aria-live="polite" id="err-equipes"></div>
+    <details class="plie-in" id="eq-composer"><summary>Composer les équipes</summary>
+      <p class="sous-hint">Une équipe par ligne : <code>Refuge | SPA Forez-Pilat : 03 07 11</code>.
+        Le sujet après « | » est facultatif. Recomposer garde l'historique : une équipe se
+        retrouve par son nom, ou par sa place dans la liste.</p>
+      <textarea id="eq-texte" rows="5" spellcheck="false" aria-label="Les équipes, une par ligne"></textarea>
+      <div class="pick" style="margin-top:.7rem"><button class="btn" id="b-eq-composer" type="button">Enregistrer les équipes</button></div>
+      <div aria-live="polite" id="err-eq-composer"></div>
+    </details>
+  </div>
+
   <div class="card" id="carte-semestre" hidden>
     <h2>Le semestre</h2>
     <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »

@@ -27,6 +27,8 @@
 // séances muettes, une réussite qui reste sous 40 %.
 
 import { $, sb, suivi, erreur, nomDe, prenomSeul } from './socle.js';
+import { brancherAlertes, signaler } from './alertes.js';
+import { chargerCourbe } from './courbe.js';
 
 // L'ordre dans lequel on se déplace. C'est aussi l'ordre d'affichage.
 var GRAVITES = ["urgent", "attention", "a_suivre", "info"];
@@ -37,6 +39,9 @@ var ROMAINS = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
 function chargerVigilance(apres){
   var bloc = $("bloc-vigilance");
+  brancherAlertes();
+  // La courbe suit la même boucle, à son rythme (trente secondes au plus).
+  chargerCourbe();
   if (!suivi.seanceId) { bloc.hidden = true; suivi.vigilance = null; return Promise.resolve(); }
   return sb.rpc("vigilance_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
     var d = r && !r.error && r.data;
@@ -46,6 +51,8 @@ function chargerVigilance(apres){
     suivi.vigilance = d;
     bloc.hidden = false;
     rendreVigilance(d);
+    // Vibrer, compter sur l'icône, garder l'écran allumé (alertes.js).
+    signaler(d);
     if (apres) apres();
   });
 }
@@ -83,11 +90,41 @@ function rendreVigilance(d){
 
   rendreActes(d);
 
+  rendreResume(d);
+
   var s = d.seuils || {};
   $("vg-seuils").textContent =
     "Silence : " + (s.silence_min || 8) + " min sans rien · retard : " +
-    (s.grace_min || 3) + " min après la fin prévue d'un acte · trop rapide : moins de " +
-    (s.rapide_s || 5) + " s entre deux réponses.";
+    (s.grace_min || 3) + " min après la fin prévue d'un acte" +
+    (d.nature === "projet"
+      ? " · projet : en retard à la moitié des missions du groupe, bloqué sans mission depuis " +
+        (s.bloque_min || 25) + " min"
+      : "") +
+    " · sans le temps de lire : réponse plus rapide que la lecture de la question " +
+    "(3,5 mots par seconde, 4 à 25 s).";
+}
+
+// Une ligne sous le titre : ce qui se compte pour toute la classe — l'humeur
+// de l'appel, les réponses données sans lire, et sur un projet la médiane des
+// missions. On la lit d'un coup d'œil avant de lire les noms.
+var METEO = { A: "☀️", B: "🌤", C: "🌧", D: "⛈" };
+function rendreResume(d){
+  var z = $("vg-resume");
+  if (!z) return;
+  var morceaux = [];
+  var h = d.humeurs || {};
+  var meteo = ["A", "B", "C", "D"].filter(function(l){ return h[l]; })
+    .map(function(l){ return METEO[l] + " " + h[l]; });
+  if (meteo.length) morceaux.push(meteo.join(" · "));
+  if (d.nature === "projet" && d.mediane_missions !== null && d.mediane_missions !== undefined) {
+    morceaux.push("missions : médiane " + String(d.mediane_missions).replace(".", ",") +
+                  (d.jalons ? " sur " + d.jalons : ""));
+  }
+  if (d.trop_vite) {
+    morceaux.push(d.trop_vite + " réponse" + (d.trop_vite > 1 ? "s" : "") + " sans le temps de lire");
+  }
+  z.textContent = morceaux.join("  ·  ");
+  z.hidden = !morceaux.length;
 }
 
 function ligneVigilance(d, x){
@@ -228,4 +265,4 @@ function rendreASuivre(d){
   });
 }
 
-export { chargerVigilance, rendreVigilance, rendreActes, chargerASuivre, rendreASuivre };
+export { chargerVigilance, rendreVigilance, rendreActes, rendreResume, chargerASuivre, rendreASuivre };
