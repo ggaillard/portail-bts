@@ -63,6 +63,13 @@
 .gs-meta{font-size:.8rem;color:var(--ink-soft)}
 .gs-projet .gs-num{color:var(--accent)}
 .gs-b{flex:0 0 auto;min-height:44px}
+/* Les gestes d'état sur la ligne (05/10) : Ouvrir / Fermer / Clore,
+   Rendre visible, Suivre, puis Modifier. Ils passent sous le titre quand
+   la colonne est étroite — la fiche ouverte à côté, ou un téléphone. */
+.gs-l{flex-wrap:wrap}
+.gs-txt{flex:1 1 12rem}
+.gs-actes{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem;margin-left:auto}
+.gs-actes .btn,.gs-actes .qa-b{min-height:44px;padding:.4rem .8rem;font-size:.88rem}
 .gs-form{margin-top:1rem;padding:.9rem 1rem;border:1px solid var(--rule-soft);
   border-radius:10px;background:var(--surface-alt)}
 .gs-champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));
@@ -77,7 +84,7 @@
 @media (max-width: 30rem){
   .gs-l{flex-wrap:wrap}
   .gs-txt{flex-basis:calc(100% - 2.9rem)}
-  .gs-b{margin-left:2.9rem}
+  .gs-actes{margin-left:2.9rem}
 }
 
 /* ── Les modules (28/09) ──

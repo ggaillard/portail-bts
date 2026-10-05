@@ -213,6 +213,36 @@ for (const w of [360, 1280]) {
     rates.push(`séances : la ligne de la séance 11 dit « ${liste.meta[1]} »`);
   }
 
+  // Le geste d'état sur la ligne (05/10) : un projet fermé s'ouvre d'ici,
+  // sans formulaire ; un projet ouvert se ferme, différé.
+  const gestesLigne = await p.evaluate(() => [...document.querySelectorAll('#gs-liste .gs-l')]
+    .map((l) => [...l.querySelectorAll('.gs-actes button')].map((b) => b.textContent).join('|')));
+  if (gestesLigne[0] !== 'Fermer|Suivre ›|Modifier') rates.push(`séances : gestes du TP0 ouvert « ${gestesLigne[0]} »`);
+  if (gestesLigne[1] !== 'Ouvrir|Suivre ›|Modifier') rates.push(`séances : gestes de l'IA 1 fermée « ${gestesLigne[1]} »`);
+  await p.evaluate(() => {
+    const sb = window.__e.sb, avant = sb.from;
+    window.__fromAvant = avant;
+    sb.from = function(){
+      const ch = { then: (ok, ko) => Promise.resolve({ data: [{ id: 25, classe_id: 2, numero: 11, titre: 'IA 1',
+        nature: 'projet', jalons: 5, echeance: '2026-10-16', duree_min: 180, publiee: false, ouverte: false }],
+        error: null }).then(ok, ko) };
+      ['select', 'eq', 'order'].forEach((m) => { ch[m] = () => ch; });
+      return ch;
+    };
+    window.__appels.length = 0;
+  });
+  if (/^Ouvrir\|/.test(gestesLigne[1] || '')) {
+    await p.click('#gs-liste .gs-l:nth-child(2) .gs-a:text("Ouvrir")');
+    await pause(p, 200);
+  }
+  const ouvre = await p.evaluate(() => {
+    window.__e.sb.from = window.__fromAvant;
+    return window.__appels.filter((a) => a.nom === 'enregistrer_seance').map((a) => a.args);
+  });
+  if (ouvre.length !== 1 || ouvre[0].p_ouverte !== true || ouvre[0].p_publiee !== true || ouvre[0].p_seance_id !== 25) {
+    rates.push(`séances : « Ouvrir » sur la ligne → ${JSON.stringify(ouvre)}`);
+  }
+
   await p.click('#gs-liste .gs-l:nth-child(2) .gs-b');
   await pause(p);
   const form = await p.evaluate(() => ({

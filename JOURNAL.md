@@ -22,6 +22,49 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 5 octobre 2026 — ouvrir une séance depuis l'écran où on la regarde
+
+Demandé : « l'application de gestion des séances n'est pas très pratique,
+certaines fonctionnalités semblent masquées ; je ne vois pas comment activer
+les séances des BTS 2 sur l'IA ». **Aucune migration** : les trois fonctions
+utilisées (`enregistrer_seance`, `clore_seance`, `publier_seance`) sont en base
+depuis septembre.
+
+Relevé sur le portail en service, avant correction :
+
+- **IA 1 et IA 2 (BTS2) inactivables depuis En cours.** Créées « fermées, non
+  publiées » par leur migration. Le pré-vol disait « Séance fermée — les
+  étudiants ne peuvent plus rien valider » sans aucun bouton : ceux du pré-vol
+  sont masqués depuis le 28/09 (`#prevol > .pick`), et l'en-tête cachait son
+  action pour **tout** projet. La zone des chiffres proposait une requête SQL à
+  recopier dans Supabase. Seul chemin : Préparer → la classe → Modifier → deux
+  cases → Enregistrer.
+- **La séance 3 du BTS1, démarrée le 30/09, jamais close.** En cours s'ouvrait
+  dessus chaque matin (« ouverte et démarrée » = l'heure en train de se jouer),
+  badge « En cours », chrono « 7294 / 55 min », rythme « dans le rythme »,
+  « Plus rien depuis 7289 min ».
+
+Corrigé :
+
+| Où | Quoi |
+|---|---|
+| `js/ouverture.js` (neuf) | Ouvrir (publie ET ouvre, **sans** `demarrer_seance` : pas de chrono, pas de « séance du jour » pour cinq semaines), fermer, rendre visible ; « oubliée ouverte » = la règle d'`a_faire()` (cours, durée + 120 min) |
+| `js/prevol.js` (neuf, sorti de `seance.js`) | Chaque ⚠️ du pré-vol porte son geste : Ouvrir le projet, Le rendre visible, Fermer (différé), Démarrer, Clore (différé), Écrire les missions ›, Poser l'échéance ›. Un cours joué et clos dit « Séance terminée » au lieu de « 1 point à régler » |
+| `js/pilote.js` | En-tête : « Ouvrir le projet » sur un projet fermé ; badges « Ouvert, caché » et « Oubliée ouverte » ; chrono « ouverte depuis 5 j » |
+| `js/seance.js` | Le pré-vol lit `publiee` à côté de `preflight_seance()` ; plus de SQL dans le message de séance fermée ; rythme d'une séance oubliée |
+| `js/encours.js` | La règle 1 ne prend plus un projet ni une séance oubliée ouverte pour « l'heure en train de se jouer » |
+| `js/gestion.js` | Préparer › Les séances : sur chaque ligne, Ouvrir / Fermer / Clore, Rendre visible (ouverte mais cachée), Suivre › (vers En cours) |
+| `js/vigilance.js` | « depuis 7289 min » se lit « depuis 5 j » |
+
+Contrôles : `t_suivi.mjs` (cinq états, cassé deux fois : action d'en-tête
+retirée → « action de l'en-tête « », attendu « Ouvrir le projet » » ; publiee
+non envoyée → « ouvrir n'envoie pas publiee ET ouverte »), `t_pilotage.mjs`
+(séance oubliée, cassé une fois → « s'ouvre sur la séance 2, oubliée ouverte
+depuis cinq jours »), `t_missions.mjs` (gestes de ligne, cassé une fois → deux
+défauts nommés).
+
+---
+
 ## 2 octobre 2026 — les indicateurs : l'heure, la semaine, les équipes
 
 Demandé : « pas assez d'indicateurs de suivi, en temps réel et en fin de

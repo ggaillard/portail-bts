@@ -1230,3 +1230,19 @@ demandé pour suivre l'heure ET la semaine depuis un téléphone :
 
 Les chiffres de `mesurer.mjs` après ce lot : 881 lignes d'`index.html`, 14
 feuilles, 32 modules, 9 609 lignes de JavaScript, 63 fonctions RPC appelées.
+
+**Le 05/10, le lot « ouvrir une séance »** — demandé parce que les séances IA
+du BTS2 ne s'ouvraient pas depuis En cours (détail dans `JOURNAL.md`) :
+
+- deux modules neufs : `ouverture.js` (ouvrir, fermer, rendre visible ;
+  « oubliée ouverte ») et `prevol.js`, **sorti de `seance.js`** — qui passe de
+  673 à 627 lignes au lieu de franchir les 700 ;
+- `index.html` gagne une ligne, le bouton masqué `#b-ouvrir` que l'en-tête et
+  le pré-vol cliquent ; aucune feuille ajoutée, aucun seuil ;
+- une fonction RPC de plus appelée par la page, `publier_seance()`, en base
+  depuis le 09/09 ; aucune migration ;
+- aucun contrôle neuf : `t_suivi`, `t_pilotage` et `t_missions` s'étendent, et
+  chacun a été cassé pour voir ce qu'il dit (`JOURNAL.md`).
+
+Les chiffres de `mesurer.mjs` après ce lot : 882 lignes d'`index.html`, 14
+feuilles, 34 modules, 10 026 lignes de JavaScript, 64 fonctions RPC appelées.

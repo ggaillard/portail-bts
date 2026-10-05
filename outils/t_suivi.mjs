@@ -277,6 +277,119 @@ for (const w of [390, 1280]) {
   await fermer();
 }
 
+// ── Ouvrir, fermer, montrer (05/10) ───────────────────────────────────────
+// Le 05/10, la séance IA 1 du BTS2 — un projet créé fermé et caché — ne
+// pouvait pas être ouverte depuis En cours : le pré-vol disait « Séance
+// fermée » sans bouton (ceux du pré-vol sont masqués), l'en-tête cachait son
+// action pour tout projet, et la zone des chiffres donnait une requête SQL.
+// On vérifie ici que chaque état a son geste, et que le geste part vers la
+// bonne fonction : ouvrir un projet publie ET ouvre SANS démarrer le chrono.
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const LIGNE = { id: 25, classe_id: 2, numero: 11, titre: "IA 1 - Développer à partir d'une spécification, avec un agent",
+                  nature: 'projet', jalons: 5, echeance: '2026-10-16', duree_min: 180, publiee: false, ouverte: false };
+  const etat = (pv, publiee) => p.evaluate(({ pv, publiee, LIGNE }) => {
+    let e = document.getElementById('carte-suivi');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    const pc = document.getElementById('pk-classe'), ps = document.getElementById('pk-seance');
+    pc.innerHTML = '<option value="2">BTS SIO 2 - SLAM</option>';
+    ps.innerHTML = '<option value="">Choisir…</option><option value="25" data-titre="11 — IA 1" data-nature="' +
+                   pv.nature + '">11 — IA 1 · fermée</option>';
+    ps.value = '25';
+    const s = window.__e.suivi;
+    s.classeId = 2; s.seanceId = '25'; s.nature = pv.nature;
+    // La fausse couche rend toujours une liste vide pour .from() : on lui
+    // fait rendre la ligne de la séance, que pré-vol et ouverture relisent.
+    const sb = window.__e.sb;
+    sb.from = function(){
+      const ch = { then: (ok, ko) => Promise.resolve({ data: [Object.assign({}, LIGNE, { publiee: publiee, ouverte: pv.ouverte })],
+                                                      error: null }).then(ok, ko) };
+      ['select', 'eq', 'order', 'neq', 'in', 'limit'].forEach((m) => { ch[m] = () => ch; });
+      return ch;
+    };
+    window.__reponses = Object.assign(window.__reponses || {}, { preflight_seance: Object.assign({ ok: true, jalons: 5,
+      echeance: '2026-10-16', duree_min: 180, questions: 0, appel_du_jour: true, eleves: 13, avec_pin: 13,
+      deja_connectes: 12, seance: 11 }, pv), enregistrer_seance: { ok: true, id: 25, cree: false } });
+    window.__appels.length = 0;
+    return window.__e.chargerPrevol().then(() => ({
+      badge: document.getElementById('sv-badge').textContent,
+      action: document.getElementById('b-sv-action').hidden ? '' : document.getElementById('b-sv-action').textContent,
+      chrono: document.getElementById('sv-chrono').textContent,
+      lignes: [...document.querySelectorAll('#prevol-liste li')].map((li) => li.textContent.replace(/\s+/g, ' ').trim()),
+      gestes: [...document.querySelectorAll('#prevol-liste .pv-geste')].map((b) => b.textContent),
+      pastille: document.getElementById('prevol-etat').textContent,
+    }));
+  }, { pv, publiee, LIGNE });
+  const appels = () => p.evaluate(() => window.__appels.map((a) => a.nom + ' ' + JSON.stringify(a.args || {})));
+
+  // 1. Projet fermé et caché : l'en-tête ET la ligne offrent « Ouvrir le projet ».
+  const f = await etat({ nature: 'projet', ouverte: false, demarree_le: null }, false);
+  if (f.action !== 'Ouvrir le projet') rates.push(`projet fermé : action de l'en-tête « ${f.action} », attendu « Ouvrir le projet »`);
+  if (!f.gestes.includes('Ouvrir le projet')) rates.push(`projet fermé : la ligne du pré-vol n'offre pas « Ouvrir le projet » (${f.gestes.join(', ')})`);
+  if (!f.lignes.some((l) => /Projet fermé — les étudiants ne le voient pas/.test(l))) rates.push(`projet fermé : ${f.lignes.join(' | ')}`);
+  // L'en-tête s'il a son bouton, sinon la ligne : un défaut ne doit pas en
+  // masquer un autre derrière un clic impossible.
+  if (f.action === 'Ouvrir le projet') await p.click('#b-sv-action');
+  else if (f.gestes.includes('Ouvrir le projet')) await p.click('#prevol-liste .pv-geste:text("Ouvrir le projet")');
+  await p.waitForTimeout(250);
+  const a1 = await appels();
+  const enr = a1.filter((x) => x.startsWith('enregistrer_seance'));
+  if (enr.length !== 1) rates.push(`projet fermé : « Ouvrir le projet » → ${enr.length} appel(s) à enregistrer_seance (${a1.join(' | ')})`);
+  else {
+    const g = JSON.parse(enr[0].slice('enregistrer_seance '.length));
+    if (g.p_publiee !== true || g.p_ouverte !== true) rates.push(`projet fermé : ouvrir n'envoie pas publiee ET ouverte — ${enr[0]}`);
+    if (g.p_echeance !== '2026-10-16' || g.p_jalons !== 5 || g.p_numero !== 11 || g.p_duree_min !== 180) {
+      rates.push(`projet fermé : ouvrir réécrit autre chose que l'état — ${enr[0]}`);
+    }
+  }
+  if (a1.some((x) => x.startsWith('demarrer_seance'))) rates.push('projet fermé : ouvrir passe par demarrer_seance — le chrono ferait du projet « la séance du jour »');
+  const toast1 = await p.evaluate(() => [...document.querySelectorAll('.toast')].map((t) => t.textContent).join(' | '));
+  if (!/Projet ouvert/.test(toast1)) rates.push(`projet fermé : pas de confirmation après ouverture (« ${toast1} »)`);
+
+  // 2. Projet ouvert mais caché : « Le rendre visible » → publier_seance(25, true).
+  const c = await etat({ nature: 'projet', ouverte: true, demarree_le: null }, false);
+  if (c.badge !== 'Ouvert, caché') rates.push(`projet caché : badge « ${c.badge} »`);
+  if (!c.gestes.includes('Le rendre visible')) rates.push(`projet caché : pas de « Le rendre visible » (${c.gestes.join(', ')})`);
+  await p.click('#prevol-liste .pv-geste:text("Le rendre visible")');
+  await p.waitForTimeout(200);
+  const a2 = await appels();
+  if (!a2.includes('publier_seance {"p_seance_id":25,"p_publiee":true}')) rates.push(`projet caché : ${a2.join(' | ')}`);
+
+  // 3. Projet ouvert et visible : pas d'action d'en-tête ; « Fermer » est différé.
+  const o = await etat({ nature: 'projet', ouverte: true, demarree_le: null }, true);
+  if (o.action) rates.push(`projet ouvert : l'en-tête propose « ${o.action} » — un projet ouvert le reste, sans bouton sous le pouce`);
+  if (o.pastille !== 'Tout est prêt') rates.push(`projet ouvert : pastille « ${o.pastille} »`);
+  await p.click('#prevol .prevol-tete');            // replié quand tout est prêt : on le déplie
+  await p.click('#prevol-liste .pv-geste:text("Fermer")');
+  await p.waitForTimeout(200);
+  const avant = (await appels()).filter((x) => x.startsWith('clore_seance')).length;
+  await p.waitForTimeout(5500);
+  const apres = (await appels()).filter((x) => x.startsWith('clore_seance'));
+  if (avant !== 0 || apres.length !== 1 || !/"p_seance_id":25/.test(apres[0])) {
+    rates.push(`projet ouvert : « Fermer » → ${avant} appel(s) immédiat(s), ${apres.length} après 5 s (attendu 0 puis 1)`);
+  }
+
+  // 4. Cours oublié ouvert (la séance 3 du BTS1, 121 h le 05/10).
+  const v = await etat({ nature: 'cours', ouverte: true, questions: 10, seance: 3, duree_min: 55,
+    demarree_le: new Date(Date.now() - 7294 * 60000).toISOString() }, true);
+  if (v.badge !== 'Oubliée ouverte') rates.push(`cours oublié : badge « ${v.badge} »`);
+  if (v.chrono !== 'ouverte depuis 5 j') rates.push(`cours oublié : chrono « ${v.chrono} »`);
+  if (v.action !== 'Clore la séance') rates.push(`cours oublié : action « ${v.action} »`);
+  if (!v.gestes.includes('Clore la séance')) rates.push(`cours oublié : le pré-vol n'offre pas « Clore la séance » (${v.gestes.join(', ')})`);
+
+  // 5. Cours joué puis clos : plus un « point à régler ».
+  const t = await etat({ nature: 'cours', ouverte: false, questions: 10, seance: 2, duree_min: 55,
+    demarree_le: '2026-09-23T08:19:00Z' }, true);
+  if (t.pastille !== 'Séance terminée') rates.push(`cours terminé : pastille « ${t.pastille} » — une séance finie ne crie pas « à régler »`);
+  if (t.badge !== 'Terminée') rates.push(`cours terminé : badge « ${t.badge} »`);
+
+  if (erreurs.length) rates.push(`ouvrir / fermer : ${erreurs.join(' | ')}`);
+  console.log(`── ouvrir / fermer : fermé « ${f.action} » · caché « ${c.badge} » · ouvert « ${o.pastille} » · ` +
+              `oublié « ${v.badge} · ${v.chrono} » · terminé « ${t.pastille} »`);
+  await fermer();
+}
+
 // ── Après la séance (28/09) : le compte rendu, le carnet, l'export ────────
 {
   const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });

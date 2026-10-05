@@ -29,6 +29,7 @@
 import { $, sb, suivi, erreur, nomDe, prenomSeul } from './socle.js';
 import { brancherAlertes, signaler } from './alertes.js';
 import { chargerCourbe } from './courbe.js';
+import { dureeLisible } from './ouverture.js';
 
 // L'ordre dans lequel on se déplace. C'est aussi l'ordre d'affichage.
 var GRAVITES = ["urgent", "attention", "a_suivre", "info"];
@@ -149,7 +150,10 @@ function ligneVigilance(d, x){
     var r = document.createElement("span");
     r.className = "vg-r g-" + g.gravite;
     r.title = NOM_GRAVITE[g.gravite] || "";
-    r.textContent = g.texte;
+    // « Plus rien depuis 7289 min » (05/10, une séance oubliée ouverte) :
+    // la base compte en minutes, on lit en heures ou en jours au-delà d'1 h 30.
+    r.textContent = String(g.texte || "").replace(/(\d+) min\b/g, function(m, n){
+      return Number(n) >= 90 ? dureeLisible(n) : m; });
     corps.appendChild(r);
   });
   l.appendChild(corps);

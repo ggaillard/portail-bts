@@ -28,6 +28,7 @@ import { toast } from './toast.js';
 import { ouvrirFiche } from './fiche.js';
 import { rendreCompteRendu } from './compterendu.js';
 import { majQuestionnairesSeance } from './qseance.js';
+import { seanceOubliee, depuisLe } from './ouverture.js';
 
 var VUES = ["maintenant", "eleves", "questions", "fin"];
 var SQUELETTE = '<span class="vh">Chargement…</span><span class="squelette"></span>' +
@@ -62,8 +63,11 @@ function majPilote(apresStats){
   badge.textContent = aSeance ? etat[1] : "—";
 
   // Le chrono : seulement pendant une séance de cours démarrée et ouverte.
+  // Oubliée ouverte, il dit depuis quand — « 7294 / 55 min » ne se lit pas.
   var chrono = "";
-  if (p && p.nature !== "projet" && p.ouverte && p.demarree_le) {
+  if (seanceOubliee(p)) {
+    chrono = "ouverte depuis " + depuisLe(p.demarree_le);
+  } else if (p && p.nature !== "projet" && p.ouverte && p.demarree_le) {
     var min = Math.max(0, Math.round((Date.now() - new Date(p.demarree_le).getTime()) / 60000));
     chrono = min + (p.duree_min ? " / " + p.duree_min : "") + " min";
   }
@@ -77,10 +81,17 @@ function majPilote(apresStats){
   }
   $("sv-kpi").textContent = kpi;
 
-  // L'action principale. Un projet reste ouvert (pas de chrono, pas de
-  // clôture hebdomadaire), et la séance 99 est le registre d'appel.
+  // L'action principale. Un projet OUVERT reste ouvert (pas de chrono, pas
+  // de clôture hebdomadaire : « Fermer » est dans le pré-vol, discret) ; un
+  // projet FERMÉ s'ouvre d'ici — jusqu'au 05/10, rien ne le permettait sur cet
+  // écran. La séance 99 est le registre d'appel.
   var appel = p && String(p.seance) === "99";
-  if (!aSeance || !p || p.nature === "projet" || appel) {
+  if (aSeance && p && p.nature === "projet" && !p.ouverte) {
+    action.hidden = false;
+    action.dataset.geste = "ouvrir";
+    action.textContent = "Ouvrir le projet";
+    action.classList.remove("btn-sec");
+  } else if (!aSeance || !p || p.nature === "projet" || appel) {
     action.hidden = true;
   } else {
     action.hidden = false;
@@ -94,7 +105,8 @@ function majPilote(apresStats){
   var pv = $("prevol");
   if (pv && p) {
     var pret = /prêt/.test(($("prevol-etat") || {}).textContent || "");
-    pv.classList.toggle("pv-replie", !!(pret && p.ouverte && p.demarree_le) && !pv.dataset.ouvert);
+    var enMarche = p.ouverte && (p.demarree_le || p.nature === "projet");
+    pv.classList.toggle("pv-replie", !!(pret && enMarche) && !pv.dataset.ouvert);
   }
 
   // Les pastilles des vues.
@@ -149,7 +161,11 @@ function lireTitres(){
 
 function etatSeance(p){
   if (!p) return ["neutre", "—"];
-  if (p.nature === "projet") return p.ouverte ? ["ok", "Projet ouvert"] : ["neutre", "Projet fermé"];
+  if (p.nature === "projet") {
+    if (!p.ouverte) return ["neutre", "Projet fermé"];
+    return p.publiee === false ? ["att", "Ouvert, caché"] : ["ok", "Projet ouvert"];
+  }
+  if (seanceOubliee(p)) return ["att", "Oubliée ouverte"];
   if (p.ouverte && p.demarree_le) return ["ok", "En cours"];
   if (p.ouverte) return ["att", "Ouverte"];
   if (p.demarree_le) return ["neutre", "Terminée"];
@@ -319,7 +335,10 @@ function brancherPilote(){
 
   $("b-sv-action").addEventListener("click", function(){
     var geste = $("b-sv-action").dataset.geste;
-    if (geste === "demarrer") {
+    if (geste === "ouvrir") {
+      // Le geste et son message vivent dans prevol.js, derrière ce bouton.
+      $("b-ouvrir").click();
+    } else if (geste === "demarrer") {
       $("b-demarrer").click();
       toast("Séance démarrée : les réponses sont ouvertes, le chrono part.");
     } else if (geste === "clore") {

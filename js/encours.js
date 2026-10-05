@@ -18,6 +18,11 @@
 // l'année (les TP du BTS2 le sont tous, sans jamais avoir été démarrés).
 // En cours s'ouvrait donc sur un TP du BTS2 le matin de la séance 3 du BTS1,
 // et le questionnaire qu'on cherchait n'était pas sur cet écran-là.
+// Le 05/10, même défaut par l'autre bout : la séance 3 du BTS1, démarrée le
+// 30/09 et jamais close, restait « ouverte et démarrée » — En cours s'ouvrait
+// dessus cinq jours de suite, chrono à 7 294 minutes. La règle 1 ne retient
+// donc qu'une séance de COURS qui n'est pas OUBLIÉE OUVERTE (durée + 2 h,
+// la règle d'a_faire()) ; l'oubliée reste signalée par « Ce qui bloque ».
 // Avant tout cela, l'ADRESSE : « #appel/s/123 » (un favori, un raccourci)
 // désigne la séance à ouvrir, si elle existe dans une classe réelle.
 // Le choix se refait à chaque ouverture de l'espace ; les sélecteurs restent
@@ -26,6 +31,7 @@
 import { $, sb } from './socle.js';
 import { chargerSeancesDe } from './seance.js';
 import { seanceDeLAdresse } from './navigation.js';
+import { seanceOubliee } from './ouverture.js';
 
 function seanceDuJour(liste, idsReels, maintenant){
   var l = (liste || []).filter(function(s){
@@ -35,7 +41,10 @@ function seanceDuJour(liste, idsReels, maintenant){
   var recent = function(a, b){ return date(b) - date(a); };
   var jour = new Date(maintenant || Date.now()).toDateString();
 
-  var enCours = l.filter(function(s){ return s.ouverte && s.demarree_le; }).sort(recent);
+  var enCours = l.filter(function(s){
+    return (s.nature || "cours") === "cours" && s.ouverte && s.demarree_le &&
+           !seanceOubliee(s, maintenant);
+  }).sort(recent);
   if (enCours.length) return enCours[0];
 
   var duJour = l.filter(function(s){
@@ -63,7 +72,7 @@ function seanceDuJour(liste, idsReels, maintenant){
 function choisirSeanceDuJour(classes){
   if (!classes || !classes.length) return Promise.resolve(null);
   var ids = classes.map(function(c){ return String(c.id); });
-  return sb.from("seances").select("id,classe_id,numero,ouverte,demarree_le,nature,publiee,controle_ouvert")
+  return sb.from("seances").select("id,classe_id,numero,ouverte,demarree_le,duree_min,nature,publiee,controle_ouvert")
     .then(function(r){
       var voulue = seanceDeLAdresse();
       var s = (voulue && (r && r.data || []).filter(function(x){

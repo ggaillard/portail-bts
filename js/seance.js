@@ -49,9 +49,19 @@ import { chargerAppelToutesClasses } from './appel.js';
 import { chargerSemestre } from './ensemble.js';
 import { chargerMissions } from './missions.js';
 import { majPilote, marquerEleve, ouvrirVue } from './pilote.js';
+import { rendrePrevol, brancherPrevol } from './prevol.js';
+import { seanceOubliee, depuisLe } from './ouverture.js';
 
 let chargerAFaire = function(){};
 export function brancherSeance(liens){ chargerAFaire = liens.chargerAFaire; }
+
+// Après un geste du pré-vol (ouvrir, fermer, rendre visible) : tout ce qui
+// lit l'état de la séance se relit, comme après Démarrer ou Clore.
+brancherPrevol({ relire: function(){
+  chargerAFaire();
+  chargerSemestre();
+  return chargerPrevol().then(rafraichir);
+} });
 
 // Une réponse « évaluée » est celle qui a un corrigé : on ne calcule le taux
 // de réussite que sur celles-là. Une mission cochée n'est pas une bonne réponse.
@@ -205,14 +215,15 @@ function rendreSuivi(s){
   if (s.reponses === 0) {
     guide.hidden = false;
     guide.classList.toggle("ok", !!suivi.ouverte);
+    // Fermée : jusqu'au 05/10, ce message donnait une requête SQL à recopier
+    // dans Supabase. Le geste est dans l'en-tête et dans « Avant de commencer ».
     guide.innerHTML = suivi.ouverte
       ? "Aucune réponse pour l'instant, et c'est normal : la séance est " +
         "<b>ouverte</b> mais personne n'a encore commencé. Les compteurs se " +
         "rempliront dès les premières réponses de vos élèves."
-      : "Aucune réponse, et cette séance est <b>fermée</b> : personne ne peut " +
-        "y répondre. Pour l'ouvrir, exécutez dans l'éditeur SQL de Supabase :<br>" +
-        "<code>update public.seances set ouverte = true where id = " +
-        suivi.seanceId + ";</code>";
+      : "Aucune réponse, et cette séance est <b>fermée</b> : personne ne peut y répondre. " +
+        (suivi.nature === "projet" ? "<b>Ouvrir le projet</b>, en haut de l'écran, la publie et l'ouvre."
+                                   : "<b>Démarrer la séance</b>, en haut de l'écran, l'ouvre et lance le chrono.");
   } else {
     guide.hidden = true;
   }
@@ -358,12 +369,22 @@ function chargerProjet(){
   });
 }
 
+// `publiee` n'est pas dans preflight_seance() : on la lit à côté, sur la
+// table, plutôt que de réécrire la fonction pour une colonne. Sans elle, un
+// projet ouvert mais caché se disait « ouvert » — et personne ne le voyait.
 function chargerPrevol(){
   var bloc = $("prevol");
   if (!suivi.seanceId) { bloc.hidden = true; suivi.prevol = null; return Promise.resolve(); }
-  return sb.rpc("preflight_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+  var id = Number(suivi.seanceId);
+  return Promise.all([
+    sb.rpc("preflight_seance", { p_seance_id: id }),
+    sb.from("seances").select("id,publiee").eq("id", id)
+  ]).then(function(rr){
+    var r = rr[0], ligne = rr[1] && !rr[1].error && rr[1].data && rr[1].data[0];
     if (!r || r.error || !r.data || !r.data.ok) { bloc.hidden = true; suivi.prevol = null; return; }
+    if (String(id) !== String(suivi.seanceId)) return;       // on a changé de séance entre-temps
     suivi.prevol = r.data;
+    suivi.prevol.publiee = ligne ? !!ligne.publiee : null;
     rendrePrevol(r.data);
     suivi.projet = null;
     if (r.data.nature === "projet") chargerProjet();
@@ -375,82 +396,6 @@ function chargerPrevol(){
   });
 }
 
-
-function rendrePrevol(p){
-  var bloc = $("prevol");
-  bloc.hidden = false;
-
-  var projet = p.nature === "projet";
-  var lignes = [];
-
-  if (projet) {
-    // Sur un projet, ce ne sont pas dix questions qu'on attend, mais des
-    // jalons déclarés et une échéance : sans eux, aucun avancement n'est lisible.
-    lignes.push(p.jalons
-      ? [true,  p.jalons + " jalons déclarés", ""]
-      : [false, "Aucun jalon déclaré", "l'avancement se calculera sur l'étudiant le plus avancé, faute de repère"]);
-    lignes.push(p.echeance
-      ? [true,  "Échéance au " + dateCourte(p.echeance), ""]
-      : [false, "Pas d'échéance", "impossible de dire qui n'ira pas au bout au rythme actuel"]);
-  } else {
-    // Le corrigé : sans lui, rien n'est évalué et la Répartition reste vide.
-    lignes.push(p.questions > 0
-      ? [true,  p.questions + " questions corrigées", ""]
-      : [false, "Aucun corrigé pour cette séance", "les réponses seront enregistrées mais jamais évaluées"]);
-  }
-  // L'appel : sans lui, pas de trace de présence pour la journée.
-  lignes.push(p.appel_du_jour
-    ? [true,  "Question d'appel posée pour aujourd'hui", ""]
-    : [null,  "Question d'appel pas encore créée", "elle se crée d'elle-même à la première connexion d'un étudiant, rien à faire"]);
-  // L'état : une séance fermée refuse tout, en silence.
-  if (projet) {
-    lignes.push(p.ouverte
-      ? [true,  "Séance ouverte en permanence", ""]
-      : [false, "Séance fermée", "les étudiants ne peuvent plus rien valider sur ce projet"]);
-  } else {
-    lignes.push(p.ouverte
-      ? [true,  "Séance ouverte" + (p.demarree_le ? ", démarrée à " + heureCourte(p.demarree_le) : ", pas encore démarrée"), ""]
-      : [false, "Séance fermée", "personne ne peut répondre tant qu'elle n'est pas démarrée"]);
-  }
-  // Les accès : un étudiant sans PIN ne peut pas entrer.
-  var accesOk = p.eleves > 0 && p.avec_pin === p.eleves;
-  lignes.push(accesOk
-    ? [true,  p.eleves + " étudiants, tous avec un code PIN (" + p.deja_connectes + " déjà connectés)", ""]
-    : [false, p.avec_pin + " codes PIN pour " + p.eleves + " étudiants", "les étudiants sans PIN ne pourront pas s'identifier"]);
-
-  var ul = $("prevol-liste");
-  ul.innerHTML = "";
-  lignes.forEach(function(l){
-    var li = document.createElement("li");
-    li.innerHTML = '<span class="pv-i"></span><span><b></b><span class="pv-ko"></span></span>';
-    li.querySelector(".pv-i").textContent = l[0] === true ? "✅" : (l[0] === null ? "ℹ️" : "⚠️");
-    li.querySelector("b").textContent = l[1];
-    li.querySelector(".pv-ko").textContent = l[2] ? " — " + l[2] : "";
-    ul.appendChild(li);
-  });
-
-  // Seul un vrai blocage compte : une ligne d'information (null) n'est pas
-  // un point à régler, sinon le pré-vol crie au loup tous les matins.
-  var manque = lignes.filter(function(l){ return l[0] === false; }).length;
-  var etat = $("prevol-etat");
-  etat.textContent = manque ? (manque + (manque > 1 ? " points à régler" : " point à régler")) : "Tout est prêt";
-  etat.className = "prevol-etat " + (manque ? "ko" : "ok");
-
-  // Un projet reste ouvert : ni chrono à lancer, ni séance à clore chaque semaine.
-  // La séance 99 est le registre d'appel : la clore couperait le pointage et
-  // l'humeur pour la classe entière. Le bouton disparaît, la base refuse aussi.
-  var appel = String(p.seance) === "99";
-  $("b-demarrer").hidden = projet;
-  $("b-clore").hidden = projet || appel;
-  $("b-demarrer").textContent = p.demarree_le && p.ouverte ? "Redémarrer le chrono" : "Démarrer la séance";
-  $("b-clore").disabled = !p.ouverte;
-  majPilote();
-}
-
-function heureCourte(iso){
-  var d = new Date(iso);
-  return isNaN(d) ? "?" : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-}
 
 function pilotage(action, question){
   if (!suivi.seanceId) return;
@@ -492,6 +437,15 @@ function rendreRythme(s){
     zone.className = "rythme mort";
     zone.innerHTML = "Séance non démarrée : pas de repère de temps. " +
                      "Le chrono part au clic sur <b>Démarrer la séance</b>.";
+    return zone.appendChild(noteAvance(p));
+  }
+  // Oubliée ouverte : « 7294 min sur 55 · dans le rythme » (05/10) n'est pas
+  // un rythme. On dit ce qu'il en est ; le geste est dans l'en-tête et le pré-vol.
+  if (seanceOubliee(p)) {
+    zone.className = "rythme retard";
+    zone.innerHTML = "Démarrée il y a <b></b> et jamais close : il n'y a plus de rythme à lire. " +
+                     "<b>Clore la séance</b> fige les réponses.";
+    zone.querySelector("b").textContent = depuisLe(p.demarree_le);
     return zone.appendChild(noteAvance(p));
   }
   var debut = new Date(p.demarree_le).getTime();

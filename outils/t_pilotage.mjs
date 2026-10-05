@@ -294,11 +294,17 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     const jourEnCours = window.__e.seanceDuJour(
       L.map(x => x.id === 4 ? { ...x, ouverte: true, demarree_le: '2026-10-07T10:20:00Z' } : x),
       ['1', '2'], Date.parse('2026-10-07T12:40:00+02:00'));
+    // 05/10 : une séance de cours démarrée cinq jours plus tôt et jamais close
+    // n'est pas « l'heure en train de se jouer » — c'est un oubli, que « Ce qui
+    // bloque » signale. En cours s'ouvre sur la prochaine séance à jouer.
+    const jourOubli = window.__e.seanceDuJour(
+      L.map(x => x.id === 2 ? { ...x, ouverte: true, demarree_le: '2026-09-25T10:19:00Z', duree_min: 55 } : x),
+      ['1', '2'], Date.parse('2026-09-30T11:40:00+02:00'));
     window.__e.majQuestionnairesSeance(99, 2, 99, true);
     const qsAppel = document.getElementById('bloc-qseance').hidden;
     return { gestes, etat, detache, ouvert, focus, candidates, bloque, regle, fiche, choix, ficheDet,
              qsVisible, qsLignes, qsChoix, qsAssocie, qsBoutons, qsH, qsAppel,
-             jour: jour && jour.id, jourEnCours: jourEnCours && jourEnCours.id,
+             jour: jour && jour.id, jourEnCours: jourEnCours && jourEnCours.id, jourOubli: jourOubli && jourOubli.id,
              revProjet, revCours, revTexte, revH, revAppel,
              debord: document.documentElement.scrollWidth - document.documentElement.clientWidth };
   }, { BIB2 });
@@ -320,9 +326,10 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   if (!/regler_questionnaire \{"p_seance_id":34,"p_reste_ouvert":false,"p_jusqu_au":"2026-10-12"\}/.test(r.regle)) rates.push(`rattacher : le comportement ne part pas en un appel complet — ${r.regle}`);
   if (r.fiche.length !== 1 || !/Réviser/.test(r.fiche[0])) rates.push(`fiche : la séance ne dit pas quel questionnaire l'accompagne — ${r.fiche.join(' | ')}`);
   if (r.choix.length - 1 !== 1) rates.push(`fiche : ${r.choix.length - 1} questionnaire(s) proposés au rattachement, attendu 1 (le stage du BTS2)`);
-  console.log('   séance du jour   :', r.jour, '· une fois la 4 démarrée :', r.jourEnCours);
+  console.log('   séance du jour   :', r.jour, '· une fois la 4 démarrée :', r.jourEnCours, '· la 2 oubliée ouverte :', r.jourOubli);
   if (r.jour !== 3) rates.push(`En cours : s'ouvre sur la séance ${r.jour} au lieu de la prochaine séance de cours (3) — un TP ouvert toute l'année ne fait pas la séance du jour`);
   if (r.jourEnCours !== 4) rates.push(`En cours : une séance démarrée et ouverte ne passe pas en premier (${r.jourEnCours})`);
+  if (r.jourOubli !== 3) rates.push(`En cours : s'ouvre sur la séance ${r.jourOubli}, oubliée ouverte depuis cinq jours, au lieu de la prochaine à jouer (3)`);
   console.log('   séance (direct)  :', r.qsLignes.join(' | '), '· à associer :', r.qsChoix, '·', r.qsAssocie);
   if (!r.qsVisible || r.qsLignes.length !== 1 || !/Réviser/.test(r.qsLignes[0])) rates.push(`direct : l'écran de la séance ne montre pas le questionnaire associé — ${r.qsLignes.join(' | ')}`);
   if (!/Proposer|Éteindre/.test(r.qsBoutons.join(' ')) || !r.qsBoutons.includes('Détacher')) rates.push(`direct : gestes manquants sur le questionnaire associé — ${r.qsBoutons.join(', ')}`);

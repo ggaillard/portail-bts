@@ -20,6 +20,14 @@
 // relus : une échéance posée ici doit éteindre la ligne « Projet sans
 // échéance » sans qu'on recharge la page.
 //
+// Depuis le 05/10, chaque ligne porte son GESTE D'ÉTAT, sans passer par le
+// formulaire : « Ouvrir » un projet fermé (publie ET ouvre — ouverture.js),
+// « Fermer » un projet ouvert, « Clore » un cours resté ouvert — ces deux-là
+// différés avec « Annuler » —, « Rendre visible » une séance ouverte mais
+// cachée, et « Suivre › » pour la suivre dans En cours. Ouvrir les séances
+// IA du BTS2 demandait jusque-là Modifier, deux cases, Enregistrer — et rien
+// ne disait que c'était là.
+//
 // Depuis le 28/09, les séances se lisent MODULE PAR MODULE (js/modules.js),
 // et c'est ici qu'on range une séance : un sélecteur « Module » dans le
 // formulaire, qui appelle ranger_seance() après enregistrer_seance(). Deux
@@ -28,7 +36,9 @@
 // modules_enseignant() n'est pas déployée, la liste reste à plat, comme avant.
 
 import { $, sb, suivi, erreur, typo } from './socle.js';
-import { chargerSeancesDe, activerSeance } from './seance.js';
+import { chargerSeancesDe, activerSeance, chargerPrevol } from './seance.js';
+import { ouvrirSeance, fermerSeance, montrerSeance } from './ouverture.js';
+import { toast } from './toast.js';
 import { lireModules, modulesDe } from './modules.js';
 import { ouvrirFichePrep, fermerFichePrep } from './preparer.js';
 import { ouvrirOnglet } from './navigation.js';
@@ -148,14 +158,93 @@ function ligne(s){
     var l = document.createElement("div");
     l.className = "gs-l" + (s.nature === "projet" ? " gs-projet" : "");
     l.innerHTML = '<span class="gs-num"></span><span class="gs-txt"><span class="gs-titre"></span>' +
-                  '<span class="gs-meta"></span></span><button class="qa-b gs-b" type="button">Modifier</button>';
+                  '<span class="gs-meta"></span></span><span class="gs-actes">' +
+                  '<button class="qa-b gs-b" type="button">Modifier</button></span>';
     l.querySelector(".gs-num").textContent = s.numero;
     l.querySelector(".gs-titre").textContent = typo(s.titre);
     l.querySelector(".gs-meta").textContent = (s.nature === "projet" ? "Projet" : "Cours") +
       " · " + suivre(s) + " · " + etat(s) + (s.reponses ? " · " + s.reponses + " réponses" : "");
     l.querySelector(".gs-b").setAttribute("aria-label", "Modifier la séance " + s.numero);
     l.querySelector(".gs-b").addEventListener("click", function(){ ouvrirFormulaire(s); });
+    var actes = l.querySelector(".gs-actes"), modifier = l.querySelector(".gs-b");
+    gestesDeLigne(s).forEach(function(g){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = (g.principal ? "btn" : "qa-b") + " gs-a";
+      b.textContent = g.libelle;
+      b.setAttribute("aria-label", g.libelle.replace(" ›", "") + " — séance " + s.numero);
+      b.addEventListener("click", function(){ g.faire(b); });
+      actes.insertBefore(b, modifier);
+    });
     return l;
+}
+
+// ── Les gestes d'état, sur la ligne ──────────────────────────────────────
+function gestesDeLigne(s){
+  var g = [];
+  if (s.nature === "projet") {
+    g.push(s.ouverte
+      ? { libelle: "Fermer", faire: function(b){ fermerDiffere(s, b, "Le projet " + s.numero +
+          " va être fermé : plus personne ne pourra cocher une mission."); } }
+      : { libelle: "Ouvrir", principal: true, faire: function(b){ gesteLigne(b, ouvrirSeance(s.id),
+          "Séance " + s.numero + " ouverte et visible : les étudiants voient leurs missions et peuvent les cocher.", s); } });
+  } else if (s.ouverte) {
+    g.push({ libelle: "Clore", faire: function(b){ fermerDiffere(s, b, "La séance " + s.numero +
+      " va être close : plus aucune réponse ne sera acceptée."); } });
+  }
+  // Ouverte mais cachée : elle accepte des réponses que personne ne voit où donner.
+  if (s.ouverte && !s.publiee) {
+    g.push({ libelle: "Rendre visible", faire: function(b){ gesteLigne(b, montrerSeance(s.id, true),
+      "Séance " + s.numero + " visible.", s); } });
+  }
+  g.push({ libelle: "Suivre ›", faire: function(){ suivreEnDirect(s); } });
+  return g;
+}
+
+function gesteLigne(b, promesse, message, s){
+  b.disabled = true;
+  erreur("err-gs-liste", "");
+  return promesse.then(function(d){
+    b.disabled = false;
+    if (!d.ok) { erreur("err-gs-liste", d.detail); return; }
+    toast(message);
+    apresEtat(s);
+  });
+}
+
+function fermerDiffere(s, b, message){
+  b.disabled = true;
+  toast(message, {
+    apres: function(){ gesteLigne(b, fermerSeance(s.id), "Séance " + s.numero + " fermée. Les réponses déjà données restent.", s); },
+    annuler: function(){ b.disabled = false; toast("Annulé : la séance " + s.numero + " reste ouverte."); }
+  });
+}
+
+// La liste, « Ce qui bloque », le semestre — et l'écran du direct s'il
+// regarde cette séance-là : il doit dire le nouvel état sans rechargement.
+//
+// La fiche ouverte à côté est rouverte sur des données relues : ses cases
+// « Publiée » et « Ouverte » diraient sinon l'état d'avant, et un
+// « Enregistrer » plus tard le rétablirait sans qu'on le voie.
+function apresEtat(s){
+  var fiche = suivi.prep;
+  var onglet = (document.querySelector("#gs-onglets .actif") || { dataset: {} }).dataset.onglet;
+  lireSeances(classeGestion).then(function(){
+    var x = fiche && seances.filter(function(y){ return String(y.id) === String(fiche); })[0];
+    if (x) ouvrirFormulaire(x, onglet || "infos", true);
+  });
+  if (String(suivi.seanceId) === String(s.id)) chargerPrevol();
+  apres();
+}
+
+function suivreEnDirect(s){
+  ouvrirOnglet("appel");
+  var sel = $("pk-classe");
+  if (sel) sel.value = String(classeGestion);
+  return chargerSeancesDe(classeGestion, s.id).then(function(){
+    var c = $("carte-suivi");
+    if (c && c.scrollIntoView) c.scrollIntoView({ block: "start" });
+  });
 }
 
 // Le numéro qui suit la dernière séance ; s'il dépasse la bande autorisée,
@@ -168,7 +257,7 @@ function prochainNumero(){
   return "";
 }
 
-function ouvrirFormulaire(s, onglet){
+function ouvrirFormulaire(s, onglet, sansFocus){
   ouvrirFichePrep(s, onglet);
   var f = $("f-gs");
   f.hidden = false;
@@ -192,7 +281,7 @@ function ouvrirFormulaire(s, onglet){
   // Une séance qui a des réponses garde son numéro : autant le dire avant.
   $("gs-numero").disabled = !!(s && s.reponses);
   erreur("err-gs", "");
-  if (!onglet || onglet === "infos") $("gs-titre").focus();
+  if (!sansFocus && (!onglet || onglet === "infos")) $("gs-titre").focus();
 }
 
 // Le sélecteur n'existe que s'il y a des modules. Une séance nouvelle dans

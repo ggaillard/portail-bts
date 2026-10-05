@@ -287,6 +287,7 @@
         <ul class="prevol-liste" id="prevol-liste"></ul>
         <div class="pick">
           <button class="btn" id="b-demarrer" type="button">Démarrer la séance</button>
+          <button class="btn" id="b-ouvrir" type="button" hidden>Ouvrir le projet</button>
           <button class="btn btn-sec" id="b-clore" type="button">Clore la séance</button>
         </div>
         <div aria-live="polite" id="err-prevol"></div>
@@ -478,9 +479,9 @@
        l'onglet La séance, en regardant la séance qu'il prépare. -->
   <div class="card" id="carte-seances" hidden>
     <h2>Les séances</h2>
-    <p class="hint">Titre, nature, jalons, échéance, publication. Une séance
-      <b>non publiée</b> n'apparaît pas aux étudiants ; <b>fermée</b>, elle
-      n'accepte plus de réponse. Les numéros 90 à 99 sont réservés.</p>
+    <p class="hint">Une séance <b>non publiée</b> n'apparaît pas aux étudiants ;
+      <b>fermée</b>, elle n'accepte aucune réponse. <b>Ouvrir</b> fait les deux d'un
+      geste, sur la ligne. Le reste se règle par Modifier. Numéros 90 à 99 réservés.</p>
     <div class="pick">
       <select id="gs-classe" aria-label="Classe dont on règle les séances"></select>
       <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>

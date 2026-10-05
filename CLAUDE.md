@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**881 lignes**) + `styles/` (quatorze feuilles) + `js/` :
+`index.html` (**882 lignes**) + `styles/` (quatorze feuilles) + `js/` :
 
 | module | ce qu'il porte |
 |---|---|
@@ -26,7 +26,9 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `enquetes.js` | « Faisons connaissance » (98) et « Recherche de stage » (97) |
 | `ensemble.js` | le semestre et les projets |
 | `controle.js` | le contrôle d'entrée, des deux côtés de l'écran |
-| `seance.js` | pré-vol, démarrer / clore, rafraîchir, chiffres, élève par élève |
+| `seance.js` | lire le pré-vol, démarrer / clore, rafraîchir, chiffres, élève par élève |
+| `prevol.js` | « Avant de commencer » : les lignes du pré-vol, **chacune avec son geste** (05/10) |
+| `ouverture.js` | ouvrir (publier ET ouvrir, sans chrono), fermer, rendre visible une séance ; « oubliée ouverte » (05/10) |
 | `heure.js` | le parcours de l'heure et le débriefing — les deux lectures qui se projettent |
 | `ecran.js` | le mode classe projeté au tableau |
 | `bibliotheque.js` | les questionnaires côté enseignant : modèles, affectations, réglages |
@@ -113,8 +115,27 @@ La carte « La séance » d'En cours a le motif des applications de suivi :
   ouvre les deux sélecteurs, choisir une séance les referme —, l'état en
   badge, le chrono, « 10/13 actifs · 87 % juste », « mis à jour il y a 12 s »
   avec **Pause** (`suivi.pause` : `rafraichir()` ne fait plus rien), et **une
-  action principale**, Démarrer ou Clore. Les boutons du pré-vol restent dans
-  le DOM (c'est eux qui portent les gestes) mais sont masqués.
+  action principale** : Démarrer ou Clore pour un cours, **Ouvrir le projet**
+  pour un projet fermé (depuis le 05/10 ; un projet ouvert n'a pas d'action
+  d'en-tête, il reste ouvert). Les boutons du pré-vol restent dans le DOM
+  (c'est eux qui portent les gestes) mais sont masqués.
+- **Chaque ⚠️ du pré-vol porte son geste** (`prevol.js`, 05/10) : Ouvrir le
+  projet, Le rendre visible (ouvert mais caché), Fermer (différé), Démarrer,
+  Clore une séance oubliée (différé), Écrire les missions ›, Poser l'échéance ›.
+  Avant, le pré-vol nommait « Séance fermée » sans bouton nulle part sur
+  l'écran : les séances IA du BTS2 ne s'ouvraient que depuis le formulaire de
+  Préparer. **Un geste nommé doit être faisable depuis la carte** — la règle de
+  « Ce qui bloque » vaut ici aussi.
+- **Ouvrir un projet ne passe pas par `demarrer_seance()`** : elle horodate
+  `demarree_le`, et une séance ouverte et démarrée est « l'heure en train de se
+  jouer » pour `encours.js`. `ouverture.js` relit la ligne puis la réécrit à
+  l'identique par `enregistrer_seance()`, `publiee` et `ouverte` à vrai.
+- **Oubliée ouverte** : un cours ouvert plus de sa durée + 2 h après son
+  démarrage — la règle même d'`a_faire()`. Badge « Oubliée ouverte », chrono
+  « ouverte depuis 5 j », « Clore la séance » ; `encours.js` ne l'ouvre plus
+  d'office (le 05/10, la séance 3 du BTS1 l'était depuis 121 h, chrono à
+  7 294 min). Une séance de cours jouée puis close dit « Séance terminée »,
+  pas « 1 point à régler ».
 - **« Clore » est différé de cinq secondes avec « Annuler »** (`toast.js`) :
   le geste coupe les réponses de toute la classe et ne se rattrape pas.
   Démarrer part tout de suite — il se refait.
@@ -134,7 +155,10 @@ La carte « La séance » d'En cours a le motif des applications de suivi :
   hors réussite ; un jalon = `tp…` à `'true'`).
 
 `outils/t_suivi.mjs` vérifie tout cela, « Clore » compris : sans « Annuler »,
-un appel à `clore_seance` après 5 s ; avec, aucun.
+un appel à `clore_seance` après 5 s ; avec, aucun. Et les cinq états du
+05/10 : projet fermé (Ouvrir → `enregistrer_seance` avec publiee et ouverte,
+jamais `demarrer_seance`), ouvert mais caché (`publier_seance`), ouvert
+(Fermer différé), cours oublié, cours terminé.
 
 ### Préparer — la fiche d'une séance (28/09)
 
@@ -164,6 +188,10 @@ l'écran du direct, qui ne garde que des liens « Écrire … › » (`.vers-pre
   à régler est un lien vers l'onglet qui le règle.
 - Après un enregistrement, **la fiche reste ouverte** sur la séance (même une
   séance qu'on vient de créer : on écrit ensuite son contrôle).
+- **L'état se règle sur la ligne, sans formulaire** (05/10) : Ouvrir (projet
+  fermé — publie et ouvre), Fermer (projet ouvert) ou Clore (cours ouvert),
+  différés avec « Annuler » ; Rendre visible (ouverte mais cachée) ; Suivre ›
+  ouvre la séance dans En cours. `t_missions.mjs` le vérifie.
 
 ### Après la séance — compte rendu et carnet (28/09)
 
