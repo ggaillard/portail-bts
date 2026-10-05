@@ -1,0 +1,112 @@
+/* ── composants ─────────────────────────────────────
+   Lot 1 des propositions du 05/10 (claude/application-seance-propositions.md) :
+   les composants partagés, un dessin chacun, et leur inventaire.
+
+   Feuille ajoutée EN DERNIER dans index.html : classes neuves seulement
+   (inter-*, aide*, rc-*, cs-*, btn-discret), plus deux règles qui
+   ALIGNENT d'anciennes classes sur ces niveaux (.qa-b, .gs-pret-lien). Ce
+   sont les seules qui gagnent par leur position, et c'est voulu.
+
+   L'inventaire — et il n'y en a pas d'autre :
+
+     Bouton        .btn (principal) · .btn-sec (secondaire) · .btn-discret
+                   (tertiaire, d'allure lien). .qa-b est un secondaire en
+                   pilule : même couleur, même bordure, même hauteur.
+     Interrupteur  .inter — un état qu'on rebascule (js/interrupteur.js)
+     Puce          .filtre — un filtre de liste, aria-pressed
+     Segments      .sv-vue-b — les vues d'un même écran, role="tab"
+     Outil         .sv-pause — une bascule d'en-tête (Pause, alertes)
+     Toast         .toast-b — l'action d'une confirmation passagère
+     Projection    .ce-btn — le pied de l'écran projeté, lu de loin
+
+   styleguide.html les montre tous ; outils/t_navigation.mjs y passe axe-core
+   en thème clair et sombre.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Interrupteur (APG « Switch ») ──
+   Le curseur dit l'état par sa POSITION autant que par sa couleur (WCAG
+   1.4.1) ; la piste et le curseur passent 3 : 1 contre leur fond (1.4.11). */
+.inter{appearance:none;display:inline-flex;align-items:center;gap:.55rem;min-height:44px;
+  padding:.2rem .35rem .2rem .2rem;background:transparent;border:0;border-radius:8px;
+  font:inherit;font-size:.9rem;font-weight:500;color:var(--ink);cursor:pointer;text-align:left}
+.inter:hover .inter-piste{border-color:var(--ink)}
+.inter:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.inter[disabled]{opacity:.55;cursor:progress}
+.inter-piste{position:relative;flex:0 0 2.4rem;height:1.4rem;border-radius:999px;
+  background:var(--surface-alt);border:2px solid var(--ink-soft);transition:background .15s,border-color .15s}
+.inter-bouton{position:absolute;top:2px;left:2px;width:calc(1.4rem - 8px);height:calc(1.4rem - 8px);
+  border-radius:50%;background:var(--ink-soft);transition:transform .15s}
+.inter[aria-checked="true"] .inter-piste{background:var(--ok);border-color:var(--ok)}
+.inter[aria-checked="true"] .inter-bouton{transform:translateX(1rem);background:var(--surface)}
+.inter-l{line-height:1.3}
+@media (prefers-reduced-motion: reduce){.inter-piste,.inter-bouton{transition:none}}
+
+/* ── Boutons : trois niveaux ──
+   principal  .btn       un seul par carte : le geste qu'on vient faire
+   secondaire .btn-sec   les autres gestes ; .qa-b en est la variante pilule
+   discret    .btn-discret  aller ailleurs (« Écrire les missions › »),
+                         d'allure lien, souligné, jamais seul sur sa ligne
+   Tous font 44 px de haut au moins. */
+.btn-discret{appearance:none;display:inline-flex;align-items:center;gap:.35rem;min-height:44px;
+  padding:.3rem .2rem;background:transparent;border:0;border-radius:7px;font:inherit;font-size:.9rem;
+  font-weight:600;color:var(--accent-ink);text-decoration:underline;text-underline-offset:3px;
+  cursor:pointer;text-align:left}
+.btn-discret:hover{text-decoration-thickness:2px}
+.btn-discret:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-discret[disabled]{opacity:.55;cursor:default}
+/* Alignements (05/10) : un secondaire en pilule a le fond d'un secondaire, et
+   les deux liens d'allure « aller vers » sont des boutons discrets. */
+.qa-b{background:transparent}
+.qa-b.vers-prep,.gs-pret-lien{border:0;background:transparent;color:var(--accent-ink);
+  text-decoration:underline;text-underline-offset:3px;min-height:44px;padding-left:.2rem;padding-right:.2rem}
+
+/* ── Aller à une séance (APG « Combobox ») — js/choixseance.js ──
+   La liste se déroule SOUS le champ, dans le panneau : pas de couche
+   flottante qu'un téléphone couperait. Une option fait 44 px. */
+.cs{margin-bottom:.6rem}
+.cs-lbl{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.3rem}
+.cs-nb{font-family:var(--f-mono);font-size:.74rem;color:var(--ink-soft);font-weight:400}
+.cs-liste{margin-top:.35rem;max-height:min(26rem,55vh);overflow-y:auto;border:1px solid var(--rule);
+  border-radius:8px;background:var(--surface)}
+.cs-liste ul{list-style:none;margin:0;padding:0}
+.cs-g{position:sticky;top:0;background:var(--surface-alt);font-size:.74rem;font-weight:600;
+  color:var(--ink-soft);padding:.3rem .7rem;letter-spacing:.02em}
+.cs-o{display:flex;align-items:center;gap:.6rem;min-height:44px;padding:.35rem .7rem;cursor:pointer;
+  border-top:1px solid var(--rule-soft)}
+.cs-o:hover{background:var(--accent-soft)}
+.cs-o[aria-selected="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.cs-o.cs-courante .cs-t{font-weight:600}
+.cs-t{flex:1 1 auto;min-width:0;font-size:.9rem;line-height:1.3}
+.cs-e{flex:0 0 auto;font-size:.76rem;color:var(--ink-soft);white-space:nowrap}
+.cs-vide{padding:.6rem .7rem;margin:0}
+.cs-avance{margin:.2rem 0 .5rem}
+.cs-avance > summary{cursor:pointer;font-size:.85rem;color:var(--accent-ink);min-height:44px;
+  display:flex;align-items:center}
+
+/* ── Raccourcis clavier — js/raccourcis.js ── */
+.rc-ouvrir{margin-left:auto;font-size:.85rem}
+@media (max-width: 30rem){.rc-ouvrir{display:none}}   /* pas de clavier sous le pouce */
+/* margin:auto : la remise à zéro de socle.css (*{margin:0}) retirait au
+   <dialog> le centrage que le navigateur lui donne. */
+.rc{margin:auto;border:1px solid var(--rule);border-radius:10px;background:var(--surface);color:var(--ink);
+  padding:1.2rem 1.3rem;width:min(30rem,calc(100% - 2rem));max-height:calc(100% - 2rem)}
+.rc::backdrop{background:rgba(10,20,30,.45)}
+.rc-table{margin:.4rem 0 .8rem}
+.rc-table td{color:var(--ink)}
+kbd{font-family:var(--f-mono);font-size:.8rem;padding:.05rem .4rem;border:1px solid var(--rule);
+  border-bottom-width:2px;border-radius:5px;background:var(--surface-alt);color:var(--ink);white-space:nowrap}
+
+/* ── Aide repliée (APG « Disclosure », en <details>) ──
+   Une phrase sous le titre de la carte ; le reste derrière « En savoir
+   plus ». Le 05/10, l'aide des questionnaires faisait 96 mots avant le
+   premier geste (critère « brièveté » de Bastien & Scapin). */
+.aide{margin:-.6rem 0 1rem;font-size:.88rem;color:var(--ink-soft)}
+.aide > summary{cursor:pointer;color:var(--accent-ink);font-weight:600;min-height:44px;
+  display:inline-flex;align-items:center;list-style-position:inside}
+.aide > summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.aide > p{margin:.1rem 0 .4rem}
+
+/* Les liens du texte suivent le thème : le bleu par défaut du navigateur
+   tombe à 1,9 : 1 sur le fond sombre. Les liens habillés (a.projet, le lien
+   d'évitement) gardent leur règle, plus précise. */
+a{color:var(--accent-ink)}

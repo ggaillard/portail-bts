@@ -25,7 +25,10 @@
 //     à chaque fois, et la carte épinglée avec.
 
 import { chromium } from 'playwright';
+import fs from 'fs';
+import { createRequire } from 'module';
 import { ouvrir } from './portail.mjs';
+import { servir } from './serveur.mjs';
 
 const RACINE = process.argv[2] || process.cwd();
 const rates = [];
@@ -221,9 +224,149 @@ if (a11y.premier !== 'evitement') rates.push(`le premier élément focalisable e
 if (erreurs.length) rates.push('erreur JS — ' + erreurs[0]);
 
 await fermer();
+
+// ── 6. Ce que mesure axe-core : WCAG 2.2 AA, en clair ET en sombre ────────
+// Lot 1 des propositions du 05/10 (item 1.9). L'audit de ce jour-là avait
+// trouvé, entre autres, TOUS les boutons principaux à 2,5 : 1 en thème sombre
+// — « Me connecter » compris — et un tableau défilant inatteignable au
+// clavier. Aucun des douze contrôles ne regardait le thème sombre. Celui-ci
+// passe axe-core sur l'écran de connexion, les trois onglets enseignant (avec
+// des données d'essai), et le guide des composants (styleguide.html), à 390
+// et 1 280 px, dans les deux thèmes ; puis vérifie qu'à 320 px rien ne défile
+// en largeur (WCAG 1.4.10, « redistribution »).
+//
+// axe-core vient de node_modules s'il y est (`npm i axe-core`), sinon du CDN
+// à une version FIXE — jamais d'un « latest » qui ferait changer le verdict
+// sans qu'on ait rien touché. Introuvable des deux côtés : le contrôle
+// échoue, il ne passe pas au vert en n'ayant rien vérifié.
+//
+// axe ne voit qu'environ un tiers des critères. Le reste se vérifie à la main
+// une fois par trimestre (liste dans CLAUDE.md, « Accessibilité »).
+const AXE_VERSION = '4.14.0';
+async function sourceAxe(){
+  try { return fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8'); } catch (e) {}
+  try {
+    const r = await fetch(`https://cdn.jsdelivr.net/npm/axe-core@${AXE_VERSION}/axe.min.js`);
+    if (r.ok) return await r.text();
+  } catch (e) {}
+  return null;
+}
+const AXE = await sourceAxe();
+const REGLES = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const fautesAxe = [];
+
+async function auditer(page, ou){
+  await page.addScriptTag({ content: AXE });
+  const v = await page.evaluate(async (REGLES) => {
+    // Les <details> s'ouvrent : ce qu'ils cachent est audité aussi.
+    document.querySelectorAll('details').forEach((d) => { if (d.offsetParent !== null || d.closest('.volet:not([hidden])')) d.open = true; });
+    const r = await window.axe.run(document, { runOnly: { type: 'tag', values: REGLES } });
+    return r.violations.map((x) => x.id + ' (' + x.nodes.length + ') : ' +
+      x.nodes.slice(0, 2).map((n) => n.target.join(' ') + (n.any[0] && n.any[0].message ? ' — ' + n.any[0].message.slice(0, 120) : '')).join(' | '));
+  }, REGLES);
+  v.forEach((x) => fautesAxe.push(ou + ' · ' + x));
+  return v.length;
+}
+
+// Des données d'essai complètes : chaque carte enseignant a de quoi s'afficher.
+function donneesEnseignant(){
+  const T = {
+    classes: [{ id: 1, code: 'BTS1-DEV-2026', nom: 'BTS SIO 1 - Bloc 1 DEV' }, { id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }],
+    seances: [{ id: 3, classe_id: 1, numero: 3, titre: 'Séance 3 - où vit la donnée', ouverte: true, notee: false,
+                nature: 'cours', jalons: null, module_id: 4, publiee: true, duree_min: 55,
+                demarree_le: new Date(Date.now() - 20 * 60000).toISOString() }],
+    eleves: Array.from({ length: 6 }, (_, i) => ({ id: i + 1, numero: String(i + 1).padStart(2, '0'), avatar: '🦊', auth_id: 'x' })),
+  };
+  const sb = window.__e.sb;
+  sb.from = function (t) {
+    const ch = { then: (ok, ko) => Promise.resolve({ data: (T[t] || []), error: null }).then(ok, ko) };
+    ['select', 'eq', 'order', 'neq', 'in', 'limit', 'gte', 'lte', 'filter'].forEach((m) => { ch[m] = () => ch; });
+    return ch;
+  };
+  window.__reponses = {
+    a_faire: { ok: true, bloquants: 0, attentions: 1, taches: [{ classe: 'BTS SIO 1 - Bloc 1 DEV', code: 'BTS1-DEV-2026',
+      classe_id: 1, gravite: 'attention', quoi: 'Séance 2 encore ouverte', detail: 'Démarrée il y a 11 h.',
+      geste: 'Clore la séance', action: 'clore', seance_id: 11, aller: null }] },
+    preflight_seance: { ok: true, nature: 'cours', seance: 3, questions: 10, ouverte: true, duree_min: 55,
+      demarree_le: new Date(Date.now() - 20 * 60000).toISOString(), appel_du_jour: true, eleves: 6, avec_pin: 6, deja_connectes: 6 },
+    seances_de_classe: { ok: true, liste: [
+      { id: 25, numero: 11, titre: 'IA 1', nature: 'projet', jalons: 5, echeance: '2026-10-16', duree_min: 180,
+        ouverte: false, publiee: false, missions: 5, corriges: 0, reponses: 0, module_id: 3 }] },
+  };
+  return window.__e.ouvrirEspaceEnseignant();
+}
+
+if (!AXE) {
+  rates.push(`axe-core introuvable (ni node_modules, ni le CDN à la version ${AXE_VERSION}) : ` +
+             'rien n\'a été vérifié. « npm i axe-core » puis relancer.');
+} else {
+  for (const theme of ['light', 'dark']) {
+    for (const largeur of [390, 1280]) {
+      // L'écran de connexion, tel qu'il s'ouvre.
+      const c = await ouvrir(nav, RACINE, { largeur });
+      await c.page.emulateMedia({ colorScheme: theme });
+      await c.page.waitForTimeout(300);
+      await auditer(c.page, `connexion ${theme} ${largeur}`);
+      await c.fermer();
+      // L'espace enseignant, onglet par onglet.
+      const e = await ouvrir(nav, RACINE, { largeur });
+      await e.page.emulateMedia({ colorScheme: theme });
+      await e.page.evaluate(donneesEnseignant);
+      await e.page.waitForTimeout(800);
+      for (const v of ['appel', 'quest', 'ensemble']) {
+        await e.page.evaluate((v) => document.getElementById('ong-' + v).click(), v);
+        await e.page.waitForTimeout(300);
+        await auditer(e.page, `${v} ${theme} ${largeur}`);
+      }
+      if (e.erreurs.length) rates.push(`audit ${theme} ${largeur} : erreur JS — ${e.erreurs[0]}`);
+      await e.fermer();
+    }
+    // Le guide des composants.
+    const site = await servir(RACINE, 0, '/');
+    const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: theme });
+    const g = await ctx.newPage();
+    const errG = [];
+    g.on('pageerror', (x) => errG.push(String(x)));
+    await g.goto(site.url + 'styleguide.html', { waitUntil: 'load' });
+    await g.waitForTimeout(300);
+    await auditer(g, `styleguide ${theme}`);
+    const ko = await g.evaluate(() => [...document.querySelectorAll('#sg-contrastes .sg-ko')].map((x) => x.textContent));
+    if (ko.length) rates.push(`styleguide ${theme} : encres sous 4,5 : 1 — ${ko.join(' | ')}`);
+    if (!(await g.evaluate(() => document.querySelectorAll('#sg-inters [role="switch"]').length))) {
+      rates.push(`styleguide ${theme} : aucun interrupteur rendu — js/interrupteur.js ne s'est pas chargé`);
+    }
+    if (errG.length) rates.push(`styleguide ${theme} : erreur JS — ${errG[0]}`);
+    await ctx.close();
+    site.fermer();
+  }
+
+  // WCAG 1.4.10 : à 320 px, rien ne défile en largeur.
+  const r320 = await ouvrir(nav, RACINE, { largeur: 320 });
+  await r320.page.waitForTimeout(300);
+  const debords = [];
+  const largeurDe = () => r320.page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (await largeurDe() > 0) debords.push('connexion +' + (await largeurDe()) + ' px');
+  await r320.page.evaluate(donneesEnseignant);
+  await r320.page.waitForTimeout(800);
+  for (const v of ['appel', 'quest', 'ensemble']) {
+    await r320.page.evaluate((v) => document.getElementById('ong-' + v).click(), v);
+    await r320.page.waitForTimeout(250);
+    const d = await largeurDe();
+    if (d > 0) debords.push(v + ' +' + d + ' px');
+  }
+  await r320.fermer();
+
+  console.log('\n── axe-core ' + AXE_VERSION + ' (WCAG 2.2 AA), clair et sombre, 390 et 1 280 px');
+  console.log('   violations :', fautesAxe.length, '· débordements à 320 px :', debords.length ? debords.join(', ') : 'aucun');
+  fautesAxe.slice(0, 12).forEach((x) => rates.push('axe — ' + x));
+  if (fautesAxe.length > 12) rates.push(`… et ${fautesAxe.length - 12} autres violations axe`);
+  if (debords.length) rates.push(`à 320 px, la page défile en largeur (WCAG 1.4.10) : ${debords.join(', ')}`);
+}
+
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
 console.log('  ✓ L\'adresse dit où l\'on est, Précédent y ramène, les deux barres');
-console.log('    d\'onglets suivent le même motif, et rien n\'est annoncé en silence.');
+console.log('    d\'onglets suivent le même motif, rien n\'est annoncé en silence,');
+console.log('    et axe-core ne trouve rien en clair comme en sombre (WCAG 2.2 AA).');

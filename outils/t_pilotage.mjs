@@ -257,7 +257,8 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     await window.__e.ouvrirFichePrep({ id: 3, numero: 2, titre: 'TP2', nature: 'cours', module_id: 1 }, 'infos');
     await attendre(80);
     const revCours = !document.getElementById('gs-rev').hidden;
-    const revTexte = document.getElementById('b-gs-rev').textContent;
+    const rb = document.getElementById('b-gs-rev');
+    const revTexte = rb.textContent + '#' + rb.getAttribute('role') + '=' + rb.getAttribute('aria-checked');
     const revH = document.getElementById('b-gs-rev').getBoundingClientRect().height;
     window.__appels.length = 0;
     document.getElementById('b-gs-rev').click();
@@ -280,8 +281,10 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
     await attendre(30);
     const qsAssocie = window.__appels.filter(a => a.nom === 'rattacher_questionnaire')
       .map(a => JSON.stringify(a.args)).join(' | ');
-    const qsBoutons = [...document.querySelectorAll('#qs-liste .btn')].map(x => x.textContent);
-    const qsH = Math.min(...[...document.querySelectorAll('#qs-liste .btn, #qs-ajout')]
+    // Depuis le 05/10, l'état se change par l'interrupteur commun (role="switch").
+    const qsBoutons = [...document.querySelectorAll('#qs-liste .btn, #qs-liste [role="switch"]')]
+      .map(x => x.textContent + (x.getAttribute('role') === 'switch' ? '#switch=' + x.getAttribute('aria-checked') : ''));
+    const qsH = Math.min(...[...document.querySelectorAll('#qs-liste .btn, #qs-liste [role="switch"], #qs-ajout')]
       .map(x => x.getBoundingClientRect().height));
     // « En cours » s'ouvre sur la séance du jour, pas sur un TP resté ouvert
     // toute l'année (30/09 : il ouvrait un TP du BTS2 le jour de la séance 3).
@@ -332,13 +335,13 @@ for (const [w, nom] of [[390, 'téléphone'], [1280, 'bureau']]) {
   if (r.jourOubli !== 3) rates.push(`En cours : s'ouvre sur la séance ${r.jourOubli}, oubliée ouverte depuis cinq jours, au lieu de la prochaine à jouer (3)`);
   console.log('   séance (direct)  :', r.qsLignes.join(' | '), '· à associer :', r.qsChoix, '·', r.qsAssocie);
   if (!r.qsVisible || r.qsLignes.length !== 1 || !/Réviser/.test(r.qsLignes[0])) rates.push(`direct : l'écran de la séance ne montre pas le questionnaire associé — ${r.qsLignes.join(' | ')}`);
-  if (!/Proposer|Éteindre/.test(r.qsBoutons.join(' ')) || !r.qsBoutons.includes('Détacher')) rates.push(`direct : gestes manquants sur le questionnaire associé — ${r.qsBoutons.join(', ')}`);
+  if (!/Proposé aux étudiants#switch=(true|false)/.test(r.qsBoutons.join(' ')) || !r.qsBoutons.includes('Détacher')) rates.push(`direct : gestes manquants sur le questionnaire associé (interrupteur « Proposé aux étudiants », Détacher) — ${r.qsBoutons.join(', ')}`);
   if (r.qsChoix < 1 || !/"p_cible":3/.test(r.qsAssocie)) rates.push(`direct : « Associer un questionnaire… » n'appelle pas rattacher_questionnaire(…, 3) — ${r.qsAssocie}`);
   if (r.qsH < 44) rates.push(`direct : une cible du bloc questionnaires fait ${r.qsH} px, sous 44`);
   if (!r.qsAppel) rates.push('direct : le bloc questionnaires s\'affiche sur la séance d\'appel (99)');
   console.log('   réviser (fiche)  : caché sur un projet', r.revProjet, '· visible sur un cours', r.revCours, '·', r.revTexte, '·', r.revAppel);
   if (!r.revProjet) rates.push('réviser : le bouton « Réviser cette séance » apparaît sur un projet, qui n\'a pas de quiz');
-  if (!r.revCours || !/Proposer la révision/.test(r.revTexte)) rates.push(`réviser : le bouton manque sur un cours — « ${r.revTexte} »`);
+  if (!r.revCours || r.revTexte !== 'Révision proposée aux étudiants#switch=false') rates.push(`réviser : l'interrupteur manque sur un cours, ou n'est pas éteint — « ${r.revTexte} »`);
   if (r.revH < 44) rates.push(`réviser : bouton de ${r.revH} px, sous les 44 px`);
   if (r.revAppel !== '{"p_seance_id":3,"p_ouvrir":true}') rates.push(`réviser : le clic n'appelle pas reviser_seance(3, vrai) — ${r.revAppel}`);
   if (!/"p_seance_id":34,"p_cible":null/.test(r.ficheDet)) rates.push(`fiche : « Détacher » n'appelle pas rattacher_questionnaire(34, null) — ${r.ficheDet}`);

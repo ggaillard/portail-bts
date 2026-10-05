@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**882 lignes**) + `styles/` (quatorze feuilles) + `js/` :
+`index.html` (**928 lignes**) + `styles/` (quinze feuilles) + `js/` + `styleguide.html` (le guide des composants) :
 
 | module | ce qu'il porte |
 |---|---|
@@ -41,7 +41,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
 | `toast.js` | les confirmations passagères, avec « Annuler » pour un geste différé |
 | `preparer.js` | la fiche d'une séance sous Préparer : onglets, « Prête à démarrer ? », éditeurs préremplis, les questionnaires qui l'accompagnent, « Proposer la révision » |
-| `qseance.js` | sur l'écran du direct (vue Maintenant), les questionnaires qui accompagnent la séance : les voir, Proposer / Éteindre, Détacher, « Associer un questionnaire… » |
+| `qseance.js` | sur l'écran du direct (vue Maintenant), les questionnaires qui accompagnent la séance : les voir, l'interrupteur « Proposé aux étudiants », Détacher, « Associer un questionnaire… » |
 | `compterendu.js` | le compte rendu d'une séance, sous « Fin d'heure » : texte à copier, CSV |
 | `carnet.js` | le carnet de la classe dans Bilan : élèves × séances jouées, « décroche », CSV |
 | `exporter.js` | le CSV qu'un tableur français ouvre sans question (point-virgule, BOM) |
@@ -50,6 +50,10 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `courbe.js` | la courbe de l'heure : avancement médian, attendu, actifs sur 5 min (02/10) |
 | `semaine.js` | « Cette semaine », en tête de Bilan, faite pour le téléphone (02/10) |
 | `equipes.js` | les équipes d'un module : jalons, appréciation, journal, points des pairs — des deux côtés (02/10) |
+| `interrupteur.js` | l'interrupteur commun (`role="switch"`) : « Proposé aux étudiants », « Visible » (05/10) |
+| `refus.js` | `texteRefus()` : un refus de la base dit sa cause et quoi faire (05/10) |
+| `choixseance.js` | « Aller à une séance » : la recherche, motif Combobox, groupée classe › module, récentes (05/10) |
+| `raccourcis.js` | les raccourcis clavier et leur aide (`?`), désactivables (05/10) |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -171,7 +175,7 @@ l'écran du direct, qui ne garde que des liens « Écrire … › » (`.vers-pre
 | Onglet | Contenu |
 |---|---|
 | Infos | le formulaire de `gestion.js` (titre, module, nature, jalons, échéance…) |
-| Contrôle | l'état (badge, qui a répondu), **Le proposer / Éteindre**, l'éditeur `ct-*` |
+| Contrôle | l'état (qui a répondu), l'interrupteur **« Proposé aux étudiants »**, l'éditeur `ct-*` |
 | Concepts | l'éditeur `db-*` — séance de cours seulement |
 | Missions | l'éditeur `mi-*` — séance de projet seulement |
 
@@ -646,7 +650,7 @@ sur deux. `publier_seance(seance_id, publiee)` sert aux exceptions : ouvrir en
 avance pour un absent, refermer un brouillon parti trop tôt. Elle refuse les
 numéros ≥ 90 — questionnaires et appel n'ont pas de trace écrite à dévoiler.
 
-Le portail montre l'état dans « Le semestre » : un bouton **Visible / Cachée**
+Le portail montre l'état dans « Le semestre » : l'interrupteur **« Visible »** (jusqu'au 05/10, un bouton Visible / Cachée)
 par séance. `semestre()` rend donc `seance_id` et `publiee` — sans le premier
 on ne peut pas basculer, sans le second on ne sait pas quoi basculer.
 
@@ -980,7 +984,7 @@ par accident :
 | | Le geste | Ce qu'il fait | Réversible ? |
 |---|---|---|---|
 | Affectation | **Donner à cette classe** / **Retirer de la classe** | Crée ou efface la séance de cette classe | Retirer devient **impossible** dès la première réponse |
-| Visibilité | **Proposé / Éteint** | Décide si les étudiants le voient | Toujours, autant de fois qu'on veut |
+| Visibilité | l'interrupteur **« Proposé aux étudiants »** (une pastille Proposé / Éteint jusqu'au 05/10) | Décide si les étudiants le voient | Toujours, autant de fois qu'on veut |
 
 L'interrupteur est placé **avant** le retrait : c'est le geste courant, celui
 qu'on refait. Retirer est rare et destructeur, il vient après — et il est
@@ -1437,6 +1441,66 @@ clic.
 - **L'avatar est unique dans la classe** — c'est ce qui rend le repère visuel
   fiable en projection. Les comptes de test prennent 🧪 et 🔬.
 
+## Ergonomie et accessibilité — le lot 1 (05/10)
+
+Proposé et accepté le 05/10 (`claude/application-seance-propositions.md` dans
+le projet). Les standards de référence : critères ergonomiques de **Bastien &
+Scapin**, **ISO 9241-110**, **WCAG 2.2 AA** (le RGAA 5 l'intégrera), motifs des
+**ARIA Authoring Practices**. Règles qui en sortent, et qu'on ne défait pas :
+
+- **Un état qu'on rebascule est un interrupteur** (`js/interrupteur.js`,
+  `role="switch"`, `aria-checked`), avec un libellé FIXE : « Proposé aux
+  étudiants » (questionnaires, contrôles d'entrée, révision), « Visible »
+  (publication). **Une action qui change le cours de la séance est un bouton
+  nommé par son verbe** : Démarrer, Ouvrir, Clore — y compris pour un projet
+  (« Fermer » a disparu). Ne pas réintroduire de bouton dont le libellé
+  bascule entre l'état et l'action (« Éteindre / Le proposer »).
+- **Le vocabulaire** : *Visible / Cachée* (jamais « publiée » à l'écran),
+  *Ouverte / Fermée*, *Proposé aux étudiants*, *Démarrer / Ouvrir / Clore*,
+  *Donner à cette classe / Retirer de la classe* (affectation).
+- **Trois niveaux de bouton** : `.btn` (principal, un par carte), `.btn-sec`
+  (et `.qa-b`, sa pilule), `.btn-discret` (aller ailleurs). L'inventaire des
+  composants est en tête de `styles/composants.css` ; **`styleguide.html`**
+  les montre tous.
+- **Un refus dit sa cause** : `texteRefus(r)` (`js/refus.js`) — session,
+  réseau, fonction pas déployée, raison de la base. Un module garde ses
+  messages pour les motifs qu'il est seul à connaître et passe le reste.
+  `t_messages.mjs` refuse le retour de « Action refusée. Vérifiez… ».
+- **Aucune couleur de texte en dur sur un fond du thème.** Le texte prend un
+  jeton (`--ink`, `--ink-soft`, `--ink-faint`, `--ok`, `--signal`, `--ko`,
+  `--accent-ink`) ; le texte posé SUR `--accent` prend `--on-accent` (blanc
+  en clair, encre foncée en sombre — le blanc y faisait 2,5 : 1). Les couples
+  texte / fond de la table de `socle.css` passent 4,5 : 1 dans les deux
+  thèmes. Une pastille qui porte son propre fond clair (la ligne des absents)
+  reste lisible dans les deux et n'est pas concernée.
+- **Une zone qui défile se prend au clavier** : `tabindex="0"`,
+  `role="region"`, un nom (`.scroll`).
+- **Une phrase sous le titre d'une carte** ; le reste dans
+  `<details class="aide">En savoir plus</details>`. Les modes d'emploi des
+  éditeurs (syntaxe d'un contrôle, d'une mission) restent dépliés : on les lit
+  en tapant.
+- **Aller à une séance** se fait par la recherche (`js/choixseance.js`, Ctrl+K) ;
+  les deux listes natives restent, repliées, parce que le portail les lit.
+- **Les raccourcis à une touche se coupent** (WCAG 2.1.4) depuis leur aide ;
+  jamais dans un champ, jamais pendant la projection ou une fiche ouverte ;
+  **Clore n'a pas de raccourci**.
+
+**Contrôle automatique** : `t_navigation.mjs` passe **axe-core** (version
+fixée) sur la connexion, les trois onglets enseignant et `styleguide.html`, à
+390 et 1 280 px, **en clair et en sombre**, puis vérifie qu'à 320 px rien ne
+défile en largeur (WCAG 1.4.10). Zéro violation attendue ; cassé le 05/10 en
+remettant le blanc sur le bouton sombre (9 violations nommées).
+
+**Vérification manuelle, une fois par trimestre** — axe ne voit qu'environ un
+tiers des critères :
+
+1. NVDA (ou VoiceOver) : se connecter en étudiant et répondre à l'appel ;
+   démarrer une séance ; proposer un questionnaire. Tout s'annonce-t-il ?
+2. Zoom du navigateur à 200 % : rien n'est coupé ni recouvert (1.4.4).
+3. Espacement du texte (bookmarklet « Text spacing ») : rien ne déborde (1.4.12).
+4. Tout au clavier seul, focus toujours visible (2.1.1, 2.4.7).
+5. Noter la date et ce qui a été trouvé dans `JOURNAL.md`.
+
 ## Workflow
 
 Le dépôt est **public** et publié par GitHub Pages. Demander confirmation avant
@@ -1448,7 +1512,7 @@ différentes :
 | Workflow | Question |
 |---|---|
 | `verifier-portail.yml` · **syntaxe** | `index.html` s'affiche-t-il encore ? Syntaxe JS, `$("id")` existants, et **toute fonction appelée est-elle définie** |
-| `verifier-portail.yml` · **gabarits** | Les chiffres de `REFONTE.md` sont-ils ceux du dépôt (`mesurer.mjs`), et les douze contrôles de navigateur passent-ils ? `t_chargement` · `t_appel` · `t_revision` · `t_pilotage` · `t_ecran` · `t_messages` · `t_navigation` · `t_suivi` · `t_vigilance` · `t_etudiant` · `t_missions` · `t_indicateurs` |
+| `verifier-portail.yml` · **gabarits** | Les chiffres de `REFONTE.md` sont-ils ceux du dépôt (`mesurer.mjs`), et les douze contrôles de navigateur passent-ils ? `t_chargement` · `t_appel` · `t_revision` · `t_pilotage` · `t_ecran` · `t_messages` · `t_navigation` (dont axe-core, WCAG 2.2 AA, deux thèmes) · `t_suivi` · `t_vigilance` · `t_etudiant` · `t_missions` · `t_indicateurs` |
 | `verifier-portail.yml` · **coherence** | Les bonnes réponses de la base collent-elles aux supports ? |
 | `verifier-portail.yml` · **fiche** | **Cette séance est-elle prête ?** Douze points, appliqués à chaque `docs/seances/seance-*.md` trouvée |
 | `supabase.yml` · **verifier** | La chaîne de migrations se rejoue-t-elle deux fois sur une base vierge, et les invariants tiennent-ils ? |

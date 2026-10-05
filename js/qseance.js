@@ -10,7 +10,7 @@
 // Ce bloc, dans la vue « Maintenant », dit trois choses et offre trois gestes :
 //
 //   · ce qui accompagne la séance, et si les étudiants le voient (badge) ;
-//   · Proposer / Éteindre — ouvrir_questionnaire(), le geste de toujours ;
+//   · l'interrupteur « Proposé aux étudiants » — ouvrir_questionnaire() ;
 //   · Détacher, et « Associer un questionnaire… » — rattacher_questionnaire().
 //
 // Même base que la carte des questionnaires et que la fiche de Préparer
@@ -22,6 +22,8 @@
 
 import { $, sb, erreur, typo } from './socle.js';
 import { chargerQuestionnaires, texteRattachement } from './bibliotheque.js';
+import { interrupteur } from './interrupteur.js';
+import { texteRefus } from './refus.js';
 
 var lue = "";            // « classe/séance » de la dernière lecture
 var enCours = false;
@@ -98,11 +100,6 @@ function qsLigne(seanceId, classeId, x){
   t.className = "qs-t";
   var b = document.createElement("b");
   b.textContent = typo(x.m.titre);
-  var badge = document.createElement("span");
-  badge.className = "badge " + (x.a.ouvert ? "ok" : "neutre");
-  badge.textContent = x.a.ouvert ? "Proposé" : "Éteint";
-  b.appendChild(document.createTextNode(" "));
-  b.appendChild(badge);
   var d = document.createElement("span");
   d.className = "sous-hint";
   d.textContent = texteRattachement(x.a) + " · " + (x.a.termines || 0) + " / " +
@@ -112,11 +109,10 @@ function qsLigne(seanceId, classeId, x){
 
   var actes = document.createElement("span");
   actes.className = "qs-actes";
-  var sw = document.createElement("button");
-  sw.type = "button";
-  sw.className = "btn" + (x.a.ouvert ? " btn-sec" : "");
-  sw.textContent = x.a.ouvert ? "Éteindre" : "Proposer";
-  sw.setAttribute("aria-label", (x.a.ouvert ? "Éteindre" : "Proposer") + " « " + x.m.titre + " »");
+  // L'interrupteur commun (05/10) : il dit l'état ET le change. Avant, une
+  // pastille « Proposé » à côté d'un bouton « Éteindre ».
+  var sw = interrupteur({ libelle: "Proposé aux étudiants", on: !!x.a.ouvert,
+    nom: "Proposé aux étudiants — « " + x.m.titre + " »" });
   sw.addEventListener("click", function(){
     sw.disabled = true;
     var vise = !x.a.ouvert;
@@ -124,7 +120,7 @@ function qsLigne(seanceId, classeId, x){
       { p_classe_id: Number(classeId), p_numero: Number(x.a.numero), p_ouvert: vise },
       function(){
         return vise ? "« " + typo(x.m.titre) + " » est proposé aux étudiants."
-                    : "« " + typo(x.m.titre) + " » est éteint. Les réponses sont gardées.";
+                    : "« " + typo(x.m.titre) + " » n'est plus proposé. Les réponses sont gardées.";
       }, seanceId, classeId);
   });
   var de = document.createElement("button");
@@ -137,7 +133,7 @@ function qsLigne(seanceId, classeId, x){
     qsGeste("rattacher_questionnaire", { p_seance_id: Number(x.a.seance_id), p_cible: null },
       function(){
         return "« " + typo(x.m.titre) + " » ne suit plus cette séance. Son état n'a pas changé : " +
-               "c'est « Proposer / Éteindre » qui décide de ce que voient les étudiants.";
+               "c'est l'interrupteur « Proposé aux étudiants » qui décide de ce qu'ils voient.";
       }, seanceId, classeId);
   });
   actes.appendChild(sw); actes.appendChild(de);
@@ -150,7 +146,7 @@ function qsGeste(rpc, args, texte, seanceId, classeId){
   sb.rpc(rpc, args).then(function(r){
     var d = r && r.data;
     if (!r || r.error || !d || !d.ok) {
-      erreur("err-qseance", "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      erreur("err-qseance", texteRefus(r));
     } else {
       erreur("err-qseance", texte(d), true);
     }

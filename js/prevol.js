@@ -14,8 +14,9 @@
 // ÊTRE FAISABLE DEPUIS LA CARTE. Chaque ligne ⚠️ porte donc son bouton :
 //
 //   · Projet fermé            → « Ouvrir le projet » (publie ET ouvre, sans chrono)
-//   · Projet ouvert mais caché → « Le rendre visible »
-//   · Projet ouvert et visible → « Fermer », discret, différé avec « Annuler »
+//   · Projet ouvert mais caché → « Rendre visible »
+//   · Projet ouvert et visible → « Clore le projet », discret, différé avec
+//     « Annuler » (« Clore », comme un cours : un seul verbe depuis le lot 1)
 //   · Cours fermé, pas joué    → « Démarrer la séance »
 //   · Cours oublié ouvert      → « Clore la séance », différé avec « Annuler »
 //   · Pas de jalon, pas d'échéance → « Écrire les missions › », « Poser
@@ -86,10 +87,10 @@ function lignesPrevol(p){
         { libelle: "Ouvrir le projet", faire: function(){ $("b-ouvrir").click(); } }]);
     } else if (p.publiee === false) {
       l.push([false, "Projet ouvert mais caché", "les étudiants ne voient pas ses missions",
-        { libelle: "Le rendre visible", faire: rendreVisibleIci }]);
+        { libelle: "Rendre visible", faire: rendreVisibleIci }]);
     } else {
       l.push([true, "Projet ouvert et visible", "les étudiants cochent leurs missions à leur rythme",
-        { libelle: "Fermer", sec: true, faire: fermerProjetIci }]);
+        { libelle: "Clore le projet", sec: true, faire: fermerProjetIci }]);
     }
   } else if (seanceOubliee(p)) {
     l.push([false, "Ouverte depuis " + depuisLe(p.demarree_le),
@@ -196,16 +197,16 @@ function rendreVisibleIci(bouton){
   });
 }
 
-// Fermer coupe les réponses de toute la classe : différé, avec « Annuler ».
+// Clore coupe les réponses de toute la classe : différé, avec « Annuler ».
 function fermerProjetIci(bouton){
   var id = suivi.seanceId;
   if (!id) return;
   bouton.disabled = true;
-  toast("Le projet va être fermé : plus personne ne pourra cocher une mission.", {
+  toast("Le projet va être clos : plus personne ne pourra cocher une mission.", {
     apres: function(){
-      fermerSeance(id).then(function(d){ apresGeste(d, bouton, "Projet fermé. Les missions déjà cochées restent."); });
+      fermerSeance(id).then(function(d){ apresGeste(d, bouton, "Projet clos. Les missions déjà cochées restent."); });
     },
-    annuler: function(){ bouton.disabled = false; toast("Fermeture annulée. Le projet reste ouvert."); }
+    annuler: function(){ bouton.disabled = false; toast("Clôture annulée. Le projet reste ouvert."); }
   });
 }
 

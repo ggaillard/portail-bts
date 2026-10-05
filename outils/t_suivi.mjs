@@ -350,24 +350,24 @@ for (const w of [390, 1280]) {
   // 2. Projet ouvert mais caché : « Le rendre visible » → publier_seance(25, true).
   const c = await etat({ nature: 'projet', ouverte: true, demarree_le: null }, false);
   if (c.badge !== 'Ouvert, caché') rates.push(`projet caché : badge « ${c.badge} »`);
-  if (!c.gestes.includes('Le rendre visible')) rates.push(`projet caché : pas de « Le rendre visible » (${c.gestes.join(', ')})`);
-  await p.click('#prevol-liste .pv-geste:text("Le rendre visible")');
+  if (!c.gestes.includes('Rendre visible')) rates.push(`projet caché : pas de « Rendre visible » (${c.gestes.join(', ')})`);
+  if (c.gestes.includes('Rendre visible')) await p.click('#prevol-liste .pv-geste:text("Rendre visible")');
   await p.waitForTimeout(200);
   const a2 = await appels();
   if (!a2.includes('publier_seance {"p_seance_id":25,"p_publiee":true}')) rates.push(`projet caché : ${a2.join(' | ')}`);
 
-  // 3. Projet ouvert et visible : pas d'action d'en-tête ; « Fermer » est différé.
+  // 3. Projet ouvert et visible : pas d'action d'en-tête ; « Clore le projet » est différé.
   const o = await etat({ nature: 'projet', ouverte: true, demarree_le: null }, true);
   if (o.action) rates.push(`projet ouvert : l'en-tête propose « ${o.action} » — un projet ouvert le reste, sans bouton sous le pouce`);
   if (o.pastille !== 'Tout est prêt') rates.push(`projet ouvert : pastille « ${o.pastille} »`);
   await p.click('#prevol .prevol-tete');            // replié quand tout est prêt : on le déplie
-  await p.click('#prevol-liste .pv-geste:text("Fermer")');
+  await p.click('#prevol-liste .pv-geste:text("Clore le projet")');
   await p.waitForTimeout(200);
   const avant = (await appels()).filter((x) => x.startsWith('clore_seance')).length;
   await p.waitForTimeout(5500);
   const apres = (await appels()).filter((x) => x.startsWith('clore_seance'));
   if (avant !== 0 || apres.length !== 1 || !/"p_seance_id":25/.test(apres[0])) {
-    rates.push(`projet ouvert : « Fermer » → ${avant} appel(s) immédiat(s), ${apres.length} après 5 s (attendu 0 puis 1)`);
+    rates.push(`projet ouvert : « Clore le projet » → ${avant} appel(s) immédiat(s), ${apres.length} après 5 s (attendu 0 puis 1)`);
   }
 
   // 4. Cours oublié ouvert (la séance 3 du BTS1, 121 h le 05/10).
@@ -387,6 +387,134 @@ for (const w of [390, 1280]) {
   if (erreurs.length) rates.push(`ouvrir / fermer : ${erreurs.join(' | ')}`);
   console.log(`── ouvrir / fermer : fermé « ${f.action} » · caché « ${c.badge} » · ouvert « ${o.pastille} » · ` +
               `oublié « ${v.badge} · ${v.chrono} » · terminé « ${t.pastille} »`);
+  await fermer();
+}
+
+// ── Aller à une séance, et les raccourcis (05/10, lot 1) ─────────────────
+// Le sélecteur était deux listes natives, dix-sept entrées sans recherche ni
+// module. On vérifie le motif Combobox (rôle, état déplié, option active), le
+// filtre, les groupes, le choix au clavier, la mémoire des récentes ; puis
+// que les raccourcis agissent, se coupent (WCAG 2.1.4), et ne se déclenchent
+// jamais en tapant dans un champ.
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 1280 });
+  const S = [
+    { id: 3, classe_id: 1, numero: 3, titre: 'Séance 3 - où vit la donnée', ouverte: true, publiee: true, nature: 'cours',
+      module_id: 4, duree_min: 55, demarree_le: new Date(Date.now() - 7294 * 60000).toISOString() },
+    { id: 4, classe_id: 1, numero: 4, titre: 'Séance 4 - versionner', ouverte: false, publiee: false, nature: 'cours', module_id: 4 },
+    { id: 29, classe_id: 1, numero: 99, titre: 'Appel - question du jour', ouverte: true, publiee: true, nature: 'cours' },
+    { id: 25, classe_id: 2, numero: 11, titre: "IA 1 - Développer à partir d'une spécification", ouverte: false, publiee: false,
+      nature: 'projet', module_id: 3 },
+    { id: 26, classe_id: 2, numero: 12, titre: 'IA 2 - Prompts et évaluation', ouverte: true, publiee: true, nature: 'projet', module_id: 3 },
+  ];
+  const prep = await p.evaluate((S) => {
+    try { localStorage.removeItem('tdc-seances-recentes'); localStorage.removeItem('tdc-raccourcis'); } catch (e) {}
+    ['chargement', 'connexion', 'espace-etu'].forEach((i) => { document.getElementById(i).hidden = true; });
+    document.getElementById('espace-ens').hidden = false;
+    const pc = document.getElementById('pk-classe');
+    pc.innerHTML = '<option value="1">BTS SIO 1 - Bloc 1 DEV</option><option value="2">BTS SIO 2 - SLAM</option>';
+    const sb = window.__e.sb;
+    sb.from = function (t) {
+      const filtres = {};
+      const ch = { then: (ok, ko) => Promise.resolve({ data: t === 'seances'
+        ? S.filter((s) => Object.keys(filtres).every((k) => String(s[k]) === String(filtres[k]))) : [], error: null }).then(ok, ko) };
+      ['select', 'order', 'neq', 'in', 'limit'].forEach((m) => { ch[m] = () => ch; });
+      ch.eq = (col, v) => { filtres[col] = v; return ch; };
+      return ch;
+    };
+    window.__reponses = { modules_enseignant: { ok: true, classes: [
+      { classe_id: 1, modules: [{ id: 4, titre: 'Bloc 1 DEV', icone: '🧭', ordre: 1 }] },
+      { classe_id: 2, modules: [{ id: 3, titre: 'IA Méca Forez — concevoir', icone: '🏭', ordre: 2 }] }] },
+      preflight_seance: { ok: true, nature: 'projet', seance: 11, ouverte: false, jalons: 5, echeance: '2026-10-16',
+        appel_du_jour: true, eleves: 13, avec_pin: 13, deja_connectes: 12 } };
+    return true;
+  }, S);
+  // 1. « Changer ▾ » ouvre le panneau, le focus va au champ, la liste se déplie.
+  await p.click('#sv-fil');
+  await p.waitForTimeout(300);
+  const ouvert = await p.evaluate(() => {
+    const i = document.getElementById('cs-saisie');
+    return { focus: document.activeElement === i, role: i.getAttribute('role'), deplie: i.getAttribute('aria-expanded'),
+      groupes: [...document.querySelectorAll('#cs-liste .cs-g')].map((g) => g.textContent),
+      options: [...document.querySelectorAll('#cs-liste [role="option"]')].map((o) => o.textContent),
+      active: i.getAttribute('aria-activedescendant') };
+  });
+  if (!ouvert.focus || ouvert.role !== 'combobox' || ouvert.deplie !== 'true') rates.push(`sélecteur : focus ${ouvert.focus}, rôle ${ouvert.role}, aria-expanded ${ouvert.deplie}`);
+  if (ouvert.groupes.join(' | ') !== 'BTS SIO 1 - Bloc 1 DEV › 🧭 Bloc 1 DEV | BTS SIO 2 - SLAM › 🏭 IA Méca Forez | Questionnaires et appel') {
+    rates.push(`sélecteur : groupes « ${ouvert.groupes.join(' | ')} »`);
+  }
+  if (!ouvert.options.some((o) => /oubliée ouverte/.test(o)) || !ouvert.options.some((o) => /99 — Appel.*BTS SIO 1/.test(o))) {
+    rates.push(`sélecteur : les états ou l'appel à part manquent — ${ouvert.options.join(' | ')}`);
+  }
+  // 2. On tape, sans accents ni majuscules ; ↓ puis Entrée choisit.
+  await p.fill('#cs-saisie', 'ia specif');
+  await p.waitForTimeout(100);
+  const filtre = await p.evaluate(() => [...document.querySelectorAll('#cs-liste [role="option"]')].map((o) => o.textContent));
+  if (filtre.length !== 1 || !/IA 1/.test(filtre[0])) rates.push(`sélecteur : « ia specif » trouve ${filtre.length} séance(s) — ${filtre.join(' | ')}`);
+  await p.fill('#cs-saisie', 'ia');
+  await p.waitForTimeout(100);
+  await p.keyboard.press('ArrowDown');
+  const act = await p.evaluate(() => { const i = document.getElementById('cs-saisie');
+    const o = document.getElementById(i.getAttribute('aria-activedescendant')); return o ? o.textContent : ''; });
+  await p.keyboard.press('Enter');
+  await p.waitForTimeout(400);
+  const choisi = await p.evaluate(() => ({ classe: document.getElementById('pk-classe').value,
+    seance: document.getElementById('pk-seance').value, panneau: document.getElementById('sv-choix').hidden,
+    fil: document.getElementById('sv-fil-seance').textContent,
+    recentes: JSON.parse(localStorage.getItem('tdc-seances-recentes') || '[]') }));
+  if (!/IA 2/.test(act) || choisi.classe !== '2' || choisi.seance !== '26' || !choisi.panneau) {
+    rates.push(`sélecteur : ↓ + Entrée sur « ${act} » → classe ${choisi.classe}, séance ${choisi.seance}, panneau fermé ${choisi.panneau}`);
+  }
+  if (choisi.recentes[0] !== '26') rates.push(`sélecteur : la séance choisie n'est pas notée en récente (${JSON.stringify(choisi.recentes)})`);
+  // 3. Rouvert sans texte : « Récentes » en tête.
+  await p.click('#sv-fil');
+  await p.waitForTimeout(300);
+  const g1 = await p.evaluate(() => (document.querySelector('#cs-liste .cs-g') || {}).textContent);
+  if (g1 !== 'Récentes') rates.push(`sélecteur : le premier groupe est « ${g1} », attendu « Récentes »`);
+  await p.keyboard.press('Escape');
+  const ferme = await p.evaluate(() => document.getElementById('cs-saisie').getAttribute('aria-expanded'));
+  if (ferme !== 'false') rates.push(`sélecteur : Échap laisse la liste dépliée (${ferme})`);
+
+  // 4. Les raccourcis. En tapant dans le champ, rien ne part.
+  await p.keyboard.type('2');
+  const pasDansChamp = await p.evaluate(() => document.getElementById('sv-eleves').hidden);
+  if (!pasDansChamp) rates.push('raccourcis : « 2 » tapé dans un champ a changé de vue');
+  await p.evaluate(() => { document.getElementById('cs-saisie').value = ''; document.getElementById('cs-saisie').blur();
+    document.getElementById('sv-choix').hidden = true; document.body.focus(); });
+  await p.keyboard.press('2');
+  const vue2 = await p.evaluate(() => !document.getElementById('sv-eleves').hidden);
+  await p.keyboard.press('/');
+  const cherche = await p.evaluate(() => document.activeElement && document.activeElement.id);
+  await p.evaluate(() => document.activeElement.blur());
+  await p.keyboard.press('1');
+  await p.keyboard.press('Shift+?');
+  await p.waitForTimeout(100);
+  const aide = await p.evaluate(() => ({ ouvert: document.getElementById('rc-aide').open,
+    inter: !!document.querySelector('#rc-inter [role="switch"]') }));
+  await p.keyboard.press('Escape');
+  const aideFermee = await p.evaluate(() => !document.getElementById('rc-aide').open);
+  if (!vue2) rates.push('raccourcis : « 2 » n\'ouvre pas la vue Élèves');
+  if (cherche !== 'sv-recherche') rates.push(`raccourcis : « / » met le focus sur « ${cherche} », attendu la recherche d'élève`);
+  if (!aide.ouvert || !aide.inter || !aideFermee) rates.push(`raccourcis : « ? » → aide ouverte ${aide.ouvert}, interrupteur ${aide.inter}, refermée par Échap ${aideFermee}`);
+  // « D » ouvre le projet affiché (l'action d'en-tête), comme un clic.
+  await p.evaluate(() => { window.__appels.length = 0; });
+  await p.keyboard.press('d');
+  await p.waitForTimeout(250);
+  const ouvreParD = await p.evaluate(() => window.__appels.filter((a) => a.nom === 'enregistrer_seance').length);
+  if (ouvreParD !== 1) rates.push(`raccourcis : « D » sur un projet fermé → ${ouvreParD} appel(s) à enregistrer_seance, attendu 1`);
+  // Coupés (WCAG 2.1.4) : plus rien à une touche ; Ctrl+K reste.
+  await p.evaluate(() => { localStorage.setItem('tdc-raccourcis', 'non'); });
+  await p.keyboard.press('2');
+  const coupe = await p.evaluate(() => document.getElementById('sv-eleves').hidden);
+  await p.keyboard.press('Control+k');
+  await p.waitForTimeout(250);
+  const ctrlK = await p.evaluate(() => ({ panneau: !document.getElementById('sv-choix').hidden,
+    focus: document.activeElement && document.activeElement.id }));
+  if (!coupe) rates.push('raccourcis : coupés, « 2 » change encore de vue (WCAG 2.1.4)');
+  if (!ctrlK.panneau || ctrlK.focus !== 'cs-saisie') rates.push(`raccourcis : Ctrl+K → panneau ${ctrlK.panneau}, focus ${ctrlK.focus}`);
+  if (erreurs.length) rates.push('sélecteur / raccourcis : erreur JS — ' + erreurs[0]);
+  console.log(`── sélecteur : ${ouvert.options.length} séances, ${ouvert.groupes.length} groupes · « ia » ↓ Entrée → ${choisi.fil}` +
+              ` · raccourcis 2 / ? D Ctrl+K : ${vue2} ${cherche === 'sv-recherche'} ${aide.ouvert} ${ouvreParD === 1} ${ctrlK.panneau}`);
   await fermer();
 }
 
@@ -482,4 +610,5 @@ console.log('  ✓ Les quatre chiffres sont gros sur un téléphone, tiennent su
 console.log('    ligne, ne cassent pas leur grille, et les contrôles d\'entrée');
 console.log('    sont dans le bon onglet ; l\'écran de la séance a son en-tête collant,');
 console.log('    ses quatre vues, ses filtres, sa fiche élève, et « Clore » s\'annule ;');
-console.log('    le compte rendu et le carnet de la classe disent juste, et s\'exportent.');
+console.log('    le compte rendu et le carnet de la classe disent juste, et s\'exportent ;');
+console.log('    une séance se cherche au clavier, et les raccourcis se coupent.');

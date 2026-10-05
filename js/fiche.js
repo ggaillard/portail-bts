@@ -144,7 +144,16 @@ function rendreFiche(e, el, seances, reps, appels){
       corps.appendChild(tr);
     });
   var b = bloc("Séance par séance", corps.children.length ? "" : "Aucune séance jouée pour l'instant.");
-  if (corps.children.length) { var sc = document.createElement("div"); sc.className = "scroll"; sc.appendChild(t); b.appendChild(sc); }
+  if (corps.children.length) {
+    // Une zone qui défile doit se prendre au clavier (WCAG 2.1.1) : sans
+    // focus, les colonnes de droite ne s'atteignent qu'à la souris.
+    var sc = document.createElement("div");
+    sc.className = "scroll";
+    sc.tabIndex = 0;
+    sc.setAttribute("role", "region");
+    sc.setAttribute("aria-label", "Séance par séance");
+    sc.appendChild(t); b.appendChild(sc);
+  }
   z.appendChild(b);
 }
 

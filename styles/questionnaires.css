@@ -22,9 +22,8 @@
   background:var(--surface);color:var(--ink-soft);white-space:nowrap}
 .qa-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qa-b[disabled]{opacity:.55;cursor:progress}
-.qa-b .pt{width:.6rem;height:.6rem;border-radius:50%;background:var(--ink-faint)}
-.qa-b.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
-.qa-b.on .pt{background:var(--ok)}
+/* .qa-b .pt et .qa-b.on dessinaient l'ancien interrupteur « Proposé /
+   Éteint ». Retirés le 05/10 : l'interrupteur est .inter (composants.css). */
 /* La file d'attente de l'étudiant. Sur un téléphone, trois cartes empilées
    ne disent pas combien il en reste ni où l'on va : ce bandeau le dit en une
    ligne, et il colle en haut pour rester vrai pendant le défilement. */

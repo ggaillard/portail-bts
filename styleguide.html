@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide des composants — Portail BTS SIO</title>
+<!-- Le guide des composants (05/10, lot 1 des propositions, item 1.4).
+     Chaque composant du portail une fois, avec SES feuilles, dans le même
+     ordre qu'index.html : ce qu'on voit ici est ce que voit le portail. Il
+     suit le thème du système ; outils/t_navigation.mjs y passe axe-core en
+     clair ET en sombre — un composant qui perd son contraste dans un thème le
+     perd ici d'abord, sur une page où aucune donnée ne le cache. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E6E6E'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles/socle.css">
+<link rel="stylesheet" href="styles/appel.css">
+<link rel="stylesheet" href="styles/seance.css">
+<link rel="stylesheet" href="styles/etudiant.css">
+<link rel="stylesheet" href="styles/afaire.css">
+<link rel="stylesheet" href="styles/questionnaires.css">
+<link rel="stylesheet" href="styles/navigation.css">
+<link rel="stylesheet" href="styles/ensemble.css">
+<link rel="stylesheet" href="styles/suivi.css">
+<link rel="stylesheet" href="styles/ecran.css">
+<link rel="stylesheet" href="styles/missions.css">
+<link rel="stylesheet" href="styles/moments.css">
+<link rel="stylesheet" href="styles/pilote.css">
+<link rel="stylesheet" href="styles/indicateurs.css">
+<link rel="stylesheet" href="styles/composants.css">
+<style>
+  .sg-l{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0 1rem}
+  .sg-n{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft)}
+  .sg-c{display:grid;grid-template-columns:repeat(auto-fill,minmax(12rem,1fr));gap:.5rem;margin:.6rem 0}
+  .sg-c > div{border:1px solid var(--rule);border-radius:8px;padding:.5rem .6rem;font-size:.85rem}
+  .sg-c i{display:inline-block;width:1rem;height:1rem;border-radius:4px;border:1px solid var(--rule);
+    vertical-align:-.15rem;margin-right:.4rem}
+  .sg-ko{color:var(--ko);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">Portail BTS SIO · composants</span>
+  <h1>Guide des composants</h1>
+  <p class="sub">Chaque composant une fois, avec les feuilles du portail. La page suit le thème du système.</p>
+</header>
+
+<main>
+<section class="card" aria-labelledby="sg-couleurs">
+  <h2 id="sg-couleurs">Les couleurs du texte, et leur contraste</h2>
+  <p class="hint">Calculé dans ce navigateur, sur les trois fonds du thème affiché. WCAG 1.4.3 demande 4,5 : 1.</p>
+  <div class="sg-c" id="sg-contrastes"></div>
+</section>
+
+<section class="card" aria-labelledby="sg-boutons">
+  <h2 id="sg-boutons">Boutons — trois niveaux</h2>
+  <div class="sg-l">
+    <button class="btn" type="button">Démarrer la séance</button>
+    <button class="btn btn-sec" type="button">Rafraîchir</button>
+    <button class="qa-b" type="button">Modifier</button>
+    <button class="btn-discret" type="button">Écrire les missions ›</button>
+  </div>
+  <div class="sg-l">
+    <button class="btn" type="button" disabled>Principal désactivé</button>
+    <button class="btn btn-sec" type="button" disabled>Secondaire désactivé</button>
+  </div>
+  <p class="sg-n">.btn · .btn-sec · .qa-b (secondaire en pilule) · .btn-discret</p>
+</section>
+
+<section class="card" aria-labelledby="sg-inter">
+  <h2 id="sg-inter">Interrupteur — un état qu'on rebascule</h2>
+  <div class="sg-l" id="sg-inters"></div>
+  <p class="sg-n">.inter, role="switch", aria-checked — js/interrupteur.js. Le libellé ne change pas ; le curseur, si.</p>
+</section>
+
+<section class="card" aria-labelledby="sg-filtres">
+  <h2 id="sg-filtres">Puces, segments, outils</h2>
+  <div class="sv-filtres" role="group" aria-label="Exemple de filtres">
+    <button class="filtre on" type="button" aria-pressed="true">Tous</button>
+    <button class="filtre" type="button" aria-pressed="false">En difficulté</button>
+  </div>
+  <nav class="sv-vues" role="tablist" aria-label="Exemple de vues">
+    <button class="sv-vue-b actif" type="button" role="tab" aria-selected="true">Maintenant</button>
+    <button class="sv-vue-b" type="button" role="tab" aria-selected="false" tabindex="-1">Élèves</button>
+  </nav>
+  <div class="sg-l">
+    <button class="sv-pause" type="button" aria-pressed="false">Pause</button>
+    <button class="sv-pause" type="button" aria-pressed="true">Reprendre</button>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="sg-etats">
+  <h2 id="sg-etats">États — une seule grammaire de couleurs</h2>
+  <div class="sg-l">
+    <span class="badge ok">Fait</span>
+    <span class="badge att">À surveiller</span>
+    <span class="badge ko">Bloquant</span>
+    <span class="badge neutre">Pas posé</span>
+    <span class="prevol-etat ok">Tout est prêt</span>
+    <span class="prevol-etat ko">1 point à régler</span>
+    <span class="af-pastille att">1 point de vigilance</span>
+  </div>
+  <div class="msg">Message d'erreur : ce qui s'est passé, puis quoi faire.</div>
+  <div class="msg ok">Confirmation : le geste a été pris en compte.</div>
+</section>
+
+<section class="card" aria-labelledby="sg-aide">
+  <h2 id="sg-aide">Aide repliée</h2>
+  <p class="hint">Une phrase sous le titre de la carte.</p>
+  <details class="aide"><summary>En savoir plus</summary>
+    <p>Le reste de l'explication, pour qui la cherche — jamais avant le premier geste.</p></details>
+  <p class="sg-n">details.aide — motif « Disclosure ».</p>
+</section>
+
+<section class="card" aria-labelledby="sg-champs">
+  <h2 id="sg-champs">Champs</h2>
+  <div class="field"><label for="sg-i">Titre</label><input id="sg-i" value="Séance 4"></div>
+  <div class="field"><label for="sg-s">Classe</label><select id="sg-s"><option>BTS SIO 2 - SLAM</option></select></div>
+  <p class="sous-hint">Texte d'appoint (.sous-hint).</p>
+  <table><thead><tr><th>Classe</th><th>Étudiants</th></tr></thead>
+    <tbody><tr><td>BTS SIO 2 - SLAM</td><td class="num">13</td></tr></tbody></table>
+</section>
+</main>
+
+<footer><span>Page de référence, sans donnée. Le portail : <a href="./">index.html</a>.</span></footer>
+</div>
+
+<script type="module">
+import { interrupteur } from './js/interrupteur.js';
+
+// Trois interrupteurs : éteint, allumé, désactivé. Un clic bascule ici
+// sans base derrière — c'est le dessin qu'on vérifie, pas le geste.
+var z = document.getElementById("sg-inters");
+[["Proposé aux étudiants", false], ["Visible par les étudiants", true], ["Désactivé", false]].forEach(function(x, i){
+  var b = interrupteur({ libelle: x[0], on: x[1], change: function(vise, bt){
+    bt.setAttribute("aria-checked", vise ? "true" : "false"); bt.classList.toggle("on", vise); } });
+  if (i === 2) b.disabled = true;
+  z.appendChild(b);
+});
+
+// Le contraste de chaque encre sur chaque fond, recalculé dans le thème affiché.
+function rgb(c){ var m = c.match(/\d+(\.\d+)?/g).map(Number); return m.slice(0, 3); }
+function lum(c){ return rgb(c).map(function(v){ v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); })
+  .reduce(function(s, v, i){ return s + v * [.2126, .7152, .0722][i]; }, 0); }
+function ratio(a, b){ var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+var sonde = document.createElement("span");
+document.body.appendChild(sonde);
+function valeur(v){ sonde.style.color = "var(" + v + ")"; return getComputedStyle(sonde).color; }
+var fonds = ["--ground", "--surface", "--surface-alt"];
+var encres = ["--ink", "--ink-soft", "--ink-faint", "--accent", "--accent-ink", "--ok", "--signal", "--ko"];
+var c = document.getElementById("sg-contrastes");
+encres.forEach(function(e){
+  var d = document.createElement("div");
+  var pire = Math.min.apply(null, fonds.map(function(f){ return ratio(valeur(e), valeur(f)); }));
+  var i = document.createElement("i");
+  i.style.background = "var(" + e + ")";
+  d.appendChild(i);
+  d.appendChild(document.createTextNode(e + " — " + pire.toFixed(2).replace(".", ",") + " : 1 au pire"));
+  if (pire < 4.5) { d.className = "sg-ko"; d.appendChild(document.createTextNode(" ✗")); }
+  c.appendChild(d);
+});
+sonde.remove();
+</script>
+</body>
+</html>

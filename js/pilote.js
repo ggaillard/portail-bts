@@ -82,7 +82,7 @@ function majPilote(apresStats){
   $("sv-kpi").textContent = kpi;
 
   // L'action principale. Un projet OUVERT reste ouvert (pas de chrono, pas
-  // de clôture hebdomadaire : « Fermer » est dans le pré-vol, discret) ; un
+  // de clôture hebdomadaire : « Clore le projet » est dans le pré-vol, discret) ; un
   // projet FERMÉ s'ouvre d'ici — jusqu'au 05/10, rien ne le permettait sur cet
   // écran. La séance 99 est le registre d'appel.
   var appel = p && String(p.seance) === "99";
@@ -279,7 +279,8 @@ function brancherPilote(){
     var c = $("sv-choix"), ouvert = c.hidden;
     c.hidden = !ouvert;
     $("sv-fil").setAttribute("aria-expanded", ouvert ? "true" : "false");
-    if (ouvert) $("pk-seance").focus();
+    // Le champ de recherche d'abord (05/10) : c'est lui qu'on vient chercher.
+    if (ouvert) $("cs-saisie").focus();
   });
   // Choisir une séance referme le sélecteur : on l'a ouvert pour ça. Le
   // squelette remplace « Chargement… » une fois activerSeance() passée.

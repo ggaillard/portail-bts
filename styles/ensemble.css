@@ -12,7 +12,7 @@
 
 .etage{display:flex;align-items:baseline;gap:.6rem;margin:2.2rem 0 .7rem;flex-wrap:wrap}
 .etage:first-of-type{margin-top:1.2rem}
-.etage-n{font-family:var(--f-mono);font-size:.8rem;font-weight:600;color:#fff;
+.etage-n{font-family:var(--f-mono);font-size:.8rem;font-weight:600;color:var(--on-accent);
   background:var(--accent);border-radius:99px;padding:.1rem .55rem;flex:0 0 auto}
 .etage h2{margin:0;font-size:1.15rem}
 .etage p{margin:0;font-size:.87rem;color:var(--ink-soft);flex:1 1 100%}
@@ -31,17 +31,13 @@
 .sem-e.prete{background:#E4EDFA;color:#24507F}
 .sem-e.en_cours{background:#FDF0DC;color:#8A5A16}
 .sem-e.jouee{background:#DEF3E6;color:#1B6B42}
-/* Visible / Cachée : ce que les étudiants ont le droit de LIRE. À ne pas
-   confondre avec « ouverte », qui décide s'ils peuvent RÉPONDRE. */
-.sem-pub{appearance:none;cursor:pointer;font:inherit;font-size:.74rem;font-weight:600;
-  min-height:44px;padding:.2rem .6rem;border-radius:99px;flex:0 0 auto;
-  border:1px solid var(--rule);background:var(--surface);color:var(--ink-faint)}
-.sem-pub.on{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
-.sem-pub:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.sem-pub[disabled]{opacity:.55;cursor:progress}
+/* Visible : ce que les étudiants ont le droit de LIRE. À ne pas confondre
+   avec « ouverte », qui décide s'ils peuvent RÉPONDRE. Depuis le 05/10 c'est
+   l'interrupteur commun (styles/composants.css) ; ne reste ici que sa place. */
+.sem-pub{flex:0 0 auto;font-size:.8rem}
 .sem-x{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft);flex:0 0 auto;
   min-width:8.5rem;text-align:right}
-.sem-notee{font-size:.72rem;color:#8A5A16;flex:0 0 auto}
+.sem-notee{font-size:.72rem;color:var(--signal);flex:0 0 auto}
 @media (max-width: 40rem){
   .sem-x{min-width:0;flex:1 1 100%;text-align:left;padding-left:2.15rem}
   .sem-l{flex-wrap:wrap;padding:.45rem 0}

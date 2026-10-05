@@ -17,6 +17,8 @@
 // mêmes séances. Les importer ferait un cycle.
 
 import { $, sb, suivi, erreur, typo, nomDe, prenomSeul } from './socle.js';
+import { interrupteur } from './interrupteur.js';
+import { texteRefus } from './refus.js';
 
 let chargerAFaire = function(){};
 let chargerConnaissance = function(){};
@@ -378,15 +380,11 @@ function caseClasse(m, c, a){
   }
   etat.textContent = bouts.join(" · ");
 
-  var b = document.createElement("button");
-  b.type = "button";
-  b.className = "qa-b" + (a.ouvert ? " on" : "");
-  b.innerHTML = '<span class="pt"></span><span class="et"></span>';
-  b.querySelector(".et").textContent = a.ouvert ? "Proposé" : "Éteint";
-  b.setAttribute("aria-pressed", a.ouvert ? "true" : "false");
-  b.setAttribute("aria-label", (a.ouvert ? "Éteindre" : "Proposer") + " « " +
-                 m.titre + " » pour " + c.nom);
-  b.addEventListener("click", function(){ basculer(m, c, a, b); });
+  // L'interrupteur de js/interrupteur.js (05/10) : le même partout où un
+  // questionnaire, un contrôle ou une révision se propose aux étudiants.
+  var b = interrupteur({ libelle: "Proposé aux étudiants", on: !!a.ouvert,
+    nom: "Proposé aux étudiants — « " + m.titre + " » pour " + c.nom,
+    change: function(vise, bt){ basculer(m, c, a, bt); } });
   actes.appendChild(b);
 
   // Rattacher ou détacher se voit sur la ligne, et plus seulement dans le
@@ -549,7 +547,7 @@ function rattacher(m, c, a, sel){
         ? "Cette séance appartient à une autre classe."
         : (d && d.motif === "pas_un_cours")
           ? "On ne rattache un questionnaire qu'à une séance de cours."
-          : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+          : texteRefus(r));
       rafraichirQuestionnaires();
       return;
     }
@@ -576,8 +574,7 @@ function basculer(m, c, a, b){
                                    p_ouvert: vise }).then(function(r){
     b.disabled = false;
     if (!r || r.error || !r.data || !r.data.ok) {
-      erreur("err-qactifs", "Action refusée. Vérifiez que vous êtes bien " +
-                            "connecté en enseignant.");
+      erreur("err-qactifs", texteRefus(r));
       return;
     }
     erreur("err-qactifs", "« " + m.titre + " » " +
@@ -593,7 +590,7 @@ function affecter(m, c){
     if (!r || r.error || !r.data || !r.data.ok) {
       erreur("err-qactifs", (r && r.data && r.data.motif === "plein")
         ? "Cette classe a déjà neuf questionnaires : retirez-en un d'abord."
-        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+        : texteRefus(r));
       rafraichirQuestionnaires();
       return;
     }
@@ -614,7 +611,7 @@ function retirer(m, c, a, bouton){
           d.nombre + " réponse" + (d.nombre > 1 ? "s ont" : " a") +
           " déjà été enregistrée" + (d.nombre > 1 ? "s" : "") +
           ". Éteignez-le : il disparaît de l'écran des étudiants sans rien perdre."
-        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+        : texteRefus(r));
       rafraichirQuestionnaires();
       return;
     }
@@ -632,7 +629,7 @@ function supprimerModele(m){
         ? "« " + m.titre + " » a déjà reçu " + d.nombre + " réponse" +
           (d.nombre > 1 ? "s" : "") + " : il ne peut pas être supprimé. " +
           "Décochez ses classes ou éteignez-le."
-        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+        : texteRefus(r));
       return;
     }
     erreur("err-qactifs", "« " + m.titre + " » a été supprimé.", true);

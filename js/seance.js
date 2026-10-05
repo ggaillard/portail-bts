@@ -51,6 +51,7 @@ import { chargerMissions } from './missions.js';
 import { majPilote, marquerEleve, ouvrirVue } from './pilote.js';
 import { rendrePrevol, brancherPrevol } from './prevol.js';
 import { seanceOubliee, depuisLe } from './ouverture.js';
+import { texteRefus } from './refus.js';
 
 let chargerAFaire = function(){};
 export function brancherSeance(liens){ chargerAFaire = liens.chargerAFaire; }
@@ -405,9 +406,8 @@ function pilotage(action, question){
     $("b-demarrer").disabled = false;
     if (!r || r.error || !r.data || !r.data.ok) {
       // « appel » n'est pas un refus de droits : c'est un refus de principe.
-      erreur("err-prevol", (r && r.data && r.data.motif === "appel")
-        ? "La séance d'appel reste ouverte toute l'année : la clore couperait le pointage de la classe."
-        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      // refus.js connaît ce motif comme les autres.
+      erreur("err-prevol", texteRefus(r));
       $("b-clore").disabled = false;
       return;
     }

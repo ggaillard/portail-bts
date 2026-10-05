@@ -1246,3 +1246,21 @@ du BTS2 ne s'ouvraient pas depuis En cours (détail dans `JOURNAL.md`) :
 
 Les chiffres de `mesurer.mjs` après ce lot : 882 lignes d'`index.html`, 14
 feuilles, 34 modules, 10 026 lignes de JavaScript, 64 fonctions RPC appelées.
+
+**Le 05/10 au soir, le lot 1 des propositions** (ergonomie et accessibilité,
+détail dans `JOURNAL.md` et dans CLAUDE.md, « Ergonomie et accessibilité ») :
+
+- quatre modules neufs, chacun d'un sujet : `interrupteur.js`, `refus.js`,
+  `choixseance.js`, `raccourcis.js` ; aucun module existant ne s'approche du
+  plafond (`bibliotheque.js` reste sous 660 lignes) ;
+- une feuille de plus, **en dernier** : `styles/composants.css`, classes
+  neuves et deux alignements assumés (`.qa-b`, `.gs-pret-lien`) ; deux media
+  queries de plus, sur des seuils déjà déclarés (`telephone`,
+  `prefers-reduced-motion`) ; une variable de plus, `--on-accent` ;
+- `index.html` gagne 46 lignes : le `<dialog>` des raccourcis, le champ
+  « Aller à une séance », les sept aides repliées ;
+- une page hors application, `styleguide.html`, auditée avec le reste ;
+- aucun contrôle neuf : axe-core entre dans `t_navigation.mjs`.
+
+Les chiffres de `mesurer.mjs` après ce lot : 928 lignes d'`index.html`, 15
+feuilles, 38 modules, 10 493 lignes de JavaScript, 64 fonctions RPC appelées.

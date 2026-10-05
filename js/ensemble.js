@@ -19,6 +19,8 @@
 // est dans CLAUDE.md, et le bouton d'ici ne touche que `publiee`.
 
 import { $, sb, suivi, erreur, typo, pastilles, classesReelles } from './socle.js';
+import { interrupteur, reglerInterrupteur } from './interrupteur.js';
+import { texteRefus } from './refus.js';
 
 // Le portail savait tout dire d'UNE séance et rien de l'ensemble. Savoir si la
 // séance 7 avait son corrigé se lisait dans un tableau tenu à la main, donc
@@ -186,16 +188,10 @@ function ligneSemestre(x){
   // « Démarrer la séance » publie déjà : ce bouton-ci sert aux exceptions —
   // ouvrir en avance à un absent, refermer un brouillon parti trop tôt.
   if (x.seance_id && x.numero < 90) {
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "sem-pub" + (x.publiee ? " on" : "");
-    b.textContent = x.publiee ? "Visible" : "Cachée";
-    b.title = x.publiee
-      ? "Les étudiants peuvent lire cette séance. Cliquer pour la cacher."
-      : "Les étudiants ne voient pas cette séance. Cliquer pour la rendre visible.";
-    b.setAttribute("aria-pressed", x.publiee ? "true" : "false");
-    b.setAttribute("aria-label", (x.publiee ? "Cacher" : "Rendre visible") +
-                   " la séance " + x.numero + " — " + (x.titre || ""));
+    // L'interrupteur commun (05/10) : « Visible par les étudiants », le même
+    // libellé que la case du formulaire de Préparer.
+    var b = interrupteur({ libelle: "Visible", classe: "sem-pub", on: !!x.publiee,
+      nom: "Visible par les étudiants — séance " + x.numero + " — " + (x.titre || "") });
     b.addEventListener("click", function(){
       var vise = !b.classList.contains("on");
       b.disabled = true;
@@ -203,14 +199,11 @@ function ligneSemestre(x){
                                  p_publiee: vise }).then(function(r){
         b.disabled = false;
         if (!r || r.error || !r.data || !r.data.ok) {
-          erreur("err-semestre", "Action refusée. Vérifiez que vous êtes bien " +
-                                 "connecté en enseignant.");
+          erreur("err-semestre", texteRefus(r));
           return;
         }
         x.publiee = vise;
-        b.classList.toggle("on", vise);
-        b.textContent = vise ? "Visible" : "Cachée";
-        b.setAttribute("aria-pressed", vise ? "true" : "false");
+        reglerInterrupteur(b, vise);
         erreur("err-semestre", "Séance " + x.numero + " — " +
                (vise ? "visible par les étudiants." : "cachée aux étudiants."), true);
       });

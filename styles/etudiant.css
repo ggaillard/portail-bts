@@ -48,10 +48,10 @@
 .et-tete{display:flex;align-items:baseline;gap:.5rem;font-size:.88rem}
 .et-tete b{font-weight:600}
 .et-nums{font-family:var(--f-mono);font-size:1.05rem;letter-spacing:.05em;margin-left:.1rem}
-.et-0 .et-tete b,.et-0 .et-nums{color:#963232}
-.et-1 .et-tete b,.et-1 .et-nums{color:#8A5A16}
-.et-2 .et-tete b,.et-2 .et-nums{color:#24507F}
-.et-3 .et-tete b,.et-3 .et-nums{color:#1B6B42}
+.et-0 .et-tete b,.et-0 .et-nums{color:var(--ko)}       /* jetons du thème (05/10) : */
+.et-1 .et-tete b,.et-1 .et-nums{color:var(--signal)}   /* en dur, ces quatre teintes */
+.et-2 .et-tete b,.et-2 .et-nums{color:var(--accent-ink)} /* tombaient à 2,2 : 1 sur le */
+.et-3 .et-tete b,.et-3 .et-nums{color:var(--ok)}       /* fond sombre */
 .et-x .et-tete b,.et-x .et-nums{color:var(--ink-soft)}
 /* Révision par thème (29/09) : certitude avant la correction, bilan par thème. */
 .rv-opt.pris{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}

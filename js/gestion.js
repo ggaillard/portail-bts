@@ -22,8 +22,7 @@
 //
 // Depuis le 05/10, chaque ligne porte son GESTE D'ÉTAT, sans passer par le
 // formulaire : « Ouvrir » un projet fermé (publie ET ouvre — ouverture.js),
-// « Fermer » un projet ouvert, « Clore » un cours resté ouvert — ces deux-là
-// différés avec « Annuler » —, « Rendre visible » une séance ouverte mais
+// « Clore » un projet ou un cours ouvert — différé avec « Annuler » —, « Rendre visible » une séance ouverte mais
 // cachée, et « Suivre › » pour la suivre dans En cours. Ouvrir les séances
 // IA du BTS2 demandait jusque-là Modifier, deux cases, Enregistrer — et rien
 // ne disait que c'était là.
@@ -39,6 +38,7 @@ import { $, sb, suivi, erreur, typo } from './socle.js';
 import { chargerSeancesDe, activerSeance, chargerPrevol } from './seance.js';
 import { ouvrirSeance, fermerSeance, montrerSeance } from './ouverture.js';
 import { toast } from './toast.js';
+import { texteRefus } from './refus.js';
 import { lireModules, modulesDe } from './modules.js';
 import { ouvrirFichePrep, fermerFichePrep } from './preparer.js';
 import { ouvrirOnglet } from './navigation.js';
@@ -101,7 +101,8 @@ function relireGestion(){
 
 function etat(s){
   var bouts = [];
-  bouts.push(s.publiee ? "publiée" : "non publiée");
+  // « visible / cachée » : le mot de l'interrupteur et de la case (05/10).
+  bouts.push(s.publiee ? "visible" : "cachée");
   bouts.push(s.ouverte ? "ouverte" : "fermée");
   return bouts.join(" · ");
 }
@@ -184,8 +185,8 @@ function gestesDeLigne(s){
   var g = [];
   if (s.nature === "projet") {
     g.push(s.ouverte
-      ? { libelle: "Fermer", faire: function(b){ fermerDiffere(s, b, "Le projet " + s.numero +
-          " va être fermé : plus personne ne pourra cocher une mission."); } }
+      ? { libelle: "Clore", faire: function(b){ fermerDiffere(s, b, "Le projet " + s.numero +
+          " va être clos : plus personne ne pourra cocher une mission."); } }
       : { libelle: "Ouvrir", principal: true, faire: function(b){ gesteLigne(b, ouvrirSeance(s.id),
           "Séance " + s.numero + " ouverte et visible : les étudiants voient leurs missions et peuvent les cocher.", s); } });
   } else if (s.ouverte) {
@@ -215,7 +216,7 @@ function gesteLigne(b, promesse, message, s){
 function fermerDiffere(s, b, message){
   b.disabled = true;
   toast(message, {
-    apres: function(){ gesteLigne(b, fermerSeance(s.id), "Séance " + s.numero + " fermée. Les réponses déjà données restent.", s); },
+    apres: function(){ gesteLigne(b, fermerSeance(s.id), "Séance " + s.numero + " close. Les réponses déjà données restent.", s); },
     annuler: function(){ b.disabled = false; toast("Annulé : la séance " + s.numero + " reste ouverte."); }
   });
 }
@@ -365,9 +366,9 @@ function enregistrer(){
   }).then(function(r){
     b.disabled = false;
     if (r.error || !r.data || !r.data.ok) {
-      erreur("err-gs", (r.data && r.data.detail) ||
-        (r.data && r.data.motif === "refus" ? "Réservé à l'enseignant." :
-         "La séance n'a pas été enregistrée."));
+      // Enregistrée mais pas rangée : le détail le dit, sans « pas enregistrée »
+      // devant — ce serait faux.
+      erreur("err-gs", r.recharger ? texteRefus(r) : "La séance n'a pas été enregistrée. " + texteRefus(r));
       // La séance, elle, est enregistrée : la liste doit le montrer, et le
       // message passe au-dessus d'elle, le formulaire se refermant.
       if (r.recharger) lireSeances(classeGestion).then(function(){ erreur("err-gs-liste", r.data.detail); });

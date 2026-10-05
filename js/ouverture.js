@@ -37,6 +37,7 @@
 // l'était depuis 121 h, et l'en-tête affichait « En cours · 7294 / 55 min ».
 
 import { sb } from './socle.js';
+import { texteRefus, estRefus } from './refus.js';
 
 var MARGE_OUBLI_MIN = 120;
 
@@ -63,14 +64,8 @@ function depuisLe(iso, maintenant){
 }
 
 function reponseGeste(r){
-  var d = r && r.data;
-  if (!r || r.error || !d || !d.ok) {
-    return { ok: false, detail: (d && d.detail) ||
-      (d && d.motif === "appel" ? "La séance d'appel reste ouverte toute l'année : la clore couperait le pointage de la classe."
-       : d && d.motif === "numero" ? "Les numéros 90 à 99 se règlent depuis leur propre carte."
-       : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.") };
-  }
-  return d;
+  if (estRefus(r)) return { ok: false, detail: texteRefus(r) };
+  return r.data;
 }
 
 function ouvrirSeance(id){

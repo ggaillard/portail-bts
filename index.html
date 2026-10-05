@@ -38,6 +38,7 @@
 <link rel="stylesheet" href="styles/moments.css">
 <link rel="stylesheet" href="styles/pilote.css">
 <link rel="stylesheet" href="styles/indicateurs.css">
+<link rel="stylesheet" href="styles/composants.css">
 </head>
 <body>
 <!-- WCAG 2.4.1 : sans ce lien, un usage au clavier retraverse l'en-tête à
@@ -172,6 +173,7 @@
 <section id="espace-ens" hidden>
   <div class="ident">
     <span class="ident-txt">Connecté en <b>enseignant</b> · toutes les classes</span>
+    <button class="btn-discret rc-ouvrir" id="b-raccourcis" type="button" aria-haspopup="dialog">Raccourcis clavier (?)</button>
     <button class="btn btn-sec" id="b-sortie-ens">Se déconnecter</button>
   </div>
   <!-- « Ce qui bloque » : une ligne quand tout va bien, dépliée d'office dès
@@ -257,13 +259,25 @@
       </div>
     </div>
     <div class="sv-choix" id="sv-choix" hidden>
-      <p class="hint"><span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
-
-      <div class="pick">
-        <label class="suivi-lbl" for="pk-classe" hidden>Classe</label>
-        <select id="pk-classe" aria-label="Classe"></select>
-        <select id="pk-seance" aria-label="Séance"></select>
+      <!-- Aller à une séance (05/10, js/choixseance.js) : un champ qu'on
+           cherche, motif Combobox des ARIA Authoring Practices. Les deux
+           listes natives restent dessous, repliées : le portail les lit. -->
+      <div class="cs">
+        <label for="cs-saisie" class="cs-lbl">Aller à une séance <span class="cs-nb" id="cs-nb"></span></label>
+        <input id="cs-saisie" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+          aria-controls="cs-liste" autocomplete="off" spellcheck="false"
+          placeholder="Numéro, titre, classe ou module">
+        <div class="cs-liste" id="cs-liste" role="listbox" aria-label="Séances" hidden></div>
       </div>
+      <details class="cs-avance">
+        <summary>Par classe, puis séance</summary>
+        <div class="pick">
+          <label class="suivi-lbl" for="pk-classe" hidden>Classe</label>
+          <select id="pk-classe" aria-label="Classe"></select>
+          <select id="pk-seance" aria-label="Séance"></select>
+        </div>
+      </details>
+      <p class="hint"><span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
     </div>
 
     <nav class="sv-vues" id="sv-vues" role="tablist" aria-label="Vues de la séance">
@@ -355,7 +369,7 @@
                aria-label="Avancement médian de la classe et attendu, minute par minute, puis le nombre d'étudiants actifs"></svg>
           <p class="sous-hint cb-lu" id="cb-lu"></p>
           <details class="plie-in"><summary>Les chiffres, cinq minutes par cinq minutes</summary>
-            <div class="scroll"><table class="cb-table" id="cb-table"></table></div></details>
+            <div class="scroll" tabindex="0" role="region" aria-label="Les chiffres de l'heure"><table class="cb-table" id="cb-table"></table></div></details>
         </div>
         <div class="tuiles" id="tuiles"></div>
         <div class="pick">
@@ -398,7 +412,7 @@
         <!-- Replié depuis le 28/09 : 25 lignes × N missions faisaient 1 000 px ;
              le résumé et les barres au-dessus disent déjà qui est arrêté. -->
         <details class="plie-in" id="mi-detail"><summary>La grille, élève par élève</summary>
-          <div class="scroll"><table class="mi-grille" id="mi-grille"></table></div>
+          <div class="scroll" tabindex="0" role="region" aria-label="Grille des missions"><table class="mi-grille" id="mi-grille"></table></div>
           <ol class="mi-legende" id="mi-legende"></ol>
         </details>
         <button class="qa-b vers-prep" type="button" data-onglet="missions">Écrire les missions ›</button>
@@ -418,8 +432,8 @@
       <div id="bloc-controle" class="ct-bloc" hidden>
         <div class="ct-tete">
           <h3 class="sous-titre" style="margin:0">Contrôle d'entrée</h3>
-          <button class="qa-b" id="b-controle" type="button">
-            <span class="pt"></span><span class="et"></span></button>
+          <button class="inter" id="b-controle" type="button" role="switch" aria-checked="false"
+            data-inter="1"><span class="inter-piste" aria-hidden="true"><span class="inter-bouton"></span></span><span class="inter-l">Proposé aux étudiants</span></button>
         </div>
         <p class="sous-hint" id="ct-resume"></p>
         <details class="plie-in" id="ct-detail"><summary>Notion par notion</summary>
@@ -479,9 +493,11 @@
        l'onglet La séance, en regardant la séance qu'il prépare. -->
   <div class="card" id="carte-seances" hidden>
     <h2>Les séances</h2>
-    <p class="hint">Une séance <b>non publiée</b> n'apparaît pas aux étudiants ;
-      <b>fermée</b>, elle n'accepte aucune réponse. <b>Ouvrir</b> fait les deux d'un
-      geste, sur la ligne. Le reste se règle par Modifier. Numéros 90 à 99 réservés.</p>
+    <p class="hint">Chaque ligne porte son geste : <b>Ouvrir</b> rend visible et ouvre, <b>Clore</b> fige les réponses.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p><b>Cachée</b>, une séance n'apparaît pas aux étudiants ; <b>fermée</b>, elle
+      n'accepte aucune réponse. Le reste — titre, module, jalons, échéance — se règle par
+      <b>Modifier</b>. Les numéros 90 à 99 sont réservés aux questionnaires et à l'appel.</p></details>
     <div class="pick">
       <select id="gs-classe" aria-label="Classe dont on règle les séances"></select>
       <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>
@@ -528,7 +544,7 @@
               <span class="sous-hint" id="gs-jalons-note"></span></label>
             <label>Échéance <input id="gs-echeance" type="date"></label>
             <label>Durée (min) <input id="gs-duree" type="number" min="5" max="600"></label>
-            <label class="gs-case"><input id="gs-publiee" type="checkbox"> Publiée</label>
+            <label class="gs-case"><input id="gs-publiee" type="checkbox"> Visible par les étudiants</label>
             <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
           </div>
           <div class="pick">
@@ -542,7 +558,8 @@
           <div class="gs-rev" id="gs-rev" hidden>
             <span class="gs-qn-t"><b>Réviser cette séance</b>
               <span class="sous-hint" id="gs-rev-etat">Le quiz de la séance, correction après chaque réponse, bilan concept par concept.</span></span>
-            <button class="btn" id="b-gs-rev" type="button">Proposer la révision</button>
+            <button class="inter" id="b-gs-rev" type="button" role="switch" aria-checked="false"
+              data-inter="1"><span class="inter-piste" aria-hidden="true"><span class="inter-bouton"></span></span><span class="inter-l">Révision proposée aux étudiants</span></button>
           </div>
           <div id="gs-qn-liste"></div>
           <label class="gs-qn-aj">Rattacher <select id="gs-qn-ajout"></select></label>
@@ -553,7 +570,8 @@
         <div class="pick gs-ctl-etat">
           <span class="badge neutre" id="pr-ctl-badge">—</span>
           <span class="sous-hint" id="pr-ctl-resume"></span>
-          <button class="btn btn-sec" id="b-pr-ctl" type="button" hidden></button>
+          <button class="inter" id="b-pr-ctl" type="button" role="switch" aria-checked="false" hidden
+            data-inter="1"><span class="inter-piste" aria-hidden="true"><span class="inter-bouton"></span></span><span class="inter-l">Proposé aux étudiants</span></button>
         </div>
         <div aria-live="polite" id="err-pr-ctl"></div>
         <div id="ct-neuf" class="gs-editeur">
@@ -607,10 +625,11 @@
        un contrôle éteint ; il reste ici pour la vue d'ensemble, toutes classes. -->
   <details class="card plie" id="carte-controles" hidden>
     <summary><h2>Contrôles d'entrée <span class="ctl-compte" id="ctl-compte"></span></h2></summary>
-    <p class="hint">Les notions posées <b>avant</b> une séance, pour savoir ce
-      qu'ils en avaient gardé. Ici, tout ce qui est écrit, pour toutes les
-      classes, avec son interrupteur. <b>Éteint, aucun étudiant ne le voit.</b>
-      Pour en écrire un, choisissez sa séance ci-dessous.</p>
+    <p class="hint">Tout ce qui est écrit, pour toutes les classes, avec son interrupteur.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>Les notions posées <b>avant</b> une séance, pour savoir ce qu'ils en avaient
+      gardé. Interrupteur coupé, aucun étudiant ne le voit. Pour en écrire un, ouvrez sa
+      séance dans « Les séances », onglet Contrôle.</p></details>
     <div id="ctl-liste"></div>
     <div aria-live="polite" id="err-controles"></div>
   </details>
@@ -621,15 +640,14 @@
        carte, qui montre et allume sans dupliquer la rédaction. -->
   <div class="card" id="carte-qactifs" hidden>
     <h2>Vos questionnaires</h2>
-    <p class="hint">Un questionnaire s'écrit une fois, puis se donne à une ou
-      plusieurs classes. Chaque classe garde ses propres réponses. Deux gestes,
-      à ne pas confondre : <b>« Donner à cette classe »</b> le prépare sans le
-      montrer, <b>l'interrupteur Proposé / Éteint</b> décide si les étudiants le
-      voient. Éteindre n'efface rien et se refait autant de fois qu'on veut ;
-      <b>retirer</b> supprime l'affectation, et devient impossible dès qu'une
-      réponse existe. Enfin, <b>« Avec la séance… »</b> le rattache à un moment du
-      semestre : il s'allume alors quand cette séance démarre, et s'éteint quand
-      elle se clot.</p>
+    <p class="hint">Écrit une fois, donné à une ou plusieurs classes ; l'interrupteur décide si les étudiants le voient.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>Chaque classe garde ses propres réponses. Deux gestes à ne pas confondre :
+      <b>« Donner à cette classe »</b> le prépare sans le montrer, l'interrupteur
+      <b>« Proposé aux étudiants »</b> décide s'ils le voient. Le couper n'efface rien et se
+      refait autant de fois qu'on veut ; <b>retirer</b> supprime l'affectation, et devient
+      impossible dès qu'une réponse existe. <b>« Rattacher… »</b> le lie à une séance : il
+      s'allume quand elle démarre et s'éteint quand elle se clôt.</p></details>
     <div id="qa-liste"></div>
     <div aria-live="polite" id="err-qactifs"></div>
     <details class="qn-neuf" id="qn-neuf">
@@ -725,10 +743,12 @@
        appréciation du jour, journal, points des pairs. js/equipes.js. -->
   <div class="card" id="carte-equipes" hidden>
     <h2>Les équipes</h2>
-    <p class="hint">Jalons de l'équipe, et la part de chacun : son journal de fin de séance,
-      votre appréciation du jour (✓ moteur · ~ présent · ✗ rien fourni), les points que lui
-      donnent ses pairs à chaque jalon. Des raisons pour savoir à qui parler — l'équipe se
-      note sur ses livrables.</p>
+    <p class="hint">Les jalons de chaque équipe, et la part de chacun.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>La part de chacun se lit à trois endroits : son journal de fin de séance, votre
+      appréciation du jour (✓ moteur · ~ présent · ✗ rien fourni), les points que lui donnent
+      ses pairs à chaque jalon. Ce sont des raisons pour savoir à qui parler — l'équipe se
+      note sur ses livrables.</p></details>
     <div class="pick"><select id="eq-module" aria-label="Module"></select></div>
     <p class="sous-hint" id="eq-resume" aria-live="polite"></p>
     <div id="eq-liste"></div>
@@ -745,9 +765,10 @@
 
   <div class="card" id="carte-semestre" hidden>
     <h2>Le semestre</h2>
-    <p class="hint">Une ligne par séance, l'état calculé depuis la base. « À produire »
-      signifie qu'aucun corrigé n'existe : les réponses seraient enregistrées sans
-      jamais être évaluées.</p>
+    <p class="hint">Une ligne par séance, l'état calculé depuis la base.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>« À produire » signifie qu'aucun corrigé n'existe : les réponses seraient
+      enregistrées sans jamais être évaluées.</p></details>
     <div id="sem-classes"></div>
     <div aria-live="polite" id="err-semestre"></div>
   </div>
@@ -756,9 +777,10 @@
        notes. Un clic sur un élève ouvre sa fiche. js/carnet.js. -->
   <div class="card" id="carte-carnet" hidden>
     <h2>Le carnet de la classe</h2>
-    <p class="hint">Une ligne par élève, une colonne par séance jouée. Vert au-dessus
-      de 70 %, orange de 40 à 69 %, rouge en dessous, « — » quand rien n'a été fait.
-      Un clic sur un élève ouvre sa fiche.</p>
+    <p class="hint">Une ligne par élève, une colonne par séance jouée ; un clic ouvre la fiche.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>Vert au-dessus de 70 %, orange de 40 à 69 %, rouge en dessous, « — » quand rien
+      n'a été fait.</p></details>
     <div class="pick">
       <select id="cn-classe" aria-label="Classe du carnet"></select>
       <div class="sv-filtres" id="cn-mode" role="group" aria-label="Ce que disent les cases">
@@ -768,13 +790,13 @@
       <button class="btn btn-sec" id="b-cn-csv" type="button">Exporter (CSV)</button>
     </div>
     <p class="sous-hint" id="cn-resume" aria-live="polite"></p>
-    <div class="scroll cn-cadre"><table class="cn-table" id="cn-table"></table></div>
+    <div class="scroll cn-cadre" tabindex="0" role="region" aria-label="Carnet de la classe"><table class="cn-table" id="cn-table"></table></div>
   </div>
 
   <div class="card">
     <h2>Vos classes</h2>
     <p class="hint">Nombre d'étudiants déjà connectés au moins une fois, et volume de réponses enregistrées.</p>
-    <div class="scroll"><table id="t-classes">
+    <div class="scroll" tabindex="0" role="region" aria-label="Vos classes"><table id="t-classes">
       <thead><tr><th>Classe</th><th>Code</th><th>Étudiants</th><th>Connectés</th><th>Unités</th></tr></thead>
       <tbody></tbody>
     </table></div>
@@ -789,8 +811,10 @@
 
   <details class="card plie" id="carte-stage" hidden>
     <summary><h2>Recherche de stage</h2></summary>
-    <p class="hint">Où en est chacun, d'après ce qu'il a déclaré lui-même. Une réponse
-      ancienne ne dit plus rien de vrai : la date de mise à jour est à côté du numéro.</p>
+    <p class="hint">Où en est chacun, d'après ce qu'il a déclaré lui-même.</p>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>Une réponse ancienne ne dit plus rien de vrai : la date de mise à jour est à côté
+      du numéro.</p></details>
     <div id="stage-classes"></div>
   </details>
   </div>
@@ -805,6 +829,28 @@
 </footer>
 
 </div>
+
+<!-- Les raccourcis clavier (05/10, js/raccourcis.js) : un <dialog> natif,
+     ouvert par « ? » ou par le bouton de l'en-tête enseignant. -->
+<dialog class="rc" id="rc-aide" aria-labelledby="rc-titre">
+  <h2 id="rc-titre">Raccourcis clavier</h2>
+  <p class="hint">Dans l'espace enseignant, hors d'un champ de saisie.</p>
+  <table class="rc-table">
+    <thead><tr><th scope="col">Touche</th><th scope="col">Effet</th></tr></thead>
+    <tbody>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd></td><td>Aller à une séance, de n'importe quel onglet</td></tr>
+      <tr><td><kbd>D</kbd></td><td>Démarrer la séance, ou ouvrir le projet</td></tr>
+      <tr><td><kbd>P</kbd></td><td>Mettre en pause, ou reprendre, la mise à jour</td></tr>
+      <tr><td><kbd>1</kbd> à <kbd>4</kbd></td><td>Maintenant · Élèves · Questions · Fin d'heure</td></tr>
+      <tr><td><kbd>/</kbd></td><td>Chercher un élève</td></tr>
+      <tr><td><kbd>?</kbd></td><td>Cette aide</td></tr>
+      <tr><td><kbd>Échap</kbd></td><td>Fermer une liste, une fiche, cette aide</td></tr>
+    </tbody>
+  </table>
+  <p class="sous-hint">Clore n'a pas de raccourci : il coupe les réponses de toute la classe.</p>
+  <div id="rc-inter"></div>
+  <div class="pick"><button class="btn" type="button" id="rc-fermer" autofocus>Fermer</button></div>
+</dialog>
 
 <!-- Les confirmations passagères (js/toast.js), en bas de l'écran. -->
 <div class="toasts" id="toasts" aria-live="polite"></div>

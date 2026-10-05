@@ -24,6 +24,8 @@
 import { $, sb, suivi, erreur, typo } from './socle.js';
 import { lignesMissions } from './missions.js';
 import { chargerQuestionnaires, texteRattachement } from './bibliotheque.js';
+import { reglerInterrupteur } from './interrupteur.js';
+import { texteRefus } from './refus.js';
 
 var ONGLETS_P = ["infos", "controle", "concepts", "missions"];
 var courante = null;       // la ligne de seances_de_classe ouverte, ou null (nouvelle)
@@ -157,18 +159,21 @@ function rendrePret(s, p, c, d){
 function rendreControlePrep(c){
   var bd = $("pr-ctl-badge"), r = $("pr-ctl-resume"), b = $("b-pr-ctl");
   if (!c || !c.notions) {
+    bd.hidden = false;
     bd.className = "badge neutre"; bd.textContent = "Pas écrit";
     r.textContent = "Écrivez les notions ci-dessous : les étudiants y répondent avant de venir.";
     b.hidden = true;
     return;
   }
-  bd.className = "badge " + (c.ouvert ? "ok" : "att");
-  bd.textContent = c.ouvert ? "Proposé" : "Éteint";
+  // Écrit : l'interrupteur dit l'état à lui seul (05/10). Le badge « Proposé /
+  // Éteint » à côté d'un bouton « Éteindre / Le proposer » disait deux fois la
+  // même chose, dans deux vocabulaires.
+  bd.hidden = true;
   var repondu = c.termines || 0;
   r.textContent = c.notions + " notions · " + repondu + " / " + c.inscrits + " ont répondu" +
-    (repondu ? " — il ne peut plus être réécrit, seulement éteint." : "");
+    (repondu ? " — il ne peut plus être réécrit ; l'interrupteur le retire aux étudiants sans rien perdre." : "");
   b.hidden = false;
-  b.textContent = c.ouvert ? "Éteindre" : "Le proposer aux étudiants";
+  reglerInterrupteur(b, !!c.ouvert);
   b.dataset.vise = c.ouvert ? "" : "1";
   $("b-ct-creer").disabled = repondu > 0;
   $("ct-texte").readOnly = repondu > 0;
@@ -245,18 +250,18 @@ function rendreRevisionPrep(s, x){
   if (z.hidden) return;
   b.disabled = false;
   b.dataset.eteindre = "";
+  // Un interrupteur (05/10) : éteint tant qu'elle n'existe pas ou n'est pas
+  // proposée ; l'allumer la fabrique au besoin (reviser_seance).
+  reglerInterrupteur(b, !!(x && x.a.ouvert));
   if (!x) {
-    b.textContent = "Proposer la révision";
     e.textContent = "Le quiz de la séance, correction après chaque réponse, bilan concept par concept. " +
                     "À ouvrir après le contrôle d'entrée, pas avant.";
   } else if (x.a.ouvert) {
-    b.textContent = "Éteindre la révision";
     b.dataset.eteindre = "oui";
     e.textContent = "Proposée aux étudiants — " + x.m.questions + " questions · " +
                     (x.a.commences || 0) + " commencé(s), " + (x.a.termines || 0) + " terminé(s).";
   } else {
-    b.textContent = "Proposer la révision";
-    e.textContent = "Prête, éteinte — " + x.m.questions + " questions" +
+    e.textContent = "Prête, pas proposée — " + x.m.questions + " questions" +
                     (x.a.commences ? " · " + x.a.commences + " l'ont déjà commencée." : ".");
   }
   b.onclick = function(){
@@ -269,16 +274,12 @@ function rendreRevisionPrep(s, x){
     appel.then(function(r){
       var d = r && r.data;
       if (!r || r.error || !d || !d.ok) {
-        var pourquoi = d && d.detail ? d.detail
-                     : (r && r.error && /reviser_seance/.test(r.error.message || "")
-                        ? "La base ne connaît pas encore cette fonction : la migration du 30/09 n'est pas appliquée."
-                        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
-        erreur("err-gs-qn", pourquoi);
+        erreur("err-gs-qn", texteRefus(r));
         b.disabled = false;
         return;
       }
       erreur("err-gs-qn", b.dataset.eteindre
-        ? "Révision éteinte : les étudiants ne la voient plus. Leurs réponses sont gardées."
+        ? "Révision retirée aux étudiants. Leurs réponses sont gardées."
         : "« " + d.titre + " » est proposée à la classe — " + d.questions + " questions." +
           (d.fige ? " Des étudiants y avaient déjà répondu : le texte n'a pas été réécrit." : ""), true);
       lireQuestionnairesPrep(s);
@@ -344,7 +345,7 @@ function rattacherPrep(s, x, cible){
                                       p_cible: cible === null ? null : Number(cible) }).then(function(r){
     var d = r && r.data;
     if (!r || r.error || !d || !d.ok) {
-      erreur("err-gs-qn", "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+      erreur("err-gs-qn", texteRefus(r));
     } else if (cible === null) {
       erreur("err-gs-qn", "« " + x.m.titre + " » ne suit plus cette séance. Son état n'a pas " +
              "changé : c'est l'interrupteur qui décide de ce que voient les étudiants.", true);
@@ -397,8 +398,9 @@ function brancherPreparer(){
     b.disabled = true;
     sb.rpc("ouvrir_controle", { p_seance_id: Number(courante.id), p_ouvert: vise }).then(function(r){
       b.disabled = false;
-      if (!ok(r)) { erreur("err-pr-ctl", "Action refusée. Vérifiez que vous êtes bien connecté en enseignant."); return; }
-      erreur("err-pr-ctl", vise ? "Contrôle proposé aux étudiants." : "Contrôle éteint.", true);
+      if (!ok(r)) { erreur("err-pr-ctl", texteRefus(r)); return; }
+      erreur("err-pr-ctl", vise ? "Contrôle proposé aux étudiants."
+                                : "Contrôle retiré aux étudiants. Les réponses sont gardées.", true);
       lireEtat(courante);
     });
   });

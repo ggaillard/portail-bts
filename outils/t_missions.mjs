@@ -209,7 +209,7 @@ for (const w of [360, 1280]) {
   }));
   if (!liste.visible) rates.push('séances : la carte ne s\'affiche pas');
   if (liste.lignes !== 2) rates.push(`séances : ${liste.lignes} lignes, attendu 2`);
-  if (!liste.meta[1] || !/5 missions/.test(liste.meta[1]) || !/non publiée/.test(liste.meta[1])) {
+  if (!liste.meta[1] || !/5 missions/.test(liste.meta[1]) || !/cachée/.test(liste.meta[1])) {
     rates.push(`séances : la ligne de la séance 11 dit « ${liste.meta[1]} »`);
   }
 
@@ -217,7 +217,7 @@ for (const w of [360, 1280]) {
   // sans formulaire ; un projet ouvert se ferme, différé.
   const gestesLigne = await p.evaluate(() => [...document.querySelectorAll('#gs-liste .gs-l')]
     .map((l) => [...l.querySelectorAll('.gs-actes button')].map((b) => b.textContent).join('|')));
-  if (gestesLigne[0] !== 'Fermer|Suivre ›|Modifier') rates.push(`séances : gestes du TP0 ouvert « ${gestesLigne[0]} »`);
+  if (gestesLigne[0] !== 'Clore|Suivre ›|Modifier') rates.push(`séances : gestes du TP0 ouvert « ${gestesLigne[0]} »`);
   if (gestesLigne[1] !== 'Ouvrir|Suivre ›|Modifier') rates.push(`séances : gestes de l'IA 1 fermée « ${gestesLigne[1]} »`);
   await p.evaluate(() => {
     const sb = window.__e.sb, avant = sb.from;

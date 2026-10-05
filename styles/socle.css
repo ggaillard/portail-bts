@@ -34,21 +34,32 @@
    une largeur de plus à vérifier à chaque changement, pour toujours.
    ────────────────────────────────────────────────────────────────────────── */
 
+/* Contrastes (05/10, lot 1 des propositions) : tout couple texte / fond de
+   cette table passe 4,5 : 1 (WCAG 1.4.3) dans les deux thèmes, mesuré par
+   axe-core dans outils/t_navigation.mjs. Trois teintes ont bougé pour cela :
+     --ink-faint  #8697A6 -> #5E6F7F en clair (2,6 à 3,0 : 1 avant ; aucune
+                  teinte plus pâle ne passe sur --surface-alt) et #71828F ->
+                  #8193A1 en sombre (3,8 à 4,6 : 1 avant) ;
+     --ok, --signal un cran plus foncés en clair (4,34 et 4,46 : 1 sur leur
+                  fond « soft », juste sous le seuil) ;
+     --on-accent  le texte posé SUR --accent : blanc en clair, encre foncée en
+                  sombre — le blanc sur #4FB3AD faisait 2,5 : 1, et c'était le
+                  bouton « Me connecter » des étudiants. */
 :root{
   --ground:#F4F6F8; --surface:#FFF; --surface-alt:#EDF1F4;
-  --ink:#17212B; --ink-soft:#5A6B7B; --ink-faint:#8697A6;
+  --ink:#17212B; --ink-soft:#5A6B7B; --ink-faint:#5E6F7F;
   --rule:#DCE3E9; --rule-soft:#E9EEF2;
-  --accent:#0E6E6E; --accent-ink:#0A5555; --accent-soft:#E1EFEE;
-  --signal:#B45309; --signal-soft:#FBF0E2;
-  --ok:#1B7F4B; --ok-soft:#E3F2E9;
+  --accent:#0E6E6E; --accent-ink:#0A5555; --accent-soft:#E1EFEE; --on-accent:#FFF;
+  --signal:#A64C08; --signal-soft:#FBF0E2;
+  --ok:#18733F; --ok-soft:#E3F2E9;
   --f-sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root{
   --ground:#0F171E; --surface:#16202A; --surface-alt:#1B2733;
-  --ink:#E4EAF0; --ink-soft:#9CACBB; --ink-faint:#71828F;
+  --ink:#E4EAF0; --ink-soft:#9CACBB; --ink-faint:#8193A1;
   --rule:#26333F; --rule-soft:#1F2B36;
-  --accent:#4FB3AD; --accent-ink:#79CBC5; --accent-soft:#123230;
+  --accent:#4FB3AD; --accent-ink:#79CBC5; --accent-soft:#123230; --on-accent:#0B1A1F;
   --signal:#D9903F; --signal-soft:#33260F;
   --ok:#4FBF84; --ok-soft:#10301F;
 }}
@@ -85,7 +96,7 @@ input,select{background:var(--surface-alt);color:var(--ink);border:1px solid var
 .row{display:flex;gap:.7rem}
 .row .field{flex:1}
 
-.btn{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:.65rem 1.1rem;
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:7px;padding:.65rem 1.1rem;
      font:inherit;font-size:.95rem;font-weight:600;cursor:pointer;min-height:44px}
 .btn:hover{filter:brightness(1.08)}
 .btn[disabled]{opacity:.55;cursor:default}
@@ -126,6 +137,9 @@ td:first-child,th:first-child{padding-left:0}
 tr:last-child td{border-bottom:0}
 .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink)}
 .scroll{overflow-x:auto}
+/* Une zone qui défile se prend au clavier (tabindex="0", WCAG 2.1.1) : son
+   focus doit donc se voir comme celui d'un bouton. */
+.scroll:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 
 footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
@@ -139,7 +153,7 @@ footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--rule);
    retireraient aussi de l'ordre de tabulation, et il ne servirait plus à rien.
    On le sort de l'écran, et il revient dès qu'on l'atteint au clavier. */
 .evitement{position:absolute;left:-9999px;top:0;z-index:50;
-  background:var(--accent);color:#fff;font-size:.95rem;font-weight:600;
+  background:var(--accent);color:var(--on-accent);font-size:.95rem;font-weight:600;
   padding:.7rem 1.1rem;border-radius:0 0 8px 0;text-decoration:none}
 .evitement:focus{left:0}
 #contenu:focus{outline:none}

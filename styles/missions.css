@@ -102,7 +102,7 @@
 .md-meta{flex:1 1 auto;font-family:var(--f-mono);font-size:.8rem;color:var(--ink-soft)}
 .md-b{flex:0 0 auto;min-height:44px}
 .md-neuf{margin:.6rem 0 .4rem}
-.md-reste{margin:0 0 .6rem;font-size:.87rem;color:#8A5A16}
+.md-reste{margin:0 0 .6rem;font-size:.87rem;color:var(--signal)}
 .gs-module{margin-top:1.1rem}
 .gs-module:first-child{margin-top:.2rem}
-.gs-sans{color:#8A5A16}
+.gs-sans{color:var(--signal)}

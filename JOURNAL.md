@@ -22,6 +22,37 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 5 octobre 2026 (soir) — lot 1 : ergonomie et accessibilité
+
+Accepté : le lot 1 des propositions du même jour (`claude/application-seance-propositions.md`
+dans le projet). **Aucune migration.** Mesuré avant, avec axe-core 4.14 (WCAG
+2.2 AA) : tous les boutons principaux à 2,5 : 1 en thème sombre, « Me
+connecter » compris ; l'encre pâle à 2,6–3,0 : 1 en clair ; deux pastilles
+juste sous 4,5 ; un tableau défilant inatteignable au clavier ; quatre
+teintes de texte en dur qui tombaient à 2,2 : 1 sur fond sombre. Après :
+**zéro violation**, en clair et en sombre, à 390 et 1 280 px.
+
+| Item | Où | Quoi |
+|---|---|---|
+| 1.1 Contrastes | `styles/socle.css` (jetons), `etudiant.css`, `appel.css`, `ensemble.css`, `missions.css`, `pilote.css` | `--ink-faint`, `--ok`, `--signal` ajustés ; `--on-accent` neuf ; plus de texte en dur sur fond du thème ; liens au jeton |
+| 1.2 Clavier | `index.html`, `fiche.js` | les cinq zones `.scroll` : `tabindex`, `role="region"`, un nom |
+| 1.3 Vocabulaire | `js/interrupteur.js` (neuf), `bibliotheque.js`, `controle.js`, `preparer.js`, `qseance.js`, `ensemble.js`, `gestion.js`, `prevol.js` | un interrupteur `role="switch"` pour « Proposé aux étudiants » et « Visible » ; « Clore » aussi pour un projet ; « visible / cachée » partout |
+| 1.4 Boutons | `styles/composants.css` (neuve, en dernier), `styleguide.html` (neuve) | trois niveaux, inventaire des composants, guide qui calcule ses propres contrastes |
+| 1.5 Erreurs | `js/refus.js` (neuf) | les 14 « Action refusée. Vérifiez… » remplacés : session, réseau, fonction absente, raison de la base |
+| 1.6 Séances | `js/choixseance.js` (neuf), `index.html`, `pilote.js` | « Aller à une séance » : recherche, groupes classe › module, état, récentes, questionnaires à part |
+| 1.7 Clavier | `js/raccourcis.js` (neuf), `index.html` (`<dialog>`) | Ctrl+K, D, P, 1-4, /, ? ; à une touche coupables (WCAG 2.1.4) ; pas de raccourci pour Clore |
+| 1.8 Aides | `index.html` | sept aides de carte réduites à une phrase + « En savoir plus » |
+| 1.9 Contrôle | `outils/t_navigation.mjs` | axe-core (version fixée) sur connexion, trois onglets, guide, deux thèmes ; 320 px sans défilement latéral |
+
+Contrôles : `t_navigation` (cassé : blanc remis sur le bouton sombre → 9
+violations nommées), `t_messages` (refus), `t_suivi` (sélecteur et
+raccourcis ; cassé deux fois : Entrée sans effet → 3 défauts, raccourcis non
+coupables → « coupés, « 2 » change encore de vue »), `t_pilotage`,
+`t_missions` (vocabulaire). Vérification manuelle trimestrielle : liste dans
+CLAUDE.md, « Ergonomie et accessibilité ».
+
+---
+
 ## 5 octobre 2026 — ouvrir une séance depuis l'écran où on la regarde
 
 Demandé : « l'application de gestion des séances n'est pas très pratique,

@@ -32,6 +32,8 @@ import { $, sb, suivi, erreur, typo, codeClasseCourante, majFile, marquerEtape,
 // c'est elle qu'on lit à voix haute.
 import { lireAvantDeRepondre } from './lecture.js';
 import { ligneAbsents } from './appel.js';
+import { interrupteur, reglerInterrupteur } from './interrupteur.js';
+import { texteRefus } from './refus.js';
 
 let allerAuControle = function(){};
 export function brancherControle(liens){ allerAuControle = liens.allerAuControle; }
@@ -170,9 +172,7 @@ function chargerControle(){
 
 function rendreControleEns(d){
   var b = $("b-controle");
-  b.classList.toggle("on", !!d.ouvert);
-  b.querySelector(".et").textContent = d.ouvert ? "Proposé" : "Éteint";
-  b.setAttribute("aria-pressed", d.ouvert ? "true" : "false");
+  reglerInterrupteur(b, !!d.ouvert);
   b.disabled = !d.notions;
   b.title = d.notions ? "" : "Écrivez d'abord les notions à contrôler.";
 
@@ -318,15 +318,9 @@ function ligneControleGlobal(c){
 
   var bas = d.querySelector(".ctl-bas");
 
-  var b = document.createElement("button");
-  b.type = "button";
-  b.className = "qa-b" + (c.ouvert ? " on" : "");
-  b.innerHTML = '<span class="pt"></span><span class="et"></span>';
-  b.querySelector(".et").textContent = c.ouvert ? "Proposé" : "Éteint";
-  b.setAttribute("aria-pressed", c.ouvert ? "true" : "false");
-  b.setAttribute("aria-label", (c.ouvert ? "Éteindre" : "Proposer") +
-    " le contrôle de la séance " + c.numero + " pour " + c.classe);
-  b.addEventListener("click", function(){ basculerControle(c, b); });
+  var b = interrupteur({ libelle: "Proposé aux étudiants", on: !!c.ouvert,
+    nom: "Proposé aux étudiants — contrôle de la séance " + c.numero + " pour " + c.classe,
+    change: function(){ basculerControle(c, b); } });
   bas.appendChild(b);
 
   var v = document.createElement("button");
@@ -351,7 +345,7 @@ function basculerControle(c, b){
     if (!r || r.error || !r.data || !r.data.ok) {
       erreur("err-controles", (r && r.data && r.data.motif === "vide")
         ? "Ce contrôle n'a aucune notion : rien à proposer."
-        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+        : texteRefus(r));
       return;
     }
     erreur("err-controles", vise

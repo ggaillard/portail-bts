@@ -22,6 +22,8 @@
 //     mangeant la moitié du message serait un autre défaut, pas un correctif.
 
 import { chromium } from 'playwright';
+import fs from 'fs';
+import path from 'path';
 import { ouvrir } from './portail.mjs';
 
 const RACINE = process.argv[2] || process.cwd();
@@ -89,6 +91,30 @@ const reste = await p.evaluate(() => {
 });
 console.log('\n── après erreur(zone, "") :', JSON.stringify(reste));
 if (reste !== '') rates.push(`erreur(zone, "") laisse ${JSON.stringify(reste)} derrière elle`);
+// ── Un refus dit quoi faire (05/10, js/refus.js) ─────────────────────────
+// Avant le lot 1, quatorze endroits affichaient « Action refusée. Vérifiez
+// que vous êtes bien connecté en enseignant. » quelle que soit la cause. Une
+// cause, un message ; et la raison envoyée par la base n'est jamais jetée.
+const REFUS = [
+  ['réseau coupé',          { data: null, error: { message: 'TypeError: Failed to fetch' } }, /réseau/],
+  ['session expirée',       { data: null, error: { message: 'JWT expired', code: 'PGRST301' } }, /session/],
+  ['fonction pas déployée', { data: null, error: { message: 'Could not find the function public.x', code: 'PGRST202' } }, /migration/],
+  ['refus de droits',       { data: { ok: false, motif: 'refus' }, error: null }, /reconnaît pas comme enseignant/],
+  ['raison de la base',     { data: { ok: false, motif: 'pris', detail: 'La séance 12 existe déjà dans cette classe.' }, error: null }, /^La séance 12 existe déjà/],
+  ['motif inconnu',         { data: { ok: false, motif: 'bizarre' }, error: null }, /« bizarre »/],
+];
+const lus = await p.evaluate((REFUS) => REFUS.map(([q, r]) => [q, window.__e.texteRefus(r)]), REFUS);
+console.log('\n── refus :');
+lus.forEach(([q, txt], i) => {
+  console.log('   ' + q.padEnd(22) + ' → ' + txt);
+  if (!REFUS[i][2].test(txt)) rates.push(`refus « ${q} » : « ${txt} » ne dit pas ce qu'il faut`);
+  if (/Action refusée\. Vérifiez/.test(txt)) rates.push(`refus « ${q} » : le message générique est revenu`);
+});
+// Et dans le code : plus aucun module ne l'écrit lui-même.
+const generiques = fs.readdirSync(path.join(RACINE, 'js')).filter((f) =>
+  /Action refusée\. Vérifiez/.test(fs.readFileSync(path.join(RACINE, 'js', f), 'utf8')));
+if (generiques.length) rates.push(`le message générique « Action refusée. Vérifiez… » est encore écrit dans : ${generiques.join(', ')}`);
+
 if (erreurs.length) rates.push('erreur JS — ' + erreurs[0]);
 
 await fermer();
@@ -96,4 +122,4 @@ await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
-console.log('  ✓ Un titre venu de la base s\'affiche en entier et n\'exécute rien.');
+console.log('  ✓ Un titre venu de la base s\'affiche en entier et n\'exécute rien ;\n    un refus dit sa cause et ce qu\'on peut faire.');

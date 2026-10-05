@@ -74,7 +74,7 @@
 .filtre{appearance:none;border:1px solid var(--rule);background:var(--surface);color:var(--ink-soft);
   font:inherit;font-size:.82rem;border-radius:999px;padding:.3rem .8rem;min-height:36px;cursor:pointer;position:relative}
 .filtre::after{content:"";position:absolute;inset:-4px 0}
-.filtre.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.filtre.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .filtre:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sv-cherche input[type=search]{flex:1 1 12rem;min-width:0}
 .el{cursor:pointer}
@@ -109,7 +109,7 @@ body.fiche-ouverte{overflow:hidden}
 .fe-table td:first-child,.fe-table td:nth-child(3),.fe-table td:nth-child(4){font-family:var(--f-mono);white-space:nowrap}
 .fe-table td.ok{color:var(--ok)}
 .fe-table td.att{color:var(--signal)}
-.fe-table td.ko{color:#963232}
+.fe-table td.ko{color:var(--ko)}
 .fe-table tr.fe-courante td{background:var(--accent-soft);font-weight:600}
 .fe-table tr.fe-rien td{color:var(--ink-faint)}
 

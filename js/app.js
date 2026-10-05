@@ -60,6 +60,11 @@ import { chargerMissionsEtu, brancherMissions } from './missions.js';
 import { brancherGestion, chargerGestion, relireGestion } from './gestion.js';
 import { brancherModules, chargerModules, chargerModulesEtu } from './modules.js';
 import { choisirSeanceDuJour } from './encours.js';
+import { texteRefus } from './refus.js';
+// Deux modules qui se branchent seuls au chargement (lot 1, 05/10) : la
+// recherche d'une séance, et les raccourcis clavier.
+import './choixseance.js';
+import './raccourcis.js';
 import { chargerCarnet } from './carnet.js';
 import { chargerSemaine } from './semaine.js';
 import { chargerEquipes, chargerEquipeEtu } from './equipes.js';
@@ -245,7 +250,7 @@ $("b-controle").addEventListener("click", function(){
     if (!r || r.error || !r.data || !r.data.ok) {
       erreur("err-controle", (r && r.data && r.data.motif === "vide")
         ? "Écrivez d'abord les notions à contrôler."
-        : "Action refusée. Vérifiez que vous êtes bien connecté en enseignant.");
+        : texteRefus(r));
       return;
     }
     erreur("err-controle", vise

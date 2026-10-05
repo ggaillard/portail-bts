@@ -44,7 +44,7 @@
 .cq-cle{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-soft)}
 .cq-txt{display:block;margin:.15rem 0 .35rem;font-size:.95rem}
 .cq-opt{display:block;font-size:.9rem;padding:.08rem 0;color:var(--ink-soft)}
-.cq-opt.juste{color:#1B6B42;font-weight:600}
+.cq-opt.juste{color:var(--ok);font-weight:600}
 .cq-exp{display:block;margin-top:.25rem;font-size:.85rem;color:var(--ink-soft);font-style:italic}
 /* Deux classes l'une sous l'autre, c'est deux écrans de téléphone à franchir
    pour arriver à la seconde. Dès qu'il y a la largeur, elles passent côte à
