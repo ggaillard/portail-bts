@@ -57,8 +57,76 @@ var TITRE_BASE = document.title;
 // L'ADRESSE au chargement (encours.js la lit), les SÉLECTEURS ensuite
 // (pilote.js réécrit l'adresse à chaque séance choisie).
 function seanceDeLAdresse(){
-  var m = /^#(?:appel|seance)\/s\/(\d+)$/.exec(location.hash || "");
+  var m = /^#(?:appel|seance)\/s\/(\d+)$/.exec(location.hash || "") ||
+          /^#s\/(\d+)\/(?:direct)(?:\/[a-z]+)?$/.exec(location.hash || "");
   return m ? m[1] : null;
+}
+
+// ── La page d'une séance (06/10, lot 3) ───────────────────────────────────
+//
+// « #s/35 », « #s/35/preparer/missions », « #s/35/direct », « #s/35/bilan ».
+// La séance devient un objet qu'on ouvre : une page, trois onglets — les
+// trois moments appliqués à UNE séance. L'onglet du haut qui s'allume est
+// le moment de l'onglet de la page (Préparer → Préparer, En direct → En
+// cours, Bilan → Bilan) : on sait toujours d'où l'on vient, et un clic
+// dessus y ramène. Ce module ne construit pas la page — js/pageseance.js le
+// fait, et s'inscrit ici par brancherPage() — il tient l'adresse.
+var PAGE_MOMENT = { preparer: "quest", direct: "appel", bilan: "ensemble" };
+var PAGE_TITRES = { preparer: "Préparer", direct: "En direct", bilan: "Bilan" };
+var page = { ouvrir: null, quitter: null };
+var pageCourante = null;      // { id, onglet } quand la page est à l'écran
+
+function pageDeLAdresse(){
+  var m = /^#s\/(\d+|nouvelle)(?:\/(preparer|direct|bilan))?(?:\/([a-z]+))?$/.exec(location.hash || "");
+  return m ? { id: m[1], onglet: m[2] || null, sous: m[3] || null } : null;
+}
+
+function brancherPage(o){ page = o; }
+function pageOuverte(){ return pageCourante; }
+
+// Aller à la page d'une séance. `adresse` comme pour ouvrirOnglet().
+function allerSeance(id, onglet, sous, adresse){
+  var cible = "#s/" + id + (onglet ? "/" + onglet : "") + (onglet && sous ? "/" + sous : "");
+  if (adresse !== "aucun" && location.hash !== cible) {
+    try {
+      if (adresse === "remplacer") history.replaceState(null, "", cible);
+      else history.pushState(null, "", cible);
+    } catch (e) { /* l'adresse est un confort */ }
+  }
+  if (page.ouvrir) return page.ouvrir(String(id), onglet || null, sous || null);
+  return Promise.resolve();
+}
+
+// Appelée par la page une fois son onglet choisi : les volets des moments
+// se cachent, le moment correspondant s'allume, le titre suit.
+function montrerPage(id, onglet, titre){
+  var cle = PAGE_MOMENT[onglet] || "quest";
+  ONGLETS.forEach(function(k){
+    var o = $("ong-" + k), actif = (k === cle);
+    o.classList.toggle("actif", actif);
+    o.setAttribute("aria-selected", actif ? "true" : "false");
+    o.tabIndex = actif ? 0 : -1;
+    $("volet-" + k).hidden = true;
+  });
+  $("volet-seance").hidden = false;
+  pageCourante = { id: String(id), onglet: onglet };
+  document.title = (titre ? titre + " — " : "") + PAGE_TITRES[onglet] + " — " + TITRE_BASE;
+}
+
+function quitterPage(){
+  if (!pageCourante) return;
+  pageCourante = null;
+  if ($("volet-seance")) $("volet-seance").hidden = true;
+  if (page.quitter) page.quitter();
+}
+
+// À l'ouverture de l'espace : la page si l'adresse en désigne une, sinon
+// l'onglet de l'adresse, sinon En cours.
+function ouvrirDepuisLAdresse(){
+  var p = pageDeLAdresse();
+  if (!p) { ouvrirOnglet(ongletDeLAdresse() || "appel", "remplacer"); return; }
+  ouvrirOnglet(PAGE_MOMENT[p.onglet] || "appel", "aucun");
+  allerSeance(p.id, p.onglet, p.sous, "aucun");
 }
 
 function ongletDeLAdresse(){
@@ -74,6 +142,7 @@ function ongletDeLAdresse(){
 function ouvrirOnglet(cle, adresse){
   cle = ALIAS[cle] || cle;
   if (ONGLETS.indexOf(cle) < 0) cle = "appel";
+  quitterPage();
   ONGLETS.forEach(function(k){
     var o = $("ong-" + k), v = $("volet-" + k);
     var actif = (k === cle);
@@ -107,6 +176,8 @@ function ouvrirOnglet(cle, adresse){
 // exactement ce qu'on veut écouter.
 window.addEventListener("hashchange", function(){
   if ($("espace-ens").hidden) return;   // l'étudiant a ses propres ancres
+  var p = pageDeLAdresse();
+  if (p) { allerSeance(p.id, p.onglet, p.sous, "aucun"); return; }
   ouvrirOnglet(ongletDeLAdresse() || "appel", "aucun");
 });
 
@@ -165,4 +236,5 @@ CONNEXION.forEach(function(cle, i){
   });
 });
 
-export { ONGLETS, ouvrirOnglet, ongletDeLAdresse, seanceDeLAdresse, onglet };
+export { ONGLETS, ouvrirOnglet, ongletDeLAdresse, seanceDeLAdresse, onglet,
+         pageDeLAdresse, brancherPage, pageOuverte, allerSeance, montrerPage, ouvrirDepuisLAdresse };

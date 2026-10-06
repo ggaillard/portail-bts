@@ -147,6 +147,22 @@ console.log('── lien vers une séance :', lien.hash, '· après Préparer pu
 if (lien.actif !== 'ong-appel' || lien.hash !== '#appel/s/14') rates.push(`« #appel/s/14 » ouvre ${lien.actif} et devient « ${lien.hash} »`);
 if (retour.actif !== 'ong-appel' || retour.hash !== '#appel/s/14') rates.push(`Précédent depuis Préparer mène à ${retour.actif} « ${retour.hash} »`);
 
+// ── 3quinquies. La page d'une séance dans l'adresse (06/10, lot 3) ─────────
+// « #s/25/bilan » rouvre la PAGE, sur son onglet Bilan, et allume le moment
+// Bilan ; la normalisation d'ouverture ne réécrit pas l'adresse en #appel.
+await p.goto(url + '#s/25/bilan', { waitUntil: 'load' });
+await p.reload({ waitUntil: 'load' });
+const pageLien = await p.evaluate(() => {
+  window.__e.ouvrirEspaceEnseignant();
+  return { actif: (document.querySelector('.onglet.actif') || {}).id, hash: location.hash,
+    page: !document.getElementById('volet-seance').hidden,
+    volets: [...document.querySelectorAll('.volet')].filter((v) => !v.hidden).map((v) => v.id).join() };
+});
+console.log('── page d\'une séance :', pageLien.hash, '·', pageLien.actif, '·', pageLien.volets);
+if (pageLien.hash !== '#s/25/bilan' || pageLien.actif !== 'ong-ensemble' || pageLien.volets !== 'volet-seance') {
+  rates.push(`« #s/25/bilan » ouvre ${JSON.stringify(pageLien)} — attendu la page seule, moment Bilan allumé`);
+}
+
 // ── 3quater. Installable, et la barre sous le pouce sur un téléphone ──────
 const manifeste = await p.evaluate(() => fetch('manifest.webmanifest').then((r) => r.json()).then((m) =>
   ({ nom: m.short_name, icones: m.icons.length, affichage: m.display })).catch((e) => ({ err: String(e) })));
@@ -307,6 +323,21 @@ function donneesEnseignant(){
         prevue_le: new Date(Date.now() - 25 * 60000).toISOString(), fin_prevue: new Date(Date.now() + 30 * 60000).toISOString(), journal: [] }] },
     emploi_du_temps: { ok: true, automatique: false, pg_cron: false, classes: [
       { id: 1, code: 'BTS1-DEV-2026', nom: 'BTS SIO 1 - Bloc 1 DEV', creneaux: [{ jour: 2, debut: '08:00', fin: '09:00' }] }] },
+    // Lot 3 (06/10) : la semaine à préparer, et le bilan de la page d'une séance.
+    agenda: { ok: true, debut: new Date().toISOString().slice(0, 10), jours: 7, emploi_du_temps: true,
+      creneaux: [{ classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', jour: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+                   debut_le: new Date(Date.now() + 86400000).toISOString(), fin_le: new Date(Date.now() + 90000000).toISOString() },
+                 { classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', jour: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
+                   debut_le: new Date(Date.now() + 2 * 86400000).toISOString(), fin_le: new Date(Date.now() + 2 * 86400000 + 3600000).toISOString() }],
+      seances: [{ id: 25, classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', numero: 11, titre: 'IA 1', nature: 'projet', etat: 'brouillon',
+                  manque: ['echeance'], prevue_le: new Date(Date.now() + 86400000).toISOString(), fin_prevue: new Date(Date.now() + 90000000).toISOString() }],
+      a_placer: [{ id: 25, classe_id: 1, numero: 11, titre: 'IA 1', etat: 'prete' }] },
+    bilan_seance: { ok: true, inscrits: 6, participants: 5, reponses: 30,
+      seance: { id: 25, numero: 11, nature: 'projet', etat: 'clos', ouverte: false, publiee: true,
+                demarree_le: new Date(Date.now() - 86400000).toISOString(), prevue_le: null, fin_prevue: null, ecart_min: null },
+      appel: { jour: new Date().toISOString().slice(0, 10), pose: true, presents: 5, absents: ['04'] },
+      controle: { notions: 0 }, missions: { declarees: 5, mediane: 3, finis: 2 }, journal: [] },
+    debriefing: { ok: true, concepts: [{ intitule: 'Une spécification', verdict: 'fragile', taux: 60 }], plus_ratees: [] },
   };
   return window.__e.ouvrirEspaceEnseignant();
 }
@@ -346,6 +377,29 @@ if (!AXE) {
             !document.getElementById('carte-edt').hidden && document.getElementById('carte-edt').open);
           if (!ouverte) rates.push(`audit ${theme} ${largeur} : la fiche ou l'emploi du temps ne s'ouvrent pas — rien vérifié là`);
           await auditer(e.page, `quest+fiche ${theme} ${largeur}`);
+          // Lot 3 : la barre des actions groupées, la page d'une séance (Préparer,
+          // puis Bilan), et l'assistant « Nouveau module » ouvert.
+          await e.page.evaluate(() => { const c = document.querySelector('#gs-liste .gs-choix'); if (c) c.click(); });
+          await e.page.waitForTimeout(150);
+          const lot = await e.page.evaluate(() => !document.getElementById('gs-lot').hidden &&
+            !document.getElementById('carte-avenir').hidden);
+          if (!lot) rates.push(`audit ${theme} ${largeur} : la barre groupée ou la semaine ne s'affichent pas — rien vérifié là`);
+          await auditer(e.page, `quest+lot ${theme} ${largeur}`);
+          for (const onglet of ['preparer', 'bilan']) {
+            await e.page.evaluate((o) => { location.hash = '#s/25/' + o; }, onglet);
+            await e.page.waitForTimeout(600);
+            const vue = await e.page.evaluate((o) => !document.getElementById('volet-seance').hidden &&
+              !document.getElementById('sp-' + o).hidden, onglet);
+            if (!vue) rates.push(`audit ${theme} ${largeur} : la page s'ouvre mal sur ${onglet} — rien vérifié là`);
+            await auditer(e.page, `page ${onglet} ${theme} ${largeur}`);
+          }
+          await e.page.evaluate(() => { document.getElementById('ong-quest').click(); document.getElementById('b-gs-module').click(); });
+          await e.page.waitForTimeout(250);
+          if (!(await e.page.evaluate(() => document.getElementById('as-dialog').open))) {
+            rates.push(`audit ${theme} ${largeur} : l'assistant ne s'ouvre pas — rien vérifié là`);
+          }
+          await auditer(e.page, `assistant ${theme} ${largeur}`);
+          await e.page.evaluate(() => document.getElementById('as-dialog').close());
         }
       }
       if (e.erreurs.length) rates.push(`audit ${theme} ${largeur} : erreur JS — ${e.erreurs[0]}`);
@@ -383,6 +437,12 @@ if (!AXE) {
     await r320.page.waitForTimeout(250);
     const d = await largeurDe();
     if (d > 0) debords.push(v + ' +' + d + ' px');
+  }
+  for (const o of ['preparer', 'direct', 'bilan']) {
+    await r320.page.evaluate((o) => { location.hash = '#s/25/' + o; }, o);
+    await r320.page.waitForTimeout(500);
+    const d = await largeurDe();
+    if (d > 0) debords.push('page ' + o + ' +' + d + ' px');
   }
   await r320.fermer();
 

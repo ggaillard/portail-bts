@@ -815,10 +815,163 @@ for (const w of [390, 1280]) {
   await fermer();
 }
 
+// ─── La page d'une séance (06/10, lot 3) ───────────────────────────────────
+// « #s/25 » : un fil d'Ariane, trois onglets — Préparer, En direct, Bilan —
+// qui allument le moment correspondant. La page HÉBERGE la fiche et la carte
+// du direct, puis les rend. Ouvrir sur Préparer ne change pas la séance
+// suivie ; En direct la charge ; une autre séance choisie dans la carte
+// emmène la page ; le Bilan dit le prévu et le fait, l'appel, les concepts,
+// et mène au compte rendu ; Dupliquer ouvre la copie ; un lien « Écrire … ›»
+// du direct ouvre l'onglet Préparer de la page, sur le bon onglet de fiche.
+for (const w of [390, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  await p.evaluate(() => {
+    const il = (min) => new Date(Date.now() - min * 60000).toISOString();
+    window.__tables = {
+      classes: [{ id: 1, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }],
+      seances: [
+        { id: 3, classe_id: 1, numero: 3, titre: 'TP3', ouverte: true, nature: 'cours', module_id: 2, publiee: true,
+          duree_min: 55, demarree_le: il(10), controle_ouvert: false },
+        { id: 25, classe_id: 1, numero: 11, titre: 'IA 1', ouverte: false, nature: 'projet', jalons: 5, module_id: 3,
+          publiee: false, duree_min: 180 },
+        { id: 26, classe_id: 1, numero: 12, titre: 'IA 2', ouverte: false, nature: 'projet', jalons: 5, module_id: 3,
+          publiee: true, duree_min: 180, demarree_le: il(3000) }],
+      eleves: [],
+    };
+    const L = (o) => Object.assign({ nature: 'projet', jalons: 5, echeance: '2026-10-16', duree_min: 180, ouverte: false,
+      publiee: false, missions: 5, corriges: 0, reponses: 0, module_id: 3, etat: 'prete', manque: [], demarree_le: null,
+      prevue_le: null, fin_prevue: null, auto_ouvrir: false, auto_clore: false }, o);
+    window.__reponses = {
+      seances_de_classe: { ok: true, liste: [
+        L({ id: 3, numero: 3, titre: 'TP3', nature: 'cours', module_id: 2, ouverte: true, publiee: true, etat: 'en_cours', demarree_le: il(10) }),
+        L({ id: 25, numero: 11, titre: 'IA 1' }),
+        L({ id: 26, numero: 12, titre: 'IA 2', etat: 'clos', publiee: true, reponses: 40, demarree_le: il(3000),
+            prevue_le: il(3007), fin_prevue: il(2827) })] },
+      modules_enseignant: { ok: true, classes: [{ classe_id: 1, modules: [
+        { id: 2, titre: 'PlaylistApp', icone: '🎵', depot: 'https://github.com/a/b' },
+        { id: 3, titre: 'IA Méca Forez — six séances', icone: '🏭', depot: 'https://github.com/a/c' }] }] },
+      preflight_seance: { ok: true, nature: 'projet', jalons: 5, echeance: '2026-10-16', questions: 0, eleves: 13, avec_pin: 13 },
+      bilan_seance: { ok: true, inscrits: 13, participants: 12, reponses: 40,
+        seance: { id: 26, numero: 12, titre: 'IA 2', nature: 'projet', etat: 'clos', ouverte: false, publiee: true,
+                  demarree_le: il(3000), prevue_le: il(3007), fin_prevue: il(2827), ecart_min: 7 },
+        appel: { jour: new Date().toISOString().slice(0, 10), pose: true, presents: 11, absents: ['04', '09'] },
+        controle: { notions: 6, repondants: 11, reussite: 68 },
+        missions: { declarees: 5, mediane: 3, finis: 4 },
+        journal: [{ geste: 'ouvrir', pour: il(3007), note: null, fait_le: il(3007) }] },
+      debriefing: { ok: true, reussite: null, concepts: [
+        { intitule: 'Une spécification', verdict: 'acquis', taux: 80 },
+        { intitule: 'La grille d’écart', verdict: 'a_revoir', taux: 30 }], plus_ratees: [] },
+      dupliquer_seance: { ok: true, id: 27, numero: 13, titre: 'IA 2 (copie)', missions: 5, notions: 6 },
+    };
+    return window.__e.ouvrirEspaceEnseignant();
+  });
+  await p.waitForTimeout(1000);
+  const suivie = await p.evaluate(() => String(window.__e.suivi.seanceId));
+
+  // Préparer : la fiche est là, la séance suivie n'a pas bougé.
+  await p.evaluate(() => { location.hash = '#s/25'; });
+  await p.waitForTimeout(700);
+  const a = await p.evaluate(() => ({
+    page: !document.getElementById('volet-seance').hidden,
+    moment: (document.querySelector('.onglet.actif') || {}).id,
+    fil: [...document.querySelectorAll('#sp-fil li')].map((l) => (l.querySelector('a') ? '[' + l.textContent + ']' : l.textContent) +
+      (l.getAttribute('aria-current') ? '@' : '')).join(' › '),
+    fiche: document.getElementById('gs-fiche').parentNode.id + (document.getElementById('gs-fiche').hidden ? ' cachée' : ''),
+    prep: String(window.__e.suivi.prep), suivie: String(window.__e.suivi.seanceId),
+    actes: [...document.querySelectorAll('#sp-actes button')].map((b) => b.textContent).join('|'),
+    suiv: document.getElementById('b-sp-suiv').hidden ? '' : document.getElementById('b-sp-suiv').textContent,
+    prec: document.getElementById('b-sp-prec').hidden ? '' : document.getElementById('b-sp-prec').textContent,
+    titre: document.title }));
+  if (!a.page || a.moment !== 'ong-quest' || a.fil !== '[Préparer] › [BTS SIO 2 - SLAM] › 🏭 IA Méca Forez › Séance 11@') {
+    rates.push(`${w} px (page) : ouverture ${JSON.stringify(a)}`);
+  }
+  if (a.fiche !== 'sp-preparer' || a.prep !== '25' || a.suivie !== suivie) {
+    rates.push(`${w} px (page) : sur Préparer, fiche ${a.fiche}, préparée ${a.prep}, suivie ${a.suivie} (avant : ${suivie})`);
+  }
+  if (a.actes !== 'Ouvrir|Dupliquer' || a.suiv !== 'Séance 12 ›' || a.prec !== '‹ Séance 3' || !/^Séance 11 — Préparer/.test(a.titre)) {
+    rates.push(`${w} px (page) : en-tête ${JSON.stringify(a)}`);
+  }
+
+  // En direct : la carte vient, la séance se charge, le moment En cours s'allume.
+  await p.click('#spb-direct');
+  await p.waitForTimeout(600);
+  const d = await p.evaluate(() => ({ hash: location.hash, moment: (document.querySelector('.onglet.actif') || {}).id,
+    carte: document.getElementById('carte-suivi').parentNode.id, suivie: String(window.__e.suivi.seanceId),
+    resume: document.getElementById('sp-resume').hidden }));
+  if (d.hash !== '#s/25/direct' || d.moment !== 'ong-appel' || d.carte !== 'sp-direct' || d.suivie !== '25' || !d.resume) {
+    rates.push(`${w} px (page) : En direct ${JSON.stringify(d)}`);
+  }
+  // Une autre séance choisie dans la carte : la page suit.
+  await p.evaluate(() => window.__e.chargerSeancesDe(1, 26));
+  await p.waitForTimeout(500);
+  const f = await p.evaluate(() => ({ hash: location.hash, titre: document.getElementById('sp-titre').textContent }));
+  if (f.hash !== '#s/26/direct' || f.titre !== '12 — IA 2') rates.push(`${w} px (page) : la page ne suit pas la séance choisie ${JSON.stringify(f)}`);
+
+  // Bilan.
+  await p.click('#spb-bilan');
+  await p.waitForTimeout(500);
+  const b = await p.evaluate(() => ({ hash: location.hash, moment: (document.querySelector('.onglet.actif') || {}).id,
+    lignes: [...document.querySelectorAll('#sp-bilan-corps dt')].map((x) => x.textContent + '=' + x.nextElementSibling.textContent),
+    concepts: [...document.querySelectorAll('.sp-concepts .badge')].map((x) => x.className.replace('badge ', '') + ':' + x.textContent) }));
+  const lu = b.lignes.join(' ¦ ');
+  if (b.hash !== '#s/26/bilan' || b.moment !== 'ong-ensemble' || !/Fait=démarrée .*7 min après l'heure prévue · close/.test(lu) ||
+      !/Appel=11 \/ 13 présents · absents : 04, 09/.test(lu) || !/Missions=médiane 3 \/ 5 · 4 ont tout fini/.test(lu) ||
+      !/Contrôle d'entrée=11 \/ 13 l'ont fait · 68 % juste/.test(lu) || !/L'automate=ouverte automatiquement/.test(lu) ||
+      b.concepts.join(',') !== 'ok:acquis · 80 %,ko:à revoir · 30 %') {
+    rates.push(`${w} px (page) : Bilan ${JSON.stringify(b)}`);
+  }
+  await p.evaluate(() => [...document.querySelectorAll('#sp-bilan-corps button')].filter((x) => /compte rendu/.test(x.textContent))[0].click());
+  await p.waitForTimeout(500);
+  const cr = await p.evaluate(() => ({ hash: location.hash, fin: !document.getElementById('sv-fin').hidden }));
+  if (cr.hash !== '#s/26/direct/fin' || !cr.fin) rates.push(`${w} px (page) : « Le compte rendu › » mène à ${JSON.stringify(cr)}`);
+
+  // Dupliquer, depuis le Bilan.
+  await p.click('#spb-bilan');
+  await p.waitForTimeout(300);
+  await p.evaluate(() => [...document.querySelectorAll('#sp-actes button')].filter((x) => x.dataset.geste === 'dupliquer')[0].click());
+  await p.waitForTimeout(600);
+  const du = await p.evaluate(() => ({ a: window.__appels.filter((x) => x.nom === 'dupliquer_seance').map((x) => x.args.p_seance_id),
+    hash: location.hash }));
+  if (JSON.stringify(du.a) !== '[26]' || du.hash !== '#s/27/preparer') rates.push(`${w} px (page) : Dupliquer ${JSON.stringify(du)}`);
+
+  // Quitter par l'onglet du haut : tout revient à sa place.
+  await p.click('#ong-appel');
+  await p.waitForTimeout(300);
+  const q = await p.evaluate(() => ({ page: !document.getElementById('volet-seance').hidden,
+    carte: document.getElementById('carte-suivi').parentNode.id, fiche: document.getElementById('gs-fiche').parentNode.id,
+    ficheCachee: document.getElementById('gs-fiche').hidden, hash: location.hash }));
+  if (q.page || q.carte !== 'volet-appel' || q.fiche !== 'gs-cadre' || !q.ficheCachee || !/^#appel/.test(q.hash)) {
+    rates.push(`${w} px (page) : en quittant ${JSON.stringify(q)}`);
+  }
+  // Précédent rouvre la page.
+  await p.goBack();
+  await p.waitForTimeout(700);
+  const pr = await p.evaluate(() => ({ page: !document.getElementById('volet-seance').hidden, hash: location.hash }));
+  if (!pr.page || !/^#s\//.test(pr.hash)) rates.push(`${w} px (page) : Précédent ${JSON.stringify(pr)}`);
+
+  // « Écrire les missions › » depuis le direct : l'onglet Préparer de la page, onglet Missions.
+  await p.click('#ong-appel');
+  await p.waitForTimeout(300);
+  await p.evaluate(() => { const b = document.querySelector('#bloc-missions .vers-prep'); b.closest('[hidden]') && null; b.click(); });
+  await p.waitForTimeout(700);
+  const vp = await p.evaluate(() => ({ hash: location.hash, onglet: (document.querySelector('#gs-onglets .actif') || {}).id,
+    fiche: document.getElementById('gs-fiche').parentNode.id }));
+  if (!/^#s\/\d+\/preparer\/missions$/.test(vp.hash) || vp.onglet !== 'gsb-missions' || vp.fiche !== 'sp-preparer') {
+    rates.push(`${w} px (page) : « Écrire les missions › » ${JSON.stringify(vp)}`);
+  }
+  const debord = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (debord > 0) rates.push(`${w} px (page) : la page déborde de ${debord} px`);
+  if (erreurs.length) rates.push(`${w} px (page) : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · page : ${a.fil} · ${a.actes} · direct ${d.suivie} · bilan ${b.lignes.length} lignes · copie ${du.hash}`);
+  await fermer();
+}
+
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
+console.log('  ✓ La page d\'une séance : fil d\'Ariane, trois onglets qui allument leur moment,');
+console.log('    la fiche et le direct hébergés puis rendus, le Bilan, Dupliquer, Précédent ;');
 console.log('  ✓ L\'état d\'une séance vient de la base et se lit en quatre étapes ;');
 console.log('    « Aujourd\'hui » croise créneaux et séances, un geste par ligne ;');
 console.log('  ✓ Les quatre chiffres sont gros sur un téléphone, tiennent sur une');

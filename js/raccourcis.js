@@ -25,7 +25,7 @@
 
 import { $, suivi } from './socle.js';
 import { ouvrirVue } from './pilote.js';
-import { ouvrirOnglet } from './navigation.js';
+import { ouvrirOnglet, pageOuverte, allerSeance } from './navigation.js';
 import { interrupteur, reglerInterrupteur } from './interrupteur.js';
 
 var CLE = "tdc-raccourcis";
@@ -56,8 +56,18 @@ function ouvrirAideRaccourcis(){
   if (d.showModal) d.showModal(); else d.setAttribute("open", "");
 }
 
+// La carte du direct vit dans En cours, ou dans la page d'une séance sur
+// son onglet En direct (06/10, lot 3) : les touches la suivent.
+function directVisible(){
+  if ($("volet-appel") && !$("volet-appel").hidden) return true;
+  var p = pageOuverte();
+  return !!(p && p.onglet === "direct");
+}
+
 function allerAUneSeance(){
-  ouvrirOnglet("appel");
+  var p = pageOuverte();
+  if (p) { if (p.onglet !== "direct") allerSeance(p.id, "direct", null, "remplacer"); }
+  else ouvrirOnglet("appel");
   var c = $("sv-choix"), f = $("sv-fil");
   if (c && c.hidden && f) f.click();       // pilote.js ouvre le panneau et y met le focus
   else if ($("cs-saisie")) $("cs-saisie").focus();
@@ -76,7 +86,7 @@ function surTouche(e){
   if (e.ctrlKey || e.metaKey || e.altKey || dansUnChamp(e.target)) return;
   if (!raccourcisActifs()) return;
 
-  var enCours = $("volet-appel") && !$("volet-appel").hidden;
+  var enCours = directVisible();
   var k = e.key;
   if (k === "?") { e.preventDefault(); ouvrirAideRaccourcis(); return; }
   if (!enCours) return;

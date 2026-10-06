@@ -564,6 +564,7 @@ function activerSeance(){
   suivi.nature  = opt.dataset.nature || "cours";
   suivi.jalons  = opt.dataset.jalons || null;
   $("stats-attente").textContent = "Chargement…";
+  document.dispatchEvent(new CustomEvent("tdc-seance-suivie", { detail: { id: sel.value } }));   // la page suit (lot 3)
   chargerPrevol();
   chargerQuestionsSeance();
   rafraichir().then(lancerBoucle);

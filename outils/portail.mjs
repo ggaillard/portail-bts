@@ -44,8 +44,9 @@ window.supabase = { createClient: function(){ return {
   // oblige chaque contrôle à éviter les chemins qui enchaînent, c'est-à-dire
   // à éviter précisément ce qui casse. Celle-ci s'enchaîne autant qu'on veut
   // et se résout toujours sur une liste vide.
-  from: function(){
-    var vide = { data: [], error: null };
+  // window.__tables[nom], s'il est posé, est ce que rend la table (06/10).
+  from: function(nom){
+    var vide = { data: (window.__tables && window.__tables[nom]) || [], error: null };
     var chaine = {
       then: function(ok, ko){ return Promise.resolve(vide).then(ok, ko); },
       catch: function(f){ return Promise.resolve(vide).catch(f); }

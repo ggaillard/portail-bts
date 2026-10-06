@@ -1,0 +1,127 @@
+/* ── mise en place ──────────────────────────────────
+   Lot 3 des propositions du 05/10 (06/10) : la page d'une séance, la
+   semaine à préparer, les actions groupées, l'assistant « Nouveau module »
+   et la reconduction. Classes neuves seulement, chargée avant
+   composants.css comme planning.css. Couleurs : les jetons du thème — axe
+   relit tout en clair et en sombre.
+   ───────────────────────────────────────────────── */
+
+/* ── La page d'une séance ── */
+.sp-haut{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.2rem .8rem;margin:.2rem 0 .5rem}
+.sp-fil ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:.1rem .2rem;font-size:.86rem}
+.sp-fil li{color:var(--ink-soft)}
+.sp-fil li + li::before{content:"›";margin:0 .35rem 0 .15rem;color:var(--ink-soft)}
+.sp-fil a{color:var(--accent-ink);display:inline-flex;align-items:center;min-height:44px}
+.sp-fil [aria-current="page"]{color:var(--ink);font-weight:600}
+.sp-voisins{display:flex;gap:.3rem}
+.sp-voisins .btn-discret{min-height:44px;font-size:.86rem}
+.sp-tete{padding-bottom:.6rem}
+.sp-titre-l{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .7rem}
+.sp-titre-l h2{margin:0;font-size:1.25rem;line-height:1.3}
+.sp-resume .sous-hint{margin:.35rem 0 0}
+.sp-actes{margin:.6rem 0 .2rem}
+.sp-onglets{margin-top:.7rem}
+.sp-panneau{margin-top:.8rem}
+/* Hébergées dans la page, la fiche et la carte perdent ce que la page dit
+   déjà : le titre et le retour de la fiche, l'intertitre « La séance ». */
+.sp .gs-fiche{margin-top:0}
+.sp .gs-fiche-tete,.sp .sv-h2{display:none}
+
+/* ── Le bilan ── */
+#sp-bilan-corps > .sous-titre:first-child{margin-top:0}
+.sp-bilan-l{display:grid;grid-template-columns:minmax(7rem,max-content) minmax(0,1fr);gap:.45rem 1rem;margin:.6rem 0 1rem}
+.sp-bilan-l dt{font-weight:600;font-size:.88rem;color:var(--ink)}
+.sp-bilan-l dd{margin:0;font-size:.9rem;color:var(--ink)}
+.sp-bilan-t{margin:1rem 0 .4rem;font-size:.95rem}
+.sp-concepts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.35rem}
+.sp-concepts li{font-size:.9rem}
+.sp-reprendre{margin:0 0 .8rem 1.2rem;padding:0;font-size:.9rem}
+@media (max-width: 30rem){
+  .sp-bilan-l{grid-template-columns:minmax(0,1fr);gap:.1rem}
+  .sp-bilan-l dd{margin-bottom:.45rem}
+  .sp-titre-l h2{font-size:1.1rem}
+}
+
+/* ── La liste des séances : la case et le titre-lien ── */
+.gs-choix-l{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  min-width:44px;min-height:44px;margin:-.3rem -.6rem -.3rem -.5rem;cursor:pointer}
+.gs-choix{width:1.15rem;height:1.15rem;margin:0;accent-color:var(--accent)}
+/* Sur un téléphone, la case, le numéro et le titre restent sur une ligne :
+   le titre prend ce que laissent la case (2,35 rem) et le numéro (2,9 rem). */
+@media (max-width: 30rem){
+  .gs-l .gs-txt{flex-basis:calc(100% - 5.3rem)}
+  .gs-l .gs-actes{margin-left:5.3rem}
+}
+a.gs-titre{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:.2em}
+a.gs-titre:hover{text-decoration-color:currentColor}
+
+/* ── La semaine à préparer ──
+   Un jour, ses créneaux : l'heure, ce que c'est, l'état. Même grille que
+   « Aujourd'hui » (planning.css), et la même mise en pile sur un téléphone. */
+.av-nav{align-items:center}
+.av-periode{font-weight:600;min-width:9rem;text-align:center}
+.av-liste{list-style:none;margin:.4rem 0 0;padding:0}
+.av-j{font-size:.92rem;margin:.9rem 0 .2rem}
+.av-j::first-letter{text-transform:uppercase}   /* « Lundi 12 octobre », pas « Octobre » */
+.av-lignes{list-style:none;margin:0;padding:0}
+.av-l{display:grid;grid-template-columns:6.6rem minmax(0,1fr) auto;align-items:center;gap:.3rem .7rem;
+  padding:.45rem .3rem;border-top:1px solid var(--rule-soft)}
+.av-lignes .av-l:first-child{border-top:0}
+.av-h{font-family:var(--f-mono);font-size:.86rem;font-weight:600;white-space:nowrap}
+.av-t{display:flex;flex-direction:column;min-width:0}
+.av-c{font-size:.76rem;color:var(--ink-soft)}
+.av-s{font-weight:600;color:var(--ink);display:inline-flex;align-items:center;min-height:44px;
+  text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:.2em}
+.av-m{font-size:.8rem;color:var(--ink-soft)}
+.av-m a{color:var(--accent-ink);text-decoration:underline}
+.av-libre .av-m{font-style:italic}
+.av-placer{grid-column:3}
+.av-placer select{min-height:44px;max-width:16rem;font:inherit;font-size:.85rem;color:var(--ink);
+  background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:.3rem .4rem}
+.av-vide{color:var(--ink-soft);font-size:.9rem}
+@media (max-width: 30rem){
+  .av-l{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"h b" "t t" "p p"}
+  .av-h{grid-area:h}
+  .av-l > .badge{grid-area:b;justify-self:end}
+  .av-t{grid-area:t}
+  .av-placer{grid-area:p;grid-column:auto}
+  .av-placer select{max-width:100%;width:100%}
+}
+
+/* ── Les actions groupées ── */
+.lot{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .5rem;margin:.6rem 0;padding:.55rem .7rem;
+  border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+.lot-n{font-weight:600;font-size:.88rem;color:var(--accent-ink);flex:1 1 100%}
+.lot .btn{min-height:44px;font-size:.86rem;padding:.4rem .75rem}
+.lot-ranger select{min-height:44px;font:inherit;font-size:.86rem;color:var(--ink);background:var(--surface);
+  border:1px solid var(--rule);border-radius:8px;padding:.3rem .4rem}
+.lot .btn-discret{min-height:44px;font-size:.86rem}
+.gs-module .lot-mod{margin-left:.6rem;min-height:44px;font-size:.8rem;font-weight:500;vertical-align:middle}
+
+/* ── L'assistant « Nouveau module » ──
+   Un <dialog> comme l'aide des raccourcis (composants.css), plus large ; sur
+   un téléphone, il prend tout l'écran. Les étapes reprennent le dessin des
+   étapes d'une séance (planning.css). */
+.as{margin:auto;border:1px solid var(--rule);border-radius:12px;background:var(--surface);color:var(--ink);
+  padding:1.1rem 1.2rem;width:min(42rem,calc(100% - 2rem));max-height:calc(100% - 2rem);overflow-y:auto}
+.as::backdrop{background:rgba(10,20,30,.45)}
+.as-tete{display:flex;align-items:center;justify-content:space-between;gap:.8rem}
+.as-tete h2{margin:0}
+.as-etapes{margin:.7rem 0 .6rem}
+.as-pas .hint{margin:.3rem 0 .4rem}
+.as textarea{width:100%;font-family:var(--f-mono);font-size:.86rem;background:var(--surface-alt);color:var(--ink);
+  border:1px solid var(--rule);border-radius:8px;padding:.5rem .6rem}
+.as-places{margin:.4rem 0 0 1.1rem;font-size:.9rem}
+.as-contenus{list-style:none;margin:.4rem 0 0;padding:0}
+.as-contenus li{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .6rem;padding:.3rem 0;border-top:1px solid var(--rule-soft)}
+.as-contenus li:first-child{border-top:0}
+.as-c-t{flex:1 1 14rem;font-weight:500}
+.as-contenus .btn-discret{min-height:44px}
+.as-nav{justify-content:flex-end;margin-top:1rem}
+@media (max-width: 30rem){
+  .as{width:100%;max-width:100%;max-height:100%;height:100%;border-radius:0;padding:.9rem .9rem 1.2rem}
+}
+
+/* ── Reconduire une classe ── */
+.rn{margin-top:1rem}
+.rn > summary{min-height:44px;display:flex;align-items:center;font-weight:600;font-size:.92rem;cursor:pointer}

@@ -36,7 +36,10 @@ function ouvrirFichePrep(s, onglet){
   courante = s || null;
   suivi.prep = s ? s.id : null;
   f.hidden = false;
-  $("gs-cadre").classList.add("fiche-ouverte");
+  // Dans la liste de Préparer, la fiche partage la place avec la liste ;
+  // dans la page d'une séance (06/10, lot 3), elle est seule.
+  $("gs-cadre").classList.toggle("fiche-ouverte", f.parentNode === $("gs-cadre"));
+  document.dispatchEvent(new CustomEvent("tdc-fiche-ouverte", { detail: { id: s ? s.id : null } }));
   $("gs-fiche-titre").textContent = s ? "Séance " + s.numero + " — " + typo(s.titre) : "Nouvelle séance";
 
   // Une séance pas encore créée n'a que ses informations. Un cours n'a pas

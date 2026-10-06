@@ -41,7 +41,7 @@ import { toast } from './toast.js';
 import { texteRefus } from './refus.js';
 import { lireModules, modulesDe } from './modules.js';
 import { ouvrirFichePrep, fermerFichePrep } from './preparer.js';
-import { ouvrirOnglet } from './navigation.js';
+import { allerSeance } from './navigation.js';
 import { etatDe, quandLisible } from './etat.js';
 import { remplirPlanning, enregistrerPlanning, verifierPlanning } from './planning.js';
 
@@ -61,6 +61,7 @@ function chargerGestion(classes){
       var o = document.createElement("option");
       o.value = c.id;
       o.textContent = c.nom;
+      o.dataset.code = c.code || "";
       sel.appendChild(o);
     });
     sel.addEventListener("change", function(){ lireSeances(sel.value); });
@@ -142,7 +143,7 @@ function rendreListe(){
     t.appendChild(p);
     return;
   }
-  if (!modules) { seances.forEach(function(s){ t.appendChild(ligne(s)); }); return; }
+  if (!modules) { seances.forEach(function(s){ t.appendChild(ligne(s)); }); listeRendue(); return; }
 
   // Un groupe par module, dans l'ordre des modules ; puis celles qui ne sont
   // rangées nulle part, nommées comme telles — c'est ce qu'il reste à faire.
@@ -162,16 +163,28 @@ function rendreListe(){
     t.appendChild(h);
     g.liste.forEach(function(s){ t.appendChild(ligne(s)); });
   });
+  listeRendue();
 }
+
+// Les actions groupées (js/lot.js) repartent d'une sélection vide.
+function listeRendue(){ document.dispatchEvent(new Event("tdc-liste-rendue")); }
 
 function ligne(s){
     var l = document.createElement("div");
     l.className = "gs-l" + (s.nature === "projet" ? " gs-projet" : "");
-    l.innerHTML = '<span class="gs-num"></span><span class="gs-txt"><span class="gs-titre"></span>' +
+    // Le titre est un LIEN vers la page de la séance (06/10, lot 3) : un vrai
+    // lien, qu'on ouvre dans un autre onglet ou qu'on met en favori. La case
+    // sert aux actions groupées (js/lot.js).
+    l.innerHTML = '<label class="gs-choix-l"><input class="gs-choix" type="checkbox"></label><span class="gs-num"></span>' +
+                  '<span class="gs-txt"><a class="gs-titre"></a>' +
                   '<span class="gs-meta"></span></span><span class="gs-actes">' +
                   '<button class="qa-b gs-b" type="button">Modifier</button></span>';
     l.querySelector(".gs-num").textContent = s.numero;
     l.querySelector(".gs-titre").textContent = typo(s.titre);
+    l.querySelector(".gs-titre").href = "#s/" + s.id;
+    l.dataset.id = s.id;
+    l.querySelector(".gs-choix").value = s.id;
+    l.querySelector(".gs-choix").setAttribute("aria-label", "Choisir la séance " + s.numero);
     // L'état calculé par la base (etat_seance, 06/10), en badge devant la ligne.
     var e = etatDe(s);
     if (e.base) {
@@ -256,14 +269,9 @@ function apresEtat(s){
   apres();
 }
 
+// Suivre › ouvre la page de la séance sur son direct (06/10, lot 3).
 function suivreEnDirect(s){
-  ouvrirOnglet("appel");
-  var sel = $("pk-classe");
-  if (sel) sel.value = String(classeGestion);
-  return chargerSeancesDe(classeGestion, s.id).then(function(){
-    var c = $("carte-suivi");
-    if (c && c.scrollIntoView) c.scrollIntoView({ block: "start" });
-  });
+  return allerSeance(s.id, "direct");
 }
 
 // Le numéro qui suit la dernière séance ; s'il dépasse la bande autorisée,
@@ -336,20 +344,16 @@ function fermerFormulaire(){
   fermerFichePrep();
 }
 
-// Ouvrir la fiche d'une séance dans Préparer, sur un onglet : c'est le chemin
-// depuis l'écran du direct, où les éditeurs ne sont plus.
+// Préparer une séance, sur un onglet de sa fiche : c'est le chemin depuis
+// l'écran du direct, où les éditeurs ne sont plus. Depuis le 06/10 (lot 3),
+// il mène à la page de la séance, onglet Préparer : on y reste dans la
+// séance, au lieu de changer de moment.
 function preparerSeance(classeId, seanceId, onglet){
-  ouvrirOnglet("quest");
-  var sel = $("gs-classe");
-  if (sel) sel.value = String(classeId);
-  return lireSeances(classeId).then(function(){
-    var s = seances.filter(function(x){ return String(x.id) === String(seanceId); })[0];
-    if (!s) return;
-    ouvrirFormulaire(s, onglet);
-    var f = $("gs-fiche");
-    if (f && f.scrollIntoView) f.scrollIntoView({ block: "start" });
-  });
+  return allerSeance(seanceId, "preparer", onglet && onglet !== "infos" ? onglet : null);
 }
+
+// Ce que la liste a lu : la page d'une séance s'en sert (état, voisines).
+function seancesLues(){ return { classeId: classeGestion, liste: seances, modules: modules }; }
 
 function enregistrer(){
   var f = $("f-gs");
@@ -434,4 +438,5 @@ function enregistrer(){
   });
 }
 
-export { chargerGestion, lireSeances, relireGestion, prochainNumero, suivre, preparerSeance };
+export { chargerGestion, lireSeances, relireGestion, prochainNumero, suivre, preparerSeance,
+         ouvrirFormulaire, fermerFormulaire, seancesLues };

@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="styles/pilote.css">
 <link rel="stylesheet" href="styles/indicateurs.css">
 <link rel="stylesheet" href="styles/planning.css">
+<link rel="stylesheet" href="styles/miseenplace.css">
 <link rel="stylesheet" href="styles/composants.css">
 <style>
   .sg-l{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0 1rem}
@@ -121,6 +122,25 @@
       <span class="jour-m">Aucune séance programmée sur ce créneau.</span></span><button class="qa-b jour-a" type="button">Programmer ›</button></li>
   </ul>
   <p class="sg-n">.cycle (ol, aria-current="step") · .jour-l · .badge.encours — js/etat.js, js/aujourdhui.js</p>
+</section>
+
+<section class="card" aria-labelledby="sg-miseenplace">
+  <h2 id="sg-miseenplace">Page d'une séance, semaine, actions groupées</h2>
+  <nav class="sp-fil" aria-label="Exemple de fil d'Ariane"><ol>
+    <li><a href="#sg-miseenplace">Préparer</a></li><li><a href="#sg-miseenplace">BTS SIO 2 - SLAM</a></li>
+    <li>🏭 IA Méca Forez</li><li aria-current="page">Séance 11</li></ol></nav>
+  <ul class="av-lignes">
+    <li class="av-l"><span class="av-h">15:00–17:00</span><span class="av-t"><span class="av-c">BTS SIO 2 - SLAM</span>
+      <a class="av-s" href="#sg-miseenplace">11 — IA 1</a><span class="av-m">manque : <a href="#sg-miseenplace">échéance</a></span></span>
+      <span class="badge att">À régler</span></li>
+  </ul>
+  <div class="lot" role="group" aria-label="Exemple d'actions groupées">
+    <span class="lot-n">2 séances choisies (11, 12)</span>
+    <button class="btn btn-sec" type="button">Programmer à la suite</button>
+    <button class="btn btn-sec" type="button" disabled>Ouvrir</button>
+    <button class="btn-discret" type="button">Tout désélectionner</button>
+  </div>
+  <p class="sg-n">.sp-fil (nav + ol, aria-current="page") · .av-l · .lot — js/pageseance.js, js/avenir.js, js/lot.js</p>
 </section>
 
 <section class="card" aria-labelledby="sg-aide">

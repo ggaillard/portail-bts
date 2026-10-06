@@ -740,6 +740,205 @@ for (const w of [390, 1280]) {
   await fermer();
 }
 
+// ─── 9. La mise en place (06/10, lot 3) ────────────────────────────────────
+// La semaine à préparer : une ligne par créneau, l'état et ce qui manque,
+// chaque manque menant à l'onglet de la page qui le règle ; un créneau vide
+// reçoit une séance d'un choix (planifier_seance sur CE créneau). Les actions
+// groupées : la barre n'apparaît qu'avec une case cochée, grise ce qui ne
+// s'applique à aucune, « Programmer à la suite » envoie les séances choisies
+// dans l'ordre et dit celles qui n'ont pas été programmées ; « Clore » part
+// après cinq secondes, sauf « Annuler ». L'assistant lit le mkdocs.yml du
+// dépôt, écrit à chaque étape (module, puis séances d'un seul appel), et mène
+// à la page de chaque séance. La reconduction n'écrit qu'au second geste,
+// pour les valeurs de l'aperçu.
+const MKDOCS = 'site_name: Cours d\'essai\nsite_url: https://ggaillard.github.io/essai/\nnav:\n' +
+  '  - Accueil: index.md\n  - Séances:\n      - "1 — « Premier »": seances/seance-01.md\n' +
+  '      - "2 — Second": seances/seance-02.md\n      - TP: tp/tp3.md\n  - Progression: progression.md\n';
+for (const w of [390, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  await p.route('https://raw.githubusercontent.com/**', (r) =>
+    r.fulfill({ status: 200, contentType: 'text/plain; charset=utf-8', body: MKDOCS }));
+  await p.evaluate(() => {
+    const iso = (j, h) => { const d = new Date(); d.setDate(d.getDate() + j); d.setHours(h, 0, 0, 0); return d.toISOString(); };
+    window.__tables = { classes: [{ id: 1, code: 'BTS1-DEV-2026', nom: 'BTS SIO 1 - Bloc 1 DEV' },
+                                  { id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }] };
+    const L = (o) => Object.assign({ nature: 'cours', jalons: null, echeance: null, duree_min: 55, ouverte: false,
+      publiee: false, missions: 0, corriges: 10, reponses: 0, module_id: 4, etat: 'prete', manque: [], demarree_le: null,
+      prevue_le: null, fin_prevue: null, auto_ouvrir: false, auto_clore: false }, o);
+    window.__iso = iso;
+    window.__reponses = {
+      seances_de_classe: { ok: true, liste: [L({ id: 31, numero: 5, titre: 'Séance 5' }),
+        L({ id: 32, numero: 6, titre: 'Séance 6', ouverte: true, publiee: true, etat: 'ouverte' }),
+        L({ id: 33, numero: 7, titre: 'Séance 7', etat: 'brouillon', manque: ['concepts'], prevue_le: iso(1, 10), fin_prevue: iso(1, 12) })] },
+      modules_enseignant: { ok: true, classes: [{ classe_id: 1, modules: [
+        { id: 4, titre: 'Bloc 1 DEV', icone: '💻', depot: 'https://github.com/a/b' },
+        { id: 5, titre: 'Autre', icone: '📦', depot: 'https://github.com/a/c' }] }] },
+      agenda: { ok: true, debut: new Date().toISOString().slice(0, 10), jours: 7, emploi_du_temps: true,
+        creneaux: [{ classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', jour: iso(1, 12).slice(0, 10), debut_le: iso(1, 10), fin_le: iso(1, 12) },
+                   { classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', jour: iso(3, 12).slice(0, 10), debut_le: iso(3, 10), fin_le: iso(3, 12) }],
+        seances: [Object.assign(L({ id: 33, numero: 7, titre: 'Séance 7', etat: 'brouillon', manque: ['concepts', 'module'] }),
+          { classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', prevue_le: iso(1, 10), fin_prevue: iso(1, 12) })],
+        a_placer: [{ id: 31, classe_id: 1, numero: 5, titre: 'Séance 5', etat: 'prete' },
+                   { id: 50, classe_id: 2, numero: 9, titre: 'Autre classe', etat: 'prete' }] },
+      programmer_seances: { ok: true, programmees: [{ id: 31, numero: 5, prevue_le: iso(1, 10), fin_prevue: iso(1, 12) }],
+        ecartees: [{ id: 32, numero: 6, detail: 'déjà ouverte ou jouée : son créneau ne bouge pas' }] },
+      planifier_seance: { ok: true }, publier_seance: { ok: true }, ranger_seance: { ok: true }, clore_seance: { ok: true },
+      emploi_du_temps: { ok: true, classes: [{ id: 1, creneaux: [{ jour: 2, debut: '10:00', fin: '12:00' }] }] },
+      enregistrer_module: { ok: true, id: 9, cree: true },
+      creer_seances: { ok: true, creees: 3, liste: [{ id: 41, numero: 1, titre: '« Premier »' },
+        { id: 42, numero: 2, titre: 'Second' }, { id: 43, numero: 3, titre: 'TP' }] },
+      reconduire_classe: { ok: true, essai: true, code: 'BTS1-DEV-2027', nom: 'BTS SIO 1 - Bloc 1 DEV', annee: '2027-2028',
+        compte: { modules: 1, seances: 14, corriges: 140, concepts: 60, missions: 0, passages: 5, projets: 2 } },
+    };
+    return window.__e.ouvrirEspaceEnseignant();
+  });
+  await pause(p, 900);
+  await p.click('#ong-quest');
+  await pause(p, 400);
+
+  // La semaine à préparer.
+  const av = await p.evaluate(() => ({
+    visible: !document.getElementById('carte-avenir').hidden,
+    resume: document.getElementById('av-resume').textContent,
+    jours: document.querySelectorAll('#av-liste .av-jour').length,
+    liens: [...document.querySelectorAll('#av-liste a')].map((a) => a.getAttribute('href')),
+    choix: [...document.querySelectorAll('#av-liste select option')].map((o) => o.value).join(','),
+  }));
+  if (!av.visible || av.jours !== 2 || !/2 créneaux · 0 séance prête · 1 à régler · 1 créneau vide/.test(av.resume)) {
+    rates.push(`${w} px (semaine) : ${JSON.stringify(av)}`);
+  }
+  if (av.liens.join(' ') !== '#s/33/preparer #s/33/preparer/concepts #s/33/preparer/infos') {
+    rates.push(`${w} px (semaine) : liens ${av.liens.join(' ')} — attendu la page, puis l'onglet de chaque manque`);
+  }
+  if (av.choix !== ',31') rates.push(`${w} px (semaine) : le créneau du BTS1 propose « ${av.choix} » (une séance d'une autre classe ?)`);
+  await p.selectOption('#av-liste select', '31');
+  await pause(p, 250);
+  const pl = await p.evaluate(() => ({ a: window.__appels.filter((x) => x.nom === 'planifier_seance').map((x) => x.args),
+    attendu: window.__reponses.agenda.creneaux[1].debut_le }));
+  if (pl.a.length !== 1 || pl.a[0].p_seance_id !== 31 || pl.a[0].p_prevue_le !== pl.attendu) {
+    rates.push(`${w} px (semaine) : placer → ${JSON.stringify(pl.a)} (créneau ${pl.attendu})`);
+  }
+
+  // Les actions groupées.
+  const sansChoix = await p.evaluate(() => document.getElementById('gs-lot').hidden);
+  if (!sansChoix) rates.push(`${w} px (lot) : la barre est visible sans aucune séance choisie`);
+  await p.evaluate(() => { const c = document.querySelectorAll('#gs-liste .gs-choix'); c[0].click(); c[1].click(); });
+  await pause(p, 80);
+  const barre = await p.evaluate(() => ({ visible: !document.getElementById('gs-lot').hidden,
+    n: document.getElementById('gs-lot-n').textContent,
+    gestes: [...document.querySelectorAll('#gs-lot [data-lot]')].map((b) => b.dataset.lot + (b.disabled ? '×' : '')).join(' '),
+    module: document.querySelectorAll('#gs-liste .lot-mod').length }));
+  if (!barre.visible || barre.n !== '2 séances choisies (5, 6)' ||
+      barre.gestes !== 'programmer deprogrammer× montrer ouvrir× clore' || barre.module < 1) {
+    rates.push(`${w} px (lot) : barre ${JSON.stringify(barre)}`);
+  }
+  await p.click('#gs-lot [data-lot="programmer"]');
+  await pause(p, 350);
+  const prog = await p.evaluate(() => ({ a: window.__appels.filter((x) => x.nom === 'programmer_seances').map((x) => x.args),
+    msg: document.getElementById('err-gs-liste').textContent }));
+  if (JSON.stringify(prog.a) !== '[{"p_ids":[31,32],"p_depuis":null}]' || !/Programmées à la suite : 5 /.test(prog.msg) ||
+      !/Pas programmée : 6 — déjà ouverte/.test(prog.msg)) {
+    rates.push(`${w} px (lot) : programmer → ${JSON.stringify(prog)}`);
+  }
+  // Clore, différé : avec « Annuler », rien ; sans, la séance ouverte seulement.
+  await p.evaluate(() => { const c = document.querySelectorAll('#gs-liste .gs-choix'); c[0].click(); c[1].click(); });
+  await pause(p, 60);
+  await p.click('#gs-lot [data-lot="clore"]');
+  await pause(p, 150);
+  await p.evaluate(() => { const b = [...document.querySelectorAll('#toasts button')].filter((x) => /Annuler/.test(x.textContent))[0]; if (b) b.click(); });
+  await p.waitForTimeout(5600);
+  const annule = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'clore_seance').length);
+  if (annule) rates.push(`${w} px (lot) : « Annuler » n'a pas empêché la clôture (${annule} appel)`);
+  await p.evaluate(() => { const c = document.querySelectorAll('#gs-liste .gs-choix'); if (!c[0].checked) c[0].click(); if (!c[1].checked) c[1].click(); });
+  await pause(p, 60);
+  await p.click('#gs-lot [data-lot="clore"]');
+  await p.waitForTimeout(5800);
+  const clos = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'clore_seance').map((x) => x.args.p_seance_id));
+  if (JSON.stringify(clos) !== '[32]') rates.push(`${w} px (lot) : clore → ${JSON.stringify(clos)}, attendu la seule séance ouverte (32)`);
+
+  // L'assistant « Nouveau module ».
+  await p.click('#b-gs-module');
+  await pause(p, 150);
+  await p.fill('#as-depot', 'https://github.com/ggaillard/essai');
+  await p.click('#b-as-lire');
+  await pause(p, 400);
+  const a1 = await p.evaluate(() => ({ ouvert: document.getElementById('as-dialog').open,
+    titre: document.getElementById('as-titre-m').value, code: document.getElementById('as-code').value,
+    site: document.getElementById('as-site').value, texte: document.getElementById('as-texte').value,
+    etape: document.querySelector('#as-etapes [aria-current="step"]') && document.querySelector('#as-etapes [aria-current="step"]').textContent }));
+  if (!a1.ouvert || a1.titre !== "Cours d'essai" || a1.code !== 'essai' || a1.site !== 'https://ggaillard.github.io/essai/' ||
+      a1.texte !== '1 — « Premier »\n2 — Second\n3 — TP' || !/Le dépôt/.test(a1.etape || '')) {
+    rates.push(`${w} px (assistant) : lecture du dépôt ${JSON.stringify(a1)}`);
+  }
+  await p.click('#b-as-suiv');
+  await pause(p, 250);
+  await p.click('#b-as-suiv');
+  await pause(p, 300);
+  const a2 = await p.evaluate(() => ({ pas: [1, 2, 3, 4].map((k) => document.getElementById('as-pas-' + k).hidden ? 0 : 1).join(''),
+    mod: window.__appels.filter((x) => x.nom === 'enregistrer_module').map((x) => x.args),
+    sea: window.__appels.filter((x) => x.nom === 'creer_seances').map((x) => x.args) }));
+  if (a2.pas !== '0010' || a2.mod.length !== 1 || a2.mod[0].p_depot !== 'https://github.com/ggaillard/essai' || a2.mod[0].p_module_id !== null ||
+      a2.sea.length !== 1 || a2.sea[0].p_module_id !== 9 || a2.sea[0].p_classe_id !== 1 || !/^1 — « Premier »\n2 — Second/.test(a2.sea[0].p_texte)) {
+    rates.push(`${w} px (assistant) : étapes 1-2 ${JSON.stringify(a2)}`);
+  }
+  // Revenir en arrière ne recrée rien.
+  await p.click('#b-as-prec');
+  await pause(p, 80);
+  await p.click('#b-as-suiv');
+  await pause(p, 200);
+  const deux = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'creer_seances').length);
+  if (deux !== 1) rates.push(`${w} px (assistant) : revenir puis repartir a recréé les séances (${deux} appels)`);
+  await p.click('#b-as-programmer');
+  await pause(p, 250);
+  const pg = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'programmer_seances').pop().args);
+  if (JSON.stringify(pg.p_ids) !== '[41,42,43]' || pg.p_depuis !== new Date().toISOString().slice(0, 10)) {
+    rates.push(`${w} px (assistant) : programmer ${JSON.stringify(pg)}`);
+  }
+  await p.click('#b-as-suiv');
+  await pause(p, 150);
+  const c4 = await p.evaluate(() => [...document.querySelectorAll('#as-contenus button')].map((b) => b.textContent).join('|'));
+  if (c4 !== 'Concepts ›|Contrôle ›|Concepts ›|Contrôle ›|Concepts ›|Contrôle ›') rates.push(`${w} px (assistant) : contenus « ${c4} »`);
+  await p.click('#as-contenus button');
+  await pause(p, 300);
+  const vers = await p.evaluate(() => ({ hash: location.hash, ouvert: document.getElementById('as-dialog').open }));
+  if (vers.hash !== '#s/41/preparer/concepts' || vers.ouvert) rates.push(`${w} px (assistant) : « Concepts › » mène à ${JSON.stringify(vers)}`);
+
+  // Reconduire : l'aperçu, puis l'écriture, pour les mêmes valeurs.
+  await p.click('#ong-quest');
+  await pause(p, 250);
+  await p.evaluate(() => { document.getElementById('carte-modules').open = true; document.getElementById('rn-bloc').open = true; });
+  await pause(p, 150);
+  const rn0 = await p.evaluate(() => ({ code: document.getElementById('rn-code').value, ok: document.getElementById('b-rn-ok').hidden }));
+  if (rn0.code !== 'BTS1-DEV-2027' || !rn0.ok) rates.push(`${w} px (reconduire) : ${JSON.stringify(rn0)}`);
+  await p.click('#b-rn-voir');
+  await pause(p, 200);
+  await p.fill('#rn-code', 'BTS1-DEV-2028');
+  const cache = await p.evaluate(() => document.getElementById('b-rn-ok').hidden);
+  if (!cache) rates.push(`${w} px (reconduire) : changer le code laisse le bouton qui écrit`);
+  await p.click('#b-rn-voir');
+  await pause(p, 200);
+  await p.click('#b-rn-ok');
+  await pause(p, 200);
+  const rn = await p.evaluate(() => window.__appels.filter((x) => x.nom === 'reconduire_classe').map((x) => x.args.p_ecrire + ':' + x.args.p_code));
+  if (rn.join(' ') !== 'false:BTS1-DEV-2027 false:BTS1-DEV-2028 true:BTS1-DEV-2028') rates.push(`${w} px (reconduire) : ${rn.join(' ')}`);
+
+  const debord = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (debord > 0) rates.push(`${w} px (mise en place) : la page déborde de ${debord} px`);
+  if (erreurs.length) rates.push(`${w} px (mise en place) : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · mise en place : ${av.resume} · lot ${barre.gestes} · assistant ${a2.pas} · reconduire ${rn.length} appels`);
+  await fermer();
+}
+
+// lireMkdocs(), seul : les pages qui ne sont pas des séances sont écartées.
+{
+  const { page: p, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const m = await p.evaluate((t) => window.__e.lireMkdocs(t), MKDOCS + 'extra:\n  - "9 — pas dans nav": x.md\n');
+  if (m.titre !== "Cours d'essai" || m.seances.map((s) => s.numero + ':' + s.titre).join('|') !== '1:« Premier »|2:Second|3:TP') {
+    rates.push(`lireMkdocs : ${JSON.stringify(m)}`);
+  }
+  await fermer();
+}
+
 await nav.close();
 if (rates.length) {
   console.log('\n✗ ' + rates.length + ' défaut(s) :');
@@ -750,4 +949,5 @@ console.log('\n✓ Missions : cocher, décocher, séance fermée, grille par él
             '  séances : liste, formulaire prérempli, verrous, échéance envoyée ;\n' +
             '  modules : par module des deux côtés, sans dépôt enseignant chez l\'étudiant,\n' +
             '  rangement d\'une séance seulement quand son module change ;\n' +
-            '  préparer : fiche liste + détail, éditeurs préremplis sur la séance préparée.');
+            '  préparer : fiche liste + détail, éditeurs préremplis sur la séance préparée ;\n' +
+            '  mise en place : semaine à préparer, actions groupées, assistant, reconduction.');

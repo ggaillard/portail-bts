@@ -22,6 +22,42 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 6 octobre 2026 (après-midi) — lot 3 : la mise en place
+
+Demandé : « ok pour le lot 3 » des propositions du 05/10. **Une migration**,
+`20261006120000_mise_en_place.sql` — appliquée à Supabase par le workflow dès
+la poussée sur `main` ; vérifier dans l'onglet Actions que « appliquer » est
+vert avant de conclure qu'elle est en base.
+
+| Item | Où | Quoi |
+|---|---|---|
+| 3.1 Page d'une séance | `js/pageseance.js`, `js/bilanseance.js` (neufs), `navigation.js` (`#s/…`), `gestion.js`, `preparer.js`, `seance.js`, `raccourcis.js`, `index.html` ; migration (`bilan_seance()`) | `#s/35` : fil d'Ariane, séances voisines, Préparer · En direct · Bilan ; la fiche et la carte du direct y sont hébergées puis rendues ; le Bilan dit le prévu et le fait, l'appel, la participation, le contrôle, les missions ou le quiz, les concepts, l'automate |
+| 3.2 Assistant « Nouveau module » | `js/assistant.js` (neuf), `index.html` (`<dialog>`) ; migration (`creer_seances()`) | dépôt (lecture de `mkdocs.yml`), séances (tout ou rien), planning, contenus |
+| 3.3 Dupliquer, reconduire | `pageseance.js`, `js/reconduire.js` (neuf) ; migration (`dupliquer_seance()`, `reconduire_classe()`) | copie fermée et cachée, missions renumérotées, contrôle éteint ; reconduction avec aperçu, sans élève ni réponse |
+| 3.4 Actions groupées | `js/lot.js` (neuf), `gestion.js` (case par ligne) ; migration (`programmer_seances()`) | programmer à la suite, retirer la date, rendre visibles, ouvrir (projets), clore (différé), ranger |
+| 3.5 La semaine à préparer | `js/avenir.js` (neuf), `index.html` ; migration (`agenda()`) | sept jours de créneaux, « Prête ? » et ses manques, placer une séance sur un créneau vide |
+
+Vérifié : la chaîne rejouée deux fois sur une base neuve (postgres 16, comme
+le workflow), puis les assertions du workflow. Les vérifications de la
+migration ont été cassées dix fois — missions non renumérotées, ligne
+illisible ignorée, créneaux déjà pris ignorés, absents mal comptés, pas de
+séance d'appel dans la classe neuve, modules non rangés, missions non
+recopiées, aperçu qui écrit… — et chacune nomme sa faute. Côté portail :
+`t_missions` (semaine, actions groupées, assistant, reconduction, lecture de
+`mkdocs.yml`), `t_suivi` (la page : ouverture, En direct, suivre une autre
+séance, Bilan, compte rendu, Dupliquer, quitter, Précédent, « Écrire les
+missions › »), `t_navigation` (`#s/25/bilan` au rechargement ; axe-core sur la
+page, la semaine, la barre et l'assistant ; 320 px) ; dix cassures, dix
+défauts nommés. Le contrôle « déclarée deux fois » du workflow a trouvé huit
+noms de fonction en double entre les nouveaux modules et les anciens : tous
+renommés.
+
+Pas fait dans ce lot : « Cette semaine » (Bilan) ne compare pas encore le
+prévu au fait pour toute la classe — l'onglet Bilan de chaque séance le fait
+pour elle.
+
+---
+
 ## 6 octobre 2026 — lot 2 : l'état d'une séance, le planning, l'automate
 
 Demandé : « faire le lot 2 » des propositions du 05/10. **Une migration**,

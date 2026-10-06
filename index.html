@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="styles/pilote.css">
 <link rel="stylesheet" href="styles/indicateurs.css">
 <link rel="stylesheet" href="styles/planning.css">
+<link rel="stylesheet" href="styles/miseenplace.css">
 <link rel="stylesheet" href="styles/composants.css">
 </head>
 <body>
@@ -505,6 +506,21 @@
 
   <div class="volet" id="volet-quest" role="tabpanel" aria-labelledby="ong-quest" hidden>
     <p class="volet-hint">Avant l'heure : les séances de chaque module, leurs contrôles d'entrée, les questionnaires, les modules eux-mêmes.</p>
+  <!-- La semaine à préparer (06/10, lot 3) : les créneaux des sept prochains
+       jours, toutes classes, et ce que chaque séance attend encore ; un
+       créneau vide reçoit une séance d'un choix. js/avenir.js, RPC agenda(). -->
+  <section class="card" id="carte-avenir" hidden aria-labelledby="av-titre">
+    <h2 id="av-titre">La semaine à préparer</h2>
+    <p class="hint">Les créneaux des sept prochains jours, et ce que chaque séance attend encore.</p>
+    <div class="pick av-nav">
+      <button class="btn btn-sec" id="b-av-prec" type="button" aria-label="Sept jours plus tôt">‹</button>
+      <span class="av-periode" id="av-periode" aria-live="polite"></span>
+      <button class="btn btn-sec" id="b-av-suiv" type="button" aria-label="Sept jours plus tard">›</button>
+    </div>
+    <p class="sous-hint" id="av-resume"></p>
+    <ol class="av-liste" id="av-liste"></ol>
+    <div aria-live="polite" id="err-avenir"></div>
+  </section>
   <!-- Créer et régler les séances sans passer par une migration. Les corrigés,
        contrôles et missions ne s'écrivent pas ici : chacun s'écrit dans
        l'onglet La séance, en regardant la séance qu'il prépare. -->
@@ -518,6 +534,20 @@
     <div class="pick">
       <select id="gs-classe" aria-label="Classe dont on règle les séances"></select>
       <button class="btn btn-sec" id="b-gs-neuve" type="button">Nouvelle séance</button>
+      <button class="btn btn-sec" id="b-gs-module" type="button" aria-haspopup="dialog">Nouveau module…</button>
+    </div>
+    <!-- Les actions groupées (06/10, lot 3) : une case par ligne, une barre
+         dès qu'une séance est choisie. js/lot.js. -->
+    <div class="lot" id="gs-lot" role="group" aria-label="Actions sur les séances choisies" hidden>
+      <span class="lot-n" id="gs-lot-n" aria-live="polite"></span>
+      <button class="btn btn-sec" type="button" data-lot="programmer">Programmer à la suite</button>
+      <button class="btn btn-sec" type="button" data-lot="deprogrammer">Retirer la date</button>
+      <button class="btn btn-sec" type="button" data-lot="montrer">Rendre visibles</button>
+      <button class="btn btn-sec" type="button" data-lot="ouvrir">Ouvrir</button>
+      <button class="btn btn-sec" type="button" data-lot="clore">Clore</button>
+      <label class="lot-ranger" id="gs-lot-ranger"><span class="vh">Ranger les séances choisies dans un module</span>
+        <select id="gs-lot-module"></select></label>
+      <button class="btn-discret" type="button" id="b-gs-lot-vider">Tout désélectionner</button>
     </div>
     <div aria-live="polite" id="err-gs-liste"></div>
     <div class="gs-cadre" id="gs-cadre">
@@ -786,6 +816,25 @@
       <p class="sous-hint" id="md-suppr-note"></p>
       <div aria-live="polite" id="err-md"></div>
     </form>
+    <!-- Reconduire une classe (06/10, lot 3) : un geste de fin d'année, en
+         deux temps — l'aperçu, puis l'écriture. js/reconduire.js. -->
+    <details class="plie-in rn" id="rn-bloc">
+      <summary>Reconduire une classe pour l'année prochaine</summary>
+      <p class="sous-hint">En fin d'année, avant de vider l'année : une classe neuve avec les modules et
+        les séances de celle-ci — corrigés, concepts, missions — sans élève ni réponse. Elle apparaît
+        aussitôt dans la liste de connexion des étudiants.</p>
+      <div class="gs-champs">
+        <label>Classe à reconduire <select id="rn-classe"></select></label>
+        <label>Code de la classe neuve <input id="rn-code" type="text" autocomplete="off" placeholder="BTS1-DEV-2027"></label>
+        <label class="gs-large">Son nom <input id="rn-nom" type="text" autocomplete="off"></label>
+      </div>
+      <div class="pick">
+        <button class="btn btn-sec" id="b-rn-voir" type="button">Voir ce qui sera recréé</button>
+        <button class="btn" id="b-rn-ok" type="button" hidden>Reconduire</button>
+      </div>
+      <p class="sous-hint" id="rn-apercu" aria-live="polite"></p>
+      <div aria-live="polite" id="err-rn"></div>
+    </details>
   </details>
   </div>
 
@@ -888,6 +937,48 @@
   </details>
   </div>
 
+  <!-- La page d'une séance (06/10, lot 3) : « #s/35 ». Un fil d'Ariane, la
+       séance, et trois onglets — les trois moments appliqués à elle seule.
+       Elle HÉBERGE la fiche de Préparer (#gs-fiche) et la carte du direct
+       (#carte-suivi), déplacées ici quand on l'ouvre et rendues ensuite :
+       aucun bloc n'existe en deux exemplaires. js/pageseance.js. -->
+  <div class="volet sp" id="volet-seance" hidden>
+    <div class="sp-haut">
+      <nav class="sp-fil" aria-label="Fil d'Ariane"><ol id="sp-fil"></ol></nav>
+      <div class="sp-voisins">
+        <button class="btn-discret" id="b-sp-prec" type="button" hidden></button>
+        <button class="btn-discret" id="b-sp-suiv" type="button" hidden></button>
+      </div>
+    </div>
+    <div class="card sp-tete">
+      <div class="sp-titre-l">
+        <h2 id="sp-titre">Séance</h2>
+        <span class="badge neutre" id="sp-badge">—</span>
+      </div>
+      <div class="sp-resume" id="sp-resume">
+        <p class="sous-hint" id="sp-quand"></p>
+        <div class="cycle-l" id="sp-cycle-l" hidden>
+          <ol class="cycle" id="sp-etapes" aria-label="Où en est la séance"></ol>
+        </div>
+        <div class="pick sp-actes" id="sp-actes"></div>
+      </div>
+      <div aria-live="polite" id="err-sp"></div>
+      <nav class="sv-vues sp-onglets" id="sp-onglets" role="tablist" aria-label="La séance">
+        <button class="sv-vue-b actif" type="button" role="tab" id="spb-preparer" data-onglet="preparer"
+          aria-controls="sp-preparer" aria-selected="true">Préparer</button>
+        <button class="sv-vue-b" type="button" role="tab" id="spb-direct" data-onglet="direct"
+          aria-controls="sp-direct" aria-selected="false" tabindex="-1">En direct</button>
+        <button class="sv-vue-b" type="button" role="tab" id="spb-bilan" data-onglet="bilan"
+          aria-controls="sp-bilan" aria-selected="false" tabindex="-1">Bilan</button>
+      </nav>
+    </div>
+    <section class="sp-panneau" id="sp-preparer" role="tabpanel" aria-labelledby="spb-preparer"></section>
+    <section class="sp-panneau" id="sp-direct" role="tabpanel" aria-labelledby="spb-direct" hidden></section>
+    <section class="sp-panneau card" id="sp-bilan" role="tabpanel" aria-labelledby="spb-bilan" hidden>
+      <div id="sp-bilan-corps"></div>
+    </section>
+  </div>
+
 </section>
 
 </div><!-- #contenu -->
@@ -919,6 +1010,63 @@
   <p class="sous-hint">Clore n'a pas de raccourci : il coupe les réponses de toute la classe.</p>
   <div id="rc-inter"></div>
   <div class="pick"><button class="btn" type="button" id="rc-fermer" autofocus>Fermer</button></div>
+</dialog>
+
+<!-- L'assistant « Nouveau module » (06/10, lot 3) : quatre étapes dans un
+     <dialog> natif — le dépôt (son mkdocs.yml est lu), les séances, le
+     planning, les contenus. Chaque étape écrit en passant à la suivante.
+     js/assistant.js. -->
+<dialog class="as" id="as-dialog" aria-labelledby="as-titre">
+  <div class="as-tete">
+    <h2 id="as-titre">Nouveau module</h2>
+    <button class="btn btn-sec" id="b-as-fermer" type="button">Fermer</button>
+  </div>
+  <ol class="cycle as-etapes" id="as-etapes" aria-label="Les étapes"></ol>
+  <section class="as-pas" id="as-pas-1">
+    <p class="hint">L'adresse GitHub du cours : le portail lit son titre et le sommaire de son site.</p>
+    <div class="gs-champs">
+      <label>Classe <select id="as-classe"></select></label>
+      <label class="gs-large">Dépôt GitHub étudiant <input id="as-depot" type="url" autocomplete="off"
+        placeholder="https://github.com/compte/depot"></label>
+    </div>
+    <div class="pick"><button class="btn btn-sec" id="b-as-lire" type="button">Lire le dépôt</button></div>
+    <p class="sous-hint" id="as-lu" aria-live="polite"></p>
+    <div class="gs-champs">
+      <label class="gs-large">Titre du module <input id="as-titre-m" type="text" autocomplete="off"></label>
+      <label>Code <input id="as-code" type="text" autocomplete="off" pattern="[a-z0-9]+(-[a-z0-9]+)*"></label>
+      <label>Icône <input id="as-icone" type="text" maxlength="4" autocomplete="off"></label>
+      <label class="gs-large">Description <input id="as-description" type="text" autocomplete="off"></label>
+      <label class="gs-large">Site du cours <input id="as-site" type="url" autocomplete="off"></label>
+      <label class="gs-large">Dépôt enseignant (privé, jamais montré aux étudiants)
+        <input id="as-depot-ens" type="url" autocomplete="off" placeholder="https://github.com/compte/depot-prof"></label>
+    </div>
+  </section>
+  <section class="as-pas" id="as-pas-2" hidden>
+    <p class="hint">Une séance par ligne : son numéro, puis son titre. Elles naissent fermées et cachées.</p>
+    <div class="gs-champs">
+      <label>Nature <select id="as-nature"><option value="cours">Cours (une cadence)</option>
+        <option value="projet">Projet (des missions)</option></select></label>
+      <label>Durée (min) <input id="as-duree" type="number" min="5" max="600"></label>
+    </div>
+    <label class="edt-l" for="as-texte">Les séances</label>
+    <textarea id="as-texte" rows="7" spellcheck="false" placeholder="1 — Les données au cœur du SI&#10;2 — Le versioning"></textarea>
+  </section>
+  <section class="as-pas" id="as-pas-3" hidden>
+    <p class="hint">Les placer à la suite sur les créneaux libres de la classe, dans l'ordre des numéros. Facultatif.</p>
+    <div class="gs-champs"><label>À partir du <input id="as-depuis" type="date"></label></div>
+    <p class="sous-hint" id="as-edt" aria-live="polite"></p>
+    <div class="pick"><button class="btn btn-sec" id="b-as-programmer" type="button">Programmer les séances</button></div>
+    <ul class="as-places" id="as-places" aria-live="polite"></ul>
+  </section>
+  <section class="as-pas" id="as-pas-4" hidden>
+    <p class="hint">Le module est en place. Reste à écrire, séance par séance, ce qu'elle contient :</p>
+    <ul class="as-contenus" id="as-contenus"></ul>
+  </section>
+  <div aria-live="polite" id="err-as"></div>
+  <div class="pick as-nav">
+    <button class="btn btn-sec" id="b-as-prec" type="button">‹ Précédent</button>
+    <button class="btn" id="b-as-suiv" type="button">Créer le module ›</button>
+  </div>
 </dialog>
 
 <!-- Les confirmations passagères (js/toast.js), en bas de l'écran. -->

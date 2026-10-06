@@ -1287,3 +1287,30 @@ planning ») :
 
 Les chiffres de `mesurer.mjs` après ce lot : 997 lignes d'`index.html`, 16
 feuilles, 41 modules, 11 328 lignes de JavaScript, 69 fonctions RPC appelées.
+
+**Le 06/10 (après-midi), le lot 3 des propositions** (la mise en place,
+détail dans `JOURNAL.md` et dans CLAUDE.md, « La mise en place ») :
+
+- six modules neufs, chacun d'un sujet : `pageseance.js` (la page d'une
+  séance, qui HÉBERGE la fiche de Préparer et la carte du direct au lieu de
+  les recopier), `bilanseance.js` (son onglet Bilan), `avenir.js` (la semaine
+  à préparer), `lot.js` (les actions groupées), `assistant.js` (« Nouveau
+  module »), `reconduire.js` (l'année suivante) ; `gestion.js` (442 lignes)
+  et `navigation.js` ne reçoivent que des liens et l'adresse `#s/…` ;
+- une feuille de plus, `styles/miseenplace.css`, placée **avant**
+  `composants.css` : classes neuves seulement ; quatre media queries de plus,
+  sur un seuil déclaré (`telephone`) ;
+- `index.html` gagne 148 lignes : la page d'une séance, la carte « La semaine
+  à préparer », la barre des actions groupées, le `<dialog>` de l'assistant,
+  la reconduction ;
+- six fonctions RPC de plus appelées par la page (`dupliquer_seance`,
+  `creer_seances`, `programmer_seances`, `agenda`, `bilan_seance`,
+  `reconduire_classe`), toutes dans la migration `20261006120000` ;
+- aucun contrôle neuf : `t_missions`, `t_suivi` et `t_navigation` s'étendent
+  (axe-core voit la page, la semaine, la barre et l'assistant), chacun cassé
+  pour voir ce qu'il dit. Huit noms de fonction en double entre modules,
+  attrapés par le contrôle « déclarée deux fois » du workflow, ont été
+  renommés avant de partir.
+
+Les chiffres de `mesurer.mjs` après ce lot : 1 145 lignes d'`index.html`, 17
+feuilles, 47 modules, 12 818 lignes de JavaScript, 75 fonctions RPC appelées.

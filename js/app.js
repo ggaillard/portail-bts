@@ -36,7 +36,7 @@ import { CFG, $, sb, probleme, suivi, erreur, montrer, typo, anime, entree,
          codeClasseCourante } from './socle.js';
 import { brancherEcran, modeEcran, rendreEcran, rotationAuto,
          fermerEcran, minuteur } from './ecran.js';
-import { ONGLETS, ouvrirOnglet, ongletDeLAdresse } from './navigation.js';
+import { ONGLETS, ouvrirDepuisLAdresse } from './navigation.js';
 import { brancherBibliotheque, BIB, chargerQuestionnaires,
          chargerQuestionsSeance, rendreBibliotheque } from './bibliotheque.js';
 import { chargerQuestionnairesEtu, rendreQuestionnairesEtu,
@@ -65,11 +65,16 @@ import { texteRefus } from './refus.js';
 // recherche d'une séance, et les raccourcis clavier.
 import './choixseance.js';
 import './raccourcis.js';
+import './pageseance.js';          // la page d'une séance, #s/35 (06/10, lot 3)
+import './lot.js';                 // les actions groupées sur « Les séances » (06/10, lot 3)
+import './assistant.js';           // l'assistant « Nouveau module » (06/10, lot 3)
+import './reconduire.js';          // reconduire une classe pour l'année suivante (06/10, lot 3)
 import { chargerCarnet } from './carnet.js';
 import { chargerSemaine } from './semaine.js';
 import { chargerEquipes, chargerEquipeEtu } from './equipes.js';
 import { chargerJour } from './aujourdhui.js';
 import { chargerEmploiDuTemps } from './planning.js';
+import { chargerAvenir } from './avenir.js';
 
 (function(){
 "use strict";
@@ -395,8 +400,9 @@ function ouvrirEspaceEnseignant(){
   // L'onglet vient de l'adresse quand elle en porte un : c'est ce qui fait
   // qu'un rafraîchissement en pleine séance ne renvoie plus à l'appel.
   // « remplacer » : on normalise l'adresse sans ajouter d'entrée, sinon le
-  // premier Précédent ne ferait que retirer le dièse.
-  ouvrirOnglet(ongletDeLAdresse() || "appel", "remplacer");
+  // premier Précédent ne ferait que retirer le dièse. Depuis le 06/10,
+  // l'adresse peut aussi désigner la page d'une séance (#s/35/bilan).
+  ouvrirDepuisLAdresse();
 
   sb.from("classes").select("id,code,nom").order("code").then(function(rc){
     var toutes = rc.data || [];
@@ -425,6 +431,7 @@ function ouvrirEspaceEnseignant(){
     chargerGestion(classes);
     chargerJour();                    // l'agenda du jour, en tête d'En cours (06/10)
     chargerEmploiDuTemps(classes);
+    chargerAvenir();                  // la semaine à préparer, en tête de Préparer (06/10, lot 3)
 
     classes.forEach(function(c){
       var tr = document.createElement("tr");

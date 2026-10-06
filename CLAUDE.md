@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**997 lignes**) + `styles/` (seize feuilles) + `js/` + `styleguide.html` (le guide des composants) :
+`index.html` (**1 145 lignes**) + `styles/` (dix-sept feuilles) + `js/` + `styleguide.html` (le guide des composants) :
 
 | module | ce qu'il porte |
 |---|---|
@@ -57,6 +57,12 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `etat.js` | l'état d'une séance calculé par la base (`etat_seance`) traduit : libellé, couleur, **les quatre étapes** ; la lecture avec repli si la migration manque (06/10) |
 | `planning.js` | le bloc « Quand » de la fiche (créneau, prochain créneau libre, options automatiques) et la carte « L'emploi du temps » (06/10) |
 | `aujourdhui.js` | « Aujourd'hui » en tête d'En cours : créneaux et séances du jour, un geste par ligne (06/10) |
+| `pageseance.js` | **la page d'une séance** (`#s/35`) : fil d'Ariane, Préparer · En direct · Bilan ; elle HÉBERGE la fiche et la carte du direct ; Dupliquer (06/10, lot 3) |
+| `bilanseance.js` | l'onglet Bilan de la page : prévu et fait, appel, participation, contrôle, missions ou quiz, concepts, automate (06/10, lot 3) |
+| `avenir.js` | « La semaine à préparer », en tête de Préparer : créneaux, « Prête ? », placer une séance sur un créneau vide (06/10, lot 3) |
+| `lot.js` | les actions groupées sur « Les séances » : programmer à la suite, retirer la date, rendre visibles, ouvrir, clore, ranger (06/10, lot 3) |
+| `assistant.js` | l'assistant « Nouveau module » : dépôt (mkdocs.yml lu), séances, planning, contenus (06/10, lot 3) |
+| `reconduire.js` | reconduire une classe pour l'année suivante, aperçu puis écriture (06/10, lot 3) |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -88,7 +94,7 @@ semestre »). Refondu **par moment** :
 |---|---|---|
 | Ligne épinglée — **Ce qui bloque** | *Est-ce que je peux faire cours ?* | `a_faire()`, **repliée sur une ligne** avec sa pastille ; dépliée d'office dès qu'un point est **bloquant**, jamais repliée d'autorité. |
 | **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | **Aujourd'hui** (l'agenda du jour, depuis le 06/10), l'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte et démarrée**, sinon **celle du créneau en cours** (planning), sinon démarrée aujourd'hui, sinon la **prochaine programmée**, sinon la **prochaine séance de cours** (publiée ou contrôle proposé, pas encore démarrée), sinon la dernière démarrée (`js/encours.js`). Un projet ouvert toute l'année n'est pas « la séance du jour ». |
-| **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | Les séances (groupées par module) en **liste + fiche** — infos, contrôle d'entrée, concepts, missions, « Prête à démarrer ? » —, l'inventaire des contrôles (replié), les questionnaires, les modules (replié). |
+| **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | **La semaine à préparer** (depuis le 06/10), les séances (groupées par module, cases pour les actions groupées) en **liste + fiche** — infos, contrôle d'entrée, concepts, missions, « Prête à démarrer ? » —, l'inventaire des contrôles (replié), les questionnaires, les modules (replié). |
 | **Bilan** (`#ensemble`) | *Où en est-on ?* | Le semestre, module par module ; les classes ; « Faisons connaissance » et « Recherche de stage », repliés. |
 
 Règles de cette refonte :
@@ -306,7 +312,7 @@ en service : un script poussé sur GitHub n'est pas un script joué sur Supabase
 | `modules` | `classe_id`, `code`, `titre`, `description`, `icone`, `depot` (**obligatoire**, GitHub), `depot_enseignant`, `site`, `ordre` — lue seulement par fonctions |
 
 | `creneaux` | `classe_id`, `jour` (1 lundi … 7), `debut`, `fin` — l'emploi du temps, lu seulement par fonctions (06/10) |
-| `journal_auto` | `seance_id`, `geste` (ouvrir / clore), `pour` (le créneau), `note` (`deja`), `fait_le` — ce que l'automate a fait (06/10) |
+| `journal_auto` | `seance_id`, `geste` (ouvrir / clore), `pour` (le créneau), `note` (`deja`), `fait_le` — ce que l'automate a fait (06/10) ; relu par `bilan_seance()` (lot 3) |
 
 `seances.module_id` range une séance de cours ou de projet (< 90) dans un module de sa classe.
 `seances.prevue_le` / `fin_prevue` la programment ; `auto_ouvrir` / `auto_clore` confient l'ouverture et la clôture à la base (06/10).
@@ -1509,6 +1515,60 @@ restée ouverte 121 h).
 - Pas encore : « Cette semaine » ne compare pas le prévu au fait ; `a_faire()`
   n'a pas de règle « séance du jour pas prête ».
 
+## La mise en place — le lot 3 (06/10)
+
+Migration `20261006120000_mise_en_place.sql`. Le lot 2 a donné à chaque
+séance un état et un créneau ; celui-ci sert à monter ce qui se joue.
+
+- **La page d'une séance**, `#s/35` (`/preparer`, `/direct`, `/bilan`, puis
+  l'onglet de fiche ou la vue : `#s/35/preparer/missions`, `#s/35/direct/fin`).
+  Un fil d'Ariane (moment › classe › module › séance), la séance précédente et
+  la suivante, et trois onglets — **les trois moments appliqués à une
+  séance**. L'onglet du haut qui s'allume est celui du moment de l'onglet de la
+  page ; y cliquer ramène à la liste. On y arrive par le titre d'une ligne de
+  Préparer (un vrai lien), « Suivre › », la semaine à préparer, les liens
+  « Écrire … › » du direct, l'assistant.
+  - **Elle héberge, elle ne recopie pas** : `#gs-fiche` et `#carte-suivi` y
+    sont déplacés (`appendChild`) et rendus en la quittant (`navigation.js`
+    appelle `quitter` à chaque `ouvrirOnglet`). Mêmes identifiants, mêmes
+    modules pour les remplir. Ne pas dupliquer l'un de ces blocs.
+  - **Préparer ne change pas la séance suivie** : seul l'onglet En direct
+    charge la séance dans la carte. Une autre séance choisie dans la carte
+    (« Changer », Ctrl+K) emmène la page (évènement `tdc-seance-suivie`).
+  - Le geste principal (Démarrer, Ouvrir, Clore, Rendre visible) et
+    **Dupliquer** sont dans l'en-tête sur Préparer et Bilan ; sur En direct,
+    l'en-tête collant de la carte a le sien.
+  - `#appel/s/123` (28/09) garde son sens : En cours sur cette séance.
+- **Dupliquer** (`dupliquer_seance`) : titre « (copie) », nature, durée,
+  module, missions **renumérotées** (`tp13-m3`), contrôle d'entrée **éteint** ;
+  ni quiz, ni concepts, ni date. La copie naît fermée et cachée.
+- **La semaine à préparer** (`agenda(p_debut, p_jours)`) : créneaux et
+  séances programmées de sept jours, « À régler » avec chaque manque menant à
+  l'onglet qui le règle, et sur un créneau vide un sélecteur des séances à
+  placer (ni jouées, ni programmées) → `planifier_seance` sur ce créneau.
+- **Les actions groupées** (`js/lot.js`) : « Programmer à la suite »
+  (`programmer_seances` : dans l'ordre des numéros, sur les créneaux libres de
+  la classe, jamais une séance ouverte ou jouée), « Retirer la date »,
+  « Rendre visibles », « Ouvrir » (projets seulement — un cours se démarre),
+  « Clore » (différé, « Annuler »), « Ranger dans… ». Les autres gestes
+  appellent séance par séance la fonction de la ligne ; la carte dit ce qui a
+  été fait, ce qui n'était pas concerné, ce qui a été refusé et pourquoi.
+- **L'assistant « Nouveau module »** (« Nouveau module… » dans Les séances) :
+  le dépôt (le portail lit `mkdocs.yml` sur raw.githubusercontent.com : titre,
+  site, sommaire), les séances (`creer_seances` : une par ligne, tout ou rien),
+  le planning (facultatif), puis les liens vers l'onglet à écrire de chaque
+  séance. **Chaque étape écrit en passant à la suivante** ; revenir en arrière
+  ne recrée rien.
+- **Reconduire une classe** (carte des modules, replié) : `reconduire_classe`
+  recrée modules, séances (fermées, cachées), corrigés, concepts, missions,
+  points de passage et la séance d'appel 99, **sans élève ni réponse**. Aperçu
+  d'abord ; le bouton qui écrit n'apparaît qu'après, pour ces valeurs-là. La
+  classe neuve apparaît aussitôt dans la connexion étudiante : geste de juin.
+- Les noms de fonction sont **uniques sur tout le portail** (le workflow les
+  concatène) : huit doublons du lot ont été renommés avant de partir.
+- Pas fait : « Cette semaine » (Bilan) ne compare toujours pas le prévu au
+  fait — l'onglet Bilan de la page le fait pour une séance.
+
 ## Ergonomie et accessibilité — le lot 1 (05/10)
 
 Proposé et accepté le 05/10 (`claude/application-seance-propositions.md` dans
@@ -1555,7 +1615,9 @@ Scapin**, **ISO 9241-110**, **WCAG 2.2 AA** (le RGAA 5 l'intégrera), motifs des
 
 **Contrôle automatique** : `t_navigation.mjs` passe **axe-core** (version
 fixée) sur la connexion, les trois onglets enseignant (Préparer deux fois :
-avec la fiche d'une séance et l'emploi du temps ouverts, depuis le 06/10) et
+avec la fiche d'une séance et l'emploi du temps ouverts, puis la barre des actions
+groupées et la semaine ; la page d'une séance sur Préparer et Bilan ; l'assistant
+ouvert — depuis le 06/10) et
 `styleguide.html`, à
 390 et 1 280 px, **en clair et en sombre**, puis vérifie qu'à 320 px rien ne
 défile en largeur (WCAG 1.4.10). Zéro violation attendue ; cassé le 05/10 en
