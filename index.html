@@ -38,6 +38,7 @@
 <link rel="stylesheet" href="styles/moments.css">
 <link rel="stylesheet" href="styles/pilote.css">
 <link rel="stylesheet" href="styles/indicateurs.css">
+<link rel="stylesheet" href="styles/planning.css">
 <link rel="stylesheet" href="styles/composants.css">
 </head>
 <body>
@@ -204,6 +205,16 @@
   </nav>
 
   <div class="volet" id="volet-appel" role="tabpanel" aria-labelledby="ong-appel">
+  <!-- Aujourd'hui (06/10, lot 2) : l'agenda du jour, toutes classes — un
+       créneau par ligne, l'état de sa séance et SON geste. Au-dessus de
+       l'appel parce qu'on le lit avant l'heure ; quelques lignes, jamais plus.
+       js/aujourdhui.js, RPC aujourdhui(). -->
+  <section class="card jour-carte" id="carte-jour" hidden aria-labelledby="jour-titre">
+    <h2 id="jour-titre">Aujourd'hui</h2>
+    <p class="hint" id="jour-date"></p>
+    <ul class="jour-liste" id="jour-liste"></ul>
+    <div aria-live="polite" id="err-jour"></div>
+  </section>
   <div class="card" id="carte-appel" hidden>
     <h2>Appel du jour</h2>
     <p class="hint">Toutes vos classes, sans changer de sélection.</p>
@@ -278,6 +289,12 @@
         </div>
       </details>
       <p class="hint"><span id="suivi-mode" aria-live="polite">Les chiffres se rafraîchissent seuls toutes les huit secondes.</span></p>
+    </div>
+    <!-- Où en est la séance (06/10, lot 2) : l'état calculé par la base, en
+         quatre étapes, et la suite en une ligne. js/etat.js, js/pilote.js. -->
+    <div class="cycle-l" id="sv-cycle-l" hidden>
+      <ol class="cycle" id="sv-etapes" aria-label="Où en est la séance"></ol>
+      <span class="cycle-note" id="sv-cycle-note"></span>
     </div>
 
     <nav class="sv-vues" id="sv-vues" role="tablist" aria-label="Vues de la séance">
@@ -547,6 +564,28 @@
             <label class="gs-case"><input id="gs-publiee" type="checkbox"> Visible par les étudiants</label>
             <label class="gs-case"><input id="gs-ouverte" type="checkbox"> Ouverte aux réponses</label>
           </div>
+          <!-- Quand (06/10, lot 2) : le créneau de la séance, et ce que la base
+               fera seule à l'heure. js/planning.js ; planifier_seance() part
+               après enregistrer_seance(), seulement si ce bloc a changé. -->
+          <fieldset class="gs-quand" id="gs-quand" hidden>
+            <legend>Quand</legend>
+            <div class="gs-champs">
+              <label>Jour <input id="gs-jour" type="date"></label>
+              <label>Début <input id="gs-debut" type="time" step="300"></label>
+              <label>Fin <input id="gs-fin" type="time" step="300"></label>
+            </div>
+            <div class="pick">
+              <button class="btn btn-sec" id="b-gs-creneau" type="button">Prochain créneau libre</button>
+              <button class="btn-discret" id="b-gs-sans-date" type="button">Retirer la date</button>
+              <button class="btn-discret" id="b-gs-edt" type="button">L'emploi du temps ›</button>
+            </div>
+            <p class="sous-hint" id="gs-creneau-note" aria-live="polite"></p>
+            <div class="gs-champs">
+              <label class="gs-case"><input id="gs-auto-ouvrir" type="checkbox"> Ouvrir à l'heure (un cours démarre seul)</label>
+              <label class="gs-case"><input id="gs-auto-clore" type="checkbox"> Clore 15 min après la fin</label>
+            </div>
+            <p class="sous-hint" id="gs-auto-note" aria-live="polite"></p>
+          </fieldset>
           <div class="pick">
             <button class="btn" id="b-gs-ok" type="submit">Enregistrer</button>
             <button class="btn btn-sec" id="b-gs-annuler" type="button">Annuler</button>
@@ -623,6 +662,36 @@
        depuis le 28/09, tous deux sont dans Préparer — l'éditeur dans la fiche
        de chaque séance, juste au-dessus. Replié : « Ce qui bloque » signale déjà
        un contrôle éteint ; il reste ici pour la vue d'ensemble, toutes classes. -->
+  <!-- L'emploi du temps (06/10, lot 2) : il propose la date d'une séance et
+       remplit « Aujourd'hui ». Repliée : on la pose en début d'année, on la
+       corrige quand l'emploi du temps change. js/planning.js. -->
+  <details class="card plie" id="carte-edt" hidden>
+    <summary><h2>L'emploi du temps</h2> <span class="badge neutre" id="edt-resume"></span></summary>
+    <p class="hint">Un créneau par ligne : <code>lundi 15:00-17:00</code>. Il sert à programmer les séances
+      et à remplir « Aujourd'hui ».</p>
+    <div class="pick">
+      <select id="edt-classe" aria-label="Classe dont on pose l'emploi du temps"></select>
+    </div>
+    <label class="edt-l" for="edt-texte">Créneaux de la classe</label>
+    <textarea id="edt-texte" rows="4" spellcheck="false"
+      placeholder="lundi 15:00-17:00&#10;mardi 15:00-17:00"></textarea>
+    <div class="pick">
+      <button class="btn" id="b-edt-ok" type="button">Enregistrer</button>
+    </div>
+    <div aria-live="polite" id="err-edt"></div>
+    <h3 class="sous-titre">Ouvrir et clore à l'heure</h3>
+    <p class="hint" id="edt-auto" aria-live="polite"></p>
+    <div class="pick">
+      <button class="btn btn-sec" id="b-edt-auto" type="button" hidden>Mettre l'automate en marche</button>
+    </div>
+    <div aria-live="polite" id="err-edt-auto"></div>
+    <details class="aide"><summary>En savoir plus</summary>
+      <p>Une séance se programme dans sa fiche (Préparer → la séance → Infos → Quand). Ses deux
+      options — <b>ouvrir à l'heure</b>, <b>clore 15 min après la fin</b> — sont exécutées par la base,
+      chaque minute, même portail fermé. L'automate n'agit qu'une fois par créneau et jamais contre
+      vous : une séance close à la main n'est pas rouverte, une séance rouverte n'est pas reclose.</p></details>
+  </details>
+
   <details class="card plie" id="carte-controles" hidden>
     <summary><h2>Contrôles d'entrée <span class="ctl-compte" id="ctl-compte"></span></h2></summary>
     <p class="hint">Tout ce qui est écrit, pour toutes les classes, avec son interrupteur.</p>

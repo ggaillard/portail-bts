@@ -23,6 +23,11 @@
 // dessus cinq jours de suite, chrono à 7 294 minutes. La règle 1 ne retient
 // donc qu'une séance de COURS qui n'est pas OUBLIÉE OUVERTE (durée + 2 h,
 // la règle d'a_faire()) ; l'oubliée reste signalée par « Ce qui bloque ».
+// Le 06/10 (lot 2), le PLANNING : une séance dont le créneau contient
+// l'heure qu'il est passe juste après la règle 1 — même pas démarrée, c'est
+// elle qu'on vient faire —, et la prochaine séance PROGRAMMÉE passe avant la
+// règle 3, qui devinait la suivante par son numéro. Sans planning, rien ne
+// change : les deux règles ne trouvent rien.
 // Avant tout cela, l'ADRESSE : « #appel/s/123 » (un favori, un raccourci)
 // désigne la séance à ouvrir, si elle existe dans une classe réelle.
 // Le choix se refait à chaque ouverture de l'espace ; les sélecteurs restent
@@ -32,6 +37,7 @@ import { $, sb } from './socle.js';
 import { chargerSeancesDe } from './seance.js';
 import { seanceDeLAdresse } from './navigation.js';
 import { seanceOubliee } from './ouverture.js';
+import { lireAvecPlanning } from './etat.js';
 
 function seanceDuJour(liste, idsReels, maintenant){
   var l = (liste || []).filter(function(s){
@@ -47,11 +53,26 @@ function seanceDuJour(liste, idsReels, maintenant){
   }).sort(recent);
   if (enCours.length) return enCours[0];
 
+  // Le créneau en cours (un quart d'heure d'avance compris) : la séance qu'on
+  // vient faire, démarrée ou non.
+  var t = maintenant || Date.now();
+  var creneau = l.filter(function(s){
+    return s.prevue_le && Date.parse(s.prevue_le) - 15 * 60000 <= t &&
+           t < Date.parse(s.fin_prevue || s.prevue_le) && !seanceOubliee(s, maintenant);
+  }).sort(function(a, b){ return Date.parse(a.prevue_le) - Date.parse(b.prevue_le); });
+  if (creneau.length) return creneau[0];
+
   var duJour = l.filter(function(s){
     return s.demarree_le && new Date(s.demarree_le).toDateString() === jour; }).sort(recent);
   if (duJour.length) return duJour[0];
 
   var jouees = l.filter(function(s){ return s.demarree_le; }).sort(recent);
+
+  // La prochaine séance programmée, pas encore jouée.
+  var programmees = l.filter(function(s){
+    return s.prevue_le && Date.parse(s.prevue_le) > t && !s.demarree_le;
+  }).sort(function(a, b){ return Date.parse(a.prevue_le) - Date.parse(b.prevue_le); });
+  if (programmees.length) return programmees[0];
 
   // La prochaine séance de cours : prête à être jouée, pas encore jouée.
   var prochaines = l.filter(function(s){
@@ -72,7 +93,8 @@ function seanceDuJour(liste, idsReels, maintenant){
 function choisirSeanceDuJour(classes){
   if (!classes || !classes.length) return Promise.resolve(null);
   var ids = classes.map(function(c){ return String(c.id); });
-  return sb.from("seances").select("id,classe_id,numero,ouverte,demarree_le,duree_min,nature,publiee,controle_ouvert")
+  return lireAvecPlanning("id,classe_id,numero,ouverte,demarree_le,duree_min,nature,publiee,controle_ouvert",
+    function(c){ return sb.from("seances").select(c); })
     .then(function(r){
       var voulue = seanceDeLAdresse();
       var s = (voulue && (r && r.data || []).filter(function(x){

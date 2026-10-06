@@ -52,6 +52,7 @@ import { majPilote, marquerEleve, ouvrirVue } from './pilote.js';
 import { rendrePrevol, brancherPrevol } from './prevol.js';
 import { seanceOubliee, depuisLe } from './ouverture.js';
 import { texteRefus } from './refus.js';
+import { lireAvecPlanning } from './etat.js';
 
 let chargerAFaire = function(){};
 export function brancherSeance(liens){ chargerAFaire = liens.chargerAFaire; }
@@ -373,19 +374,24 @@ function chargerProjet(){
 // `publiee` n'est pas dans preflight_seance() : on la lit à côté, sur la
 // table, plutôt que de réécrire la fonction pour une colonne. Sans elle, un
 // projet ouvert mais caché se disait « ouvert » — et personne ne le voyait.
+// Depuis le 06/10, la même lecture rapporte le planning et l'état calculé par
+// la base (etat_seance) — sans eux si la migration n'est pas passée.
 function chargerPrevol(){
   var bloc = $("prevol");
   if (!suivi.seanceId) { bloc.hidden = true; suivi.prevol = null; return Promise.resolve(); }
   var id = Number(suivi.seanceId);
   return Promise.all([
     sb.rpc("preflight_seance", { p_seance_id: id }),
-    sb.from("seances").select("id,publiee").eq("id", id)
+    lireAvecPlanning("id,publiee", function(c){ return sb.from("seances").select(c).eq("id", id); })
   ]).then(function(rr){
     var r = rr[0], ligne = rr[1] && !rr[1].error && rr[1].data && rr[1].data[0];
     if (!r || r.error || !r.data || !r.data.ok) { bloc.hidden = true; suivi.prevol = null; return; }
     if (String(id) !== String(suivi.seanceId)) return;       // on a changé de séance entre-temps
     suivi.prevol = r.data;
     suivi.prevol.publiee = ligne ? !!ligne.publiee : null;
+    ["etat", "prevue_le", "fin_prevue", "auto_ouvrir", "auto_clore"].forEach(function(k){
+      suivi.prevol[k] = ligne && ligne[k] !== undefined ? ligne[k] : null;
+    });
     rendrePrevol(r.data);
     suivi.projet = null;
     if (r.data.nature === "projet") chargerProjet();
@@ -414,6 +420,8 @@ function pilotage(action, question){
     erreur("err-prevol", question, true);
     // On relit l'état plutôt que de le supposer : la source de vérité est la base.
     chargerPrevol().then(rafraichir);
+    // « Aujourd'hui » (aujourdhui.js) dit l'état de cette séance aussi.
+    document.dispatchEvent(new Event("tdc-seance-changee"));
     // Ouvrir ou clore une séance change ce qui reste à faire : la carte suit.
     chargerAFaire();
     chargerSemestre();

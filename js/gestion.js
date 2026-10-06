@@ -42,6 +42,8 @@ import { texteRefus } from './refus.js';
 import { lireModules, modulesDe } from './modules.js';
 import { ouvrirFichePrep, fermerFichePrep } from './preparer.js';
 import { ouvrirOnglet } from './navigation.js';
+import { etatDe, quandLisible } from './etat.js';
+import { remplirPlanning, enregistrerPlanning, verifierPlanning } from './planning.js';
 
 let apres = function(){};
 export function brancherGestion(liens){ apres = liens.apres || apres; }
@@ -99,9 +101,16 @@ function relireGestion(){
   if (classeGestion) return lireModules().then(function(){ return lireSeances(classeGestion); });
 }
 
+// Le créneau d'une séance pas encore jouée (06/10), avec ce que l'automate
+// fera ; puis « visible / cachée », le mot de l'interrupteur (05/10).
 function etat(s){
   var bouts = [];
-  // « visible / cachée » : le mot de l'interrupteur et de la case (05/10).
+  if (s.prevue_le && (!s.demarree_le || etatDe(s).code === "programmee")) {
+    var auto = [];
+    if (s.auto_ouvrir) auto.push("ouverture");
+    if (s.auto_clore) auto.push("clôture");
+    bouts.push(quandLisible(s.prevue_le, s.fin_prevue) + (auto.length ? " (" + auto.join(" et ") + " auto)" : ""));
+  }
   bouts.push(s.publiee ? "visible" : "cachée");
   bouts.push(s.ouverte ? "ouverte" : "fermée");
   return bouts.join(" · ");
@@ -163,6 +172,14 @@ function ligne(s){
                   '<button class="qa-b gs-b" type="button">Modifier</button></span>';
     l.querySelector(".gs-num").textContent = s.numero;
     l.querySelector(".gs-titre").textContent = typo(s.titre);
+    // L'état calculé par la base (etat_seance, 06/10), en badge devant la ligne.
+    var e = etatDe(s);
+    if (e.base) {
+      var bd = document.createElement("span");
+      bd.className = "badge " + e.ton + " gs-etat";
+      bd.textContent = e.libelle;
+      l.querySelector(".gs-meta").before(bd);
+    }
     l.querySelector(".gs-meta").textContent = (s.nature === "projet" ? "Projet" : "Cours") +
       " · " + suivre(s) + " · " + etat(s) + (s.reponses ? " · " + s.reponses + " réponses" : "");
     l.querySelector(".gs-b").setAttribute("aria-label", "Modifier la séance " + s.numero);
@@ -235,6 +252,7 @@ function apresEtat(s){
     if (x) ouvrirFormulaire(x, onglet || "infos", true);
   });
   if (String(suivi.seanceId) === String(s.id)) chargerPrevol();
+  document.dispatchEvent(new Event("tdc-seance-changee"));   // « Aujourd'hui » se relit
   apres();
 }
 
@@ -281,6 +299,9 @@ function ouvrirFormulaire(s, onglet, sansFocus){
     ? "Fixé par les " + s.missions + " missions de la séance." : "";
   // Une séance qui a des réponses garde son numéro : autant le dire avant.
   $("gs-numero").disabled = !!(s && s.reponses);
+  // Quand (06/10) : le créneau, et les séances de la classe pour savoir
+  // lesquels sont déjà pris.
+  remplirPlanning(s, classeGestion, seances);
   erreur("err-gs", "");
   if (!sansFocus && (!onglet || onglet === "infos")) $("gs-titre").focus();
 }
@@ -335,6 +356,8 @@ function enregistrer(){
   var b = $("b-gs-ok");
   var id = f.dataset.id ? Number(f.dataset.id) : null;
   var jalons = $("gs-jalons").value === "" ? 0 : Number($("gs-jalons").value);
+  var horsCreneau = verifierPlanning();
+  if (horsCreneau) { erreur("err-gs", horsCreneau); return; }
   b.disabled = true;
   sb.rpc("enregistrer_seance", {
     p_seance_id: id,
@@ -363,6 +386,18 @@ function enregistrer(){
         }
         return r;
       });
+  }).then(function(r){
+    // Programmer, seulement si le bloc « Quand » a changé (06/10) — même
+    // raison que le module : un appel à part, sans réécrire enregistrer_seance().
+    if (r.recharger || r.error || !r.data || !r.data.ok) return r;
+    return enregistrerPlanning(r.data.id).then(function(rp){
+      if (!rp) return r;
+      if (rp.error || !rp.data || !rp.data.ok) {
+        return { recharger: true, data: { ok: false, detail: "Séance enregistrée, mais pas programmée : " + texteRefus(rp) } };
+      }
+      document.dispatchEvent(new Event("tdc-seance-changee"));
+      return r;
+    });
   }).then(function(r){
     b.disabled = false;
     if (r.error || !r.data || !r.data.ok) {

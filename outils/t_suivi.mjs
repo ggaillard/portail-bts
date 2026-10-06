@@ -602,10 +602,225 @@ for (const w of [390, 1280]) {
   await fermer();
 }
 
+// ── Lot 2 (06/10) : l'état d'une séance, ses étapes, l'agenda du jour ─────
+// L'état vient de la base (etat_seance) ; l'en-tête doit le dire tel quel,
+// sauf quand le temps a passé depuis la lecture (une séance en cours devenue
+// oubliée), et retomber sur la lecture d'avant si la migration manque — y
+// compris quand la base refuse les colonnes nouvelles. L'agenda croise
+// créneaux et séances, une ligne par créneau, UN geste par ligne, et chaque
+// geste part vers la fonction qui le fait déjà ailleurs.
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const dans = (min) => new Date(Date.now() + min * 60000).toISOString();
+  const tete = (ligne, pv, refuse) => p.evaluate(({ ligne, pv, refuse }) => {
+    let e = document.getElementById('carte-suivi');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    const ps = document.getElementById('pk-seance');
+    document.getElementById('pk-classe').innerHTML = '<option value="2">BTS SIO 2 - SLAM</option>';
+    ps.innerHTML = '<option value="">Choisir…</option><option value="25" data-titre="21 — Projet IA">21</option>';
+    ps.value = '25';
+    const s = window.__e.suivi;
+    s.classeId = 2; s.seanceId = '25';
+    window.__colonnes = [];
+    window.__e.sb.from = function(){
+      let cols = '';
+      const ch = { then: (ok, ko) => Promise.resolve(refuse && /etat_seance/.test(cols)
+        ? { data: null, error: { message: 'column seances.prevue_le does not exist' } }
+        : { data: [ligne], error: null }).then(ok, ko) };
+      ch.select = (c) => { cols = c || ''; window.__colonnes.push(cols); return ch; };
+      ['eq', 'order', 'neq', 'in', 'limit'].forEach((m) => { ch[m] = () => ch; });
+      return ch;
+    };
+    window.__reponses = { preflight_seance: Object.assign({ ok: true, seance: 21, jalons: 4, echeance: '2026-10-16',
+      duree_min: 120, questions: 0, appel_du_jour: true, eleves: 12, avec_pin: 12, deja_connectes: 12 }, pv) };
+    return window.__e.chargerPrevol().then(() => {
+      const l = document.getElementById('sv-cycle-l');
+      return {
+        badge: document.getElementById('sv-badge').textContent,
+        chrono: document.getElementById('sv-chrono').textContent,
+        etapes: l.hidden ? null : [...document.querySelectorAll('#sv-etapes li')].map((li) =>
+          li.className.replace('cycle-e', '').trim() + (li.getAttribute('aria-current') ? '@' : '') + ':' + li.textContent),
+        note: document.getElementById('sv-cycle-note').textContent,
+        prep: !!document.querySelector('#sv-cycle-note .vers-prep'),
+        colonnes: window.__colonnes.join(' | '),
+      };
+    });
+  }, { ligne, pv, refuse });
+
+  const prog = await tete({ id: 25, publiee: false, etat: 'programmee', prevue_le: dans(120), fin_prevue: dans(240),
+                            auto_ouvrir: true, auto_clore: true },
+                          { nature: 'projet', ouverte: false, demarree_le: null });
+  if (prog.badge !== 'Programmée') rates.push(`état : badge « ${prog.badge} » pour une séance programmée`);
+  if (!/\d\d:\d\d–\d\d:\d\d/.test(prog.chrono)) rates.push(`état : une séance programmée ne dit pas quand (« ${prog.chrono} »)`);
+  if (!prog.etapes || prog.etapes.length !== 4 || !/^faite:/.test(prog.etapes[0]) || !/^faite ici@:✓Programmé/.test(prog.etapes[1])) {
+    rates.push(`étapes : programmée → ${JSON.stringify(prog.etapes)}`);
+  }
+  if (!/ouverture automatique à \d\d:\d\d/.test(prog.note)) rates.push(`étapes : l'ouverture automatique n'est pas dite (« ${prog.note} »)`);
+  if (!/etat:etat_seance/.test(prog.colonnes)) rates.push(`état : la ligne de la séance n'est pas lue avec son état (${prog.colonnes})`);
+
+  const brou = await tete({ id: 25, publiee: false, etat: 'brouillon' }, { nature: 'projet', ouverte: false, demarree_le: null });
+  if (brou.badge !== 'Brouillon' || !brou.prep || !brou.etapes || !/^ici@:/.test(brou.etapes[0])) {
+    rates.push(`étapes : brouillon → badge « ${brou.badge} », lien vers Préparer ${brou.prep}, ${JSON.stringify(brou.etapes)}`);
+  }
+  // Lue « en cours » il y a six heures : l'écran dit « oubliée », comme la base le dirait maintenant.
+  const oub = await tete({ id: 25, publiee: true, etat: 'en_cours' },
+                         { nature: 'cours', ouverte: true, demarree_le: dans(-360), duree_min: 55 });
+  if (oub.badge !== 'Oubliée ouverte') rates.push(`état : « en_cours » lu il y a 6 h affiché « ${oub.badge} »`);
+  if (!oub.etapes || !/^sautee:/.test(oub.etapes[1])) rates.push(`étapes : une séance démarrée sans programmation ne saute pas « Programmée » — ${JSON.stringify(oub.etapes)}`);
+  // Sans la migration : la lecture d'avant, et pas d'étapes — y compris quand la base refuse les colonnes.
+  const sans = await tete({ id: 25, publiee: false }, { nature: 'projet', ouverte: false, demarree_le: null });
+  if (sans.badge !== 'Projet fermé' || sans.etapes) rates.push(`repli : badge « ${sans.badge} », étapes ${JSON.stringify(sans.etapes)}`);
+  const refus = await tete({ id: 25, publiee: false }, { nature: 'projet', ouverte: true, demarree_le: null }, true);
+  if (refus.badge !== 'Ouvert, caché') rates.push(`repli : colonnes refusées → badge « ${refus.badge} » (publiee perdue ?) — ${refus.colonnes}`);
+  console.log(`── état : « ${prog.badge} · ${prog.chrono} » · brouillon « ${brou.badge} » · oubliée « ${oub.badge} » · repli « ${sans.badge} » / « ${refus.badge} »`);
+  console.log('   étapes :', (prog.etapes || []).join(' › '), '·', prog.note);
+
+  // L'agenda du jour.
+  const a = (h) => { const d = new Date(); const [hh, mm] = h.split(':'); d.setHours(+hh, +mm, 0, 0); return d.toISOString(); };
+  const T = [{ id: 25, classe_id: 2, numero: 21, titre: 'Projet IA (1/2)', nature: 'projet', jalons: 4, echeance: '2026-10-16',
+               duree_min: 120, publiee: false, ouverte: false, module_id: 3 },
+             { id: 4, classe_id: 1, numero: 4, titre: 'Séance 4 - versionner', nature: 'cours', duree_min: 55,
+               publiee: true, ouverte: false, module_id: 4 },
+             { id: 3, classe_id: 1, numero: 3, titre: 'Séance 3', nature: 'cours', duree_min: 55, publiee: true, ouverte: true,
+               demarree_le: dans(-5 * 1440), module_id: 4 }];
+  const JOUR = { ok: true, jour: new Date().toISOString().slice(0, 10), maintenant: new Date().toISOString(),
+    automatique: true, emploi_du_temps: true,
+    creneaux: [{ classe_id: 1, nom: 'BTS SIO 1', debut: '08:00', fin: '09:00', debut_le: a('08:00'), fin_le: a('09:00') },
+               { classe_id: 1, nom: 'BTS SIO 1', debut: '10:00', fin: '11:00', debut_le: a('10:00'), fin_le: a('11:00') },
+               { classe_id: 2, nom: 'BTS SIO 2', debut: '15:00', fin: '17:00', debut_le: a('15:00'), fin_le: a('17:00') }],
+    seances: [
+      { id: 3, classe_id: 1, nom: 'BTS SIO 1', numero: 3, titre: 'Séance 3', nature: 'cours', etat: 'oubliee', manque: [],
+        ouverte: true, publiee: true, demarree_le: dans(-5 * 1440), duree_min: 55, journal: [] },
+      { id: 4, classe_id: 1, nom: 'BTS SIO 1', numero: 4, titre: 'Séance 4 - versionner', nature: 'cours', etat: 'programmee',
+        manque: [], ouverte: false, publiee: true, demarree_le: null, duree_min: 55,
+        prevue_le: a('10:05'), fin_prevue: a('11:00'), auto_ouvrir: false, auto_clore: true, journal: [] },
+      { id: 25, classe_id: 2, nom: 'BTS SIO 2', numero: 21, titre: 'Projet IA (1/2)', nature: 'projet', etat: 'programmee',
+        manque: [], ouverte: false, publiee: false, demarree_le: null, duree_min: 120,
+        prevue_le: a('15:00'), fin_prevue: a('17:00'), auto_ouvrir: true, auto_clore: true,
+        journal: [] }] };
+  const jour = await p.evaluate(({ T, JOUR }) => {
+    let e = document.getElementById('carte-jour');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    document.getElementById('pk-classe').innerHTML = '<option value="1">BTS SIO 1</option><option value="2">BTS SIO 2</option>';
+    window.__e.sb.from = function (t) {
+      const f = {};
+      const ch = { then: (ok, ko) => Promise.resolve({ data: t === 'seances'
+        ? T.filter((s) => Object.keys(f).every((k) => String(s[k]) === String(f[k]))) : [], error: null }).then(ok, ko) };
+      ['select', 'order', 'neq', 'in', 'limit'].forEach((m) => { ch[m] = () => ch; });
+      ch.eq = (c, v) => { f[c] = v; return ch; };
+      return ch;
+    };
+    window.__reponses = { aujourdhui: JOUR, enregistrer_seance: { ok: true, id: 25, cree: false },
+      preflight_seance: { ok: true, nature: 'cours', seance: 4, ouverte: false, duree_min: 55, questions: 10 } };
+    window.__appels.length = 0;
+    return window.__e.chargerJour().then(() => ({
+      visible: !document.getElementById('carte-jour').hidden,
+      lignes: [...document.querySelectorAll('#jour-liste .jour-l')].map((li) => ({
+        h: li.querySelector('.jour-h').textContent, geste: li.querySelector('.jour-a').dataset.geste,
+        badge: (li.querySelector('.badge') || {}).textContent || '', m: (li.querySelector('.jour-m') || {}).textContent || '',
+        maintenant: li.classList.contains('maintenant') })),
+      cibles: Math.min(...[...document.querySelectorAll('#jour-liste button')].map((b) => b.getBoundingClientRect().height)),
+    }));
+  }, { T, JOUR });
+  const gestes = jour.lignes.map((l) => l.geste).join(' ');
+  if (!jour.visible || gestes !== 'clore programmer demarrer ouvrir') {
+    rates.push(`aujourd'hui : gestes « ${gestes} », attendu « clore programmer demarrer ouvrir » (l'oubli d'abord, puis l'ordre des heures)`);
+  }
+  if (!/^depuis 5 j/.test(jour.lignes[0] && jour.lignes[0].h)) rates.push(`aujourd'hui : un oubli d'un autre jour affiche « ${jour.lignes[0] && jour.lignes[0].h} »`);
+  // Programmée à 10:05 : elle va sur le créneau de 10:00, pas sur une ligne à elle.
+  if (!jour.lignes[2] || jour.lignes[2].h !== '10:00–11:00' || jour.lignes.length !== 4) {
+    rates.push(`aujourd'hui : la séance 4 n'est pas sur son créneau (${JSON.stringify(jour.lignes)})`);
+  }
+  if (!/ouverture automatique à 15:00/.test(jour.lignes[3] && jour.lignes[3].m)) {
+    rates.push(`aujourd'hui : l'ouverture automatique prévue n'est pas dite (« ${jour.lignes[3] && jour.lignes[3].m} »)`);
+  }
+  // Le journal : un geste fait se dit ; « déjà ouverte » (l'enseignant avant
+  // l'automate) ne se dit pas comme un geste de l'automate, et n'annonce plus
+  // d'ouverture — l'automate ne rouvrira pas.
+  const notes = await p.evaluate((h) => [
+    window.__e.noteDuJour({ auto_ouvrir: true, prevue_le: h, ouverte: false, journal: [{ geste: 'ouvrir', note: 'deja', fait_le: h }] }),
+    window.__e.noteDuJour({ auto_ouvrir: true, prevue_le: h, ouverte: true, journal: [{ geste: 'ouvrir', note: null, fait_le: h }] })], a('15:00'));
+  if (notes[0] !== '' || !/^ouverte automatiquement à 15:00$/.test(notes[1])) rates.push(`aujourd'hui : journal → ${JSON.stringify(notes)}`);
+  if (jour.cibles < 44) rates.push(`aujourd'hui : une cible de ${Math.round(jour.cibles)} px`);
+
+  // Ouvrir le projet depuis l'agenda : enregistrer_seance (publie ET ouvre), jamais demarrer_seance.
+  await p.click('#jour-liste .jour-a[data-geste="ouvrir"]');
+  await p.waitForTimeout(400);
+  let ap = await p.evaluate(() => window.__appels.map((x) => x.nom + ' ' + JSON.stringify(x.args || {})));
+  const ouvre = ap.filter((x) => /^enregistrer_seance/.test(x))[0] || '';
+  if (!/"p_publiee":true/.test(ouvre) || !/"p_ouverte":true/.test(ouvre) || ap.some((x) => /^demarrer_seance/.test(x))) {
+    rates.push(`aujourd'hui : « Ouvrir » → ${ap.join(' | ')}`);
+  }
+  // Démarrer un cours depuis l'agenda : la séance est chargée dans le direct, puis demarrer_seance part sur ELLE.
+  await p.evaluate(() => { window.__appels.length = 0; });
+  await p.click('#jour-liste .jour-a[data-geste="demarrer"]');
+  await p.waitForTimeout(500);
+  ap = await p.evaluate(() => ({ appels: window.__appels.map((x) => x.nom + ' ' + JSON.stringify(x.args || {})),
+                                 suivie: window.__e.suivi.seanceId }));
+  if (String(ap.suivie) !== '4' || !ap.appels.some((x) => x === 'demarrer_seance {"p_seance_id":4}')) {
+    rates.push(`aujourd'hui : « Démarrer » → séance suivie ${ap.suivie}, ${ap.appels.join(' | ')}`);
+  }
+  // Clore un oubli : différé — rien ne part tout de suite.
+  await p.evaluate(() => { window.__appels.length = 0; });
+  await p.click('#jour-liste .jour-a[data-geste="clore"]');
+  await p.waitForTimeout(200);
+  const cl = await p.evaluate(() => ({ appels: window.__appels.map((x) => x.nom),
+    toast: [...document.querySelectorAll('.toast')].map((t) => t.textContent).join(' | ') }));
+  if (cl.appels.includes('clore_seance') || !/va être close/.test(cl.toast) || !/Annuler/.test(cl.toast)) {
+    rates.push(`aujourd'hui : « Clore » n'est pas différé avec « Annuler » (${cl.appels.join(', ')} · ${cl.toast})`);
+  }
+  // Refusée (migration absente) : la carte se cache. Vide : elle le dit, et propose l'emploi du temps.
+  const vide = await p.evaluate(() => {
+    window.__reponses.aujourdhui = { ok: true, jour: '2026-10-10', maintenant: new Date().toISOString(),
+      creneaux: [], seances: [], emploi_du_temps: false, automatique: false };
+    return window.__e.chargerJour().then(() => {
+      const v = { texte: document.getElementById('jour-liste').textContent };
+      window.__reponses.aujourdhui = { ok: false, motif: 'refus' };
+      return window.__e.chargerJour().then(() => Object.assign(v, { cachee: document.getElementById('carte-jour').hidden }));
+    });
+  });
+  if (!/Pas de cours prévu aujourd'hui/.test(vide.texte) || !/emploi du temps/.test(vide.texte)) rates.push(`aujourd'hui : vide → « ${vide.texte} »`);
+  if (!vide.cachee) rates.push('aujourd\'hui : la carte reste affichée quand aujourdhui() est refusée');
+
+  // Les deux lectures pures : croiser, et choisir la séance du jour.
+  const pur = await p.evaluate(() => {
+    const t0 = Date.parse('2026-10-12T15:10:00+02:00');
+    const L = [
+      { id: 1, classe_id: 1, numero: 3, nature: 'cours', ouverte: false, demarree_le: null, publiee: true },
+      { id: 2, classe_id: 2, numero: 21, nature: 'projet', ouverte: false, publiee: false,
+        prevue_le: '2026-10-12T15:00:00+02:00', fin_prevue: '2026-10-12T17:00:00+02:00' },
+      { id: 3, classe_id: 1, numero: 5, nature: 'cours', ouverte: false, publiee: false,
+        prevue_le: '2026-10-13T10:00:00+02:00', fin_prevue: '2026-10-13T11:00:00+02:00' }];
+    return {
+      creneau: (window.__e.seanceDuJour(L, ['1', '2'], t0) || {}).id,
+      programmee: (window.__e.seanceDuJour(L, ['1', '2'], Date.parse('2026-10-12T18:00:00+02:00')) || {}).id,
+      sansPlanning: (window.__e.seanceDuJour(L.map((s) => Object.assign({}, s, { prevue_le: null, fin_prevue: null })),
+        ['1', '2'], t0) || {}).id,
+      gestes: ['brouillon', 'prete', 'programmee', 'ouverte', 'en_cours', 'oubliee', 'terminee', 'cache', 'ouvert', 'clos']
+        .map((e) => e + '=' + window.__e.gesteDuJour({ etat: e, nature: ['cache', 'ouvert', 'clos'].includes(e) ? 'projet' : 'cours',
+          numero: 3, ouverte: ['ouverte', 'en_cours', 'cache', 'ouvert'].includes(e) }).cle).join(' '),
+    };
+  });
+  if (pur.creneau !== 2) rates.push(`séance du jour : à 15:10, ${pur.creneau} plutôt que la séance du créneau (2)`);
+  if (pur.programmee !== 3) rates.push(`séance du jour : à 18:00, ${pur.programmee} plutôt que la prochaine programmée (3)`);
+  if (pur.sansPlanning !== 1) rates.push(`séance du jour : sans planning, ${pur.sansPlanning} — la règle d'avant a changé`);
+  if (pur.gestes !== 'brouillon=preparer prete=demarrer programmee=demarrer ouverte=demarrer en_cours=suivre oubliee=clore terminee=bilan cache=montrer ouvert=suivre clos=bilan') {
+    rates.push(`aujourd'hui : un état sans son geste — ${pur.gestes}`);
+  }
+  if (erreurs.length) rates.push(`lot 2 : ${erreurs.join(' | ')}`);
+  console.log(`── aujourd'hui : ${jour.lignes.map((l) => l.h + ' ' + l.geste + (l.badge ? ' [' + l.badge + ']' : '')).join(' · ')}`);
+  console.log(`   séance du jour : créneau → ${pur.creneau}, après → ${pur.programmee}, sans planning → ${pur.sansPlanning}`);
+  await fermer();
+}
+
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
+console.log('  ✓ L\'état d\'une séance vient de la base et se lit en quatre étapes ;');
+console.log('    « Aujourd\'hui » croise créneaux et séances, un geste par ligne ;');
 console.log('  ✓ Les quatre chiffres sont gros sur un téléphone, tiennent sur une');
 console.log('    ligne, ne cassent pas leur grille, et les contrôles d\'entrée');
 console.log('    sont dans le bon onglet ; l\'écran de la séance a son en-tête collant,');

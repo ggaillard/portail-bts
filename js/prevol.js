@@ -176,6 +176,7 @@ function apresGeste(d, bouton, message){
   if (!d.ok) { erreur("err-prevol", d.detail); return; }
   erreur("err-prevol", "");
   toast(message);
+  document.dispatchEvent(new Event("tdc-seance-changee"));   // « Aujourd'hui » se relit
   return relire();
 }
 

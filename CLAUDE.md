@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**928 lignes**) + `styles/` (quinze feuilles) + `js/` + `styleguide.html` (le guide des composants) :
+`index.html` (**997 lignes**) + `styles/` (seize feuilles) + `js/` + `styleguide.html` (le guide des composants) :
 
 | module | ce qu'il porte |
 |---|---|
@@ -54,6 +54,9 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `refus.js` | `texteRefus()` : un refus de la base dit sa cause et quoi faire (05/10) |
 | `choixseance.js` | « Aller à une séance » : la recherche, motif Combobox, groupée classe › module, récentes (05/10) |
 | `raccourcis.js` | les raccourcis clavier et leur aide (`?`), désactivables (05/10) |
+| `etat.js` | l'état d'une séance calculé par la base (`etat_seance`) traduit : libellé, couleur, **les quatre étapes** ; la lecture avec repli si la migration manque (06/10) |
+| `planning.js` | le bloc « Quand » de la fiche (créneau, prochain créneau libre, options automatiques) et la carte « L'emploi du temps » (06/10) |
+| `aujourdhui.js` | « Aujourd'hui » en tête d'En cours : créneaux et séances du jour, un geste par ligne (06/10) |
 | `app.js` | l'orchestration : ouvrir l'un ou l'autre espace, la connexion, la déconnexion |
 
 plus `config.js` (URL Supabase, clé anon, codes de classe). Trois rôles :
@@ -84,7 +87,7 @@ semestre »). Refondu **par moment** :
 | Onglet (clé) | La question | Ce qu'on y trouve |
 |---|---|---|
 | Ligne épinglée — **Ce qui bloque** | *Est-ce que je peux faire cours ?* | `a_faire()`, **repliée sur une ligne** avec sa pastille ; dépliée d'office dès qu'un point est **bloquant**, jamais repliée d'autorité. |
-| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | L'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte et démarrée**, sinon démarrée aujourd'hui, sinon la **prochaine séance de cours** (publiée ou contrôle proposé, pas encore démarrée), sinon la dernière démarrée (`js/encours.js`). Un projet ouvert toute l'année n'est pas « la séance du jour ». |
+| **En cours** (`#appel`, par défaut) | *Qui est là, où en est l'heure ?* | **Aujourd'hui** (l'agenda du jour, depuis le 06/10), l'appel du jour, puis **La séance** — ouverte d'office sur la séance **ouverte et démarrée**, sinon **celle du créneau en cours** (planning), sinon démarrée aujourd'hui, sinon la **prochaine programmée**, sinon la **prochaine séance de cours** (publiée ou contrôle proposé, pas encore démarrée), sinon la dernière démarrée (`js/encours.js`). Un projet ouvert toute l'année n'est pas « la séance du jour ». |
 | **Préparer** (`#quest`) | *Qu'est-ce que je mets en place ?* | Les séances (groupées par module) en **liste + fiche** — infos, contrôle d'entrée, concepts, missions, « Prête à démarrer ? » —, l'inventaire des contrôles (replié), les questionnaires, les modules (replié). |
 | **Bilan** (`#ensemble`) | *Où en est-on ?* | Le semestre, module par module ; les classes ; « Faisons connaissance » et « Recherche de stage », repliés. |
 
@@ -302,7 +305,11 @@ en service : un script poussé sur GitHub n'est pas un script joué sur Supabase
 | `missions` | `seance_id`, `cle` (`tpN-mK`), `ordre`, `libelle`, `niveau`, `verbe` — lue seulement par fonctions |
 | `modules` | `classe_id`, `code`, `titre`, `description`, `icone`, `depot` (**obligatoire**, GitHub), `depot_enseignant`, `site`, `ordre` — lue seulement par fonctions |
 
+| `creneaux` | `classe_id`, `jour` (1 lundi … 7), `debut`, `fin` — l'emploi du temps, lu seulement par fonctions (06/10) |
+| `journal_auto` | `seance_id`, `geste` (ouvrir / clore), `pour` (le créneau), `note` (`deja`), `fait_le` — ce que l'automate a fait (06/10) |
+
 `seances.module_id` range une séance de cours ou de projet (< 90) dans un module de sa classe.
+`seances.prevue_le` / `fin_prevue` la programment ; `auto_ouvrir` / `auto_clore` confient l'ouverture et la clôture à la base (06/10).
 
 Fonctions : `rejoindre()`, `repondre()`, `qui_suis_je()`, `avatars_pris()`,
 `choisir_avatar()`, `est_enseignant()`, `purger_annee()`. RLS actif partout.
@@ -1441,6 +1448,67 @@ clic.
 - **L'avatar est unique dans la classe** — c'est ce qui rend le repère visuel
   fiable en projection. Les comptes de test prennent 🧪 et 🔬.
 
+## L'état d'une séance et son planning — le lot 2 (06/10)
+
+Migration `20261006060000_etat_et_planning.sql`. Trois défauts relevés le
+05/10 : une séance n'avait pas d'état mais six colonnes que chaque écran
+recombinait ; le portail ignorait l'emploi du temps et **devinait** la séance
+du jour ; ouvrir et clore reposaient sur la mémoire (la séance 3 du BTS1 est
+restée ouverte 121 h).
+
+- **L'état se calcule en base, une fois** : `etat_seance(seance)` rend
+  `brouillon · prete · programmee · ouverte · en_cours · oubliee · terminee`
+  (projet : `ouvert · cache · clos` ; 90-98 `propose / eteint` ; 99 `appel`).
+  Elle prend la ligne : PostgREST la lit comme une colonne
+  (`select=…,etat:etat_seance`), `seances_de_classe()` et `aujourdhui()` la
+  rendent. **« Prête » = la liste « Prête à démarrer ? »** (`_manque_seance()`) :
+  corrigés et concepts pour un cours, missions ou jalons et échéance pour un
+  projet, un module si la classe en a. `js/etat.js` traduit, ne recalcule pas
+  — sauf le temps qui passe (« en cours » lu il y a 6 h → « oubliée ») et le
+  repli sans migration (la lecture d'avant, et pas d'étapes).
+  ⚠️ `seances_de_classe()` est **réécrite en entier** dans cette migration.
+- **Les étapes** sous l'en-tête de la séance : Préparée › Programmée › En
+  cours › Terminée (projet : Préparé › Programmé › Ouvert › Clos), liste
+  ordonnée avec `aria-current="step"`. « Programmée » est **sautée** (tirets)
+  quand une séance a commencé sans être programmée : on ne le prétend pas. Une
+  ligne dit la suite : « Pas prête : la régler dans Préparer › », « Pas de
+  créneau : la programmer › », « ouverture automatique à 15:00 ».
+- **Le planning** : `prevue_le` / `fin_prevue` par séance (`planifier_seance()`,
+  appelée par la fiche **après** `enregistrer_seance()` et **seulement si le
+  bloc « Quand » a changé** — le choix de `ranger_seance()`) ; l'emploi du
+  temps par classe (`creneaux`, `definir_creneaux()` : « lundi 15:00-17:00 »,
+  une ligne illisible ou deux créneaux qui se chevauchent font tout refuser).
+  « Prochain créneau libre » saute les créneaux où la classe a déjà une séance ;
+  un second clic passe au suivant (une semaine de vacances se saute ainsi).
+  **Aucun emploi du temps n'est dans une migration** : le dépôt est public.
+- **Les heures sont celles de Paris** côté base (`at time zone
+  'Europe/Paris'`), celles du navigateur côté page : la base range des
+  instants.
+- **« Aujourd'hui »** (`aujourdhui()`, `js/aujourdhui.js`) : créneaux du jour
+  et séances du jour (programmées, démarrées ce jour-là, ou un cours encore
+  ouvert), croisés — une ligne par créneau, **un geste** : Démarrer (le même
+  `pilotage()` que l'en-tête, sur la séance chargée), Ouvrir (`ouvrirSeance`,
+  jamais `demarrer_seance`), Clore une oubliée (différé, « Annuler »), Rendre
+  visible, Préparer ›, Compte rendu ›, ou Programmer › sur un créneau vide.
+  Un projet ouvert depuis des semaines n'y est pas. Les démos non plus. Elle se
+  relit chaque minute et sur l'évènement `tdc-seance-changee`, que tout geste
+  d'état émet (pilotage, pré-vol, Préparer, agenda).
+- **En cours s'ouvre sur la séance du créneau** (quinze minutes d'avance
+  comprises), puis sur la prochaine programmée ; sans planning, rien ne change.
+- **L'automate** (`auto_ouvrir`, `auto_clore`, faux par défaut) :
+  `seances_a_l_heure()`, chaque minute par pg_cron. Il ouvre au début du
+  créneau (un cours est **démarré**, chrono compris ; un projet publié et
+  ouvert) et clôt **15 min après la fin**. **Une fois par créneau, jamais
+  contre l'enseignant** : ce qui est déjà dans l'état voulu au moment du geste
+  est noté `deja` au journal, et la clé (séance, geste, `prevue_le`) empêche de
+  rouvrir une séance close à la main ou de reclore une séance rouverte.
+  Rien sur un créneau périmé (au-delà d'un jour après la fin). **Révoquée pour
+  anon et authenticated** — elle ouvrirait des séances sur simple requête.
+  pg_cron est **absent de la base d'essai du workflow** : son activation est
+  gardée ; le portail dit « à l'arrêt » et propose `activer_planification()`.
+- Pas encore : « Cette semaine » ne compare pas le prévu au fait ; `a_faire()`
+  n'a pas de règle « séance du jour pas prête ».
+
 ## Ergonomie et accessibilité — le lot 1 (05/10)
 
 Proposé et accepté le 05/10 (`claude/application-seance-propositions.md` dans
@@ -1486,7 +1554,9 @@ Scapin**, **ISO 9241-110**, **WCAG 2.2 AA** (le RGAA 5 l'intégrera), motifs des
   **Clore n'a pas de raccourci**.
 
 **Contrôle automatique** : `t_navigation.mjs` passe **axe-core** (version
-fixée) sur la connexion, les trois onglets enseignant et `styleguide.html`, à
+fixée) sur la connexion, les trois onglets enseignant (Préparer deux fois :
+avec la fiche d'une séance et l'emploi du temps ouverts, depuis le 06/10) et
+`styleguide.html`, à
 390 et 1 280 px, **en clair et en sombre**, puis vérifie qu'à 320 px rien ne
 défile en largeur (WCAG 1.4.10). Zéro violation attendue ; cassé le 05/10 en
 remettant le blanc sur le bouton sombre (9 violations nommées).

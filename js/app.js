@@ -68,6 +68,8 @@ import './raccourcis.js';
 import { chargerCarnet } from './carnet.js';
 import { chargerSemaine } from './semaine.js';
 import { chargerEquipes, chargerEquipeEtu } from './equipes.js';
+import { chargerJour } from './aujourdhui.js';
+import { chargerEmploiDuTemps } from './planning.js';
 
 (function(){
 "use strict";
@@ -421,6 +423,8 @@ function ouvrirEspaceEnseignant(){
     chargerEquipes();
     choisirSeanceDuJour(classes);
     chargerGestion(classes);
+    chargerJour();                    // l'agenda du jour, en tête d'En cours (06/10)
+    chargerEmploiDuTemps(classes);
 
     classes.forEach(function(c){
       var tr = document.createElement("tr");

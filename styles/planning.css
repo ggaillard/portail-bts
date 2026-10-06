@@ -1,0 +1,68 @@
+/* ── planning ───────────────────────────────────────
+   Lot 2 des propositions du 05/10 (06/10) : l'état d'une séance en quatre
+   étapes, le bloc « Quand » de sa fiche, l'emploi du temps, et la carte
+   « Aujourd'hui » d'En cours. Classes neuves seulement : la position de la
+   feuille (avant composants.css) ne départage rien. Couleurs : les jetons du
+   thème, rien en dur — axe-core relit tout cela en clair et en sombre.
+   ───────────────────────────────────────────────── */
+
+/* Le bleu « en cours » de la grammaire de pilote.css, pour une séance
+   programmée : elle avance, elle n'est ni faite ni à surveiller. */
+.badge.encours{background:var(--accent-soft);color:var(--accent-ink)}
+
+/* ── Les étapes (APG : une liste ordonnée, aria-current="step") ── */
+.cycle-l{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .9rem;margin:.55rem 0 .2rem}
+.cycle{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.25rem .2rem;counter-reset:none}
+.cycle-e{display:inline-flex;align-items:center;gap:.3rem;font-size:.82rem;color:var(--ink-soft);
+  padding:.1rem .55rem .1rem .2rem;border-radius:999px}
+.cycle-e + .cycle-e::before{content:"›";color:var(--ink-faint);margin:0 .15rem 0 -.1rem}
+.cycle-m{display:inline-flex;align-items:center;justify-content:center;width:1.25rem;height:1.25rem;
+  border-radius:50%;border:1.5px solid var(--ink-soft);font-size:.72rem;font-weight:600;line-height:1}
+.cycle-e.faite{color:var(--ink)}
+.cycle-e.faite .cycle-m{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.cycle-e.sautee .cycle-m{border-style:dashed}
+.cycle-e.ici{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.cycle-e.ici .cycle-m{border-color:var(--accent-ink)}
+.cycle-note{font-size:.84rem;color:var(--ink-soft)}
+.cycle-note .btn-discret{min-height:44px;font-size:.84rem}
+
+/* ── Préparer : la ligne d'une séance, et le bloc « Quand » ── */
+.gs-etat{margin:.15rem 0 .1rem;align-self:flex-start}
+.gs-quand{margin:1rem 0 .4rem;padding:.7rem .8rem .5rem;border:1px solid var(--rule);border-radius:10px;min-width:0}
+.gs-quand legend{font-weight:600;font-size:.92rem;padding:0 .35rem;color:var(--ink)}
+.gs-quand .pick{margin:.5rem 0 .1rem}
+.gs-quand .sous-hint{margin:.2rem 0}
+.gs-quand .gs-case input[disabled] + *{opacity:.6}
+
+/* ── L'emploi du temps ── */
+details.card.plie > summary .badge{margin-right:.5rem}
+.edt-l{display:block;font-size:.85rem;font-weight:600;margin:.7rem 0 .25rem}
+#edt-texte{width:100%;font-family:var(--f-mono);font-size:.88rem;background:var(--surface-alt);color:var(--ink);
+  border:1px solid var(--rule);border-radius:8px;padding:.5rem .6rem}
+
+/* ── Aujourd'hui ──
+   Une grille par ligne : l'heure, ce que c'est, l'état, le geste. Sur un
+   téléphone, deux rangées — l'heure et l'état, puis le titre et le geste ;
+   l'heure reste en tête, c'est elle qu'on cherche. */
+.jour-carte h2{margin-bottom:.1rem}
+.jour-liste{list-style:none;margin:.5rem 0 0;padding:0}
+.jour-l{display:grid;grid-template-columns:6.6rem minmax(0,1fr) auto auto;align-items:center;gap:.35rem .7rem;
+  padding:.5rem .3rem;border-top:1px solid var(--rule-soft)}
+.jour-l:first-child{border-top:0}
+.jour-l.maintenant{background:var(--accent-soft);border-radius:8px;box-shadow:inset 3px 0 0 var(--accent)}
+.jour-h{font-family:var(--f-mono);font-size:.86rem;font-weight:600;color:var(--ink);white-space:nowrap}
+.jour-t{display:flex;flex-direction:column;min-width:0}
+.jour-c{font-size:.76rem;color:var(--ink-soft)}
+.jour-s{min-height:44px;padding:.2rem 0;text-align:left;font-weight:600;color:var(--ink)}
+.jour-m{font-size:.8rem;color:var(--ink-soft)}
+.jour-libre .jour-m{font-style:italic}
+.jour-l > .badge{grid-column:3}
+.jour-a{grid-column:4;white-space:nowrap}
+.jour-vide{padding:.4rem 0;color:var(--ink-soft)}
+@media (max-width: 30rem){
+  .jour-l{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"h b" "t a"}
+  .jour-h{grid-area:h}
+  .jour-l > .badge{grid-area:b;grid-column:auto}
+  .jour-t{grid-area:t}
+  .jour-a{grid-area:a;grid-column:auto;justify-self:end;align-self:end}
+}

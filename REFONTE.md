@@ -1264,3 +1264,26 @@ détail dans `JOURNAL.md` et dans CLAUDE.md, « Ergonomie et accessibilité ») 
 
 Les chiffres de `mesurer.mjs` après ce lot : 928 lignes d'`index.html`, 15
 feuilles, 38 modules, 10 493 lignes de JavaScript, 64 fonctions RPC appelées.
+
+**Le 06/10, le lot 2 des propositions** (l'état d'une séance et son planning,
+détail dans `JOURNAL.md` et dans CLAUDE.md, « L'état d'une séance et son
+planning ») :
+
+- trois modules neufs, chacun d'un sujet : `etat.js` (traduire l'état que
+  calcule la base), `planning.js` (le bloc « Quand » et l'emploi du temps),
+  `aujourdhui.js` (l'agenda du jour) ; `seance.js` monte à 635 lignes, sous le
+  plafond, et n'a reçu qu'une lecture et un évènement ;
+- une feuille de plus, `styles/planning.css`, placée **avant**
+  `composants.css` : classes neuves seulement ; une media query de plus, sur un
+  seuil déclaré (`telephone`) ;
+- `index.html` gagne 69 lignes : la carte « Aujourd'hui », les étapes sous
+  l'en-tête de la séance, le bloc « Quand » de la fiche, la carte « L'emploi du
+  temps » ;
+- cinq fonctions RPC de plus appelées par la page (`aujourdhui`,
+  `emploi_du_temps`, `definir_creneaux`, `planifier_seance`,
+  `activer_planification`), toutes dans la migration `20261006060000` ;
+- aucun contrôle neuf : `t_suivi`, `t_missions` et `t_navigation` s'étendent,
+  et chacun a été cassé pour voir ce qu'il dit (`JOURNAL.md`).
+
+Les chiffres de `mesurer.mjs` après ce lot : 997 lignes d'`index.html`, 16
+feuilles, 41 modules, 11 328 lignes de JavaScript, 69 fonctions RPC appelées.

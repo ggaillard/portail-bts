@@ -291,7 +291,22 @@ function donneesEnseignant(){
       demarree_le: new Date(Date.now() - 20 * 60000).toISOString(), appel_du_jour: true, eleves: 6, avec_pin: 6, deja_connectes: 6 },
     seances_de_classe: { ok: true, liste: [
       { id: 25, numero: 11, titre: 'IA 1', nature: 'projet', jalons: 5, echeance: '2026-10-16', duree_min: 180,
-        ouverte: false, publiee: false, missions: 5, corriges: 0, reponses: 0, module_id: 3 }] },
+        ouverte: false, publiee: false, missions: 5, corriges: 0, reponses: 0, module_id: 3,
+        // Lot 2 (06/10) : l'état et le planning, pour que l'audit voie le badge,
+        // le bloc « Quand » de la fiche et ses options.
+        etat: 'programmee', manque: [], demarree_le: null, auto_ouvrir: true, auto_clore: false,
+        prevue_le: new Date(Date.now() + 3 * 3600000).toISOString(), fin_prevue: new Date(Date.now() + 5 * 3600000).toISOString() }] },
+    // L'agenda du jour et l'emploi du temps : une ligne de chaque sorte.
+    aujourdhui: { ok: true, jour: new Date().toISOString().slice(0, 10), maintenant: new Date().toISOString(),
+      automatique: false, emploi_du_temps: true,
+      creneaux: [{ classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', debut: '08:00', fin: '09:00',
+                   debut_le: new Date(Date.now() + 3600000).toISOString(), fin_le: new Date(Date.now() + 7200000).toISOString() }],
+      seances: [{ id: 3, classe_id: 1, nom: 'BTS SIO 1 - Bloc 1 DEV', numero: 3, titre: 'Séance 3 - où vit la donnée',
+        nature: 'cours', etat: 'en_cours', manque: [], ouverte: true, publiee: true, duree_min: 55,
+        demarree_le: new Date(Date.now() - 20 * 60000).toISOString(), auto_clore: true,
+        prevue_le: new Date(Date.now() - 25 * 60000).toISOString(), fin_prevue: new Date(Date.now() + 30 * 60000).toISOString(), journal: [] }] },
+    emploi_du_temps: { ok: true, automatique: false, pg_cron: false, classes: [
+      { id: 1, code: 'BTS1-DEV-2026', nom: 'BTS SIO 1 - Bloc 1 DEV', creneaux: [{ jour: 2, debut: '08:00', fin: '09:00' }] }] },
   };
   return window.__e.ouvrirEspaceEnseignant();
 }
@@ -317,6 +332,21 @@ if (!AXE) {
         await e.page.evaluate((v) => document.getElementById('ong-' + v).click(), v);
         await e.page.waitForTimeout(300);
         await auditer(e.page, `${v} ${theme} ${largeur}`);
+        // Préparer, une seconde fois : la fiche d'une séance (le bloc « Quand »)
+        // et l'emploi du temps déplié — ce que l'onglet fermé ne montre pas.
+        if (v === 'quest') {
+          await e.page.evaluate(() => {
+            const b = document.querySelector('#gs-liste .gs-b');
+            if (b) b.click();
+            const d = document.getElementById('carte-edt');
+            if (d) d.open = true;
+          });
+          await e.page.waitForTimeout(400);
+          const ouverte = await e.page.evaluate(() => !document.getElementById('gs-quand').hidden &&
+            !document.getElementById('carte-edt').hidden && document.getElementById('carte-edt').open);
+          if (!ouverte) rates.push(`audit ${theme} ${largeur} : la fiche ou l'emploi du temps ne s'ouvrent pas — rien vérifié là`);
+          await auditer(e.page, `quest+fiche ${theme} ${largeur}`);
+        }
       }
       if (e.erreurs.length) rates.push(`audit ${theme} ${largeur} : erreur JS — ${e.erreurs[0]}`);
       await e.fermer();

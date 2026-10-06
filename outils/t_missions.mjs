@@ -602,6 +602,144 @@ for (const w of [390, 1280]) {
   await fermer();
 }
 
+// ─── 8. Le planning (06/10, lot 2) ─────────────────────────────────────────
+// Le bloc « Quand » de la fiche : prérempli à l'heure de la salle, envoyé à
+// planifier_seance() SEULEMENT s'il a changé, refusé avant tout envoi s'il
+// est à moitié rempli, absent sur une séance d'avant la migration. Le
+// prochain créneau libre saute les créneaux déjà pris, et un second clic
+// passe au suivant. La carte « L'emploi du temps » réécrit d'un coup et
+// propose de mettre l'automate en marche quand il est à l'arrêt.
+for (const w of [390, 1280]) {
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: w });
+  await p.evaluate(() => {
+    // Les deux prochains créneaux (lundi et mardi, 15:00) sont déjà pris.
+    const prochain = (iso) => { const d = new Date(); d.setHours(15, 0, 0, 0);
+      while (((d.getDay() + 6) % 7 + 1) !== iso || d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); return d; };
+    const plus = (d, h) => new Date(d.getTime() + h * 3600000).toISOString();
+    const lun = prochain(1), mar = prochain(2);
+    window.__pris = [lun.toISOString(), mar.toISOString()];
+    const L = (o) => Object.assign({ nature: 'projet', jalons: 4, echeance: '2026-10-16', duree_min: 120, ouverte: false,
+      publiee: false, missions: 4, corriges: 0, reponses: 0, module_id: null, demarree_le: null, prevue_le: null,
+      fin_prevue: null, auto_ouvrir: false, auto_clore: false, manque: [] }, o);
+    window.__reponses = {
+      seances_de_classe: { ok: true, liste: [
+        L({ id: 25, numero: 21, titre: 'Projet IA (1/2)', etat: 'programmee', prevue_le: lun.toISOString(), fin_prevue: plus(lun, 2),
+            auto_ouvrir: true, auto_clore: true }),
+        L({ id: 26, numero: 22, titre: 'Projet IA (2/2)', etat: 'prete' }),
+        L({ id: 27, numero: 23, titre: 'Projet IA (3/2)', etat: 'programmee', prevue_le: mar.toISOString(), fin_prevue: plus(mar, 2) })] },
+      emploi_du_temps: { ok: true, automatique: false, pg_cron: true, classes: [
+        { id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM',
+          creneaux: [{ jour: 1, debut: '15:00', fin: '17:00' }, { jour: 2, debut: '15:00', fin: '17:00' }] }] },
+      enregistrer_seance: { ok: true, id: 25, cree: false },
+      planifier_seance: { ok: true, etat: 'programmee' },
+      definir_creneaux: { ok: true, creneaux: 1 },
+      activer_planification: { ok: true, automatique: true } };
+    let e = document.getElementById('volet-quest');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    document.getElementById('espace-ens').hidden = false;
+    const cl = [{ id: 2, code: 'BTS2-SLAM-2026', nom: 'BTS SIO 2 - SLAM' }];
+    window.__e.chargerGestion(cl);
+    return window.__e.chargerEmploiDuTemps(cl);
+  });
+  await pause(p, 200);
+  const liste = await p.evaluate(() => [...document.querySelectorAll('#gs-liste .gs-l')].map((l) =>
+    ((l.querySelector('.gs-etat') || {}).textContent || '') + ' | ' + l.querySelector('.gs-meta').textContent));
+  if (!/^Programmée \| .*15:00–17:00 \(ouverture et clôture auto\)/.test(liste[0] || '') || !/^Prête \| /.test(liste[1] || '')) {
+    rates.push(`${w} px (planning) : lignes « ${liste.slice(0, 2).join(' / ')} »`);
+  }
+
+  // La fiche d'une séance programmée : préremplie, et rien ne part si rien ne change.
+  await p.click('#gs-liste .gs-l:nth-child(1) .gs-b');
+  await pause(p, 200);
+  const f1 = await p.evaluate(() => ({ visible: !document.getElementById('gs-quand').hidden,
+    jour: document.getElementById('gs-jour').value, debut: document.getElementById('gs-debut').value,
+    fin: document.getElementById('gs-fin').value, ao: document.getElementById('gs-auto-ouvrir').checked,
+    note: document.getElementById('gs-auto-note').textContent,
+    attendu: (() => { const d = new Date(window.__pris[0]); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })() }));
+  if (!f1.visible || f1.jour !== f1.attendu || f1.debut !== '15:00' || f1.fin !== '17:00' || !f1.ao) {
+    rates.push(`${w} px (planning) : fiche préremplie ${JSON.stringify(f1)}`);
+  }
+  if (!/à l'arrêt/.test(f1.note)) rates.push(`${w} px (planning) : option cochée, automate à l'arrêt, et rien ne le dit (« ${f1.note} »)`);
+  await p.evaluate(() => { window.__appels.length = 0; });
+  await p.click('#b-gs-ok');
+  await pause(p, 200);
+  let ap = await p.evaluate(() => window.__appels.map((x) => x.nom));
+  if (ap.includes('planifier_seance') || !ap.includes('enregistrer_seance')) rates.push(`${w} px (planning) : sans changement → ${ap.join(', ')}`);
+
+  // L'heure change : planifier_seance() part, avec l'instant de la salle. La
+  // fiche est restée ouverte sur la séance (sur un téléphone, à la place de la liste).
+  await pause(p, 150);
+  await p.fill('#gs-debut', '15:30');
+  await p.evaluate(() => { document.getElementById('gs-debut').dispatchEvent(new Event('change')); window.__appels.length = 0; });
+  await p.click('#b-gs-ok');
+  await pause(p, 250);
+  const pl = await p.evaluate(() => ({ a: window.__appels.filter((x) => x.nom === 'planifier_seance').map((x) => x.args)[0],
+    attendu: new Date(new Date(window.__pris[0]).getTime() + 30 * 60000).toISOString() }));
+  if (!pl.a || pl.a.p_seance_id !== 25 || pl.a.p_prevue_le !== pl.attendu || pl.a.p_auto_ouvrir !== true || pl.a.p_auto_clore !== true) {
+    rates.push(`${w} px (planning) : planifier_seance ${JSON.stringify(pl.a)}, attendu début ${pl.attendu}`);
+  }
+
+  // Une séance sans date : le prochain créneau libre saute les deux pris ; un second clic avance.
+  await p.evaluate(() => document.querySelector('#gs-liste .gs-l:nth-child(2) .gs-b').click());
+  await pause(p, 150);
+  const lire = () => p.evaluate(() => ({ jour: document.getElementById('gs-jour').value, debut: document.getElementById('gs-debut').value,
+    fin: document.getElementById('gs-fin').value, inactif: document.getElementById('gs-auto-ouvrir').disabled }));
+  const vide = await lire();
+  await p.click('#b-gs-creneau');
+  const c1 = await lire();
+  await p.click('#b-gs-creneau');
+  const c2 = await lire();
+  const verdict = await p.evaluate(({ c1, c2 }) => {
+    const t = (c) => new Date(c.jour + 'T' + c.debut).getTime();
+    const pris = window.__pris.map((x) => Date.parse(x));
+    const jourIso = (c) => (new Date(c.jour + 'T12:00').getDay() + 6) % 7 + 1;
+    return { libre1: !pris.includes(t(c1)), libre2: !pris.includes(t(c2)), avance: t(c2) > t(c1),
+             jours: [jourIso(c1), jourIso(c2)], apres: t(c1) > Math.max(...pris) };
+  }, { c1, c2 });
+  if (vide.jour || !vide.inactif) rates.push(`${w} px (planning) : séance sans date ${JSON.stringify(vide)} (options actives sans créneau ?)`);
+  if (c1.debut !== '15:00' || c1.fin !== '17:00' || !verdict.libre1 || !verdict.libre2 || !verdict.avance || !verdict.apres ||
+      verdict.jours.some((j) => j !== 1 && j !== 2) || c1.inactif) {
+    rates.push(`${w} px (planning) : prochain créneau ${JSON.stringify(c1)} puis ${JSON.stringify(c2)} — ${JSON.stringify(verdict)}`);
+  }
+  // À moitié rempli : refusé avant d'écrire quoi que ce soit.
+  await p.fill('#gs-debut', '');
+  await p.evaluate(() => { window.__appels.length = 0; });
+  await p.click('#b-gs-ok');
+  await pause(p, 120);
+  const moitie = await p.evaluate(() => ({ a: window.__appels.map((x) => x.nom), msg: document.getElementById('err-gs').textContent }));
+  if (moitie.a.length || !/jour ET l'heure de début/.test(moitie.msg)) rates.push(`${w} px (planning) : jour sans heure → ${JSON.stringify(moitie)}`);
+  // Une séance lue sans `etat` (migration absente) : pas de bloc.
+  const ancien = await p.evaluate(() => window.__e.remplirPlanning({ id: 9, numero: 1, titre: 'x' }, 2, [])
+    .then(() => document.getElementById('gs-quand').hidden));
+  if (!ancien) rates.push(`${w} px (planning) : le bloc « Quand » s'affiche pour une séance que la base ne sait pas programmer`);
+
+  // L'emploi du temps.
+  const edt = await p.evaluate(() => ({ visible: !document.getElementById('carte-edt').hidden,
+    texte: document.getElementById('edt-texte').value, resume: document.getElementById('edt-resume').textContent,
+    auto: !document.getElementById('b-edt-auto').hidden }));
+  if (!edt.visible || edt.texte !== 'lundi 15:00-17:00\nmardi 15:00-17:00' || edt.resume !== '2 créneaux' || !edt.auto) {
+    rates.push(`${w} px (planning) : emploi du temps ${JSON.stringify(edt)}`);
+  }
+  await p.evaluate(() => { const d = document.getElementById('carte-edt'); d.open = true; window.__appels.length = 0; });
+  await p.fill('#edt-texte', 'lundi 15h-17h');
+  await p.click('#b-edt-ok');
+  await pause(p, 150);
+  await p.click('#b-edt-auto');
+  await pause(p, 150);
+  const ec = await p.evaluate(() => window.__appels.map((x) => x.nom + ' ' + JSON.stringify(x.args || {})));
+  if (!ec.some((x) => x === 'definir_creneaux {"p_classe_id":2,"p_texte":"lundi 15h-17h"}') || !ec.some((x) => /^activer_planification/.test(x))) {
+    rates.push(`${w} px (planning) : emploi du temps → ${ec.join(' | ')}`);
+  }
+  const cibles = await p.evaluate(() => [...document.querySelectorAll('#gs-quand button, #gs-quand input, #carte-edt button')]
+    .filter((x) => x.offsetParent && x.type !== 'checkbox').filter((x) => x.getBoundingClientRect().height < 44).map((x) => x.id || x.textContent));
+  if (cibles.length) rates.push(`${w} px (planning) : cibles sous 44 px — ${cibles.join(', ')}`);
+  const debord = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  if (debord > 0) rates.push(`${w} px (planning) : la page déborde de ${debord} px`);
+  if (erreurs.length) rates.push(`${w} px (planning) : ${erreurs.join(' | ')}`);
+  console.log(`── ${w} px · planning : ${liste[0]} · prochain ${c1.jour} ${c1.debut} puis ${c2.jour} · emploi du temps ${edt.resume}`);
+  await fermer();
+}
+
 await nav.close();
 if (rates.length) {
   console.log('\n✗ ' + rates.length + ' défaut(s) :');

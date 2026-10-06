@@ -22,6 +22,50 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 6 octobre 2026 — lot 2 : l'état d'une séance, le planning, l'automate
+
+Demandé : « faire le lot 2 » des propositions du 05/10. **Une migration**,
+`20261006060000_etat_et_planning.sql` — appliquée à Supabase par le workflow
+dès la poussée sur `main` ; vérifier dans l'onglet Actions que « appliquer »
+est vert avant de conclure qu'elle est en base.
+
+| Item | Où | Quoi |
+|---|---|---|
+| 2.1 État unique | migration (`etat_seance()`, `_manque_seance()`), `js/etat.js` (neuf), `pilote.js`, `seance.js`, `choixseance.js`, `gestion.js` | un mot calculé en base — brouillon, prête, programmée, en cours, oubliée, terminée (projet : ouvert, caché, clos) ; l'en-tête, la recherche et Préparer le lisent ; quatre étapes sous l'en-tête de la séance |
+| 2.2 Planning | migration (`prevue_le`, `fin_prevue`, table `creneaux`, `planifier_seance()`, `definir_creneaux()`, `emploi_du_temps()`), `js/planning.js` (neuf), `index.html` | bloc « Quand » dans la fiche (jour, début, fin, « Prochain créneau libre ») ; carte « L'emploi du temps » dans Préparer ; `encours.js` choisit la séance du créneau en cours, puis la prochaine programmée |
+| 2.3 Aujourd'hui | migration (`aujourdhui()`), `js/aujourdhui.js` (neuf), `index.html` | l'agenda du jour en tête d'En cours, toutes classes : un créneau par ligne, son état, un geste (Démarrer, Ouvrir, Clore différé, Rendre visible, Préparer, Compte rendu) |
+| 2.4 À l'heure | migration (`auto_ouvrir`, `auto_clore`, `journal_auto`, `seances_a_l_heure()`, pg_cron, `activer_planification()`) | deux options par séance ; la base ouvre au début du créneau (un cours est démarré) et clôt 15 min après la fin ; une fois par créneau, jamais contre un geste de l'enseignant |
+
+**pg_cron** : la migration l'active et pose la tâche « seances-a-l-heure »
+(chaque minute) si le serveur le permet ; sinon elle passe et le dit. Le
+portail affiche alors « ouverture automatique à l'arrêt » (carte
+« Aujourd'hui » et « L'emploi du temps »), et le bouton « Mettre l'automate en
+marche » appelle `activer_planification()` une fois l'extension activée dans
+Supabase → Database → Extensions. Vérifier en SQL :
+`select jobname, schedule, active from cron.job;`
+
+**Aucun emploi du temps n'est posé par la migration** (le dépôt est public) :
+il se tape dans Préparer → L'emploi du temps, une ligne par créneau.
+
+Vérifié : la chaîne rejouée deux fois sur une base neuve (postgres 16 sans
+pg_cron, comme le workflow), puis sur une base AVEC pg_cron, où la tâche a
+réellement ouvert une séance programmée à la minute suivante. Les
+vérifications de la migration ont été cassées trois fois (sans la ligne
+« déjà ouverte », sans « déjà close », l'automate rendu appelable par
+`authenticated`) : chacune nomme sa faute. Côté portail : `t_suivi` (état,
+étapes, repli sans migration, agenda, séance du jour ; cassé en retirant la
+règle du créneau et le repli des colonnes), `t_missions` (bloc « Quand »,
+prochain créneau, emploi du temps ; cassé en envoyant `planifier_seance` à
+chaque enregistrement), `t_navigation` (axe-core voit maintenant l'agenda, la
+fiche et l'emploi du temps ; cassé avec une légende à 1,3 : 1).
+
+Pas fait dans ce lot : « Cette semaine » ne compare pas encore le prévu au
+fait, et `a_faire()` n'a pas de règle « séance du jour pas prête » — l'agenda
+le montre déjà, et réécrire `a_faire()` en entier pour une ligne n'en valait
+pas le risque.
+
+---
+
 ## 5 octobre 2026 (soir) — lot 1 : ergonomie et accessibilité
 
 Accepté : le lot 1 des propositions du même jour (`claude/application-seance-propositions.md`

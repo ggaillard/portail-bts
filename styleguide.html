@@ -26,6 +26,7 @@
 <link rel="stylesheet" href="styles/moments.css">
 <link rel="stylesheet" href="styles/pilote.css">
 <link rel="stylesheet" href="styles/indicateurs.css">
+<link rel="stylesheet" href="styles/planning.css">
 <link rel="stylesheet" href="styles/composants.css">
 <style>
   .sg-l{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0 1rem}
@@ -102,6 +103,24 @@
   </div>
   <div class="msg">Message d'erreur : ce qui s'est passé, puis quoi faire.</div>
   <div class="msg ok">Confirmation : le geste a été pris en compte.</div>
+</section>
+
+<section class="card" aria-labelledby="sg-etapes">
+  <h2 id="sg-etapes">Étapes d'une séance, agenda du jour</h2>
+  <div class="cycle-l"><ol class="cycle" aria-label="Exemple d'étapes">
+    <li class="cycle-e faite"><span class="cycle-m" aria-hidden="true">✓</span>Préparée<span class="vh"> (fait)</span></li>
+    <li class="cycle-e faite ici" aria-current="step"><span class="cycle-m" aria-hidden="true">✓</span>Programmée<span class="vh"> (fait)</span></li>
+    <li class="cycle-e"><span class="cycle-m" aria-hidden="true">3</span>En cours</li>
+    <li class="cycle-e sautee"><span class="cycle-m" aria-hidden="true">–</span>Terminée</li>
+  </ol><span class="cycle-note">ouverture automatique à 15:00 · <button class="btn-discret" type="button">la programmer ›</button></span></div>
+  <ul class="jour-liste">
+    <li class="jour-l maintenant"><span class="jour-h">15:00–17:00</span><span class="jour-t"><span class="jour-c">BTS SIO 2 - SLAM</span>
+      <button class="btn-discret jour-s" type="button">21 — Projet IA (1/2)</button><span class="jour-m">ouverture automatique à 15:00</span></span>
+      <span class="badge encours">Programmée</span><button class="btn jour-a" type="button">Ouvrir</button></li>
+    <li class="jour-l jour-libre"><span class="jour-h">10:00–11:00</span><span class="jour-t"><span class="jour-c">BTS SIO 1 - Bloc 1 DEV</span>
+      <span class="jour-m">Aucune séance programmée sur ce créneau.</span></span><button class="qa-b jour-a" type="button">Programmer ›</button></li>
+  </ul>
+  <p class="sg-n">.cycle (ol, aria-current="step") · .jour-l · .badge.encours — js/etat.js, js/aujourdhui.js</p>
 </section>
 
 <section class="card" aria-labelledby="sg-aide">

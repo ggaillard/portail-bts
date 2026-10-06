@@ -29,6 +29,7 @@ import { ouvrirFiche } from './fiche.js';
 import { rendreCompteRendu } from './compterendu.js';
 import { majQuestionnairesSeance } from './qseance.js';
 import { seanceOubliee, depuisLe } from './ouverture.js';
+import { etatDe, rendreEtapes, quandLisible, heureDe } from './etat.js';
 
 var VUES = ["maintenant", "eleves", "questions", "fin"];
 var SQUELETTE = '<span class="vh">Chargement…</span><span class="squelette"></span>' +
@@ -70,8 +71,12 @@ function majPilote(apresStats){
   } else if (p && p.nature !== "projet" && p.ouverte && p.demarree_le) {
     var min = Math.max(0, Math.round((Date.now() - new Date(p.demarree_le).getTime()) / 60000));
     chrono = min + (p.duree_min ? " / " + p.duree_min : "") + " min";
+  } else if (p && !p.ouverte && p.prevue_le && etatDe(p).code === "programmee") {
+    // Programmée : la place du chrono dit quand elle commence (06/10).
+    chrono = quandLisible(p.prevue_le, p.fin_prevue);
   }
   $("sv-chrono").textContent = chrono;
+  majEtapes(aSeance ? p : null);
 
   var kpi = "";
   if (aSeance && s) {
@@ -159,17 +164,50 @@ function lireTitres(){
   });
 }
 
+// Le mot de l'état vient de la base depuis le 06/10 (etat_seance(), lue par
+// chargerPrevol) ; etat.js le traduit, et retombe sur la lecture d'avant si
+// la migration manque.
 function etatSeance(p){
   if (!p) return ["neutre", "—"];
-  if (p.nature === "projet") {
-    if (!p.ouverte) return ["neutre", "Projet fermé"];
-    return p.publiee === false ? ["att", "Ouvert, caché"] : ["ok", "Projet ouvert"];
+  var e = etatDe(p);
+  return [e.ton, e.libelle];
+}
+
+// Les quatre étapes sous l'en-tête, et une ligne qui dit la suite : ce qui
+// manque pour être prête, le créneau à poser, ce que l'automate fera seul.
+// Les liens sont des .vers-prep : gestion.js les ouvre dans Préparer.
+function majEtapes(p){
+  var l = $("sv-cycle-l"), note = $("sv-cycle-note");
+  if (!l) return;
+  rendreEtapes($("sv-etapes"), p);
+  l.hidden = $("sv-etapes").hidden;
+  note.innerHTML = "";
+  if (l.hidden) return;
+  var e = etatDe(p), bouts = [];
+  if (e.code === "brouillon") {
+    bouts.push(lienPrep("Pas prête : la régler dans Préparer ›"));
+  } else if (e.code === "prete" && !p.prevue_le) {
+    bouts.push(lienPrep("Pas de créneau : la programmer ›"));
   }
-  if (seanceOubliee(p)) return ["att", "Oubliée ouverte"];
-  if (p.ouverte && p.demarree_le) return ["ok", "En cours"];
-  if (p.ouverte) return ["att", "Ouverte"];
-  if (p.demarree_le) return ["neutre", "Terminée"];
-  return ["neutre", "Pas démarrée"];
+  if (p.prevue_le && (e.code === "programmee" || e.code === "prete")) {
+    if (p.auto_ouvrir) bouts.push(document.createTextNode("ouverture automatique à " + heureDe(p.prevue_le)));
+  }
+  if (p.auto_clore && p.fin_prevue && p.ouverte) {
+    bouts.push(document.createTextNode("clôture automatique à " +
+      heureDe(new Date(Date.parse(p.fin_prevue) + 15 * 60000).toISOString())));
+  }
+  bouts.forEach(function(b, i){
+    if (i) note.appendChild(document.createTextNode(" · "));
+    note.appendChild(b);
+  });
+}
+function lienPrep(texte){
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "btn-discret vers-prep";
+  b.dataset.onglet = "infos";
+  b.textContent = texte;
+  return b;
 }
 
 // « Mis à jour il y a 12 s » : ce qu'on regarde est-il frais ?

@@ -11,8 +11,9 @@
 //
 //   · on tape « 11 », « IA », « BTS2 », « où vit » — numéro, titre, classe ou
 //     module, sans se soucier des accents ;
-//   · la liste est rangée classe › module, chaque ligne avec son ÉTAT (en
-//     cours, ouverte, oubliée ouverte, terminée, fermée, cachée) ;
+//   · la liste est rangée classe › module, chaque ligne avec son ÉTAT — celui
+//     que calcule la base depuis le 06/10 (brouillon, prête, programmée lundi
+//     15:00, en cours, oubliée ouverte, terminée…), traduit par etat.js ;
 //   · les RÉCENTES d'abord — les cinq dernières choisies, gardées dans ce
 //     navigateur — et les questionnaires et l'appel À PART, en fin de liste ;
 //   · ↑ ↓ pour circuler, Entrée pour choisir, Échap pour fermer ; Ctrl+K y
@@ -25,7 +26,7 @@
 import { $, sb, suivi, typo } from './socle.js';
 import { lireModules } from './modules.js';
 import { chargerSeancesDe } from './seance.js';
-import { seanceOubliee } from './ouverture.js';
+import { etatDe, quandLisible, lireAvecPlanning } from './etat.js';
 
 var CLE_RECENTES = "tdc-seances-recentes";
 var MAX_OPTIONS = 80;
@@ -46,15 +47,24 @@ function noterRecente(id){
   try { localStorage.setItem(CLE_RECENTES, JSON.stringify(l.slice(0, 5))); } catch (e) {}
 }
 
-// L'état en un mot — la même lecture que l'en-tête de la séance.
+// L'état en un mot — celui de la base (etat_seance, 06/10) traduit par
+// etat.js, comme l'en-tête de la séance ; la date quand elle dit quelque
+// chose (programmée pour quand, terminée quand).
 function etatCourt(s){
-  if (Number(s.numero) >= 90) return s.ouverte ? "proposé" : "éteint";
-  if (s.nature === "projet") return s.ouverte ? (s.publiee === false ? "ouvert, caché" : "ouvert") : "fermé";
-  if (seanceOubliee(s)) return "oubliée ouverte";
-  if (s.ouverte && s.demarree_le) return "en cours";
-  if (s.ouverte) return "ouverte";
-  if (s.demarree_le) return "terminée le " + new Date(s.demarree_le).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
-  return s.publiee ? "fermée" : "fermée, cachée";
+  var e = etatDe(s);
+  var cachee = s.publiee === false ? ", cachée" : "";
+  switch (e.code) {
+    case "programmee": return "programmée " + quandLisible(s.prevue_le) + cachee;
+    case "terminee":   return "terminée le " + new Date(s.demarree_le).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+    case "a_venir":    return s.publiee ? "fermée" : "fermée, cachée";
+    case "ferme":      return "fermé";
+    case "ouvert":     return "ouvert";
+    case "clos":       return "clos";
+    case "appel":      return "toujours ouvert";
+    case "brouillon":
+    case "prete":      return e.libelle.toLowerCase() + cachee;
+    default:           return e.libelle.toLowerCase();
+  }
 }
 
 // Les classes : celles du sélecteur natif, qui sait déjà ranger les démos.
@@ -69,8 +79,8 @@ function classesDuSelecteur(){
 
 function charger(){
   return Promise.all([
-    sb.from("seances").select("id,classe_id,numero,titre,ouverte,publiee,demarree_le,duree_min,nature,module_id")
-      .order("numero"),
+    lireAvecPlanning("id,classe_id,numero,titre,ouverte,publiee,demarree_le,duree_min,nature,module_id",
+      function(c){ return sb.from("seances").select(c).order("numero"); }),
     lireModules()
   ]).then(function(rr){
     var mods = {};
