@@ -22,6 +22,33 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 7 octobre 2026 — Projet IA BTS2 : une troisième séance à distance
+
+Demandé : prolonger le projet IA pour la séance du jeudi 08/10, toujours à
+distance. `distance/projet-ia.html` gagne la partie « Jeudi 8 octobre —
+séance 23 : terminer, améliorer, présenter » (six missions : faire le point,
+terminer ce qui manque, améliorer et le prouver, sécuriser, présenter le projet
+sur sa page `github.io`, rendre). Rendu final par e-mail **lundi 12/10 avant
+17 h**, application en ligne jusqu'à 20 h ; bandeau, consignes d'arrivée et
+barème mis à jour en conséquence. Les horaires « 15 h – 17 h » sont retirés de
+l'en-tête : le jeudi n'a pas les mêmes que lundi et mardi.
+
+**Une migration**, `20261007170000_bts2_projet_ia_seance23.sql` : séance 23
+(projet, 6 jalons, échéance 12/10, module `projet-ia`), missions `tp23-m1` à
+`m6`, **créée fermée et cachée**. Jeudi : Préparer → la séance 23 → Visible,
+puis Ouvrir.
+
+Au passage : la vérification n° 5 de `20261006120000_mise_en_place.sql`
+(`agenda()`) dépendait de l'heure — rouge le mercredi après 10 h et le lundi
+après 15 h, la seconde séance programmée tombant hors des sept jours comptés
+depuis aujourd'hui. Elle compte désormais depuis la première séance
+programmée. Ce n'est qu'une assertion : `supabase db push` n'applique pas de
+nouveau une migration déjà passée, la production n'est pas touchée. Chaîne
+rejouée deux fois sur une base neuve (postgres 16) avec les assertions du
+workflow : vert.
+
+---
+
 ## 6 octobre 2026 (après-midi) — lot 3 : la mise en place
 
 Demandé : « ok pour le lot 3 » des propositions du 05/10. **Une migration**,

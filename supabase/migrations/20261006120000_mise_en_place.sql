@@ -575,7 +575,13 @@ begin
 
     -- 5. L'agenda de sept jours : les deux créneaux de la semaine, les deux
     --    séances programmées, et ce qui reste à placer.
-    v_r := public.agenda(v_auj, 7);
+    --    Sept jours À PARTIR DE LA PREMIÈRE SÉANCE PROGRAMMÉE, pas d'aujourd'hui :
+    --    partir d'aujourd'hui rendait la vérification rouge selon l'heure (le
+    --    07/10 à 18 h, mercredi 10 h passé : séances lundi 12 et mercredi 14,
+    --    la seconde hors des sept jours). Lundi et mercredi tombent chacun une
+    --    fois dans toute fenêtre de sept jours, et deux créneaux consécutifs
+    --    sont à moins de six jours l'un de l'autre.
+    v_r := public.agenda((v_s.prevue_le at time zone 'Europe/Paris')::date, 7);
     if jsonb_array_length(v_r->'creneaux') <> 2 then
       raise exception 'agenda() : % créneau(x) sur sept jours, attendu 2', jsonb_array_length(v_r->'creneaux');
     end if;

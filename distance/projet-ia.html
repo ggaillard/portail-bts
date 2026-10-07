@@ -9,17 +9,17 @@
 <body>
 <main>
 
-<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>lundi 5 et mardi 6 octobre 2026, de 15 h à 17 h</strong> · projet individuel</p>
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>lundi 5, mardi 6 et jeudi 8 octobre 2026</strong> · projet individuel</p>
 
 <h1>Projet IA — de votre PC à la production</h1>
-<p class="chapo">Chez vous, vous avez souvent une machine plus puissante qu'au lycée. En deux séances, chacun conçoit une petite application qui s'appuie sur un modèle de langage <strong>qui tourne sur son propre PC</strong>, la met en production derrière une <strong>adresse publique en HTTPS</strong>, la mesure et la sécurise. Concevoir, piloter, mesurer, sécuriser : les quatre se voient dans le rendu.</p>
+<p class="chapo">Chez vous, vous avez souvent une machine plus puissante qu'au lycée. En trois séances, chacun conçoit une petite application qui s'appuie sur un modèle de langage <strong>qui tourne sur son propre PC</strong>, la met en production derrière une <strong>adresse publique en HTTPS</strong>, la mesure et la sécurise. Concevoir, piloter, mesurer, sécuriser : les quatre se voient dans le rendu.</p>
 
 <section class="carte depart">
   <h2>À chaque séance, en arrivant</h2>
   <ol>
-    <li>À <strong>15 h</strong>, ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
-    <li>Carte <strong>« Vos missions »</strong> : séance 21 le lundi, séance 22 le mardi. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
-    <li>Pas de visio. Toutes les questions passent <strong>par e-mail</strong>, à mon adresse Gmail habituelle, avec un objet qui commence par <code>[BTS2 Projet IA]</code> suivi de votre nom. Bloqué plus de 15 minutes ? Écrivez, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds de 15 h à 17 h.</li>
+    <li>Au début du cours, ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
+    <li>Carte <strong>« Vos missions »</strong> : séance 21 le lundi, séance 22 le mardi, <strong>séance 23 le jeudi</strong>. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
+    <li>Pas de visio. Toutes les questions passent <strong>par e-mail</strong>, à mon adresse Gmail habituelle, avec un objet qui commence par <code>[BTS2 Projet IA]</code> suivi de votre nom. Bloqué plus de 15 minutes ? Écrivez, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds pendant les heures de cours.</li>
   </ol>
   <p class="note">Si possible <strong>avant lundi</strong> : installez <a href="https://ollama.com/download">Ollama</a> et <a href="https://docs.docker.com/desktop/">Docker Desktop</a>, ce sont les deux téléchargements les plus longs. Sans ordinateur utilisable chez vous, écrivez-moi avant lundi midi : une solution de repli existe.</p>
 </section>
@@ -132,7 +132,7 @@
       <tr><td><code>Dockerfile</code>, <code>compose.yaml</code></td><td>la mise en production : l'application et le tunnel</td></tr>
       <tr><td><code>.env.example</code></td><td>les réglages, à copier en <code>.env</code></td></tr>
       <tr><td><code>evaluer.py</code>, <code>cas.json</code></td><td>la mesure : rejouer vos cas et compter</td></tr>
-      <tr><td><code>README.md</code></td><td>votre dossier, à remplir au fil des deux séances</td></tr>
+      <tr><td><code>README.md</code></td><td>votre dossier, à remplir au fil des trois séances</td></tr>
     </tbody>
   </table>
 </section>
@@ -246,7 +246,81 @@ docker compose ps</code></pre>
   <ol>
     <li>README complet (§1 à §7), dernier commit poussé.</li>
     <li><strong>Avant 17 h</strong>, envoyez un e-mail à mon adresse Gmail habituelle, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code>, avec : l'adresse du dépôt GitHub (invitez <code>ggaillard</code> s'il est privé), l'<strong>URL publique</strong> et le <strong>code d'accès</strong>. Le code ne va que dans cet e-mail, jamais dans le dépôt.</li>
-    <li>Laissez l'application en ligne <strong>jusqu'à mardi 20 h</strong> : je la teste à ce moment-là. Faites l'auto-évaluation au portail.</li>
+    <li>Faites l'auto-évaluation au portail. Pas fini ? Envoyez quand même ce que vous avez : vous complétez jeudi (séance 23, plus bas).</li>
+  </ol>
+</section>
+
+<h2 class="jour">Jeudi 8 octobre — séance 23 : terminer, améliorer, présenter</h2>
+
+<section class="carte depart">
+  <h2>Le projet est prolongé</h2>
+  <p>Jeudi, chacun reprend son dépôt <code>projet-ia-&lt;prenom&gt;</code> là où il l'a laissé mardi. <strong>Personne ne repart de zéro, personne ne change de sujet.</strong> Si les séances 21 et 22 ne sont pas terminées, vous les terminez d'abord (missions 1 et 2 ci-dessous) ; sinon, vous passez directement à l'amélioration (missions 3 à 5).</p>
+  <p><strong>Rendu final : lundi 12 octobre, avant 17 h</strong>, par e-mail, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code>. Même contenu que mardi (dépôt, URL publique, code d'accès), <strong>plus</strong> trois lignes : ce qui fonctionne, ce qui ne fonctionne pas encore, ce qui vous a bloqué. L'application reste en ligne <strong>jusqu'à lundi 20 h</strong> : je la teste à ce moment-là. L'URL du tunnel change à chaque redémarrage : envoyez la dernière.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Faire le point <span class="tag">Concevoir · 15 min</span></h2>
+  <ol>
+    <li>Reprenez le tableau « Ce qui sera regardé », en bas de page. Pour chaque ligne, notez dans le README (§3, ligne du jeudi) <strong>fait</strong>, <strong>partiel</strong> ou <strong>pas fait</strong>, avec la preuve (fichier, capture, commande).</li>
+    <li>Relancez ce qui tournait mardi :
+<pre><code>ollama ps
+docker compose up -d
+docker compose ps
+docker compose logs tunnel</code></pre>
+      La dernière commande donne la <strong>nouvelle</strong> adresse publique : notez-la en tête du README.</li>
+    <li>Choisissez <strong>deux</strong> points « partiel » ou « pas fait » : ce sont vos priorités de la séance.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Terminer ce qui manque <span class="tag">Piloter · 45 min</span></h2>
+  <p>Dans l'ordre. On ne passe au point suivant que quand le précédent tient.</p>
+  <ol>
+    <li>L'application répond en local au format demandé par la fiche de votre sujet (séance 21, mission 3).</li>
+    <li>Au moins 10 cas dans <code>cas.json</code>, dont les pièges de la fiche (séance 21, mission 4).</li>
+    <li><code>docker compose</code> : application <em>healthy</em>, redémarrage prouvé (séance 22, mission 1).</li>
+    <li>URL publique testée depuis un téléphone en 4G, refus sans le code (séance 22, mission 2).</li>
+  </ol>
+  <details><summary>Indice — l'application n'arrive pas à joindre Ollama dans Docker</summary><p>Dans <code>.env</code>, mettez <code>OLLAMA_URL=http://host.docker.internal:11434</code>, pas <code>localhost</code> : dans le conteneur, <code>localhost</code> désigne le conteneur lui-même. Vérifiez qu'Ollama tourne sur le PC avec <code>ollama ps</code>. Sous Linux, suivez l'option B décrite en tête de <code>compose.yaml</code>.</p></details>
+  <details><summary>Indice — pas de Docker utilisable chez vous</summary><p>Repli : un Codespace ouvert sur votre dépôt, <code>qwen2.5:1.5b</code> sur le processeur, l'application lancée avec <code>uvicorn</code> et le port 8000 rendu <strong>public</strong> dans l'onglet Ports. Écrivez-le au §2 du README : c'est accepté, et la partie Production est alors notée sur ce que vous avez pu prouver.</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Améliorer, et le prouver <span class="tag">Mesurer · 40 min</span></h2>
+  <ol>
+    <li>Reprenez les deux échecs commentés mardi (§4). Pour chacun, faites <strong>une seule</strong> modification : la consigne de <code>prompt.txt</code>, un exemple ajouté, la température, ou le format JSON imposé.</li>
+    <li>Rejouez <strong>tout</strong> le jeu sur l'URL publique, trois essais par cas :
+<pre><code>python evaluer.py https://….trycloudflare.com VOTRE_CODE --essais 3</code></pre></li>
+    <li>Ajoutez au §4 une ligne <strong>« après modification »</strong> : taux, temps médian, ce qui a changé. Un cas qui passait et qui casse compte autant qu'un cas réparé : dites-le.</li>
+    <li>Ajoutez deux cas nouveaux, plus difficiles, tirés de ce que vous avez observé. Commitez <code>cas.json</code> et le CSV des résultats.</li>
+  </ol>
+  <p class="note">Changer deux choses à la fois, c'est ne plus savoir laquelle a servi. Une modification, une mesure.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Sécuriser jusqu'au bout <span class="tag">Sécuriser · 20 min</span></h2>
+  <ol>
+    <li>Dans le tableau des risques du §5, chaque ligne nomme <strong>la mesure qui est dans votre projet</strong> (fichier et ligne), pas une intention.</li>
+    <li>Collez les preuves qui manquent : <code>docker compose ps</code> (le port 11434 n'apparaît pas), <code>git log --all --oneline -- .env</code> (ne renvoie rien), le cas « ignore les consignes » refusé.</li>
+    <li>Imaginez une tentative de détournement de plus, propre à votre sujet. Essayez-la, ajoutez-la à <code>cas.json</code>.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Présenter le projet sur votre page <span class="tag">Piloter · 20 min</span></h2>
+  <ol>
+    <li>Créez (ou reprenez) votre page professionnelle <code>https://&lt;votre-login&gt;.github.io</code> : un dépôt <strong>public</strong> nommé exactement <code>&lt;votre-login&gt;.github.io</code>, un <code>index.html</code>, puis Settings → Pages → <em>Deploy from a branch</em>, branche <code>main</code>.</li>
+    <li>Dans la rubrique <strong>Projets</strong>, présentez le projet IA : ce que fait l'application et pour qui, une capture, les technologies (Ollama, FastAPI, Docker, tunnel), le lien vers le dépôt, et une phrase sur ce que la mesure a montré.</li>
+    <li>Ni code d'accès, ni URL trycloudflare (elle change) : une capture suffit.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">6</span> Rendre <span class="tag">10 min</span></h2>
+  <ol>
+    <li>README complet (§1 à §7), dernier commit poussé, <code>.env</code> absent du dépôt.</li>
+    <li>En fin de séance, cochez au portail les missions faites.</li>
+    <li>Rendu final par e-mail <strong>avant lundi 12 octobre, 17 h</strong> (voir plus haut), avec en plus l'adresse de votre page <code>github.io</code>. Application en ligne jusqu'à lundi 20 h.</li>
   </ol>
 </section>
 
@@ -256,7 +330,7 @@ docker compose ps</code></pre>
     <tbody>
       <tr><td>Concevoir : besoin, cas d'usage, limites, modèle justifié par la machine</td><td>3 pts</td></tr>
       <tr><td>L'application fait ce que le sujet demande, format de sortie tenu</td><td>4 pts</td></tr>
-      <tr><td>Production : compose, santé, redémarrage, URL publique joignable mardi soir</td><td>5 pts</td></tr>
+      <tr><td>Production : compose, santé, redémarrage, URL publique joignable lundi 12 au soir</td><td>5 pts</td></tr>
       <tr><td>Mesurer : 10 cas, deux modèles, trois essais, deux échecs commentés</td><td>4 pts</td></tr>
       <tr><td>Sécuriser : code, limite, Ollama non exposé, aucun secret, risques et preuves</td><td>4 pts</td></tr>
     </tbody>
