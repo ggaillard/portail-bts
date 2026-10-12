@@ -28,9 +28,9 @@ recalculée depuis la base à chaque affichage.
 le même projet IA, ou un autre contexte, branché sur une IA **en ligne,
 gratuite, sans carte bancaire**, et comparé au modèle local. Le kit (dépôt
 modèle `BTS2-Projet-IA` et `distance/projet-ia/depart/`, zip reconstruit)
-gagne `fournisseurs.py` (Ollama, OVHcloud sans compte, GitHub Models, Groq,
+gagne le module `fournisseurs` (Ollama, OVHcloud sans compte, GitHub Models, Groq,
 Mistral, Google : même dialecte « chat completions », conditions relevées le
-12/10), `essai_fournisseur.py`, `evaluer.py --pause`, la route `/a-propos` et
+12/10), le script d'essai d'un fournisseur, l'option `--pause` de l'évaluation, la route `/a-propos` et
 le §8 du README. Six missions `tp24-mK`, questionnaire « Prototyper en ligne —
 auto-évaluation » (8 questions, n° 95 attendu, rattaché à la 24,
 `reste_ouvert`). Partie « Mardi 13 octobre » de `distance/projet-ia.html`.
@@ -43,7 +43,7 @@ module (n° 96 attendu, rattaché à la 25, `reste_ouvert`) — **le n° 98 rest
 le dernier libre de la bande 90-98 du BTS2**. Page `distance/ia-entreprise.html`,
 kit en zip `distance/ia-entreprise/ia-entreprise-depart.zip`. Contexte fictif
 ThermiForez : agent connecté à une base SQLite (outils en lecture seule,
-routage souverain dans `llm.py`), RAG mots-clés / vecteurs, workflow rapports →
+routage souverain dans le module `llm` du kit), RAG mots-clés / vecteurs, workflow rapports →
 décisions avec garde-fous et validation humaine. Résultats de référence dans le
 README du dépôt enseignant.
 
