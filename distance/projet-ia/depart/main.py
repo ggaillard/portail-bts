@@ -1,9 +1,12 @@
 """Projet IA — application de départ.
 
-Une page web, une route qui interroge un modèle de langage servi par Ollama,
-et les protections minimales d'un service exposé sur Internet :
-code d'accès, taille d'entrée bornée, limite de requêtes par visiteur,
-route de santé, journal des temps de réponse.
+Une page web, une route qui interroge un modèle de langage, et les protections
+minimales d'un service exposé sur Internet : code d'accès, taille d'entrée
+bornée, limite de requêtes par visiteur, route de santé, journal des temps.
+
+Le modèle est servi par Ollama sur votre PC, ou par un fournisseur en ligne :
+c'est FOURNISSEUR, dans .env, qui décide (voir fournisseurs.py). Le reste du
+code ne change pas.
 
 À adapter à VOTRE sujet : surtout prompt.txt, et la page static/index.html.
 """
@@ -14,14 +17,13 @@ import logging
 from collections import defaultdict, deque
 from pathlib import Path
 
-import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+import fournisseurs
+
 # ── Réglages : tout vient de l'environnement (fichier .env), rien en dur ──────
-OLLAMA_URL   = os.getenv("OLLAMA_URL", "http://localhost:11434")
-MODELE       = os.getenv("MODELE", "qwen2.5:3b")
 CODE_ACCES   = os.getenv("CODE_ACCES", "")          # vide = refus de démarrer
 MAX_CARAC    = int(os.getenv("MAX_CARACTERES", "2000"))
 PAR_MINUTE   = int(os.getenv("REQUETES_PAR_MINUTE", "10"))
@@ -71,15 +73,18 @@ def accueil():
 
 @app.get("/sante")
 async def sante():
-    """Pour le healthcheck : l'application répond ET Ollama répond."""
+    """Pour le healthcheck : l'application répond ET le fournisseur du modèle répond."""
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            r = await client.get(f"{OLLAMA_URL}/api/tags")
-            r.raise_for_status()
-        return {"etat": "ok", "modele": MODELE}
+        return await fournisseurs.sante()
     except Exception as exc:  # noqa: BLE001
-        return JSONResponse({"etat": "ollama injoignable", "detail": str(exc)[:200]},
+        return JSONResponse({"etat": "modèle injoignable", "detail": str(exc)[:200]},
                             status_code=503)
+
+
+@app.get("/a-propos")
+def a_propos():
+    """Transparence : l'utilisateur a le droit de savoir qu'il parle à une IA, et où partent ses données."""
+    return fournisseurs.fiche()
 
 
 @app.post("/api/demander")
@@ -95,24 +100,19 @@ async def demander(d: Demande, req: Request):
     if len(texte) > MAX_CARAC:
         raise HTTPException(413, f"Texte trop long ({len(texte)} caractères, {MAX_CARAC} au plus).")
 
-    corps = {
-        "model": MODELE,
-        "stream": False,
-        "options": {"temperature": TEMPERATURE},
-        "messages": [
-            {"role": "system", "content": CONSIGNE},
-            {"role": "user", "content": texte},
-        ],
-    }
-    debut = time.perf_counter()
+    messages = [
+        {"role": "system", "content": CONSIGNE},
+        {"role": "user", "content": texte},
+    ]
     try:
-        async with httpx.AsyncClient(timeout=DELAI_S) as client:
-            r = await client.post(f"{OLLAMA_URL}/api/chat", json=corps)
-            r.raise_for_status()
-    except httpx.HTTPError as exc:
-        journal.error("Ollama : %s", exc)
+        res = await fournisseurs.demander(messages, temperature=TEMPERATURE, delai_s=DELAI_S)
+    except fournisseurs.QuotaAtteint as exc:
+        journal.warning("%s", exc)
+        raise HTTPException(503, "Le service de modèle est saturé : réessayez dans une minute.")
+    except fournisseurs.FournisseurInjoignable as exc:
+        journal.error("%s", exc)
         raise HTTPException(502, "Le modèle ne répond pas. Réessayez dans un instant.")
-    duree = time.perf_counter() - debut
-    reponse = r.json().get("message", {}).get("content", "")
-    journal.info("réponse en %.2f s · %d caractères en entrée · %s", duree, len(texte), qui)
-    return {"reponse": reponse, "duree_s": round(duree, 2), "modele": MODELE}
+    journal.info("réponse en %.2f s · %s · %s · %d caractères en entrée · %s",
+                 res["duree_s"], res["fournisseur"], res["modele"], len(texte), qui)
+    return {"reponse": res["texte"], "duree_s": res["duree_s"],
+            "modele": res["modele"], "fournisseur": res["fournisseur"]}

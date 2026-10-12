@@ -67,3 +67,26 @@ docker compose logs tunnel
 ## 7. Usage de l'IA pendant le projet
 
 Ce que vous avez demandé à un assistant, et ce que vous avez gardé, modifié ou refusé.
+
+## 8. Local ou en ligne ? (séance 24)
+
+**Mon choix pour la séance 24** : ☐ je continue mon sujet ☐ je change de contexte → nouveau sujet : …
+
+**Les fournisseurs essayés** (conditions relevées le …/10/2026, avec le lien) :
+
+| | Fournisseur 1 : … | Fournisseur 2 : … |
+|---|---|---|
+| Ce qu'il a fallu pour l'utiliser (compte, téléphone, clé…) | … | … |
+| Où partent les données (pays, société) | … | … |
+| Les requêtes peuvent-elles servir à entraîner ? (citer la phrase des conditions) | … | … |
+| Limite de l'offre gratuite rencontrée (429 ?) | … | … |
+
+**La mesure** — même `cas.json`, même `prompt.txt`, même température, trois essais :
+
+| | Local (Ollama, `…`) | En ligne (…, `…`) |
+|---|---|---|
+| Réussite | … % | … % |
+| Temps médian | … s | … s |
+| Cas qui changent de verdict | … | … |
+
+**La décision** : pour l'organisation de mon sujet, avec ses vraies données, je choisirais … parce que … (données personnelles ? données internes ? coût ? disponibilité ?). Règle que j'écris dans `fournisseurs.py` ou dans le README : « les textes qui contiennent … ne partent jamais vers … ».

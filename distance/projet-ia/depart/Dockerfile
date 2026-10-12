@@ -7,7 +7,7 @@ WORKDIR /appli
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py prompt.txt ./
+COPY main.py fournisseurs.py prompt.txt ./
 COPY static ./static
 
 USER appli

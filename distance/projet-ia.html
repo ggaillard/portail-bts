@@ -382,11 +382,105 @@ docker compose logs tunnel</code></pre>
 </section>
 
 <!-- MARDI13 -->
-<h2 class="jour" id="mardi13">Mardi 13 octobre — séance 24 : prototyper avec une IA en ligne, sans carte bancaire</h2>
+<h2 class="jour" id="mardi13">Mardi 13 octobre — séance 24 : le même projet, avec une IA en ligne, sans carte bancaire</h2>
 
 <section class="carte depart">
-  <h2>Consignes publiées ce soir</h2>
-  <p>Le principe : vous <strong>continuez</strong> votre projet ou vous <strong>changez de contexte</strong>, et vous branchez l'application sur un modèle <strong>en ligne, gratuit, sans carte bancaire</strong>, pour le comparer à votre modèle local — qualité, vitesse, et surtout <strong>où partent les données</strong>.</p>
+  <h2>Pourquoi cette séance</h2>
+  <p>En entreprise, on prototype souvent avec un modèle <strong>en ligne</strong> : rien à installer, pas besoin d'une carte graphique, un résultat en dix minutes. Mais un prototype n'est pas une solution : il faut savoir <strong>ce que l'offre gratuite autorise</strong>, <strong>où partent les données</strong>, et si le résultat est <strong>meilleur ou pire</strong> que le modèle local. C'est ce que vous mesurez aujourd'hui.</p>
+  <p class="regle"><strong>Aucune carte bancaire, nulle part.</strong> Si un service vous en demande une, arrêtez-vous : il n'est pas dans la liste. Et <strong>uniquement des données fictives</strong> : celles de votre sujet.</p>
+</section>
+
+<section class="carte">
+  <h2>Les fournisseurs gratuits, sans carte bancaire</h2>
+  <p>Tous parlent le même dialecte (l'API « chat completions » d'OpenAI) : le fichier <code>fournisseurs.py</code> du kit passe de l'un à l'autre avec une ligne de <code>.env</code>. Conditions relevées le 12/10/2026 : elles changent, <strong>vérifiez-les vous-même</strong> (mission 5).</p>
+  <table>
+    <thead><tr><th><code>FOURNISSEUR=</code></th><th>Ce qu'il faut</th><th>Offre gratuite</th><th>Où vont les données</th></tr></thead>
+    <tbody>
+      <tr><td><code>ovh</code><br>OVHcloud AI Endpoints</td><td><strong>rien</strong> : ni compte ni clé</td><td>2 requêtes par minute (par adresse IP et par modèle)</td><td>France ; pas d'entraînement, selon OVHcloud</td></tr>
+      <tr><td><code>github</code><br>GitHub Models</td><td>votre compte GitHub et un jeton « Models : read »</td><td>de l'ordre de 15 requêtes par minute et 150 par jour (modèles « low »)</td><td>États-Unis (Microsoft)</td></tr>
+      <tr><td><code>groq</code><br>Groq</td><td>un compte sur console.groq.com</td><td>de l'ordre de 30 par minute, 1 000 par jour selon le modèle</td><td>États-Unis</td></tr>
+      <tr><td><code>mistral</code><br>Mistral, offre Experiment</td><td>un compte et un numéro de téléphone vérifié</td><td>limites variables</td><td>France ; <strong>les requêtes peuvent servir à entraîner</strong>, selon Mistral</td></tr>
+      <tr><td><code>google</code><br>Google AI Studio</td><td>un compte Google (18 ans et plus)</td><td>limites variables selon le modèle</td><td>États-Unis ; entraînement possible sur l'offre gratuite, lire les conditions</td></tr>
+    </tbody>
+  </table>
+  <details><summary>Créer les clés (GitHub, Groq, Mistral, Google)</summary>
+    <ul>
+      <li><strong>GitHub Models</strong> : github.com → Settings → Developer settings → Personal access tokens → <em>Fine-grained tokens</em> → Generate. Dans « Permissions », ajoutez <strong>Models</strong> en lecture seule, rien d'autre. Durée : 30 jours. Modèles disponibles : <a href="https://github.com/marketplace/models">github.com/marketplace/models</a> (identifiant de la forme <code>openai/gpt-4o-mini</code>).</li>
+      <li><strong>Groq</strong> : <a href="https://console.groq.com">console.groq.com</a> → API Keys → Create.</li>
+      <li><strong>Mistral</strong> : <a href="https://console.mistral.ai">console.mistral.ai</a> → choisir l'offre <em>Experiment</em> (gratuite) → API Keys.</li>
+      <li><strong>Google</strong> : <a href="https://aistudio.google.com">aistudio.google.com</a> → Get API key.</li>
+    </ul>
+    <p>La clé va dans <code>.env</code>, ligne <code>CLE_API=</code>, et <strong>nulle part ailleurs</strong> : ni dans le dépôt, ni dans la page web, ni dans un e-mail. Une clé publiée par erreur se révoque tout de suite, depuis la même page.</p>
+  </details>
+  <p class="note">Pas de PC assez puissant pour Ollama ? C'est l'autre intérêt du SaaS : avec <code>ovh</code> ou <code>github</code>, l'application tourne dans un <strong>Codespace</strong>, sans carte graphique.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Continuer ou changer de contexte <span class="tag">Concevoir · 15 min</span></h2>
+  <p>Deux chemins, au choix. Écrivez-le en tête du <strong>§8 du README</strong> (le modèle de ce paragraphe est dans le <a href="https://github.com/ggaillard/BTS2-Projet-IA/blob/main/README.md">README du dépôt modèle</a>, à recopier en bas du vôtre).</p>
+  <ul>
+    <li><strong>Continuer</strong> : même dépôt, même sujet, même <code>cas.json</code>. Ce sera la comparaison la plus juste.</li>
+    <li><strong>Changer de contexte</strong> : un autre des sujets 1 à 5, ou un sujet libre validé par e-mail (mêmes règles que le sujet 6). Nouveau dépôt depuis le modèle, nommé <code>projet-ia-&lt;prenom&gt;-2</code> ; §1 du README et 10 cas au moins avant la mission 4. Vous pouvez travailler <strong>directement en ligne</strong>, sans Ollama.</li>
+  </ul>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Premier essai, sans aucun compte <span class="tag">Concevoir · 15 min</span></h2>
+  <ol>
+    <li>Dans votre dépôt, récupérez les deux nouveaux fichiers (un nouveau dépôt créé depuis le modèle les a déjà) :
+<pre><code>curl -O https://raw.githubusercontent.com/ggaillard/BTS2-Projet-IA/main/fournisseurs.py
+curl -O https://raw.githubusercontent.com/ggaillard/BTS2-Projet-IA/main/essai_fournisseur.py</code></pre></li>
+    <li>Essayez OVHcloud, sans clé :
+<pre><code>python essai_fournisseur.py ovh
+python essai_fournisseur.py ovh "une entrée tirée de votre cas.json"</code></pre></li>
+    <li>Lisez les deux dernières lignes affichées : <strong>où sont parties les données</strong>, et si elles peuvent servir à entraîner. Puis faites de même avec votre Ollama (<code>python essai_fournisseur.py ollama</code>) et comparez le temps.</li>
+  </ol>
+  <details><summary>Indice — « ModuleNotFoundError: httpx »</summary><p>Activez l'environnement Python du projet (celui de la séance 21), ou installez les dépendances : <code>pip install -r requirements.txt</code>.</p></details>
+  <details><summary>Indice — « quota atteint (429) »</summary><p>Sans clé, OVHcloud accepte 2 requêtes par minute. Attendez trente secondes. Pour mesurer (mission 4), un fournisseur avec compte (GitHub, Groq) sera plus confortable.</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Brancher l'application <span class="tag">Piloter · 30 min</span></h2>
+  <p>Votre <code>main.py</code> parlait à Ollama directement. Il va parler à <code>fournisseurs.py</code>, qui parle à qui on veut. Trois changements (le <a href="https://github.com/ggaillard/BTS2-Projet-IA/blob/main/main.py"><code>main.py</code> du dépôt modèle</a> les montre ; si vous n'aviez presque pas modifié le vôtre, remplacez-le) :</p>
+  <ol>
+    <li>En tête : <code>import fournisseurs</code> ; retirez <code>OLLAMA_URL</code> et <code>MODELE</code>, désormais lus par <code>fournisseurs.py</code>.</li>
+    <li>Dans <code>/sante</code> : <code>return await fournisseurs.sante()</code>. Ajoutez la route <code>/a-propos</code>, qui rend <code>fournisseurs.fiche()</code> : l'utilisateur a le droit de savoir qu'il parle à une IA, et où vont ses données.</li>
+    <li>Dans <code>/api/demander</code> : remplacez l'appel à Ollama par <code>res = await fournisseurs.demander(messages, temperature=TEMPERATURE, delai_s=DELAI_S)</code>, en traitant <code>fournisseurs.QuotaAtteint</code> (réponse 503) et <code>fournisseurs.FournisseurInjoignable</code> (502).</li>
+  </ol>
+  <p>Puis : dans le <code>Dockerfile</code>, <code>COPY main.py fournisseurs.py prompt.txt ./</code> ; dans <code>.env</code>, les lignes <code>FOURNISSEUR=</code>, <code>MODELE=</code> (vide pour le modèle par défaut du fournisseur) et <code>CLE_API=</code> (voir <code>.env.example</code>). Enfin :</p>
+<pre><code>docker compose up -d --build
+docker compose ps                  # healthy ?
+curl http://localhost:8000/a-propos</code></pre>
+  <p class="note">Sans Docker (Codespace, ou nouveau contexte) : <code>uvicorn main:app --reload</code> suffit pour aujourd'hui, avec les variables de <code>.env</code>.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Local contre en ligne : mesurer <span class="tag">Mesurer · 30 min</span></h2>
+  <ol>
+    <li>Même <code>cas.json</code>, même <code>prompt.txt</code>, même température : seul le fournisseur change. Récupérez la nouvelle version de <code>evaluer.py</code> (option <code>--pause</code>) :
+<pre><code>curl -O https://raw.githubusercontent.com/ggaillard/BTS2-Projet-IA/main/evaluer.py</code></pre></li>
+    <li>Trois essais avec chacun. Entre les deux, changez <code>FOURNISSEUR</code> dans <code>.env</code> et relancez <code>docker compose up -d</code> :
+<pre><code>python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3              # Ollama
+python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3 --pause 5    # GitHub, Groq…
+python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3 --pause 31   # OVHcloud sans clé (≈ 15 min)</code></pre></li>
+    <li>Remplissez le tableau « La mesure » du §8 ; commitez les deux CSV. Nommez <strong>les cas qui changent de verdict</strong> d'un fournisseur à l'autre, et dites pourquoi à votre avis.</li>
+  </ol>
+  <p class="note">Une erreur 503 dans les résultats, c'est le quota de l'offre gratuite, pas votre application : notez-le, c'est une information sur le fournisseur.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Où partent les données ? Décider <span class="tag">Sécuriser · 20 min</span></h2>
+  <ol>
+    <li>Pour chaque fournisseur essayé, ouvrez <strong>ses conditions</strong> (lien affiché par <code>essai_fournisseur.py</code>) et recopiez au §8 <strong>la phrase</strong> qui dit si vos requêtes peuvent servir à entraîner ses modèles, et le pays où elles sont traitées.</li>
+    <li>Imaginez votre application avec les <strong>vraies</strong> données de l'organisation de votre sujet (des noms d'usagers, des messages internes, des avis signés…). Écrivez la décision : local, fournisseur français, fournisseur américain — et pourquoi. Pensez au RGPD (données personnelles), au secret des affaires, et au fait qu'une société américaine reste soumise au droit américain même quand ses serveurs sont en Europe.</li>
+    <li>Transformez la décision en <strong>règle vérifiable</strong>, écrite au §8 : « les textes qui contiennent … ne partent jamais vers … ».</li>
+    <li>Vérifiez qu'aucune clé n'est dans le dépôt : <code>git grep -n "CLE_API=." -- . ':!.env.example'</code> ne doit rien rendre. Poussez, cochez les missions au portail.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">6</span> Vérifier ce que vous avez appris <span class="tag">Mesurer · 10 min</span></h2>
+  <p>Au portail : <strong>« Prototyper en ligne — auto-évaluation »</strong>, huit questions, avec la certitude. Recopiez au §8 les réponses fausses données en étant sûr, et ce qui est juste.</p>
 </section>
 
 
