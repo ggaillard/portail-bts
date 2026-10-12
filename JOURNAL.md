@@ -30,7 +30,7 @@ pages en ligne (OVHcloud réel) :
 - **bloquant** : `uvicorn main:app --reload` (séance 24, mission 3) ne lit pas
   `.env` → l'application refuse de démarrer (`CODE_ACCES absent`). Consigne,
   `CONSIGNES.md` du dépôt modèle et indice : `--env-file .env`. Vérifié : santé
-  et `/a-propos` répondent, `evaluer.py --pause` mesure ;
+  et `/a-propos` répondent, l'évaluation avec `--pause` mesure ;
 - sans Docker, Ollama se joint par `localhost`, pas `host.docker.internal` :
   mission 4 et `.env.example` le disent ;
 - README §8 et `CONSIGNES.md` du modèle parlaient encore de « continuer son
@@ -38,11 +38,11 @@ pages en ligne (OVHcloud réel) :
   ni URL publique, mais que le code d'accès reste obligatoire ;
 - questionnaire « IA en entreprise » : introduction et thèmes en « mercredi /
   jeudi » → séances 25 et 26 (`20261012160000_bts2_ia_entreprise_rythme.sql`) ;
-  `evaluer_decisions.py` (kit IA en entreprise) disait « acceptable » après un
+  l'évaluation des décisions (kit IA en entreprise) disait « acceptable » après un
   seul rapport traité : il dit maintenant « mesure incomplète ».
 
 Kit IA en entreprise, clone neuf : `test_outils` 7/11 et `test_pseudo` 4/8
-(les missions à écrire, attendu), `llm.py`, index, agent et workflow répondent.
+(les missions à écrire, attendu), le module `llm`, l'index, l'agent et le workflow répondent.
 Liens des deux pages : tous joignables. Zips reconstruits.
 
 ---
