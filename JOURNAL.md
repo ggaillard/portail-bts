@@ -22,6 +22,23 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 12 octobre 2026 (14 h 30) — la séance 24 avancée à cet après-midi
+
+Le jeton Supabase renouvelé par G ; workflow relancé à 14 h 15 : les trois
+migrations du jour sont en base (vérifié avec la clé publique).
+
+Puis, demandé par G : le premier projet IA étant terminé, cet après-midi porte
+sur un autre thème. **La séance 24 est avancée au lundi 12/10**, avec un sujet
+différent du premier et un nouveau dépôt (`20261012150000_bts2_seance24_avancee.sql` :
+titre, échéance, missions 1, 3 et 4 réécrites, séance 24 ouverte et visible et
+séance 23 refermée — le 12/10 seulement). `distance/projet-ia.html` : tableau de
+la semaine, partie « Lundi 12 » retirée, séance 24 réécrite pour un nouveau
+sujet, sans Docker. `distance/ia-entreprise.html` : le module commence mardi
+13 (2 h) et s'étale sur trois demi-journées (carte « Le rythme »). Chaîne
+rejouée deux fois sur une base neuve : vert.
+
+---
+
 ## 12 octobre 2026 (midi) — BTS2 : séance 24 et nouveau module « IA en entreprise »
 
 **Séance 24, mardi 13/10** (`20261012120000_bts2_projet_ia_seance24.sql`) :

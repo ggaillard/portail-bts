@@ -9,7 +9,7 @@
 <body>
 <main>
 
-<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>mercredi 14 (matin, 4 h) et jeudi 15 octobre 2026 (après-midi, 4 h)</strong> · travail individuel</p>
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>mardi 13 (après-midi, 2 h), mercredi 14 (matin, 4 h) et jeudi 15 octobre 2026 (après-midi, 4 h)</strong> · travail individuel</p>
 
 <h1>IA en entreprise — agents, RAG, workflows, décisions de confiance</h1>
 <p class="chapo">Jusqu'ici, votre application posait une question à un modèle et affichait la réponse. En entreprise, l'IA doit <strong>aller chercher les données</strong> de l'organisation, <strong>s'appuyer sur ses documents</strong>, <strong>enchaîner des étapes</strong> et <strong>préparer des décisions</strong> — qu'une personne valide, et dont on peut mesurer la fiabilité. Sans que les données des clients partent n'importe où.</p>
@@ -18,7 +18,7 @@
   <h2>À chaque séance, en arrivant</h2>
   <ol>
     <li>Ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence.</li>
-    <li>Carte <strong>« Vos missions »</strong> : séance 25 le mercredi, séance 26 le jeudi. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
+    <li>Carte <strong>« Vos missions »</strong> : séance 25 (ouverte mardi), séance 26 (ouverte mercredi). Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
     <li>Pas de visio. Questions par <strong>e-mail</strong>, à mon adresse Gmail habituelle, objet <code>[BTS2 IA Entreprise] NOM Prénom — …</code>, avec le message d'erreur copié et la commande qui l'a produit.</li>
   </ol>
   <p class="note">Ni carte graphique ni compte ne sont nécessaires : par défaut, le modèle est servi par <strong>OVHcloud, en France, sans compte ni clé</strong>. Ceux qui ont Ollama et une carte de 8 Go peuvent travailler en local (<code>qwen2.5:7b</code> ou plus, un modèle qui sait appeler des outils).</p>
@@ -53,7 +53,19 @@ python llm.py</code></pre>
   <details><summary>Indice — « quota du fournisseur atteint »</summary><p>Sans clé, OVHcloud accepte 2 requêtes par minute <strong>et par modèle</strong>. <code>llm.py</code> attend et réessaie tout seul. Pour aller plus vite pendant une mesure : <code>--pause 20</code>, ou un autre modèle OVHcloud (<code>MODELE=Meta-Llama-3_3-70B-Instruct</code>), ou Ollama en local.</p></details>
 </section>
 
-<h2 class="jour" id="mercredi14">Mercredi 14 octobre, matin — séance 25 : un agent connecté aux données</h2>
+<section class="carte depart" id="rythme">
+  <h2>Le rythme des trois demi-journées</h2>
+  <table>
+    <tbody>
+      <tr><td><strong>Mardi 13</strong>, après-midi (2 h)</td><td>séance 25, missions <strong>1 à 3</strong> : le dépôt, l'agent qui tourne, vos deux outils</td></tr>
+      <tr><td><strong>Mercredi 14</strong>, matin (4 h)</td><td>séance 25, missions <strong>4 à 7</strong> (garde-fous, mesure, routage, auto-évaluation 1 à 8), puis séance 26, missions <strong>1 et 2</strong> (le RAG)</td></tr>
+      <tr><td><strong>Jeudi 15</strong>, après-midi (4 h)</td><td>séance 26, missions <strong>3 à 7</strong> : workflow, décisions, pseudonymisation, validation humaine, risques ; <strong>rendu avant 18 h</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="note">En avance ? Continuez dans l'ordre des missions. En retard ? Les missions 1 à 5 de chaque séance passent avant les autres.</p>
+</section>
+
+<h2 class="jour" id="mercredi14"><span id="mardi13"></span>Séance 25 — un agent connecté aux données (mardi 13 et mercredi 14)</h2>
 
 <section class="carte mission">
   <h2><span class="num">1</span> De l'assistant grand public à une application <span class="tag">Concevoir · 30 min</span></h2>
@@ -121,10 +133,10 @@ MODELE=Meta-Llama-3_3-70B-Instruct  (dans .env), puis la même commande</code></
 
 <section class="carte mission">
   <h2><span class="num">7</span> Vérifier ce que vous avez appris <span class="tag">Mesurer · 10 min</span></h2>
-  <p>Au portail : <strong>« IA en entreprise — auto-évaluation »</strong>, questions <strong>1 à 8</strong> aujourd'hui (les 8 suivantes jeudi). Recopiez au DOSSIER les réponses fausses données en étant sûr. Poussez, cochez vos missions.</p>
+  <p>Au portail : <strong>« IA en entreprise — auto-évaluation »</strong>, questions <strong>1 à 8</strong> (les 8 suivantes avec la séance 26). Recopiez au DOSSIER les réponses fausses données en étant sûr. Poussez, cochez vos missions.</p>
 </section>
 
-<h2 class="jour" id="jeudi15">Jeudi 15 octobre, après-midi — séance 26 : RAG, workflow et aide à la décision</h2>
+<h2 class="jour" id="jeudi15">Séance 26 — RAG, workflow et aide à la décision (mercredi 14 et jeudi 15)</h2>
 
 <section class="carte mission">
   <h2><span class="num">1</span> Le RAG par mots-clés <span class="tag">Concevoir · 35 min</span></h2>

@@ -9,7 +9,7 @@
 <body>
 <main>
 
-<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>5, 6, 8, 12 et 13 octobre 2026</strong> · projet individuel</p>
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>5, 6, 8 et 12 octobre 2026</strong> · projet individuel</p>
 
 <h1>Projet IA — de votre PC à la production</h1>
 <p class="chapo">Chez vous, vous avez souvent une machine plus puissante qu'au lycée. En trois séances, chacun conçoit une petite application qui s'appuie sur un modèle de langage <strong>qui tourne sur son propre PC</strong>, la met en production derrière une <strong>adresse publique en HTTPS</strong>, la mesure et la sécurise. Concevoir, piloter, mesurer, sécuriser : les quatre se voient dans le rendu.</p>
@@ -18,10 +18,10 @@
   <h2>Semaine du 12 octobre : toujours à distance</h2>
   <table>
     <tbody>
-      <tr><td><strong>Lundi 12</strong>, après-midi</td><td>séance 23, suite : terminer les missions, <strong>rendre avant 17 h</strong>, s'auto-évaluer</td><td><a href="#lundi12">plus bas</a></td></tr>
-      <tr><td><strong>Mardi 13</strong>, après-midi</td><td>séance 24 : continuer ou changer de contexte, prototyper avec une IA <strong>en ligne, gratuite, sans carte bancaire</strong></td><td><a href="#mardi13">plus bas</a></td></tr>
-      <tr><td><strong>Mercredi 14</strong>, matin (4 h)</td><td>nouveau module <strong>IA en entreprise</strong> — séance 25 : un agent connecté aux données</td><td><a href="ia-entreprise.html#mercredi14">sa page</a></td></tr>
-      <tr><td><strong>Jeudi 15</strong>, après-midi (4 h)</td><td>IA en entreprise — séance 26 : RAG, workflow et aide à la décision</td><td><a href="ia-entreprise.html#jeudi15">sa page</a></td></tr>
+      <tr><td><strong>Lundi 12</strong>, après-midi</td><td>séance 24 : <strong>un nouveau sujet</strong>, prototypé avec une IA <strong>en ligne, gratuite, sans carte bancaire</strong>, comparée à votre modèle local</td><td><a href="#lundi12">plus bas</a></td></tr>
+      <tr><td><strong>Mardi 13</strong>, après-midi (2 h)</td><td>nouveau module <strong>IA en entreprise</strong> — séance 25 : un agent connecté aux données, missions 1 à 3</td><td><a href="ia-entreprise.html#rythme">sa page</a></td></tr>
+      <tr><td><strong>Mercredi 14</strong>, matin (4 h)</td><td>séance 25, missions 4 à 7, puis séance 26 : le RAG</td><td><a href="ia-entreprise.html#rythme">sa page</a></td></tr>
+      <tr><td><strong>Jeudi 15</strong>, après-midi (4 h)</td><td>séance 26 : workflow, aide à la décision, rendu</td><td><a href="ia-entreprise.html#rythme">sa page</a></td></tr>
     </tbody>
   </table>
 </section>
@@ -30,7 +30,7 @@
   <h2>À chaque séance, en arrivant</h2>
   <ol>
     <li>Au début du cours, ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
-    <li>Carte <strong>« Vos missions »</strong> : séances 21 et 22 (5-6 octobre), 23 (jeudi 8 et <strong>lundi 12</strong>), <strong>24 le mardi 13</strong>. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
+    <li>Carte <strong>« Vos missions »</strong> : séances 21 et 22 (5-6 octobre), 23 (jeudi 8), <strong>24 le lundi 12</strong>. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
     <li>Pas de visio. Toutes les questions passent <strong>par e-mail</strong>, à mon adresse Gmail habituelle, avec un objet qui commence par <code>[BTS2 Projet IA]</code> suivi de votre nom. Bloqué plus de 15 minutes ? Écrivez, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds pendant les heures de cours.</li>
   </ol>
   <p class="note">Si possible <strong>avant lundi</strong> : installez <a href="https://ollama.com/download">Ollama</a> et <a href="https://docs.docker.com/desktop/">Docker Desktop</a>, ce sont les deux téléchargements les plus longs. Sans ordinateur utilisable chez vous, écrivez-moi avant lundi midi : une solution de repli existe.</p>
@@ -350,43 +350,189 @@ docker compose logs tunnel</code></pre>
   <p class="note">L'IA est autorisée pour vous aider à coder ou à déboguer. Dites au §7 ce que vous lui avez demandé et ce que vous avez gardé : un projet que vous ne savez pas expliquer ne sera pas compté.</p>
 </section>
 
-<h2 class="jour" id="lundi12">Lundi 12 octobre — séance 23, suite : terminer, rendre, vérifier ce que vous savez</h2>
-
-<section class="carte depart">
-  <h2>Ce qui change aujourd'hui</h2>
-  <p>La <strong>séance 23 est rouverte</strong> au portail : ses six missions (plus haut, « Jeudi 8 octobre ») sont celles de cet après-midi. Le rendu ne bouge pas : <strong>avant 17 h</strong>, par e-mail, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code> ; application en ligne jusqu'à 20 h.</p>
-</section>
-
-<section class="carte mission">
-  <h2><span class="num">1</span> Terminer et rendre <span class="tag">Piloter · 1 h 15</span></h2>
-  <ol>
-    <li>Répondez à la question du jour du portail, puis reprenez <strong>la première mission non cochée</strong> de la séance 23.</li>
-    <li>Toutes les 30 minutes : commit, push, et une ligne au §3 du README, <strong>ligne « lundi 12/10 »</strong>.</li>
-    <li>À 16 h 30 au plus tard, quel que soit l'état : relancez <code>docker compose logs tunnel</code>, vérifiez l'URL en 4G, et envoyez le rendu. Un projet partiel rendu à l'heure vaut mieux qu'un projet complet rendu demain.</li>
-  </ol>
-</section>
-
-<section class="carte mission">
-  <h2><span class="num">2</span> Vérifier ce que vous avez appris <span class="tag">Mesurer · 30 min</span></h2>
-  <ol>
-    <li>Au portail, carte des questionnaires : <strong>« Projet IA (3/3) — bilan »</strong>, huit questions. Pour chacune : répondez, <strong>dites si vous étiez sûr</strong>, puis lisez la correction.</li>
-    <li>Refaites ensuite <strong>« Projet IA (1/2) »</strong> et <strong>« (2/2) »</strong> (bouton « Tout recommencer ») : une semaine après, qu'en reste-t-il ?</li>
-    <li>À la fin de chaque questionnaire, le portail affiche un <strong>bilan par thème</strong>. Recopiez au §3 du README les thèmes sous la moitié, et chaque réponse <strong>fausse donnée en étant sûr</strong> : ce sont celles qui vous auraient trompé en entreprise. Pour chacune, une phrase : ce que vous croyiez, ce qui est juste.</li>
-  </ol>
-  <p class="note">Rien n'est noté dans ces questionnaires. Ce qui compte, c'est l'écart entre ce que vous croyez savoir et ce que vous savez : il dit quoi relire.</p>
-</section>
-
-<section class="carte mission">
-  <h2><span class="num">3</span> Déjà rendu ? Préparer mardi <span class="tag">Concevoir · le temps qui reste</span></h2>
-  <p>Lisez la séance de demain, <a href="#mardi13">juste en dessous</a>, et décidez : <strong>continuer votre projet</strong> ou <strong>changer de contexte</strong>. Vous pouvez déjà essayer le fournisseur qui ne demande <strong>aucun compte</strong> (mission 2 de mardi).</p>
-</section>
-
 <!-- MARDI13 -->
-<h2 class="jour" id="mardi13">Mardi 13 octobre — séance 24 : le même projet, avec une IA en ligne, sans carte bancaire</h2>
+<h2 class="jour" id="lundi12"><span id="mardi13"></span>Lundi 12 octobre — séance 24 : un nouveau sujet, avec une IA en ligne, sans carte bancaire</h2>
 
 <section class="carte depart">
   <h2>Pourquoi cette séance</h2>
-  <p>En entreprise, on prototype souvent avec un modèle <strong>en ligne</strong> : rien à installer, pas besoin d'une carte graphique, un résultat en dix minutes. Mais un prototype n'est pas une solution : il faut savoir <strong>ce que l'offre gratuite autorise</strong>, <strong>où partent les données</strong>, et si le résultat est <strong>meilleur ou pire</strong> que le modèle local. C'est ce que vous mesurez aujourd'hui.</p>
+  <p>En entreprise, on prototype souvent avec un modèle <strong>en ligne</strong> : rien à installer, pas besoin d'une carte graphique, un résultat en dix minutes. Mais un prototype n'est pas une solution : il faut savoir <strong>ce que l'offre gratuite autorise</strong>, <strong>où partent les données</strong>, et si le résultat est <strong>meilleur ou pire</strong> que le modèle local. C'est ce que vous mesurez aujourd'hui, sur <strong>un nouveau sujet</strong> : le premier projet est rendu, on n'y touche plus.</p>
+  <p class="regle"><strong>Aucune carte bancaire, nulle part.</strong> Si un service vous en demande une, arrêtez-vous : il n'est pas dans la liste. Et <strong>uniquement des données fictives</strong> : celles de votre sujet.</p>
+</section>
+
+<section class="carte">
+  <h2>Les fournisseurs gratuits, sans carte bancaire</h2>
+  <p>Tous parlent le même dialecte (l'API « chat completions » d'OpenAI) : le fichier <code>fournisseurs.py</code> du kit passe de l'un à l'autre avec une ligne de <code>.env</code>. Conditions relevées le 12/10/2026 : elles changent, <strong>vérifiez-les vous-même</strong> (mission 5).</p>
+  <table>
+    <thead><tr><th><code>FOURNISSEUR=</code></th><th>Ce qu'il faut</th><th>Offre gratuite</th><th>Où vont les données</th></tr></thead>
+    <tbody>
+      <tr><td><code>ovh</code><br>OVHcloud AI Endpoints</td><td><strong>rien</strong> : ni compte ni clé</td><td>2 requêtes par minute (par adresse IP et par modèle)</td><td>France ; pas d'entraînement, selon OVHcloud</td></tr>
+      <tr><td><code>github</code><br>GitHub Models</td><td>votre compte GitHub et un jeton « Models : read »</td><td>de l'ordre de 15 requêtes par minute et 150 par jour (modèles « low »)</td><td>États-Unis (Microsoft)</td></tr>
+      <tr><td><code>groq</code><br>Groq</td><td>un compte sur console.groq.com</td><td>de l'ordre de 30 par minute, 1 000 par jour selon le modèle</td><td>États-Unis</td></tr>
+      <tr><td><code>mistral</code><br>Mistral, offre Experiment</td><td>un compte et un numéro de téléphone vérifié</td><td>limites variables</td><td>France ; <strong>les requêtes peuvent servir à entraîner</strong>, selon Mistral</td></tr>
+      <tr><td><code>google</code><br>Google AI Studio</td><td>un compte Google (18 ans et plus)</td><td>limites variables selon le modèle</td><td>États-Unis ; entraînement possible sur l'offre gratuite, lire les conditions</td></tr>
+    </tbody>
+  </table>
+  <details><summary>Créer les clés (GitHub, Groq, Mistral, Google)</summary>
+    <ul>
+      <li><strong>GitHub Models</strong> : github.com → Settings → Developer settings → Personal access tokens → <em>Fine-grained tokens</em> → Generate. Dans « Permissions », ajoutez <strong>Models</strong> en lecture seule, rien d'autre. Durée : 30 jours. Modèles disponibles : <a href="https://github.com/marketplace/models">github.com/marketplace/models</a> (identifiant de la forme <code>openai/gpt-4o-mini</code>).</li>
+      <li><strong>Groq</strong> : <a href="https://console.groq.com">console.groq.com</a> → API Keys → Create.</li>
+      <li><strong>Mistral</strong> : <a href="https://console.mistral.ai">console.mistral.ai</a> → choisir l'offre <em>Experiment</em> (gratuite) → API Keys.</li>
+      <li><strong>Google</strong> : <a href="https://aistudio.google.com">aistudio.google.com</a> → Get API key.</li>
+    </ul>
+    <p>La clé va dans <code>.env</code>, ligne <code>CLE_API=</code>, et <strong>nulle part ailleurs</strong> : ni dans le dépôt, ni dans la page web, ni dans un e-mail. Une clé publiée par erreur se révoque tout de suite, depuis la même page.</p>
+  </details>
+  <p class="note">Pas de PC assez puissant pour Ollama ? C'est l'autre intérêt du SaaS : avec <code>ovh</code> ou <code>github</code>, l'application tourne dans un <strong>Codespace</strong>, sans carte graphique.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Un nouveau sujet, un nouveau dépôt <span class="tag">Concevoir · 20 min</span></h2>
+  <ol>
+    <li>Choisissez un sujet <strong>différent de celui de votre premier projet</strong> : un autre des sujets 1 à 5 (fiches et données dans <a href="https://github.com/ggaillard/BTS2-Projet-IA/tree/main/sujets"><code>sujets/</code></a>, résumés plus haut sur cette page), ou un sujet libre lié au stage, à faire valider par e-mail (mêmes règles que le sujet 6, données fictives uniquement).</li>
+    <li>Nouveau dépôt depuis le modèle <a href="https://github.com/ggaillard/BTS2-Projet-IA">BTS2-Projet-IA</a> (Use this template), nommé <code>projet-ia-&lt;prenom&gt;-2</code>. Il contient déjà <code>fournisseurs.py</code> et <code>essai_fournisseur.py</code>.</li>
+    <li>Clonez-le, <code>pip install -r requirements.txt</code>, copiez <code>.env.example</code> en <code>.env</code>, mettez un <code>CODE_ACCES</code> de 8 caractères au moins.</li>
+    <li>README : §1 (le besoin, trois récits utilisateurs, deux limites) et l'en-tête du §8 (le sujet choisi, pourquoi celui-là).</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Premier essai, sans aucun compte <span class="tag">Concevoir · 15 min</span></h2>
+  <ol>
+    <li>Essayez OVHcloud, sans clé, avec une entrée tirée des données de votre nouveau sujet :
+<pre><code>python essai_fournisseur.py ovh
+python essai_fournisseur.py ovh "une entrée tirée des données du sujet"</code></pre></li>
+    <li>Lisez les deux dernières lignes affichées : <strong>où sont parties les données</strong>, et si elles peuvent servir à entraîner.</li>
+    <li>Même chose avec votre Ollama (<code>python essai_fournisseur.py ollama</code>, Ollama lancé) : comparez le temps et la réponse.</li>
+  </ol>
+  <details><summary>Indice — « quota atteint (429) »</summary><p>Sans clé, OVHcloud accepte 2 requêtes par minute. Attendez trente secondes. Pour mesurer (mission 4), un fournisseur avec compte (GitHub, Groq) sera plus confortable : voir « Créer les clés » plus haut.</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> L'application du nouveau sujet, en ligne <span class="tag">Concevoir · 35 min</span></h2>
+  <ol>
+    <li>Écrivez <code>prompt.txt</code> pour le nouveau sujet (rôle, règles de la fiche, format de sortie avec un exemple) et <strong>10 cas</strong> dans <code>cas.json</code>, dont les pièges de la fiche, deux demandes hors sujet et une tentative de détournement.</li>
+    <li>Dans <code>.env</code> : <code>FOURNISSEUR=ovh</code> (ou <code>github</code>, <code>groq</code> avec sa clé dans <code>CLE_API=</code>), <code>MODELE=</code> vide. Lancez l'application, <strong>sans Docker aujourd'hui</strong> :
+<pre><code>uvicorn main:app --reload
+curl http://localhost:8000/a-propos</code></pre>
+      La route <code>/a-propos</code> dit à l'utilisateur qu'il parle à une IA, et où partent ses données.</li>
+    <li>Essayez trois cas à la main dans la page <code>http://localhost:8000</code>, corrigez la consigne, poussez.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Local contre en ligne : mesurer <span class="tag">Mesurer · 25 min</span></h2>
+  <ol>
+    <li>Même <code>cas.json</code>, même <code>prompt.txt</code>, même température : seul le fournisseur change. Avec le fournisseur en ligne, puis (en changeant <code>FOURNISSEUR=ollama</code> et <code>MODELE=</code> votre modèle local dans <code>.env</code>, et en relançant uvicorn) avec Ollama :
+<pre><code>python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3 --pause 5    # GitHub, Groq…
+python evaluer.py http://localhost:8000 VOTRE_CODE --essais 1 --pause 31   # OVHcloud sans clé (≈ 5 min)
+python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3              # Ollama</code></pre></li>
+    <li>Remplissez le tableau « La mesure » du §8 ; commitez les CSV. Nommez <strong>les cas qui changent de verdict</strong> d'un fournisseur à l'autre, et dites pourquoi à votre avis.</li>
+  </ol>
+  <p class="note">Une erreur 503 dans les résultats, c'est le quota de l'offre gratuite, pas votre application : notez-le, c'est une information sur le fournisseur. Pas de PC pour Ollama ? Comparez deux fournisseurs en ligne, ou deux modèles d'OVHcloud.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Rendre <span class="tag">15 min</span></h2>
+  <ol>
+    <li>README complet (§1 à §7), dernier commit poussé.</li>
+    <li><strong>Avant 17 h</strong>, envoyez un e-mail à mon adresse Gmail habituelle, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code>, avec : l'adresse du dépôt GitHub (invitez <code>ggaillard</code> s'il est privé), l'<strong>URL publique</strong> et le <strong>code d'accès</strong>. Le code ne va que dans cet e-mail, jamais dans le dépôt.</li>
+    <li>Faites l'auto-évaluation au portail. Pas fini ? Envoyez quand même ce que vous avez : vous complétez jeudi (séance 23, plus bas).</li>
+  </ol>
+</section>
+
+<h2 class="jour">Jeudi 8 octobre — séance 23 : terminer, améliorer, présenter</h2>
+
+<section class="carte depart">
+  <h2>Le projet est prolongé</h2>
+  <p>Jeudi, chacun reprend son dépôt <code>projet-ia-&lt;prenom&gt;</code> là où il l'a laissé mardi. <strong>Personne ne repart de zéro, personne ne change de sujet.</strong> Si les séances 21 et 22 ne sont pas terminées, vous les terminez d'abord (missions 1 et 2 ci-dessous) ; sinon, vous passez directement à l'amélioration (missions 3 à 5).</p>
+  <p><strong>Rendu final : lundi 12 octobre, avant 17 h</strong>, par e-mail, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code>. Même contenu que mardi (dépôt, URL publique, code d'accès), <strong>plus</strong> trois lignes : ce qui fonctionne, ce qui ne fonctionne pas encore, ce qui vous a bloqué. L'application reste en ligne <strong>jusqu'à lundi 20 h</strong> : je la teste à ce moment-là. L'URL du tunnel change à chaque redémarrage : envoyez la dernière.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Faire le point <span class="tag">Concevoir · 15 min</span></h2>
+  <ol>
+    <li>Reprenez le tableau « Ce qui sera regardé », en bas de page. Pour chaque ligne, notez dans le README (§3, ligne du jeudi) <strong>fait</strong>, <strong>partiel</strong> ou <strong>pas fait</strong>, avec la preuve (fichier, capture, commande).</li>
+    <li>Relancez ce qui tournait mardi :
+<pre><code>ollama ps
+docker compose up -d
+docker compose ps
+docker compose logs tunnel</code></pre>
+      La dernière commande donne la <strong>nouvelle</strong> adresse publique : notez-la en tête du README.</li>
+    <li>Choisissez <strong>deux</strong> points « partiel » ou « pas fait » : ce sont vos priorités de la séance.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Terminer ce qui manque <span class="tag">Piloter · 45 min</span></h2>
+  <p>Dans l'ordre. On ne passe au point suivant que quand le précédent tient.</p>
+  <ol>
+    <li>L'application répond en local au format demandé par la fiche de votre sujet (séance 21, mission 3).</li>
+    <li>Au moins 10 cas dans <code>cas.json</code>, dont les pièges de la fiche (séance 21, mission 4).</li>
+    <li><code>docker compose</code> : application <em>healthy</em>, redémarrage prouvé (séance 22, mission 1).</li>
+    <li>URL publique testée depuis un téléphone en 4G, refus sans le code (séance 22, mission 2).</li>
+  </ol>
+  <details><summary>Indice — l'application n'arrive pas à joindre Ollama dans Docker</summary><p>Dans <code>.env</code>, mettez <code>OLLAMA_URL=http://host.docker.internal:11434</code>, pas <code>localhost</code> : dans le conteneur, <code>localhost</code> désigne le conteneur lui-même. Vérifiez qu'Ollama tourne sur le PC avec <code>ollama ps</code>. Sous Linux, suivez l'option B décrite en tête de <code>compose.yaml</code>.</p></details>
+  <details><summary>Indice — pas de Docker utilisable chez vous</summary><p>Repli : un Codespace ouvert sur votre dépôt, <code>qwen2.5:1.5b</code> sur le processeur, l'application lancée avec <code>uvicorn</code> et le port 8000 rendu <strong>public</strong> dans l'onglet Ports. Écrivez-le au §2 du README : c'est accepté, et la partie Production est alors notée sur ce que vous avez pu prouver.</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Améliorer, et le prouver <span class="tag">Mesurer · 40 min</span></h2>
+  <ol>
+    <li>Reprenez les deux échecs commentés mardi (§4). Pour chacun, faites <strong>une seule</strong> modification : la consigne de <code>prompt.txt</code>, un exemple ajouté, la température, ou le format JSON imposé.</li>
+    <li>Rejouez <strong>tout</strong> le jeu sur l'URL publique, trois essais par cas :
+<pre><code>python evaluer.py https://….trycloudflare.com VOTRE_CODE --essais 3</code></pre></li>
+    <li>Ajoutez au §4 une ligne <strong>« après modification »</strong> : taux, temps médian, ce qui a changé. Un cas qui passait et qui casse compte autant qu'un cas réparé : dites-le.</li>
+    <li>Ajoutez deux cas nouveaux, plus difficiles, tirés de ce que vous avez observé. Commitez <code>cas.json</code> et le CSV des résultats.</li>
+  </ol>
+  <p class="note">Changer deux choses à la fois, c'est ne plus savoir laquelle a servi. Une modification, une mesure.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Sécuriser jusqu'au bout <span class="tag">Sécuriser · 20 min</span></h2>
+  <ol>
+    <li>Dans le tableau des risques du §5, chaque ligne nomme <strong>la mesure qui est dans votre projet</strong> (fichier et ligne), pas une intention.</li>
+    <li>Collez les preuves qui manquent : <code>docker compose ps</code> (le port 11434 n'apparaît pas), <code>git log --all --oneline -- .env</code> (ne renvoie rien), le cas « ignore les consignes » refusé.</li>
+    <li>Imaginez une tentative de détournement de plus, propre à votre sujet. Essayez-la, ajoutez-la à <code>cas.json</code>.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Présenter le projet sur votre page <span class="tag">Piloter · 20 min</span></h2>
+  <ol>
+    <li>Créez (ou reprenez) votre page professionnelle <code>https://&lt;votre-login&gt;.github.io</code> : un dépôt <strong>public</strong> nommé exactement <code>&lt;votre-login&gt;.github.io</code>, un <code>index.html</code>, puis Settings → Pages → <em>Deploy from a branch</em>, branche <code>main</code>.</li>
+    <li>Dans la rubrique <strong>Projets</strong>, présentez le projet IA : ce que fait l'application et pour qui, une capture, les technologies (Ollama, FastAPI, Docker, tunnel), le lien vers le dépôt, et une phrase sur ce que la mesure a montré.</li>
+    <li>Ni code d'accès, ni URL trycloudflare (elle change) : une capture suffit.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">6</span> Rendre <span class="tag">10 min</span></h2>
+  <ol>
+    <li>README complet (§1 à §7), dernier commit poussé, <code>.env</code> absent du dépôt.</li>
+    <li>En fin de séance, cochez au portail les missions faites.</li>
+    <li>Rendu final par e-mail <strong>avant lundi 12 octobre, 17 h</strong> (voir plus haut), avec en plus l'adresse de votre page <code>github.io</code>. Application en ligne jusqu'à lundi 20 h.</li>
+  </ol>
+</section>
+
+<section class="carte depart">
+  <h2>Ce qui sera regardé</h2>
+  <table>
+    <tbody>
+      <tr><td>Concevoir : besoin, cas d'usage, limites, modèle justifié par la machine</td><td>3 pts</td></tr>
+      <tr><td>L'application fait ce que le sujet demande, format de sortie tenu</td><td>4 pts</td></tr>
+      <tr><td>Production : compose, santé, redémarrage, URL publique joignable lundi 12 au soir</td><td>5 pts</td></tr>
+      <tr><td>Mesurer : 10 cas, deux modèles, trois essais, deux échecs commentés</td><td>4 pts</td></tr>
+      <tr><td>Sécuriser : code, limite, Ollama non exposé, aucun secret, risques et preuves</td><td>4 pts</td></tr>
+    </tbody>
+  </table>
+  <p class="note">L'IA est autorisée pour vous aider à coder ou à déboguer. Dites au §7 ce que vous lui avez demandé et ce que vous avez gardé : un projet que vous ne savez pas expliquer ne sera pas compté.</p>
+</section>
+
+<!-- MARDI13 -->
+<h2 class="jour" id="lundi12"><span id="mardi13"></span>Lundi 12 octobre — séance 24 : un nouveau sujet, avec une IA en ligne, sans carte bancaire</h2>
+
+<section class="carte depart">
+  <h2>Pourquoi cette séance</h2>
+  <p>En entreprise, on prototype souvent avec un modèle <strong>en ligne</strong> : rien à installer, pas besoin d'une carte graphique, un résultat en dix minutes. Mais un prototype n'est pas une solution : il faut savoir <strong>ce que l'offre gratuite autorise</strong>, <strong>où partent les données</strong>, et si le résultat est <strong>meilleur ou pire</strong> que le modèle local. C'est ce que vous mesurez aujourd'hui, sur <strong>un nouveau sujet</strong> : le premier projet est rendu, on n'y touche plus.</p>
   <p class="regle"><strong>Aucune carte bancaire, nulle part.</strong> Si un service vous en demande une, arrêtez-vous : il n'est pas dans la liste. Et <strong>uniquement des données fictives</strong> : celles de votre sujet.</p>
 </section>
 
@@ -469,7 +615,7 @@ python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3 --pause 31   # OVH
 </section>
 
 <section class="carte mission">
-  <h2><span class="num">5</span> Où partent les données ? Décider <span class="tag">Sécuriser · 20 min</span></h2>
+  <h2><span class="num">5</span> Où partent les données ? Décider <span class="tag">Sécuriser · 15 min</span></h2>
   <ol>
     <li>Pour chaque fournisseur essayé, ouvrez <strong>ses conditions</strong> (lien affiché par <code>essai_fournisseur.py</code>) et recopiez au §8 <strong>la phrase</strong> qui dit si vos requêtes peuvent servir à entraîner ses modèles, et le pays où elles sont traitées.</li>
     <li>Imaginez votre application avec les <strong>vraies</strong> données de l'organisation de votre sujet (des noms d'usagers, des messages internes, des avis signés…). Écrivez la décision : local, fournisseur français, fournisseur américain — et pourquoi. Pensez au RGPD (données personnelles), au secret des affaires, et au fait qu'une société américaine reste soumise au droit américain même quand ses serveurs sont en Europe.</li>
