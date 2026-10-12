@@ -9,16 +9,28 @@
 <body>
 <main>
 
-<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>lundi 5, mardi 6 et jeudi 8 octobre 2026</strong> · projet individuel</p>
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>5, 6, 8, 12 et 13 octobre 2026</strong> · projet individuel</p>
 
 <h1>Projet IA — de votre PC à la production</h1>
 <p class="chapo">Chez vous, vous avez souvent une machine plus puissante qu'au lycée. En trois séances, chacun conçoit une petite application qui s'appuie sur un modèle de langage <strong>qui tourne sur son propre PC</strong>, la met en production derrière une <strong>adresse publique en HTTPS</strong>, la mesure et la sécurise. Concevoir, piloter, mesurer, sécuriser : les quatre se voient dans le rendu.</p>
+
+<section class="carte depart" id="semaine">
+  <h2>Semaine du 12 octobre : toujours à distance</h2>
+  <table>
+    <tbody>
+      <tr><td><strong>Lundi 12</strong>, après-midi</td><td>séance 23, suite : terminer les missions, <strong>rendre avant 17 h</strong>, s'auto-évaluer</td><td><a href="#lundi12">plus bas</a></td></tr>
+      <tr><td><strong>Mardi 13</strong>, après-midi</td><td>séance 24 : continuer ou changer de contexte, prototyper avec une IA <strong>en ligne, gratuite, sans carte bancaire</strong></td><td><a href="#mardi13">plus bas</a></td></tr>
+      <tr><td><strong>Mercredi 14</strong>, matin (4 h)</td><td>nouveau module <strong>IA en entreprise</strong> — séance 25 : un agent connecté aux données</td><td>page publiée mardi</td></tr>
+      <tr><td><strong>Jeudi 15</strong>, après-midi (4 h)</td><td>IA en entreprise — séance 26 : RAG, workflow et aide à la décision</td><td>page publiée mardi</td></tr>
+    </tbody>
+  </table>
+</section>
 
 <section class="carte depart">
   <h2>À chaque séance, en arrivant</h2>
   <ol>
     <li>Au début du cours, ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence, l'appel Pronote en est tiré.</li>
-    <li>Carte <strong>« Vos missions »</strong> : séance 21 le lundi, séance 22 le mardi, <strong>séance 23 le jeudi</strong>. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
+    <li>Carte <strong>« Vos missions »</strong> : séances 21 et 22 (5-6 octobre), 23 (jeudi 8 et <strong>lundi 12</strong>), <strong>24 le mardi 13</strong>. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
     <li>Pas de visio. Toutes les questions passent <strong>par e-mail</strong>, à mon adresse Gmail habituelle, avec un objet qui commence par <code>[BTS2 Projet IA]</code> suivi de votre nom. Bloqué plus de 15 minutes ? Écrivez, avec <strong>le message d'erreur copié</strong> et la commande qui l'a produit : je réponds pendant les heures de cours.</li>
   </ol>
   <p class="note">Si possible <strong>avant lundi</strong> : installez <a href="https://ollama.com/download">Ollama</a> et <a href="https://docs.docker.com/desktop/">Docker Desktop</a>, ce sont les deux téléchargements les plus longs. Sans ordinateur utilisable chez vous, écrivez-moi avant lundi midi : une solution de repli existe.</p>
@@ -337,6 +349,46 @@ docker compose logs tunnel</code></pre>
   </table>
   <p class="note">L'IA est autorisée pour vous aider à coder ou à déboguer. Dites au §7 ce que vous lui avez demandé et ce que vous avez gardé : un projet que vous ne savez pas expliquer ne sera pas compté.</p>
 </section>
+
+<h2 class="jour" id="lundi12">Lundi 12 octobre — séance 23, suite : terminer, rendre, vérifier ce que vous savez</h2>
+
+<section class="carte depart">
+  <h2>Ce qui change aujourd'hui</h2>
+  <p>La <strong>séance 23 est rouverte</strong> au portail : ses six missions (plus haut, « Jeudi 8 octobre ») sont celles de cet après-midi. Le rendu ne bouge pas : <strong>avant 17 h</strong>, par e-mail, objet <code>[BTS2 Projet IA] NOM Prénom — rendu</code> ; application en ligne jusqu'à 20 h.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Terminer et rendre <span class="tag">Piloter · 1 h 15</span></h2>
+  <ol>
+    <li>Répondez à la question du jour du portail, puis reprenez <strong>la première mission non cochée</strong> de la séance 23.</li>
+    <li>Toutes les 30 minutes : commit, push, et une ligne au §3 du README, <strong>ligne « lundi 12/10 »</strong>.</li>
+    <li>À 16 h 30 au plus tard, quel que soit l'état : relancez <code>docker compose logs tunnel</code>, vérifiez l'URL en 4G, et envoyez le rendu. Un projet partiel rendu à l'heure vaut mieux qu'un projet complet rendu demain.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Vérifier ce que vous avez appris <span class="tag">Mesurer · 30 min</span></h2>
+  <ol>
+    <li>Au portail, carte des questionnaires : <strong>« Projet IA (3/3) — bilan »</strong>, huit questions. Pour chacune : répondez, <strong>dites si vous étiez sûr</strong>, puis lisez la correction.</li>
+    <li>Refaites ensuite <strong>« Projet IA (1/2) »</strong> et <strong>« (2/2) »</strong> (bouton « Tout recommencer ») : une semaine après, qu'en reste-t-il ?</li>
+    <li>À la fin de chaque questionnaire, le portail affiche un <strong>bilan par thème</strong>. Recopiez au §3 du README les thèmes sous la moitié, et chaque réponse <strong>fausse donnée en étant sûr</strong> : ce sont celles qui vous auraient trompé en entreprise. Pour chacune, une phrase : ce que vous croyiez, ce qui est juste.</li>
+  </ol>
+  <p class="note">Rien n'est noté dans ces questionnaires. Ce qui compte, c'est l'écart entre ce que vous croyez savoir et ce que vous savez : il dit quoi relire.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Déjà rendu ? Préparer mardi <span class="tag">Concevoir · le temps qui reste</span></h2>
+  <p>Lisez la séance de demain, <a href="#mardi13">juste en dessous</a>, et décidez : <strong>continuer votre projet</strong> ou <strong>changer de contexte</strong>. Vous pouvez déjà essayer le fournisseur qui ne demande <strong>aucun compte</strong> (mission 2 de mardi).</p>
+</section>
+
+<!-- MARDI13 -->
+<h2 class="jour" id="mardi13">Mardi 13 octobre — séance 24 : prototyper avec une IA en ligne, sans carte bancaire</h2>
+
+<section class="carte depart">
+  <h2>Consignes publiées ce soir</h2>
+  <p>Le principe : vous <strong>continuez</strong> votre projet ou vous <strong>changez de contexte</strong>, et vous branchez l'application sur un modèle <strong>en ligne, gratuit, sans carte bancaire</strong>, pour le comparer à votre modèle local — qualité, vitesse, et surtout <strong>où partent les données</strong>.</p>
+</section>
+
 
 </main>
 </body>

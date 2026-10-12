@@ -22,6 +22,35 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 12 octobre 2026 (matin) — Projet IA BTS2 : lundi, on termine et on s'auto-évalue
+
+Demandé : la semaine reste à distance (lundi et mardi après-midi 2 h,
+mercredi matin 4 h, jeudi après-midi 4 h) ; continuer les missions en cours et
+vérifier les apprentissages par des questionnaires d'auto-évaluation.
+
+Relevé en base le 12/10 au matin (lecture avec la clé publique) : la séance 23
+était **close** depuis jeudi ; la bande 90-98 du BTS2 occupe 90, 91, 92, 93 et
+97. Les deux auto-évaluations du projet sont toutes deux rattachées à la 22.
+
+**Une migration**, `20261012090000_bts2_projet_ia_bilan.sql` :
+
+- questionnaire **« Projet IA (3/3) — bilan »** (`autoeval-s23-projet-ia`,
+  mode `revision`, certitude, 8 questions, deux bonnes réponses par lettre),
+  posé au premier numéro libre (94), **rattaché à la 23 avec `reste_ouvert`** :
+  il reste disponible après le rendu ;
+- la **séance 23 rouverte**, le 12/10 seulement (condition sur la date de
+  Paris) : rejouée un autre jour, la migration ne rouvre rien.
+
+`distance/projet-ia.html` : bandeau, tableau « Semaine du 12 octobre », partie
+« Lundi 12 octobre » (terminer et rendre avant 17 h, les trois questionnaires
+refaits et leur bilan par thème recopié au README, préparer mardi), et un
+emplacement pour mardi 13 (séance 24), rempli dans la journée.
+
+Chaîne rejouée deux fois sur une base neuve (postgres 16) avec les assertions
+du workflow : vert.
+
+---
+
 ## 7 octobre 2026 — Projet IA BTS2 : une troisième séance à distance
 
 Demandé : prolonger le projet IA pour la séance du jeudi 08/10, toujours à
