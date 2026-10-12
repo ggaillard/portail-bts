@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IA en entreprise</title>
+<link rel="stylesheet" href="distance.css">
+</head>
+<body>
+<main>
+
+<p class="bandeau">BTS SIO 2 SLAM · À distance · <strong>mercredi 14 (matin, 4 h) et jeudi 15 octobre 2026 (après-midi, 4 h)</strong> · travail individuel</p>
+
+<h1>IA en entreprise — agents, RAG, workflows, décisions de confiance</h1>
+<p class="chapo">Jusqu'ici, votre application posait une question à un modèle et affichait la réponse. En entreprise, l'IA doit <strong>aller chercher les données</strong> de l'organisation, <strong>s'appuyer sur ses documents</strong>, <strong>enchaîner des étapes</strong> et <strong>préparer des décisions</strong> — qu'une personne valide, et dont on peut mesurer la fiabilité. Sans que les données des clients partent n'importe où.</p>
+
+<section class="carte depart">
+  <h2>À chaque séance, en arrivant</h2>
+  <ol>
+    <li>Ouvrez le <a href="https://ggaillard.github.io/portail-bts/">portail</a>, identifiez-vous, <strong>répondez à la question du jour</strong> : c'est votre présence.</li>
+    <li>Carte <strong>« Vos missions »</strong> : séance 25 le mercredi, séance 26 le jeudi. Cochez une mission quand elle est <strong>faite et poussée sur GitHub</strong>.</li>
+    <li>Pas de visio. Questions par <strong>e-mail</strong>, à mon adresse Gmail habituelle, objet <code>[BTS2 IA Entreprise] NOM Prénom — …</code>, avec le message d'erreur copié et la commande qui l'a produit.</li>
+  </ol>
+  <p class="note">Ni carte graphique ni compte ne sont nécessaires : par défaut, le modèle est servi par <strong>OVHcloud, en France, sans compte ni clé</strong>. Ceux qui ont Ollama et une carte de 8 Go peuvent travailler en local (<code>qwen2.5:7b</code> ou plus, un modèle qui sait appeler des outils).</p>
+</section>
+
+<section class="carte">
+  <h2>Le contexte : ThermiForez</h2>
+  <p><strong>ThermiForez</strong> (fictive) entretient et dépanne chaudières, pompes à chaleur et VMC autour de Saint-Étienne : 38 salariés, 14 techniciens sur quatre secteurs, 2 400 clients sous contrat. Aujourd'hui, l'assistante du service client jongle entre trois écrans, et des salariés <strong>collent les rapports d'intervention dans un assistant IA grand public</strong> pour les résumer — avec les noms, adresses et téléphones des clients dedans.</p>
+  <p>La direction a adopté une <a href="https://github.com/ggaillard/BTS2-IA-Entreprise/blob/main/donnees/documents/charte-ia.md">charte d'usage de l'IA</a>. Vous construisez ce qu'elle décrit.</p>
+  <table>
+    <thead><tr><th>Concept</th><th>Où vous le construisez</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Agent conversationnel connecté</strong> aux données internes</td><td>séance 25 : l'assistant du service client interroge la base par des <em>outils</em>, en lecture seule</td></tr>
+      <tr><td><strong>Orchestration</strong> : du prompt isolé à une architecture</td><td>séances 25 et 26 : chaque étape à sa place (Python, modèle, base, humain), tout est journalisé</td></tr>
+      <tr><td><strong>RAG</strong> : répondre à partir des documents</td><td>séance 26 : mots-clés contre vecteurs, réponses citées, abstention</td></tr>
+      <tr><td><strong>Workflow automatisé</strong> : traiter des rapports</td><td>séance 26 : sept étapes, du texte du technicien à la décision</td></tr>
+      <tr><td><strong>IA de confiance et d'aide à la décision</strong></td><td>séance 26 : le programme calcule, le modèle qualifie, une personne valide ; on mesure si la confiance est méritée</td></tr>
+      <tr><td><strong>Souveraineté et sécurité des données</strong></td><td>séances 25 et 26 : routage selon la sensibilité des données, pseudonymisation, injections, droits minimaux</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="carte">
+  <h2>Le dépôt de départ</h2>
+  <p>Dépôt modèle <a href="https://github.com/ggaillard/BTS2-IA-Entreprise"><strong>ggaillard/BTS2-IA-Entreprise</strong></a> : <strong>Use this template → Create a new repository</strong>, nommé <code>ia-entreprise-&lt;prenom&gt;</code>. Sans GitHub sous la main : <a href="ia-entreprise/ia-entreprise-depart.zip">l'archive zip</a>. Tout est en Python, une seule dépendance (<code>httpx</code>).</p>
+<pre><code>python -m venv .venv
+.venv\Scripts\activate            (macOS, Linux : source .venv/bin/activate)
+pip install -r requirements.txt
+copy .env.example .env            (macOS, Linux : cp .env.example .env)
+python llm.py</code></pre>
+  <p>Le <code>README.md</code> du dépôt décrit chaque fichier ; <code>DOSSIER.md</code> est <strong>votre dossier</strong>, à remplir au fil des deux séances.</p>
+  <details><summary>Indice — « quota du fournisseur atteint »</summary><p>Sans clé, OVHcloud accepte 2 requêtes par minute <strong>et par modèle</strong>. <code>llm.py</code> attend et réessaie tout seul. Pour aller plus vite pendant une mesure : <code>--pause 20</code>, ou un autre modèle OVHcloud (<code>MODELE=Meta-Llama-3_3-70B-Instruct</code>), ou Ollama en local.</p></details>
+</section>
+
+<h2 class="jour" id="mercredi14">Mercredi 14 octobre, matin — séance 25 : un agent connecté aux données</h2>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> De l'assistant grand public à une application <span class="tag">Concevoir · 30 min</span></h2>
+  <ol>
+    <li>Créez votre dépôt, installez, lancez <code>python llm.py</code>. Lisez ce qu'il affiche : quelles <strong>sensibilités de données</strong> ce fournisseur a le droit de recevoir ?</li>
+    <li>Lisez la <a href="https://github.com/ggaillard/BTS2-IA-Entreprise/blob/main/donnees/documents/charte-ia.md">charte IA</a> et le début de <code>llm.py</code> (la table <code>ROUTAGE</code>).</li>
+    <li>DOSSIER §1 : trois raisons pour lesquelles coller un rapport dans un assistant en ligne pose problème, chacune reliée à un point de la charte.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Faire tourner l'agent, et le regarder faire <span class="tag">Piloter · 30 min</span></h2>
+  <ol>
+    <li>Posez quatre questions :
+<pre><code>python s25-agent/agent.py "Quand a eu lieu le dernier entretien de la chaudière de Mme Sophie Martin, à Saint-Étienne ?"
+python s25-agent/agent.py "M. ou Mme Martin a appelé : quelle est sa formule de contrat ?"
+python s25-agent/agent.py "Propose un rendez-vous d'entretien à Mme Chantal Perrin la semaine prochaine."
+python s25-agent/agent.py "Peux-tu me résumer la fiche de M. Olivier Chazal ?"</code></pre></li>
+    <li>Ouvrez <code>journal/agent.jsonl</code> et <code>journal/appels.jsonl</code> : quels outils, dans quel ordre, combien d'appels au modèle, combien de jetons ? Le contenu des questions est-il dans le journal des appels ? Pourquoi ?</li>
+    <li>Complétez le schéma Mermaid du DOSSIER §1 : où est la validation humaine du rendez-vous ? où le routage peut-il refuser ?</li>
+  </ol>
+  <p class="note">À retenir : le modèle ne touche jamais la base. Il <strong>demande</strong> un outil ; c'est <code>agent.py</code> qui décide d'exécuter. C'est cela, orchestrer.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Deux outils de plus <span class="tag">Concevoir · 50 min</span></h2>
+  <ol>
+    <li>Dans <code>s25-agent/outils.py</code>, écrivez <code>stock_piece</code> et <code>techniciens_secteur</code> : leur docstring dit exactement ce qu'ils reçoivent et rendent. <strong>Requêtes paramétrées</strong> (<code>?</code>), jamais de texte collé dans le SQL.</li>
+    <li>Décrivez-les au modèle dans <code>OUTILS</code> (nom, description, paramètres) et ajoutez-les à <code>EXECUTER</code>. La description est tout ce que le modèle en voit : soignez-la.</li>
+    <li><code>python s25-agent/test_outils.py</code> doit afficher <strong>11/11</strong>. Puis :
+<pre><code>python s25-agent/agent.py "Combien de circulateurs 25-60 en stock au dépôt de Montbrison ?"
+python s25-agent/agent.py "Quels techniciens habilités pour les pompes à chaleur couvrent le secteur de Montbrison ?"</code></pre></li>
+  </ol>
+  <details><summary>Indice — le modèle n'appelle pas mon outil</summary><p>Il ne l'a peut-être pas vu : est-il bien dans <code>OUTILS</code> ? Sinon, relisez sa description comme si vous étiez le modèle : dit-elle <em>quand</em> s'en servir ?</p></details>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Les garde-fous, prouvés <span class="tag">Sécuriser · 40 min</span></h2>
+  <ol>
+    <li><strong>Lecture seule</strong> : montrez, par une commande, que la base refuse d'écrire même si un outil essayait (<code>test_outils.py</code> en donne l'idée).</li>
+    <li><strong>Injection indirecte</strong> : la note du client CL-0141 contient une consigne cachée. L'agent la suit-il ? La <strong>signale</strong>-t-il (règle 3 de <code>consigne_agent.txt</code>) ? Sinon, améliorez la consigne, et prouvez-le.</li>
+    <li><strong>Minimisation</strong> : demandez « les téléphones de tous les clients de Firminy ». Pourquoi l'agent ne peut-il pas les donner, même s'il le voulait ?</li>
+    <li>DOSSIER §2 : le tableau des droits de chaque outil, et les preuves collées.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Mesurer l'agent <span class="tag">Mesurer · 50 min</span></h2>
+  <ol>
+    <li>Rejouez les douze questions de <code>questions.json</code>, avec deux modèles :
+<pre><code>python s25-agent/evaluer_agent.py --pause 15
+MODELE=Meta-Llama-3_3-70B-Instruct  (dans .env), puis la même commande</code></pre></li>
+    <li>DOSSIER §3 : le tableau, et <strong>deux échecs commentés</strong>. Pour l'un d'eux, <strong>une seule</strong> modification (consigne, description d'un outil…), puis on remesure.</li>
+  </ol>
+  <p class="note">Un « ✗ » n'est pas toujours la faute du modèle : relisez la réponse dans le CSV. Un juge trop strict se corrige aussi — en le disant.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">6</span> Souveraineté : le routage <span class="tag">Sécuriser · 20 min</span></h2>
+  <ol>
+    <li>Dans <code>.env</code> : <code>FOURNISSEUR=groq</code> (ou <code>github</code>), avec sa clé (séance 24). Relancez l'agent : il <strong>refuse</strong>. Collez le message et la ligne de <code>journal/appels.jsonl</code> au DOSSIER §6.</li>
+    <li>Pourquoi un fournisseur hors Union européenne n'a-t-il pas le droit de recevoir des données « personnelle », même s'il répond mieux ? Que change <code>DONNEES_FICTIVES=oui</code>, et pourquoi n'existerait-il pas en production ?</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">7</span> Vérifier ce que vous avez appris <span class="tag">Mesurer · 10 min</span></h2>
+  <p>Au portail : <strong>« IA en entreprise — auto-évaluation »</strong>, questions <strong>1 à 8</strong> aujourd'hui (les 8 suivantes jeudi). Recopiez au DOSSIER les réponses fausses données en étant sûr. Poussez, cochez vos missions.</p>
+</section>
+
+<h2 class="jour" id="jeudi15">Jeudi 15 octobre, après-midi — séance 26 : RAG, workflow et aide à la décision</h2>
+
+<section class="carte mission">
+  <h2><span class="num">1</span> Le RAG par mots-clés <span class="tag">Concevoir · 35 min</span></h2>
+  <ol>
+    <li>Découpez les neuf documents internes en passages, puis interrogez-les :
+<pre><code>python s26-rag-decision/rag.py --indexer
+python s26-rag-decision/rag.py "Le compresseur d'une PAC entre-t-il dans le plafond Sérénité ?"</code></pre></li>
+    <li>Lisez la réponse : cite-t-elle sa source ? Puis mesurez :
+<pre><code>python s26-rag-decision/evaluer_rag.py --pause 10</code></pre></li>
+    <li>DOSSIER §4, colonne « Mots-clés ».</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">2</span> Le RAG par vecteurs, et l'abstention <span class="tag">Mesurer · 35 min</span></h2>
+  <ol>
+    <li>Calculez les plongements (un seul appel) et remesurez :
+<pre><code>python s26-rag-decision/rag.py --indexer --vecteurs
+python s26-rag-decision/evaluer_rag.py --mode vecteurs --pause 25</code></pre></li>
+    <li>Trouvez la question que l'une des deux méthodes rate, et expliquez pourquoi (DOSSIER §4).</li>
+    <li>Les questions R13 et R14 ne sont pas dans les documents. Que fait le RAG ? Quel rôle jouent <code>SEUIL_MOTSCLES</code> et <code>SEUIL_VECTEURS</code> ?</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">3</span> Le workflow des rapports <span class="tag">Piloter · 40 min</span></h2>
+  <ol>
+    <li>Lisez l'en-tête de <code>s26-rag-decision/workflow.py</code> : sept étapes, chacune à sa place. Puis traitez les douze rapports :
+<pre><code>python s26-rag-decision/workflow.py --pause 5</code></pre></li>
+    <li>Pour <strong>un</strong> rapport, suivez ses sept lignes dans <code>journal/workflow.jsonl</code>, et son dossier dans <code>journal/derniere_execution.json</code> : qu'a extrait le modèle ? qu'a vérifié la base ? quels articles ont été cherchés ?</li>
+    <li>DOSSIER §5 : le schéma des sept étapes (Mermaid), avec pour chacune qui la fait.</li>
+  </ol>
+  <p class="note">Le modèle ne calcule aucun montant : le programme calcule deux scénarios à partir de la base, le modèle <strong>choisit</strong> et <strong>justifie</strong>. Pourquoi ce partage ?</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">4</span> Des décisions dignes de confiance <span class="tag">Mesurer · 45 min</span></h2>
+  <ol>
+    <li>Comparez à ce qu'aurait décidé le service SAV :
+<pre><code>python s26-rag-decision/evaluer_decisions.py</code></pre>
+      Dans l'ordre : <strong>erreurs graves</strong> (une seule refuse la mise en service), relectures manquées, décisions justes, <strong>calibration</strong> (la « confiance haute » est-elle méritée ?), automatisation.</li>
+    <li>Trouvez la cause d'une décision fausse (le dossier dans <code>derniere_execution.json</code> dit tout). Faites <strong>une</strong> modification — une consigne, un garde-fou — relancez sur les rapports concernés, puis sur les douze, et remesurez.</li>
+    <li>DOSSIER §5 : les deux mesures, et ce que vous avez changé.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">5</span> Pseudonymiser <span class="tag">Sécuriser · 30 min</span></h2>
+  <ol>
+    <li>Écrivez <code>masquer_adresses</code> dans <code>workflow.py</code> ; <code>python s26-rag-decision/test_pseudo.py</code> doit afficher <strong>8/8</strong>.</li>
+    <li>Pourquoi le code client et la commune restent-ils ? Que change <code>PSEUDONYMISER=non</code> à la sensibilité déclarée, et donc aux fournisseurs autorisés ?</li>
+    <li>DOSSIER §6 : la pseudonymisation et sa preuve.</li>
+  </ol>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">6</span> L'humain dans la boucle <span class="tag">Piloter · 20 min</span></h2>
+  <p>Vous êtes Mme Dumas, responsable SAV : <code>python s26-rag-decision/valider.py</code>. Acceptez un dossier, corrigez-en un, refusez-en un, chaque fois après avoir vérifié la source citée. Votre nom et l'heure sont tracés dans <code>journal/validations.jsonl</code>. DOSSIER §5.</p>
+</section>
+
+<section class="carte mission">
+  <h2><span class="num">7</span> Risques, auto-évaluation, rendu <span class="tag">Sécuriser · 20 min</span></h2>
+  <ol>
+    <li>DOSSIER §7 : le tableau des risques (OWASP Top 10 pour les applications LLM), avec pour chacun <strong>la mesure dans le code</strong> et la preuve.</li>
+    <li>Au portail : l'auto-évaluation, questions <strong>9 à 16</strong>.</li>
+    <li>Dépôt poussé (avec <code>journal/</code> : ce sont vos preuves), <code>.env</code> absent. <strong>Avant 18 h</strong>, e-mail <code>[BTS2 IA Entreprise] NOM Prénom — rendu</code> : l'adresse du dépôt et trois lignes — ce qui marche, ce qui ne marche pas, ce qui vous a bloqué.</li>
+  </ol>
+</section>
+
+<section class="carte depart">
+  <h2>Ce qui sera regardé</h2>
+  <table>
+    <tbody>
+      <tr><td><strong>Concevoir</strong> : les deux schémas, le tableau des droits des outils, les deux outils écrits (11/11)</td><td>4 pts</td></tr>
+      <tr><td><strong>Piloter</strong> : l'agent et le workflow tournent, journaux présents, trois validations tracées</td><td>4 pts</td></tr>
+      <tr><td><strong>Mesurer</strong> : agent sur deux modèles, RAG sur deux méthodes, décisions avec calibration, une modification mesurée avant / après</td><td>6 pts</td></tr>
+      <tr><td><strong>Sécuriser</strong> : lecture seule et injections prouvées, refus du routage prouvé, pseudonymisation 8/8, risques avec leurs mesures, aucune clé dans le dépôt</td><td>6 pts</td></tr>
+    </tbody>
+  </table>
+  <p class="note">L'IA est autorisée pour vous aider à coder ou à déboguer : dites au DOSSIER §8 ce que vous lui avez demandé et ce que vous avez gardé. Un code que vous ne savez pas expliquer ne compte pas.</p>
+</section>
+
+</main>
+</body>
+</html>

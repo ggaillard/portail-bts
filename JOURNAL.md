@@ -22,6 +22,44 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 12 octobre 2026 (midi) — BTS2 : séance 24 et nouveau module « IA en entreprise »
+
+**Séance 24, mardi 13/10** (`20261012120000_bts2_projet_ia_seance24.sql`) :
+le même projet IA, ou un autre contexte, branché sur une IA **en ligne,
+gratuite, sans carte bancaire**, et comparé au modèle local. Le kit (dépôt
+modèle `BTS2-Projet-IA` et `distance/projet-ia/depart/`, zip reconstruit)
+gagne `fournisseurs.py` (Ollama, OVHcloud sans compte, GitHub Models, Groq,
+Mistral, Google : même dialecte « chat completions », conditions relevées le
+12/10), `essai_fournisseur.py`, `evaluer.py --pause`, la route `/a-propos` et
+le §8 du README. Six missions `tp24-mK`, questionnaire « Prototyper en ligne —
+auto-évaluation » (8 questions, n° 95 attendu, rattaché à la 24,
+`reste_ouvert`). Partie « Mardi 13 octobre » de `distance/projet-ia.html`.
+
+**Module « IA en entreprise », séances 25 (mercredi 14, 4 h) et 26 (jeudi 15,
+4 h)** (`20261012140000_bts2_ia_entreprise.sql`) : module `ia-entreprise`
+(ordre 6, dépôts `BTS2-IA-Entreprise` et `BTS2-IA-Entreprise-Prof`), deux
+séances projet de 7 missions, un seul questionnaire de 16 questions pour le
+module (n° 96 attendu, rattaché à la 25, `reste_ouvert`) — **le n° 98 reste
+le dernier libre de la bande 90-98 du BTS2**. Page `distance/ia-entreprise.html`,
+kit en zip `distance/ia-entreprise/ia-entreprise-depart.zip`. Contexte fictif
+ThermiForez : agent connecté à une base SQLite (outils en lecture seule,
+routage souverain dans `llm.py`), RAG mots-clés / vecteurs, workflow rapports →
+décisions avec garde-fous et validation humaine. Résultats de référence dans le
+README du dépôt enseignant.
+
+Les trois migrations du jour rejouées deux fois sur une base neuve
+(postgres 16) avec les assertions du workflow, et `controler.py`
+(coherence, fiche, pedagogie) et `mesurer.mjs` : vert.
+
+⚠️ **Le 12/10 au matin, l'étape « Lier le projet » du workflow Supabase
+échoue : `Invalid access token`.** Le secret `SUPABASE_ACCESS_TOKEN` du dépôt
+est à renouveler (Supabase → Account → Access Tokens, puis Settings → Secrets
+du dépôt) ; tant qu'il ne l'est pas, **aucune migration n'atteint la base**.
+Relancer ensuite « Re-run failed jobs » : `supabase db push` applique toutes les
+migrations en attente d'un coup.
+
+---
+
 ## 12 octobre 2026 (matin) — Projet IA BTS2 : lundi, on termine et on s'auto-évalue
 
 Demandé : la semaine reste à distance (lundi et mardi après-midi 2 h,

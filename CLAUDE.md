@@ -1304,6 +1304,8 @@ n'existait que sur le poste de l'enseignant.
 | `bloc1-dev` — Bloc 1 DEV | BTS1-DEV-2026 | `BTS1_S1_B1_DEV` | `BTS1_S1_B1_DEV_Prof` | 1-14 |
 | `playlistapp` — PlaylistApp C# | BTS2-SLAM-2026 | `playlist-csharp` | `playlist-csharp-prof` | 0-4 |
 | `ia-meca-forez` — IA Méca Forez | BTS2-SLAM-2026 | `BTS2-IA-MecaForez` | `BTS2-IA-MecaForez-Prof` | 11-16 |
+| `projet-ia` — Projet IA à domicile | BTS2-SLAM-2026 | `BTS2-Projet-IA` | — | 21-24 |
+| `ia-entreprise` — IA en entreprise | BTS2-SLAM-2026 | `BTS2-IA-Entreprise` | `BTS2-IA-Entreprise-Prof` | 25-26 |
 
 Migration `20260928080000_modules.sql`. Les fonctions :
 
