@@ -70,7 +70,7 @@ Ce que vous avez demandé à un assistant, et ce que vous avez gardé, modifié 
 
 ## 8. Local ou en ligne ? (séance 24)
 
-**Mon choix pour la séance 24** : ☐ je continue mon sujet ☐ je change de contexte → nouveau sujet : …
+**Séance 24 — mon nouveau sujet** (différent du premier) : n° … — … · **premier sujet** : n° … · pourquoi ce choix : …
 
 **Les fournisseurs essayés** (conditions relevées le …/10/2026, avec le lien) :
 

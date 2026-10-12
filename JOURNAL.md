@@ -22,6 +22,31 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 12 octobre 2026 (14 h 45) — tests de bout en bout, quatre incohérences corrigées
+
+Rejoué comme un étudiant, depuis des clones neufs des dépôts publiés et les
+pages en ligne (OVHcloud réel) :
+
+- **bloquant** : `uvicorn main:app --reload` (séance 24, mission 3) ne lit pas
+  `.env` → l'application refuse de démarrer (`CODE_ACCES absent`). Consigne,
+  `CONSIGNES.md` du dépôt modèle et indice : `--env-file .env`. Vérifié : santé
+  et `/a-propos` répondent, `evaluer.py --pause` mesure ;
+- sans Docker, Ollama se joint par `localhost`, pas `host.docker.internal` :
+  mission 4 et `.env.example` le disent ;
+- README §8 et `CONSIGNES.md` du modèle parlaient encore de « continuer son
+  sujet » et du 13/10 ; la page dit maintenant qu'aujourd'hui il n'y a ni Docker
+  ni URL publique, mais que le code d'accès reste obligatoire ;
+- questionnaire « IA en entreprise » : introduction et thèmes en « mercredi /
+  jeudi » → séances 25 et 26 (`20261012160000_bts2_ia_entreprise_rythme.sql`) ;
+  `evaluer_decisions.py` (kit IA en entreprise) disait « acceptable » après un
+  seul rapport traité : il dit maintenant « mesure incomplète ».
+
+Kit IA en entreprise, clone neuf : `test_outils` 7/11 et `test_pseudo` 4/8
+(les missions à écrire, attendu), `llm.py`, index, agent et workflow répondent.
+Liens des deux pages : tous joignables. Zips reconstruits.
+
+---
+
 ## 12 octobre 2026 (14 h 30) — la séance 24 avancée à cet après-midi
 
 Le jeton Supabase renouvelé par G ; workflow relancé à 14 h 15 : les trois

@@ -356,6 +356,7 @@ docker compose logs tunnel</code></pre>
 <section class="carte depart">
   <h2>Pourquoi cette séance</h2>
   <p>En entreprise, on prototype souvent avec un modèle <strong>en ligne</strong> : rien à installer, pas besoin d'une carte graphique, un résultat en dix minutes. Mais un prototype n'est pas une solution : il faut savoir <strong>ce que l'offre gratuite autorise</strong>, <strong>où partent les données</strong>, et si le résultat est <strong>meilleur ou pire</strong> que le modèle local. C'est ce que vous mesurez aujourd'hui, sur <strong>un nouveau sujet</strong> : le premier projet est rendu, on n'y touche plus.</p>
+  <p><strong>Aujourd'hui, ni Docker ni URL publique</strong> : l'application tourne sur votre PC avec <code>uvicorn</code>. Le code d'accès reste obligatoire : sans <code>CODE_ACCES</code> d'au moins 8 caractères dans <code>.env</code>, l'application refuse de démarrer.</p>
   <p class="regle"><strong>Aucune carte bancaire, nulle part.</strong> Si un service vous en demande une, arrêtez-vous : il n'est pas dans la liste. Et <strong>uniquement des données fictives</strong> : celles de votre sujet.</p>
 </section>
 
@@ -404,6 +405,7 @@ python essai_fournisseur.py ovh "une entrée tirée des données du sujet"</code
     <li>Même chose avec votre Ollama (<code>python essai_fournisseur.py ollama</code>, Ollama lancé) : comparez le temps et la réponse.</li>
   </ol>
   <details><summary>Indice — « quota atteint (429) »</summary><p>Sans clé, OVHcloud accepte 2 requêtes par minute. Attendez trente secondes. Pour mesurer (mission 4), un fournisseur avec compte (GitHub, Groq) sera plus confortable : voir « Créer les clés » plus haut.</p></details>
+  <details><summary>Indice — « CODE_ACCES absent ou trop court » au lancement</summary><p>uvicorn ne lit pas <code>.env</code> tout seul : lancez <code>uvicorn main:app --reload --env-file .env</code>, et vérifiez que <code>CODE_ACCES=</code> a au moins 8 caractères.</p></details>
 </section>
 
 <section class="carte mission">
@@ -411,7 +413,7 @@ python essai_fournisseur.py ovh "une entrée tirée des données du sujet"</code
   <ol>
     <li>Écrivez <code>prompt.txt</code> pour le nouveau sujet (rôle, règles de la fiche, format de sortie avec un exemple) et <strong>10 cas</strong> dans <code>cas.json</code>, dont les pièges de la fiche, deux demandes hors sujet et une tentative de détournement.</li>
     <li>Dans <code>.env</code> : <code>FOURNISSEUR=ovh</code> (ou <code>github</code>, <code>groq</code> avec sa clé dans <code>CLE_API=</code>), <code>MODELE=</code> vide. Lancez l'application, <strong>sans Docker aujourd'hui</strong> :
-<pre><code>uvicorn main:app --reload
+<pre><code>uvicorn main:app --reload --env-file .env
 curl http://localhost:8000/a-propos</code></pre>
       La route <code>/a-propos</code> dit à l'utilisateur qu'il parle à une IA, et où partent ses données.</li>
     <li>Essayez trois cas à la main dans la page <code>http://localhost:8000</code>, corrigez la consigne, poussez.</li>
@@ -421,7 +423,7 @@ curl http://localhost:8000/a-propos</code></pre>
 <section class="carte mission">
   <h2><span class="num">4</span> Local contre en ligne : mesurer <span class="tag">Mesurer · 25 min</span></h2>
   <ol>
-    <li>Même <code>cas.json</code>, même <code>prompt.txt</code>, même température : seul le fournisseur change. Avec le fournisseur en ligne, puis (en changeant <code>FOURNISSEUR=ollama</code> et <code>MODELE=</code> votre modèle local dans <code>.env</code>, et en relançant uvicorn) avec Ollama :
+    <li>Même <code>cas.json</code>, même <code>prompt.txt</code>, même température : seul le fournisseur change. Avec le fournisseur en ligne, puis avec Ollama : dans <code>.env</code>, <code>FOURNISSEUR=ollama</code>, <code>MODELE=</code> votre modèle local et <code>OLLAMA_URL=http://localhost:11434</code> (sans Docker, Ollama est sur le même PC), puis relancez uvicorn :
 <pre><code>python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3 --pause 5    # GitHub, Groq…
 python evaluer.py http://localhost:8000 VOTRE_CODE --essais 1 --pause 31   # OVHcloud sans clé (≈ 5 min)
 python evaluer.py http://localhost:8000 VOTRE_CODE --essais 3              # Ollama</code></pre></li>
