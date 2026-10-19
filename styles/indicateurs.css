@@ -143,3 +143,60 @@ button.eq-jalon{min-height:44px;cursor:pointer}
 
 /* ── La fiche d'un élève : sa météo ── */
 .fe-meteo{display:flex;flex-wrap:wrap;gap:.25rem;font-size:1.1rem;margin-top:.35rem}
+
+/* ── « Où en est chacun » : la carte du parcours (19/10) ───────────────────
+   Une ligne par étudiant, une case par étape. Des cases de 22 px : quinze
+   étapes et le numéro tiennent à 390 px sans défiler ; au-delà, la zone
+   défile (elle se prend au clavier, .scroll). Le symbole double la couleur :
+   ✓ ✗ ● se lisent sans voir le vert ou l'orange. */
+.ca-bouchon{margin:.2rem 0 .6rem;padding:.5rem .7rem;border-radius:6px;font-weight:600;
+  background:var(--signal-soft);color:var(--signal)}
+.ca-zone{overflow-x:auto;max-width:100%}
+.ca-grille{border-collapse:separate;border-spacing:2px;font-size:.72rem}
+.ca-grille th,.ca-grille td{width:22px;min-width:22px;height:22px;padding:0;text-align:center;
+  border-radius:4px;font-variant-numeric:tabular-nums}
+.ca-grille thead th{position:relative;font-family:var(--f-mono);font-weight:600;color:var(--ink-soft);
+  height:30px;vertical-align:bottom}
+.ca-grille thead th.ca-acte{color:var(--accent-ink)}
+.ca-grille thead th:first-child{text-align:left;width:auto}
+.ca-ici-n{position:absolute;top:-2px;left:50%;transform:translateX(-50%);min-width:15px;
+  padding:0 3px;border-radius:8px;font-size:.62rem;line-height:13px;
+  background:var(--accent-soft);color:var(--accent-ink)}
+.ca-ici-n.bouchon{background:var(--signal);color:var(--surface)}
+.ca-grille tbody th{text-align:left;width:auto;white-space:nowrap;padding-right:.3rem}
+.ca-num{min-height:24px;padding:0 .2rem;border:0;background:none;color:var(--ink);
+  font:inherit;font-weight:600;cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+.ca-num:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ca-j,.ca-x{background:var(--ok-soft);color:var(--ok)}
+.ca-f{background:var(--signal-soft);color:var(--signal)}
+.ca-v{background:var(--surface-alt)}
+.ca-ici{background:var(--accent-soft);color:var(--accent-ink);font-weight:700;
+  box-shadow:inset 0 0 0 2px var(--accent)}
+.ca-ici.long{background:var(--signal-soft);color:var(--signal);box-shadow:inset 0 0 0 2px var(--signal)}
+.ca-l.fini th .ca-num{color:var(--ok)}
+.ca-l.main th .ca-num::after{content:" ✋"}
+.ca-legende span{display:inline-block;min-width:1.2rem;text-align:center;border-radius:3px}
+
+/* ── Le bilan d'une séance : ce que la séance apprend (19/10) ─────────────── */
+.an-points{list-style:none;margin:.3rem 0 .8rem;padding:0;display:grid;gap:.4rem}
+.an-points li{display:flex;gap:.5rem;align-items:baseline}
+.an-points .badge{flex:none}
+.an-table{border-collapse:collapse;font-size:.85rem;width:100%}
+.an-table th,.an-table td{padding:.3rem .45rem;border-bottom:1px solid var(--rule-soft);text-align:left;
+  vertical-align:top}
+.an-table td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.an-table tr.long td{color:var(--signal);font-weight:600}
+.an-filtres{display:flex;flex-wrap:wrap;gap:.4rem;margin:.4rem 0}
+.an-eleves{display:grid;gap:.5rem}
+.an-el{padding:.55rem .7rem;border:1px solid var(--rule-soft);border-radius:6px;background:var(--surface)}
+.an-el-tete{display:flex;flex-wrap:wrap;gap:.4rem;align-items:baseline}
+.an-el-tete strong{font-family:var(--f-mono)}
+.an-el ul{margin:.3rem 0 0;padding-left:1.1rem;font-size:.86rem}
+.an-el .an-ko{margin:.25rem 0 0;font-size:.86rem;color:var(--ink-soft)}
+/* Sur un téléphone, les quinze étapes tiennent sans défiler : cases de 16 px. */
+@media (max-width: 30rem){
+  .ca-grille{border-spacing:1px;font-size:.62rem}
+  .ca-grille th,.ca-grille td{width:16px;min-width:16px;height:20px}
+  .ca-grille tbody th{padding-right:.15rem}
+  .ca-num{padding:0 .1rem}
+}

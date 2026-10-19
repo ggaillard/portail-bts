@@ -354,6 +354,23 @@
         <div aria-live="polite" id="err-vigilance"></div>
       </div>
 
+      <!-- « Où en est chacun » (19/10) : une ligne par étudiant, une case par
+           étape de la séance dans l'ordre de la page, et l'étape où chacun EST.
+           Après « À aller voir » : celui-ci dit qui aider, celle-là où ça coince.
+           Nominatif, jamais projeté. Remplie par js/carte.js. -->
+      <div id="bloc-carte" class="pa-bloc ca-bloc" hidden>
+        <div class="ct-tete">
+          <h3>Où en est chacun <span class="vg-compte ca-compte" id="ca-compte"></span></h3>
+        </div>
+        <p class="ca-bouchon" id="ca-bouchon" role="status" hidden></p>
+        <div class="scroll ca-zone" tabindex="0" role="region" aria-label="La carte du parcours, élève par élève">
+          <table class="ca-grille" id="ca-grille"></table>
+        </div>
+        <p class="sous-hint" id="ca-absents" hidden></p>
+        <p class="sous-hint ca-legende"><span class="ca-j">✓</span> juste · <span class="ca-f">✗</span> faux ·
+          <span class="ca-ici">●</span> l'étape en cours, puis ses minutes · colonnes en chiffres romains : les points de passage.</p>
+      </div>
+
       <!-- Le parcours de l'heure. Le pré-vol dit « cette séance est-elle
            prête » ; celui-ci dit « où en est chacun ». Il vient juste après,
            parce que c'est la question suivante, et avant le contrôle d'entrée

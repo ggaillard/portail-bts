@@ -15,7 +15,7 @@ recompte ses chiffres et échoue quand le document a vieilli.
 
 ## Ce que fait ce dépôt
 
-`index.html` (**1 145 lignes**) + `styles/` (dix-sept feuilles) + `js/` + `styleguide.html` (le guide des composants) :
+`index.html` (**1 162 lignes**) + `styles/` (dix-sept feuilles) + `js/` + `styleguide.html` (le guide des composants) :
 
 | module | ce qu'il porte |
 |---|---|
@@ -59,6 +59,8 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `aujourdhui.js` | « Aujourd'hui » en tête d'En cours : créneaux et séances du jour, un geste par ligne (06/10) |
 | `pageseance.js` | **la page d'une séance** (`#s/35`) : fil d'Ariane, Préparer · En direct · Bilan ; elle HÉBERGE la fiche et la carte du direct ; Dupliquer (06/10, lot 3) |
 | `bilanseance.js` | l'onglet Bilan de la page : prévu et fait, appel, participation, contrôle, missions ou quiz, concepts, automate (06/10, lot 3) |
+| `analyse.js` | sous le Bilan d'une séance : ce que la séance apprend (points à changer, actes prévu / réel, questions), puis étudiant par étudiant — priorité, raisons, concepts à reprendre, retours individuels à copier, CSV (19/10) |
+| `carte.js` | « Où en est chacun », vue Maintenant : une ligne par étudiant, une case par étape, l'étape en cours et ses minutes, le bouchon (19/10) |
 | `avenir.js` | « La semaine à préparer », en tête de Préparer : créneaux, « Prête ? », placer une séance sur un créneau vide (06/10, lot 3) |
 | `lot.js` | les actions groupées sur « Les séances » : programmer à la suite, retirer la date, rendre visibles, ouvrir, clore, ranger (06/10, lot 3) |
 | `assistant.js` | l'assistant « Nouveau module » : dépôt (mkdocs.yml lu), séances, planning, contenus (06/10, lot 3) |
@@ -1701,7 +1703,9 @@ fois · présente au sommaire de `mkdocs.yml` · un corrigé en base par questio
 un teaser · un bloc « À retenir » · **une liste « Concepts à connaître »
 identique à celle de la base, dont les numéros de questions existent**.
 
-**Depuis la séance 5 (19/10/2026)**, deux points de plus : la grille des
+**Depuis la séance 5 (19/10/2026)**, trois points de plus — le troisième
+(point 15) : **l'ordre des étapes en base est celui de la page** (`…_etapes.sql`,
+produit par le générateur avec `outils/seances/etapes.py`). Les deux premiers : la grille des
 réponses **n'est plus dans la page** — le dépôt du cours est public, une grille
 donne les réponses à qui ouvre la page ou la colle dans une IA ; les contrôles
 lisent la bonne lettre dans les migrations (`grille_de()`), et une grille
@@ -1725,6 +1729,23 @@ une feuille (`styles/indicateurs.css`), un contrôle (`outils/t_indicateurs.mjs`
 
 ### Pendant l'heure
 
+- **« Où en est chacun »** (19/10, `js/carte.js`, `carte_parcours()`) : la base
+  connaît l'ORDRE des étapes d'une séance (`etapes_seance`, écrit par le
+  générateur depuis la trace — `outils/seances/etapes.py` ; sans lignes, repli
+  sur l'ordre des séances 1 à 4). Une ligne par présent, une case par étape,
+  l'étape où il est et ses minutes ; le **bouchon** à partir de trois présents
+  ET du quart d'entre eux sur la même étape — en dessous, c'est le rythme de
+  chacun, pas un endroit qui coince. Les absents sur une ligne. Jamais projeté.
+- **Après l'heure, l'analyse** (19/10, `js/analyse.js`, `analyse_seance()`,
+  onglet Bilan de la page d'une séance) : les points à changer dans la séance —
+  acte au-delà de prévu × 1,3 + 2 min (cinq mesures au moins), question sous
+  50 % et son distracteur s'il réunit 35 %, question quittée par 3 étudiants et
+  10 % des présents, réponses sans lire pour le quart, où s'arrêtent ceux qui
+  n'ont pas fini, mains levées par acte, question réussie par tous — puis
+  étudiant par étudiant : priorité (à revoir · à surveiller · ça va · absent),
+  raisons, concepts à reprendre (un concept dont une question est fausse),
+  retours individuels à copier (vouvoiement, prénoms locaux, rien pour qui n'a
+  rien à reprendre) et CSV. Les seuils vivent dans la fonction, pas dans la page.
 - **Le parcours guidé de la page de séance** (19/10, `suivi.js` du BTS1) : les
   questions arrivent au fil des actes, la suite attend la réponse. Sortir de la
   page PENDANT une question est dit à l'étudiant puis enregistré

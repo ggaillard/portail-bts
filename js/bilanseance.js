@@ -7,6 +7,10 @@
 // missions d'un projet), les concepts, ce qu'il faut reprendre, et ce que
 // l'automate a fait de lui-même.
 //
+// Depuis le 19/10, une troisième, sous les chiffres : `analyse_seance()`
+// (js/analyse.js) — ce que la séance apprend sur elle-même, et ce que chaque
+// étudiant doit reprendre.
+//
 // Deux lectures, en parallèle : `bilan_seance()` (migration 20261006120000)
 // et `debriefing()`, la même que la vue « Fin d'heure » — les seuils des
 // concepts (75 / 45) restent à un seul endroit. Le compte rendu à copier
@@ -19,6 +23,7 @@
 import { sb, typo } from './socle.js';
 import { quandLisible, heureDe, jourDe } from './etat.js';
 import { texteRefus } from './refus.js';
+import { rendreAnalyse } from './analyse.js';
 
 var VERDICT = { acquis: ["ok", "acquis"], fragile: ["att", "fragile"], a_revoir: ["ko", "à revoir"],
                 sans_mesure: ["neutre", "sans mesure"] };
@@ -118,6 +123,13 @@ function rendreBilan(s, z, liens){
       z.appendChild(ol);
     }
 
+    // Ce que la séance apprend, et à chacun (19/10) : après les chiffres,
+    // avant les liens. Masqué sur un projet ou une séance sans étapes.
+    var za = document.createElement("div");
+    za.className = "an-zone";
+    z.appendChild(za);
+    var analyse = rendreAnalyse(s, za);
+
     var p = document.createElement("div");
     p.className = "pick";
     [["Le compte rendu à copier ›", liens && liens.compteRendu], ["Le carnet de la classe ›", liens && liens.carnet]]
@@ -131,6 +143,7 @@ function rendreBilan(s, z, liens){
         p.appendChild(bt);
       });
     z.appendChild(p);
+    return analyse;
   });
 }
 

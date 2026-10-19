@@ -239,7 +239,14 @@ begin
 end $$;
 ''' % (len(actes), len(actes))
 
-for nom, txt in zip(SORTIES, (A, B, C)):
+# ── 4. L'ordre des étapes (ajouté le 19/10, avec carte_parcours) ────────────
+#  Après 20261019090000, qui crée la table : d'où l'horodatage à part.
+sys.path.insert(0, os.path.join(ICI, '..'))
+import etapes as _etapes
+D = _etapes.sql(N, _etapes.etapes(t))
+SORTIES = SORTIES + ('20261019091000_bts1_seance5_etapes.sql',)
+
+for nom, txt in zip(SORTIES, (A, B, C, D)):
     # LF dans le dépôt ; le clone Windows convertit lui-même (core.autocrlf).
     open(os.path.join(MIG, nom), 'w', encoding='utf-8', newline='\n').write(txt)
 print('ok', lettres, dict(c), 'fin des actes :', fin_min, 'min ;', len(actes), 'actes')
