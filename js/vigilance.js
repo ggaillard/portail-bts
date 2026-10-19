@@ -51,11 +51,34 @@ function chargerVigilance(apres){
     if (!d || !d.ok) { bloc.hidden = true; suivi.vigilance = null; if (apres) apres(); return; }
     suivi.vigilance = d;
     bloc.hidden = false;
-    rendreVigilance(d);
-    // Vibrer, compter sur l'icône, garder l'écran allumé (alertes.js).
-    signaler(d);
-    if (apres) apres();
+    return ajouterSorties(d).then(function(){
+      rendreVigilance(d);
+      // Vibrer, compter sur l'icône, garder l'écran allumé (alertes.js).
+      signaler(d);
+      if (apres) apres();
+    });
   });
+}
+
+// Sortir de la page PENDANT une question (19/10/2026, parcours guidé de la
+// page de séance) : une raison de plus, écrite par la base comme les autres
+// (`sorties_seance()`), fusionnée ici avant l'affichage. La fonction absente
+// (migration pas encore appliquée) ne change rien : on rend la vigilance
+// telle qu'elle était.
+function ajouterSorties(d){
+  return sb.rpc("sorties_seance", { p_seance_id: Number(suivi.seanceId) }).then(function(r){
+    var s = r && !r.error && r.data;
+    if (!s || !s.ok || !Array.isArray(s.eleves) || !s.eleves.length) return;
+    d.eleves = d.eleves || [];
+    var total = 0;
+    s.eleves.forEach(function(x){
+      total += 1;
+      var e = d.eleves.filter(function(y){ return String(y.numero) === String(x.numero); })[0];
+      if (!e) { e = { numero: x.numero, raisons: [] }; d.eleves.push(e); }
+      e.raisons = (e.raisons || []).concat([{ gravite: x.gravite, texte: x.texte }]);
+    });
+    d.sorties = total;
+  }, function(){ /* réseau : la vigilance reste celle de la base */ });
 }
 
 function rangDe(x){
@@ -102,7 +125,8 @@ function rendreVigilance(d){
         (s.bloque_min || 25) + " min"
       : "") +
     " · sans le temps de lire : réponse plus rapide que la lecture de la question " +
-    "(3,5 mots par seconde, 4 à 25 s).";
+    "(3,5 mots par seconde, 4 à 25 s) · page quittée pendant une question : à surveiller, " +
+    "à aller voir à partir de deux questions ou d'une minute.";
 }
 
 // Une ligne sous le titre : ce qui se compte pour toute la classe — l'humeur
@@ -120,6 +144,9 @@ function rendreResume(d){
   if (d.nature === "projet" && d.mediane_missions !== null && d.mediane_missions !== undefined) {
     morceaux.push("missions : médiane " + String(d.mediane_missions).replace(".", ",") +
                   (d.jalons ? " sur " + d.jalons : ""));
+  }
+  if (d.sorties) {
+    morceaux.push(d.sorties + " étudiant" + (d.sorties > 1 ? "s ont" : " a") + " quitté la page pendant une question");
   }
   if (d.trop_vite) {
     morceaux.push(d.trop_vite + " réponse" + (d.trop_vite > 1 ? "s" : "") + " sans le temps de lire");

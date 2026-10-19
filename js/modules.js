@@ -95,7 +95,7 @@ function blocModule(m, avecEnseignant){
 function chargerModulesEtu(classeId){
   return sb.rpc("mes_modules").then(function(r){
     var liste = r && !r.error && r.data && r.data.ok && r.data.liste;
-    if (liste && liste.length) { rendreModulesEtu(liste); return; }
+    if (liste && liste.length) { rendreModulesEtu(liste); return seanceDuJourEtu(classeId, liste); }
     return repliProjets(classeId);
   }, function(){ return repliProjets(classeId); });
 }
@@ -111,6 +111,37 @@ function rendreModulesEtu(liste){
   z.innerHTML = "";
   z.classList.add("md-etu");
   liste.forEach(function(m){ z.appendChild(blocModule(m, false)); });
+}
+
+// La séance du jour, en tête de son module (19/10/2026). Jusqu'ici
+// l'étudiant arrivait sur la page d'accueil du cours, puis cherchait la
+// séance dans le menu : un détour de plus, au moment où la classe démarre.
+// Seul un COURS démarré aujourd'hui et ouvert compte — un projet reste ouvert
+// des semaines, ce n'est pas « la séance du jour ». Le lien suit la
+// convention des cours MkDocs : <site>seances/seance-NN/.
+function seanceDuJourEtu(classeId, liste){
+  var aujourdhui = new Date().toDateString();
+  return sb.from("seances").select("id,numero,titre,nature,ouverte,demarree_le,module_id")
+    .eq("classe_id", classeId).eq("ouverte", true).lte("numero", 89)
+    .then(function(r){
+      var ss = (r && !r.error && r.data) || [];
+      ss.filter(function(x){
+        return x.nature !== "projet" && x.demarree_le &&
+               new Date(x.demarree_le).toDateString() === aujourdhui;
+      }).forEach(function(x){
+        var m = liste.filter(function(y){ return String(y.id) === String(x.module_id); })[0];
+        if (!m || !m.site || !/\/$/.test(m.site)) return;
+        var bloc = document.querySelector('#mes-projets [data-module="' + m.code + '"] .projets');
+        if (!bloc || bloc.querySelector(".projet-jour")) return;
+        var n = String(x.numero).padStart(2, "0");
+        var titre = String(x.titre || "").replace(/^Séance\s+\d+\s*-\s*/i, "");
+        var a = carte({ url: m.site + "seances/seance-" + n + "/", icone: "▶",
+                        titre: "La séance du jour — séance " + x.numero,
+                        description: typo(titre) + " · les questions arrivent au fil de la lecture." });
+        a.classList.add("projet-jour");
+        bloc.insertBefore(a, bloc.firstChild);
+      });
+    }, function(){ /* sans la liste des séances, les liens d'avant suffisent */ });
 }
 
 // ── Côté enseignant ──────────────────────────────────────────────────────

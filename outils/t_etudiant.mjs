@@ -188,10 +188,52 @@ for (const w of [360, 390, 768]) {
   if (erreurs.length) rates.push(`${w} px : erreur JS — ${erreurs[0]}`);
   await fermer();
 }
+
+// « La séance du jour » (19/10) : un cours ouvert et démarré aujourd'hui mène
+// droit à sa page, en tête de son module. Un projet ouvert depuis des
+// semaines, ou le cours d'hier resté ouvert, n'en sont pas.
+{
+  const { page: p, erreurs, fermer } = await ouvrir(nav, RACINE, { largeur: 390 });
+  const r = await p.evaluate(async () => {
+    const hier = new Date(Date.now() - 864e5).toISOString();
+    window.__reponses = Object.assign(window.__reponses || {}, {
+      mes_modules: { ok: true, liste: [
+        { id: 1, code: 'bloc1-dev', titre: 'Bloc 1 DEV', icone: '🧭', depot: 'https://github.com/x/y',
+          site: 'https://ggaillard.github.io/BTS1_S1_B1_DEV/' },
+        { id: 5, code: 'projet-ia', titre: 'Projet IA', icone: '🧠', depot: 'https://github.com/x/z',
+          site: 'https://ggaillard.github.io/BTS2-Projet-IA/' }] } });
+    window.__tables = { seances: [
+      // Le cours d'hier EN PREMIER : sans le filtre du jour, c'est lui qui
+      // prendrait la place, et le lien le dirait.
+      { id: 4, numero: 4, titre: 'Séance 4', nature: 'cours', ouverte: true, demarree_le: hier, module_id: 1 },
+      { id: 5, numero: 5, titre: 'Séance 5 - Mardi, 14 h 02', nature: 'cours', ouverte: true,
+        demarree_le: new Date().toISOString(), module_id: 1 },
+      { id: 44, numero: 21, titre: 'Projet', nature: 'projet', ouverte: true, demarree_le: new Date().toISOString(), module_id: 5 }] };
+    let e = document.getElementById('espace-etu');
+    while (e) { e.hidden = false; e = e.parentElement; }
+    await window.__e.chargerModulesEtu(1);
+    const j = [...document.querySelectorAll('#mes-projets .projet-jour')];
+    return { n: j.length, href: j[0] && j[0].getAttribute('href'),
+             module: j[0] && j[0].closest('[data-module]').dataset.module,
+             premier: j[0] && j[0] === j[0].parentNode.firstElementChild,
+             h: j[0] && Math.round(j[0].getBoundingClientRect().height) };
+  });
+  console.log(`\n── séance du jour : ${r.n} lien(s) · ${r.href} · module ${r.module} · ${r.h} px`);
+  if (r.n !== 1) rates.push(`séance du jour : ${r.n} lien(s), attendu 1 (ni le projet, ni le cours d'hier)`);
+  else {
+    if (r.href !== 'https://ggaillard.github.io/BTS1_S1_B1_DEV/seances/seance-05/')
+      rates.push(`séance du jour : lien ${r.href}`);
+    if (r.module !== 'bloc1-dev' || !r.premier) rates.push('séance du jour : pas en tête de son module');
+    if (r.h < 44) rates.push(`séance du jour : ${r.h} px, sous 44 px`);
+  }
+  if (erreurs.length) rates.push(`séance du jour : erreur JS — ${erreurs[0]}`);
+  await fermer();
+}
+
 await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach((x) => console.log('  ✗ ' + x)); process.exit(1); }
 console.log('  ✓ L\'espace étudiant s\'atteint au pouce, sa file dit la vérité,');
 console.log('    ses cartes portent leur rang, et une carte finie se replie');
-console.log('    au lieu de disparaître.');
+console.log('    au lieu de disparaître ; la séance du jour mène droit à sa page.');

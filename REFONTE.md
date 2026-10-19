@@ -1314,3 +1314,20 @@ détail dans `JOURNAL.md` et dans CLAUDE.md, « La mise en place ») :
 
 Les chiffres de `mesurer.mjs` après ce lot : 1 145 lignes d'`index.html`, 17
 feuilles, 47 modules, 12 818 lignes de JavaScript, 75 fonctions RPC appelées.
+
+### Le parcours guidé de la page de séance (19/10)
+
+Le gros du lot est dans le dépôt du cours (`docs/assets/suivi.js` du BTS1) :
+chaque question est posée juste après la notion qu'elle vérifie, et la suite
+de la page attend la réponse. Le portail n'en porte que deux gestes, sans
+module neuf :
+
+- `vigilance.js` fusionne une raison de plus, écrite par la base comme les
+  autres : « A quitté la page pendant 2 questions (84 s) » —
+  `sorties_seance()`, migration `20261019060000_parcours_guide.sql` ;
+- `modules.js` pose « La séance du jour » en tête de son module côté
+  étudiant (`seanceDuJourEtu`) : un cours ouvert et démarré aujourd'hui mène
+  droit à `<site>seances/seance-NN/`, au lieu de la page d'accueil du cours.
+
+Les chiffres de `mesurer.mjs` après ce lot : 1 145 lignes d'`index.html`, 17
+feuilles, 47 modules, 12 876 lignes de JavaScript, 76 fonctions RPC appelées.

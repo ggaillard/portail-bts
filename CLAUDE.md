@@ -1696,6 +1696,15 @@ fois · présente au sommaire de `mkdocs.yml` · un corrigé en base par questio
 un teaser · un bloc « À retenir » · **une liste « Concepts à connaître »
 identique à celle de la base, dont les numéros de questions existent**.
 
+**Depuis la séance 5 (19/10/2026)**, deux points de plus : la grille des
+réponses **n'est plus dans la page** — le dépôt du cours est public, une grille
+donne les réponses à qui ouvre la page ou la colle dans une IA ; les contrôles
+lisent la bonne lettre dans les migrations (`grille_de()`), et une grille
+revenue est refusée — et **chaque question a son ancre**
+`<div class="tdc-ici" data-q="N"></div>` dans les actes, une seule (point 14) :
+c'est là que `suivi.js` la pose, juste après la notion qu'elle vérifie. Voir
+« Le parcours guidé » dans le `CLAUDE.md` du dépôt du cours.
+
 Le dernier point est celui qui a motivé la fiche : sans lui, deux listes
 divergent en silence et on débriefe sur des concepts que la trace écrite ne
 nomme pas.
@@ -1711,6 +1720,15 @@ une feuille (`styles/indicateurs.css`), un contrôle (`outils/t_indicateurs.mjs`
 
 ### Pendant l'heure
 
+- **Le parcours guidé de la page de séance** (19/10, `suivi.js` du BTS1) : les
+  questions arrivent au fil des actes, la suite attend la réponse. Sortir de la
+  page PENDANT une question est dit à l'étudiant puis enregistré
+  (`signaler_sortie()`, table `sorties_page`, sans politique) ; `sorties_seance()`
+  en fait une raison de « À aller voir » — **à surveiller** à une question,
+  **à aller voir** à deux ou au-delà d'une minute. C'est une raison d'aller voir,
+  pas une preuve : une notification qu'on écarte fait la même chose. Le n° 99
+  est exclu. `mes_points_passage()` rend aussi `demarree_le`, `duree_min` et
+  `fin_min`, pour que la page dise à l'étudiant s'il est dans le rythme.
 - **Lire avant de répondre.** Une question s'affiche, ses options restent
   grisées le temps de la lire — 3,5 mots par seconde, entre 4 et 25 s — avec un
   décompte. **La même formule vit à quatre endroits** : `temps_lecture()` en

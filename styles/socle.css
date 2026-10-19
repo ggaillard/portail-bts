@@ -122,6 +122,10 @@ a.projet:hover{border-color:var(--accent);background:var(--accent-soft)}
   color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);
   border-radius:5px;padding:.3rem .45rem;flex:none;margin-top:.15rem}
 a.projet:hover .projet-ico{background:var(--surface)}
+/* La séance du jour (19/10) : la première carte de son module, sur toute la
+   largeur, et la seule en couleur pleine — c'est là qu'on va en premier. */
+a.projet.projet-jour{grid-column:1/-1;border-color:var(--accent);border-width:2px;background:var(--accent-soft)}
+a.projet.projet-jour .projet-ico{background:var(--accent);color:var(--on-accent);font-size:.9rem}
 /* display:block — sans lui ces deux <span> restent en ligne, la marge basse
    du titre n'agit pas, et « Bloc 1 DEV » se colle à sa description. Le
    défaut touchait aussi « Vos projets » côté étudiant. */
