@@ -587,6 +587,11 @@ l'appel donnerait une liste fausse.
 ## Les séances de cours du BTS1
 
 `BTS1_SEANCES.sql` crée les séances 1 et 2 et leurs dix corrigés chacune.
+**Depuis la séance 4, chaque séance a son générateur** : `outils/seances/seanceNN/generer.py`
+relit la trace du dépôt du cours (durées d'actes, options, ancres `tdc-ici`) et écrit
+ses migrations — corrigés, contrôle d'entrée, concepts, points de passage. La
+conduite de l'heure vit dans `conduite/CONDUITE_SEANCE_NN.md` du dépôt privé
+`BTS1_S1_B1_DEV_Prof` : une séance n'est prête que si les trois dépôts le sont.
 **Sans séance en base, rien n'est enregistré** : le site du cours appelle
 `repondre(seance_id, 'q1', 'B')`, et l'appel échoue en silence.
 
