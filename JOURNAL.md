@@ -22,6 +22,36 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 19 octobre 2026 (après-midi) — où en est chacun, ce que la séance apprend, et la séance 6
+
+Demandé par G : continuer avec la séance suivante, et améliorer le suivi
+enseignant pendant ET après la séance — analyser ce qu'il faut améliorer, et
+identifier les problèmes par étudiant.
+
+| Fichier | Ce qu'il fait | Base |
+|---|---|---|
+| `20261019090000_carte_et_analyse.sql` | table `etapes_seance` (l'ordre des étapes), `etapes_de()`, `gestes_etapes()`, `carte_parcours()`, `analyse_seance()`, `libelle_etape()`, `lieu_etape()` ; un essai de comportement sur une classe fabriquée, annulé en fin de bloc | à vérifier après la fusion |
+| `20261019091000_bts1_seance5_etapes.sql` | l'ordre des 15 étapes de la séance 5 | idem |
+| `20261019100000` à `103000_bts1_seance6*.sql` | séance 6 « Rouge, puis vert » (atelier) : titre, corrigés, contrôle d'entrée (concepts de la séance 5), concepts, points de passage (9, 21, 30, 43, 46 min), ordre des étapes | idem |
+
+- `js/carte.js` — **« Où en est chacun »**, vue Maintenant ; `js/analyse.js` —
+  **« Ce que la séance apprend »**, sous le Bilan d'une séance, avec les retours
+  individuels à copier et le CSV. `t_vigilance.mjs` les vérifie (cassé quatre fois).
+- `outils/seances/etapes.py` — l'ordre des étapes relu dans la trace ; utilisé
+  par les générateurs 05 et 06, et par `controler.py fiche` (point 15 : la base
+  et la page disent le même ordre ; `essai.py` : 20 défauts, tous nommés).
+- Vérifié sur une base neuve, avec 26 étudiants simulés sur la séance 5 :
+  l'analyse dit « L'acte III a duré 21 min en médiane, pour 12 prévues »,
+  « 18 étudiants présents n'ont pas fini — le plus souvent arrêtés à la
+  question 8 », le piège de la question 6 et les sorties de page de la 7.
+
+L'atelier de la séance 6 a son **dépôt modèle**, `ggaillard/BTS1-Atelier-Pipeline` :
+préparé dans `Documents\Cours\BTS1-Atelier-Pipeline`, **à publier par G**
+(VS Code → Publish to GitHub, public, puis *Template repository*). La session
+ne peut pas créer de dépôt.
+
+---
+
 ## 19 octobre 2026 — le parcours guidé de la page de séance, et la séance 5 du BTS1
 
 **Le constat**, mesuré sur la page de la séance 4 à 390 px : la première chose

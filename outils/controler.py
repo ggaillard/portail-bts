@@ -66,6 +66,7 @@ def fiche(racine, supports):
     base, _ = lire.corriges(racine)
     concepts_sql = lire.concepts_base(racine)
     passages_sql = lire.passages_base(racine)
+    etapes_sql = lire.etapes_base(racine)
     nav = ''
     if os.path.exists(os.path.join(supports, 'mkdocs.yml')):
         with open(os.path.join(supports, 'mkdocs.yml'), encoding='utf-8') as f:
@@ -164,6 +165,23 @@ def fiche(racine, supports):
         # 14 — depuis la séance 5, chaque question posée dans les actes
         if t.numero and t.numero >= PREMIERE_SANS_GRILLE:
             dur += _ancres(p, t, qs)
+
+        # 15 — et la base connaît le même ORDRE que la page (19/10) : sans
+        #      lui, carte_parcours() retombe sur l'ordre des séances 1 à 4 et
+        #      dit « sur la question 1 » à quelqu'un qui est à l'acte III.
+        if t.numero and t.numero >= PREMIERE_SANS_GRILLE:
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'seances'))
+            import etapes as _etapes
+            attendu = _etapes.etapes(t.texte)
+            en_base = etapes_sql.get(t.numero)
+            if not en_base:
+                dur.append("%s : l'ordre des étapes n'est pas en base (…_etapes.sql) — "
+                           "pendant l'heure, la carte du parcours le devinerait mal" % p)
+            elif en_base != attendu:
+                k = next(i for i, (x, y) in enumerate(zip(en_base + [None] * 40, attendu + [None] * 40)) if x != y)
+                dur.append("%s : l'ordre des étapes diverge au rang %d — la page dit %s, la base dit %s"
+                           % (p, k + 1, (attendu + ['rien'])[k] if k < len(attendu) else 'rien',
+                              (en_base + ['rien'])[k] if k < len(en_base) else 'rien'))
 
         # 13 — un point de passage par acte, à partir de la séance 4.
         #      Avant eux, le portail ne voyait RIEN pendant les actes : un

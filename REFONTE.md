@@ -1331,3 +1331,30 @@ module neuf :
 
 Les chiffres de `mesurer.mjs` après ce lot : 1 145 lignes d'`index.html`, 17
 feuilles, 47 modules, 12 876 lignes de JavaScript, 76 fonctions RPC appelées.
+
+### Pendant et après l'heure : la carte du parcours et l'analyse (19/10)
+
+Le parcours guidé a fait d'une séance une suite d'étapes ; la base en connaît
+désormais l'ORDRE (`etapes_seance`, écrit par le générateur de chaque séance),
+et deux lectures s'en servent — migration `20261019090000_carte_et_analyse.sql` :
+
+- **« Où en est chacun »** (`js/carte.js`, vue Maintenant, après « À aller
+  voir ») : `carte_parcours()` — une ligne par étudiant présent, une case par
+  étape, l'étape où chacun EST et ses minutes, le **bouchon** (trois présents
+  et le quart d'entre eux sur la même étape), les absents sur une seule ligne.
+  Rafraîchie par la boucle de `rafraichir()`. Nominative, jamais projetée.
+- **« Ce que la séance apprend »** (`js/analyse.js`, onglet Bilan de la page
+  d'une séance, sous les chiffres de `bilanseance.js`) : `analyse_seance()` —
+  les points à changer dans la séance (acte plus long que prévu, question
+  ratée et son distracteur, question qu'on va chercher hors de la page,
+  réponses sans lire, où l'on s'arrête, mains levées par acte), les tableaux
+  actes et questions, puis **étudiant par étudiant** : priorité, raisons,
+  questions fausses et concepts à reprendre, « Copier les retours
+  individuels » (vouvoiement, prénoms locaux) et le CSV.
+
+`t_vigilance.mjs` vérifie les deux, cassé quatre fois (bouchon, case longue,
+ordre des lignes, retour vide pour qui n'a rien à reprendre).
+
+Les chiffres de `mesurer.mjs` après ce lot : 1 162 lignes d'`index.html`, 17
+feuilles, 49 modules, 13 417 lignes de JavaScript, 78 fonctions RPC appelées.
+

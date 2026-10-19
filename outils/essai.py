@@ -110,6 +110,11 @@ ESSAIS = [
                 '| Q | 1 |\n|---|---|\n| **Rép.** | B |\n\n### Le test des trois lignes'),
      "les réponses ne sont plus publiées"),
 
+    ("une ancre déplacée, l'ordre en base n'a pas suivi", 'fiche',
+     lambda b: (_trace(b, 5), r'data-q="3"></div>(.*?)data-q="4"></div>',
+                r'data-q="4"></div>\1data-q="3"></div>'),
+     "l'ordre des étapes diverge"),
+
     ("sans grille dans la page, un corrigé manquant en base", 'fiche',
      lambda b: (_migration(b, '*_bts1_seance5.sql'),
                 r"\(5, 'q7', 'B',", "(5, 'q17', 'B',"),

@@ -36,6 +36,7 @@ import { $, sb, suivi, erreur, typo, montrer, estDemo, classesReelles,
 import { chargerControle, chargerControles } from './controle.js';
 import { chargerParcours, chargerDebrief } from './heure.js';
 import { chargerVigilance, chargerASuivre } from './vigilance.js';
+import { chargerCarte } from './carte.js';
 import { brancherDirect, debrancherDirect } from './direct.js';
 import { rendreProjet } from './ensemble.js';
 import { ouvrirOnglet } from './navigation.js';
@@ -338,6 +339,7 @@ function rafraichir(){
   // « À aller voir » suit la même boucle de huit secondes que les tuiles :
   // une main levée qui attend la boucle suivante attend déjà trop.
   chargerVigilance(function(){ if (suivi.stats) rendreRythme(suivi.stats); });
+  chargerCarte();
   chargerMissions();
   return chargerStats().then(function(s){ if (s) rendreSuivi(s); });
 }

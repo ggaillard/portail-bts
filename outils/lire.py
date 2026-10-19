@@ -16,6 +16,7 @@ jour.
 import glob
 import os
 import re
+import sys
 import unicodedata
 
 
@@ -393,3 +394,21 @@ def concepts_base(racine):
                 lignes.append((intitule, nums))
             out[n] = lignes
     return out
+
+
+def etapes_base(racine):
+    """L'ordre des étapes écrit en base : {seance: ['q1', 'acte-1', …]}.
+
+    Lu dans les migrations `*_etapes.sql`, dans l'ordre des noms — le dernier
+    écrit gagne, comme en base (le `delete` puis `insert` de chaque fichier).
+    """
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'seances'))
+    import etapes as _e
+    out = {}
+    for f in sorted(glob.glob(os.path.join(racine, 'supabase', 'migrations', '*_etapes.sql'))):
+        with open(f, encoding='utf-8') as fh:
+            n, liste = _e.lire_sql(fh.read())
+        if n is not None:
+            out[n] = liste
+    return out
+
