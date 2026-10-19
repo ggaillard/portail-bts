@@ -192,6 +192,19 @@ class Trace(object):
             return []
         return [x.strip() for x in m.group(1).split('|') if x.strip()]
 
+    @property
+    def ancres(self):
+        """[(numero, position)] des ancres <div class="tdc-ici" data-q="N">.
+
+        Depuis la séance 5 (19/10/2026), chaque question du quiz est POSÉE
+        dans l'acte, juste après la notion qu'elle vérifie : suivi.js remplace
+        l'ancre par la carte de la question, et la suite de la page attend la
+        réponse. La position sert à vérifier que l'ancre est bien dans les
+        actes, pas dans le quiz de révision.
+        """
+        return [(int(m.group(1)), m.start()) for m in re.finditer(
+            r'<div class="tdc-ici" data-q="(\d+)"></div>', self.texte)]
+
     # ── les concepts du débriefing ─────────────────────────────────────────
     @property
     def concepts(self):
