@@ -22,6 +22,7 @@ Deux niveaux de retour :
 
 import argparse
 import os
+import re
 import sys
 import unicodedata
 
@@ -38,6 +39,21 @@ DECOMMISSIONNEES = ['suivi.gaillard42.workers.dev']
 # ═══════════════════════════════════════════════════════════════════════════
 
 PREMIERE_AVEC_PASSAGES = 4
+
+# Depuis la séance 5 (19/10/2026) : la grille des réponses n'est plus dans la
+# trace — le dépôt est public, la page aussi, et une grille dans la page donne
+# les réponses à quiconque l'ouvre (ou la colle dans une IA). La base fait foi,
+# seule ; les contrôles y lisent la bonne lettre. Et chaque question est posée
+# dans l'acte, à son ancre.
+PREMIERE_SANS_GRILLE = 5
+
+
+def grille_de(t, base):
+    """La grille d'une trace : celle de la page jusqu'à la séance 4, celle des
+    migrations ensuite. Une question sans corrigé donne « ? »."""
+    if t.numero and t.numero >= PREMIERE_SANS_GRILLE and not t.grille:
+        return [base.get((t.numero, 'q%d' % n), ('?',))[0] for n, _, _ in t.questions]
+    return t.grille
 
 
 def fiche(racine, supports):
@@ -106,8 +122,13 @@ def fiche(racine, supports):
                            "le parseur prendrait le premier <code> pour le début "
                            "des options" % (p, num))
 
-        # 8 — la grille Rép. complète, sans lettre bonne plus de 4 fois
-        g = t.grille
+        # 8 — la grille Rép. complète, sans lettre bonne plus de 4 fois ;
+        #     depuis la séance 5, ABSENTE de la page et lue en base.
+        if t.numero and t.numero >= PREMIERE_SANS_GRILLE and t.grille:
+            dur.append("%s : une grille « Rép. » dans la page — depuis la séance %d "
+                       "les réponses ne sont plus publiées, la base fait foi"
+                       % (p, PREMIERE_SANS_GRILLE))
+        g = grille_de(t, base)
         if len(g) != len(qs):
             dur.append("%s : %d question(s) pour %d réponse(s) dans la grille"
                        % (p, len(qs), len(g)))
@@ -140,6 +161,10 @@ def fiche(racine, supports):
         # 12 — les concepts de la trace et ceux de la base disent la même chose
         dur += _concepts(p, t, concepts_sql.get(t.numero), qs)
 
+        # 14 — depuis la séance 5, chaque question posée dans les actes
+        if t.numero and t.numero >= PREMIERE_SANS_GRILLE:
+            dur += _ancres(p, t, qs)
+
         # 13 — un point de passage par acte, à partir de la séance 4.
         #      Avant eux, le portail ne voyait RIEN pendant les actes : un
         #      acte sans point redevient un trou de vingt minutes dans le
@@ -161,6 +186,36 @@ def fiche(racine, supports):
                                "n'a pas" % (p, i))
 
     return dur, doux
+
+
+def _ancres(p, t, qs):
+    """Point 14 : une ancre par question, une seule, dans les actes.
+
+    Une question sans ancre n'est pas perdue — suivi.js la pose à l'épilogue —
+    mais elle arrive alors loin de la notion qu'elle vérifie, ce que la
+    séance 5 a justement voulu changer. Une ancre en double poserait la
+    question deux fois ; une ancre hors des actes la poserait avant d'avoir
+    lu, ou après la fin.
+    """
+    out = []
+    nums = [n for n, _, _ in qs]
+    vues = [n for n, _ in t.ancres]
+    deb = re.search(r'^##\s.*COLD OPEN', t.texte, re.M | re.I)
+    fin = re.search(r'^##\s.*(ÉPILOGUE|EPILOGUE|Réviser après)', t.texte, re.M | re.I)
+    for n in nums:
+        if n not in vues:
+            out.append("%s q%d : pas d'ancre tdc-ici dans les actes — la question "
+                       "serait posée loin de la notion qu'elle vérifie" % (p, n))
+        elif vues.count(n) > 1:
+            out.append("%s q%d : %d ancres — la question serait posée %d fois"
+                       % (p, n, vues.count(n), vues.count(n)))
+    for n, pos in t.ancres:
+        if n not in nums:
+            out.append("%s : ancre pour une question %d que le quiz n'a pas" % (p, n))
+        elif (deb and pos < deb.start()) or (fin and pos > fin.start()):
+            out.append("%s q%d : ancre hors des actes — entre le cold open et "
+                       "l'épilogue seulement" % (p, n))
+    return out
 
 
 def _concepts(p, t, en_base, qs):
@@ -212,9 +267,11 @@ def pedagogie(racine, supports):
     ts = lire.traces(supports)
     if not ts:
         return ['aucune trace trouvée sous %s/docs/seances/' % supports], []
+    base, _ = lire.corriges(racine)
 
     for t in ts:
         p = 'séance %s' % t.numero
+        t.grille_lue = grille_de(t, base)
 
         # 1 — la trace se lit dans l'heure
         n = len(t.corps_seance.replace('|', ' ').split())
@@ -331,7 +388,7 @@ def _vocabulaire(p, t):
     """
     dur, doux, isoles = [], [], []
     corps = set(lire.mots(t.corps_seance))
-    grille = t.grille
+    grille = getattr(t, 'grille_lue', None) or t.grille
     for i, (num, enonce, opts) in enumerate(t.questions):
         negative = any(x in enonce.lower() for x in
                        (' pas ', "n'est pas", 'sauf', 'jamais'))
@@ -359,7 +416,7 @@ def _vocabulaire(p, t):
 def _longueurs(p, t):
     """La bonne réponse ne doit pas être repérable à sa longueur."""
     dur, doux = [], []
-    grille = t.grille
+    grille = getattr(t, "grille_lue", None) or t.grille
     plus_longue, plus_longue_total = 0, 0
     for i, (num, _, opts) in enumerate(t.questions):
         if i >= len(grille) or grille[i] not in 'ABCD':
@@ -399,7 +456,8 @@ def coherence(racine, supports):
 
     for t in lire.traces(supports):
         p = 'séance %s' % t.numero
-        grille = t.grille
+        sans_grille = bool(t.numero and t.numero >= PREMIERE_SANS_GRILLE and not t.grille)
+        grille = grille_de(t, base)
         qs = t.questions
         if len(qs) != len(grille):
             dur.append("%s : %d questions pour %d réponses dans la grille"

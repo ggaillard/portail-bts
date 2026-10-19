@@ -70,11 +70,11 @@ ESSAIS = [
      'dans la trace'),
 
     ("un numéro de question inexistant", 'fiche',
-     lambda b: (_migration(b, '*_debriefing.sql'), r"\[7 8\]", '[7 14]'),
+     lambda b: (_migration(b, '*_bts1_seance3_vectoriel_debriefing.sql'), r"\[7 8\]", '[7 14]'),
      'question 14'),
 
     ("un acte sans point de passage", 'fiche',
-     lambda b: (_migration(b, '*_passages.sql'), r"\(5, 'Ouvrez le capot', 45,",
+     lambda b: (_migration(b, '*_bts1_seance4_vectoriel_passages.sql'), r"\(5, 'Ouvrez le capot', 45,",
                 "(9, 'Ouvrez le capot', 45,"),
      "l'acte 5 n'a pas de point de passage"),
 
@@ -92,6 +92,28 @@ ESSAIS = [
      lambda b: (_trace(b, 3), r'\*\*2\.\*\* L\'opération',
                 "**2.** L'opération `JOIN`"),
      "code entre accents graves"),
+
+    # ── depuis la séance 5 : les questions dans les actes, sans grille ─────
+    #  Les motifs visent la séance 5 par son nom de fichier, pas « la
+    #  dernière » : la séance 6 ne doit pas rendre ces essais caducs.
+    ("une question sans ancre dans les actes", 'fiche',
+     lambda b: (_trace(b, 5), r'<div class="tdc-ici" data-q="3"></div>', ''),
+     "q3 : pas d'ancre tdc-ici"),
+
+    ("une ancre posée deux fois", 'fiche',
+     lambda b: (_trace(b, 5), r'<div class="tdc-ici" data-q="4"></div>',
+                '<div class="tdc-ici" data-q="3"></div>'),
+     "q3 : 2 ancres"),
+
+    ("la grille des réponses revenue dans la page", 'fiche',
+     lambda b: (_trace(b, 5), r'### Le test des trois lignes',
+                '| Q | 1 |\n|---|---|\n| **Rép.** | B |\n\n### Le test des trois lignes'),
+     "les réponses ne sont plus publiées"),
+
+    ("sans grille dans la page, un corrigé manquant en base", 'fiche',
+     lambda b: (_migration(b, '*_bts1_seance5.sql'),
+                r"\(5, 'q7', 'B',", "(5, 'q17', 'B',"),
+     "séance 5 q7 : aucun corrigé"),
 
     # ── pédagogie ──────────────────────────────────────────────────────────
     ("des actes qui débordent de l'heure", 'pedagogie',

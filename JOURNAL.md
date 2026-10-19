@@ -22,6 +22,54 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 19 octobre 2026 — le parcours guidé de la page de séance, et la séance 5 du BTS1
+
+**Le constat**, mesuré sur la page de la séance 4 à 390 px : la première chose
+qu'un étudiant voyait était « Question 1 / 10 » du quiz de fin, avant le cold
+open ; les points de passage n'empêchaient pas de défiler au-delà. Il ne savait
+pas quand répondre, et pouvait tout lire sans rien répondre — ou tout répondre
+sans rien lire.
+
+Dans le dépôt du cours (`BTS1_S1_B1_DEV`, branche `parcours-guide-seance5`) :
+`docs/assets/suivi.js` réécrit en parcours guidé (questions posées à leur ancre
+`tdc-ici`, suite masquée jusqu'à la réponse, explication lue avant de passer,
+rapport d'expertise verrouillé jusqu'au point de passage, fil collant avec le
+rythme de la classe, « Je bloque » proposé après six minutes, sortie de page
+pendant une question signalée), avec son contrôle de navigateur dans le
+dossier `tests/` de ce dépôt-là ; la séance 5
+« Mardi, 14 h 02 » (CI/CD et conteneurs), **sans grille de réponses dans la
+page**.
+
+Ici :
+
+| Fichier | Ce qu'il fait | Base |
+|---|---|---|
+| `20261019060000_parcours_guide.sql` | `mes_points_passage()` rend `demarree_le`, `duree_min` et `fin_min` ; table `sorties_page`, `signaler_sortie()`, `sorties_seance()` | à vérifier après la fusion |
+| `20261019070000_bts1_seance5.sql` | titre, dix corrigés, contrôle d'entrée (concepts de la séance 4, dans l'ordre), créé fermé | idem |
+| `20261019071000_bts1_seance5_debriefing.sql` | les cinq concepts | idem |
+| `20261019072000_bts1_seance5_passages.sql` | cinq points de passage (fin des actes : 14, 23, 35, 44, 46 min) | idem |
+
+Produites par `outils/seances/seance05/generer.py`. Rejouées deux fois sur une
+base neuve (le job `verifier` de `supabase.yml`, à l'identique) : vertes.
+
+- `js/vigilance.js` : la raison « A quitté la page pendant N questions (… s) »,
+  écrite par `sorties_seance()` — à surveiller à une question, à aller voir à
+  deux ou au-delà d'une minute.
+- `js/modules.js` : côté étudiant, « La séance du jour » en tête de son module,
+  lien direct vers `<site>seances/seance-NN/` (cours ouvert et démarré le jour
+  même seulement). `t_etudiant.mjs` le vérifie, cassé deux fois.
+- `outils/controler.py` : depuis la séance 5, la grille se lit dans les
+  migrations, une grille revenue dans la page est refusée (point 8), et chaque
+  question doit avoir son ancre dans les actes (point 14). `essai.py` : 19
+  défauts injectés, tous nommés ; deux motifs visaient « la dernière migration »
+  et ne s'appliquaient plus — ils visent maintenant leur fichier par son nom.
+
+Pour vérifier la base après la fusion (clé publique) :
+`GET /rest/v1/seances?select=numero,titre&numero=eq.5` doit rendre le titre
+« Séance 5 - Mardi, 14 h 02 : … ».
+
+---
+
 ## 12 octobre 2026 (14 h 45) — tests de bout en bout, quatre incohérences corrigées
 
 Rejoué comme un étudiant, depuis des clones neufs des dépôts publiés et les
