@@ -22,6 +22,28 @@ recalculée depuis la base à chaque affichage.
 
 ---
 
+## 19 octobre 2026 — chaque module dans son dépôt : les consignes quittent `distance/`
+
+Demandé par G : « chaque projet doit être dans un repository ». Deux modules du
+BTS2 tenaient la règle à moitié — kit dans leur dépôt modèle, mais consignes
+publiées ici, avec une seconde copie du kit (`distance/projet-ia/depart/`,
+identique au dépôt modèle à `CONSIGNES.md` près) et deux zips.
+
+- Pages déplacées dans `docs/index.html` de `BTS2-Projet-IA` et de
+  `BTS2-IA-Entreprise` (branches `consignes-dans-le-depot`), publiées par
+  GitHub Pages depuis `main` / `docs` ; le lien « archive zip » mène à l'archive
+  que GitHub fabrique ; `CONSIGNES.md` / `README.md` pointent la nouvelle adresse.
+- Ici : `distance/projet-ia.html` et `distance/ia-entreprise.html` redirigent ;
+  copie du kit, zips et `distance.css` retirés.
+- `20261019080000_modules_dans_leur_depot.sql` : `modules.site` des deux
+  modules, seulement s'il pointe encore sur l'ancienne adresse ; refuse tout
+  module encore publié sous `portail-bts/`.
+
+**Ordre** : activer Pages sur les deux dépôts et vérifier les deux adresses,
+PUIS fusionner ici — sinon « Vos projets » mène à une 404.
+
+---
+
 ## 19 octobre 2026 — le parcours guidé de la page de séance, et la séance 5 du BTS1
 
 **Le constat**, mesuré sur la page de la séance 4 à 390 px : la première chose

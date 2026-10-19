@@ -1307,6 +1307,18 @@ n'existait que sur le poste de l'enseignant.
 | `projet-ia` — Projet IA à domicile | BTS2-SLAM-2026 | `BTS2-Projet-IA` | — | 21-24 |
 | `ia-entreprise` — IA en entreprise | BTS2-SLAM-2026 | `BTS2-IA-Entreprise` | `BTS2-IA-Entreprise-Prof` | 25-26 |
 
+**Et son site vient de son dépôt** (règle tenue depuis le 19/10/2026) : les
+consignes d'un module sont publiées par GitHub Pages **depuis le dépôt du
+module** — MkDocs pour le Bloc 1 et PlaylistApp, `docs/index.html` pour
+Projet IA (`https://ggaillard.github.io/BTS2-Projet-IA/`) et IA en entreprise
+(`https://ggaillard.github.io/BTS2-IA-Entreprise/`). Jusqu'au 19/10, ces deux
+pages vivaient ici, dans `distance/`, avec une seconde copie du kit et deux zips
+— trois exemplaires de la même chose. `distance/*.html` ne fait plus que
+rediriger, pour les liens déjà envoyés ; **n'y remettre aucun contenu**. Le zip
+d'un kit est celui que GitHub fabrique (`archive/refs/heads/main.zip`).
+`20261019080000_modules_dans_leur_depot.sql` refuse tout module dont le site
+serait encore sous `portail-bts/`.
+
 Migration `20260928080000_modules.sql`. Les fonctions :
 
 | Fonction | Ce qu'elle fait |
