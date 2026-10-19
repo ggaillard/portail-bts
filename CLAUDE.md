@@ -1299,13 +1299,20 @@ C'est la règle posée le 28/09 : le BTS2 suivait deux enseignements (PlaylistAp
 et les séances IA Méca Forez) que rien ne séparait, et le dépôt Méca Forez
 n'existait que sur le poste de l'enseignant.
 
-| Module | Classe | Dépôt étudiant | Dépôt enseignant (privé) | Séances |
-|---|---|---|---|---|
-| `bloc1-dev` — Bloc 1 DEV | BTS1-DEV-2026 | `BTS1_S1_B1_DEV` | `BTS1_S1_B1_DEV_Prof` | 1-14 |
-| `playlistapp` — PlaylistApp C# | BTS2-SLAM-2026 | `playlist-csharp` | `playlist-csharp-prof` | 0-4 |
-| `ia-meca-forez` — IA Méca Forez | BTS2-SLAM-2026 | `BTS2-IA-MecaForez` | `BTS2-IA-MecaForez-Prof` | 11-16 |
-| `projet-ia` — Projet IA à domicile | BTS2-SLAM-2026 | `BTS2-Projet-IA` | — | 21-24 |
-| `ia-entreprise` — IA en entreprise | BTS2-SLAM-2026 | `BTS2-IA-Entreprise` | `BTS2-IA-Entreprise-Prof` | 25-26 |
+| Module | Classe | Dépôt étudiant | Dépôt enseignant (privé) | Site (consignes) | Séances |
+|---|---|---|---|---|---|
+| `bloc1-dev` — Bloc 1 DEV | BTS1-DEV-2026 | `BTS1_S1_B1_DEV` | `BTS1_S1_B1_DEV_Prof` | MkDocs du dépôt — `ggaillard.github.io/BTS1_S1_B1_DEV/` | 1-14 |
+| `playlistapp` — PlaylistApp C# | BTS2-SLAM-2026 | `playlist-csharp` | `playlist-csharp-prof` | `ggaillard.github.io/playlist-csharp/` | 0-4 |
+| `ia-meca-forez` — IA Méca Forez | BTS2-SLAM-2026 | `BTS2-IA-MecaForez` | `BTS2-IA-MecaForez-Prof` | — (le dépôt) | 11-16 |
+| `besoins-cpms` — Du besoin à la mise en place | BTS2-SLAM-2026 | `BTS2-Besoins-CPMS` | `BTS2-Besoins-CPMS-Prof` | — (le dépôt) | — |
+| `projet-ia` — Projet IA à domicile | BTS2-SLAM-2026 | `BTS2-Projet-IA` | — | `docs/` du dépôt — `ggaillard.github.io/BTS2-Projet-IA/` (19/10) | 21-24 |
+| `ia-entreprise` — IA en entreprise | BTS2-SLAM-2026 | `BTS2-IA-Entreprise` | `BTS2-IA-Entreprise-Prof` | `docs/` du dépôt — `ggaillard.github.io/BTS2-IA-Entreprise/` (19/10) | 25-26 |
+
+**Ce que portail-bts garde d'un module, et rien de plus** : ses lignes en base
+(module, séances, corrigés, missions — par migration) et, pour le Bloc 1, le
+générateur de chaque séance (`outils/seances/seanceNN/`). Le contenu — pages,
+kits, consignes — vit dans le dépôt du module. Les contrôles `coherence`,
+`fiche` et `pedagogie` clonent `BTS1_S1_B1_DEV` pour relire ses traces.
 
 **Et son site vient de son dépôt** (règle tenue depuis le 19/10/2026) : les
 consignes d'un module sont publiées par GitHub Pages **depuis le dépôt du
