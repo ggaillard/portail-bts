@@ -468,6 +468,14 @@
         <div aria-live="polite" id="err-controle"></div>
       <button class="qa-b vers-prep" type="button" data-onglet="controle">Écrire le contrôle ›</button>
       </div>
+      <!-- Questions au fil de l'heure (03/11) : voir js/fil.js. -->
+      <div id="bloc-fil" class="ct-bloc" hidden>
+        <div class="ct-tete"><h3 class="sous-titre" style="margin:0">Au fil de l'heure</h3></div>
+        <p class="sous-hint" id="fil-resume"></p>
+        <div id="fil-avance"></div>
+        <details class="plie-in" id="fil-detail"><summary>Question par question — réussite et auto-évaluation</summary>
+          <div id="fil-lignes"></div></details>
+      </div>
       <h3 class="sous-titre">Réussite par question</h3>
       <p class="sous-hint">Les moins réussies en premier. C'est là qu'il faut reprendre.</p>
       <div class="questions" id="liste-questions"></div>

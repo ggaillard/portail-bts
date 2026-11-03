@@ -1349,3 +1349,22 @@ feuilles, 48 modules, 13 048 lignes de JavaScript, 75 fonctions RPC appelées.
 
 Les chiffres de `mesurer.mjs` après ce lot : 2 094 lignes de CSS, 13 127 lignes
 de JavaScript, 1 027 règles, 644 classes, 27 media queries.
+
+### Le soir du 03/11, suite — les questions au fil de l'heure
+
+- Trace : blocs `!!! fil` placés juste après le concept qu'ils vérifient
+  (séance 5 : sept). Sur le site, `suivi.js` (`initFil`) les rend
+  interactifs : réponse, verdict et explication, puis certitude ; la suite de
+  la page reste voilée tant que la question n'est pas faite — une réponse
+  fausse ne bloque pas.
+- Clés `fNN` (corrigé, compté dans la réussite) et `fNN-c` (certitude, sans
+  corrigé : `correct` reste null, hors de tout taux). Corrigés et
+  `fil_seance()` : `20261103210000_bts1_seance5_fil.sql`, produits par
+  `outils/seances/seance05/fil.py`.
+- Portail : carte « Au fil de l'heure » dans la séance (`js/fil.js`, 49ᵉ
+  module) — qui en est où, puis question par question la réussite et l'écart
+  savoir / croire savoir, avec la ligne du contrôle d'entrée.
+
+Les chiffres de `mesurer.mjs` après ce lot : 1 162 lignes d'`index.html`,
+49 modules, 13 208 lignes de JavaScript, 76 fonctions RPC appelées.
+

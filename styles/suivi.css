@@ -105,3 +105,10 @@
 .etat-fermee{color:var(--signal);background:var(--signal-soft)}
 
 /* ── Mode classe : projection au tableau ── */
+
+/* Au fil de l'heure (03/11) : l'avancement, un groupe par nombre de
+   questions faites ; les jauges sont celles du contrôle d'entrée (.ct-*). */
+#fil-avance{margin:.4rem 0 .6rem}
+.fil-groupe{margin:.2rem 0;font-family:var(--f-mono);font-size:.85rem;line-height:1.5}
+.fil-zero b{color:var(--signal)}
+.fil-fini b{color:var(--ok)}

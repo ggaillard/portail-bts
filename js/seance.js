@@ -34,6 +34,7 @@ import { $, sb, suivi, erreur, typo, montrer, estDemo, classesReelles,
          codeClasseCourante, nomDe, prenomSeul, dateCourte, pastilles,
          anime } from './socle.js';
 import { chargerControle, chargerControles } from './controle.js';
+import { chargerFil } from './fil.js';
 import { chargerParcours, chargerDebrief } from './heure.js';
 import { chargerVigilance, chargerASuivre } from './vigilance.js';
 import { brancherDirect, debrancherDirect } from './direct.js';
@@ -339,6 +340,7 @@ function rafraichir(){
   // une main levée qui attend la boucle suivante attend déjà trop.
   chargerVigilance(function(){ if (suivi.stats) rendreRythme(suivi.stats); });
   chargerMissions();
+  chargerFil();
   return chargerStats().then(function(s){ if (s) rendreSuivi(s); });
 }
 
@@ -396,6 +398,7 @@ function chargerPrevol(){
     suivi.projet = null;
     if (r.data.nature === "projet") chargerProjet();
     chargerControle();
+    chargerFil();
     suivi.debrief = null;
     chargerDebrief();
     suivi.parcours = null;
