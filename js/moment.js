@@ -102,6 +102,19 @@ function jourLong(iso){
   return isNaN(d) ? "" : d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 }
 
+// Le bouton « Ouvrir la séance » d'une carte de cours : la page de la séance
+// sur le site du module, seulement quand la séance est ouverte.
+function brancherOuvrir(s, mod){
+  var b = s.carte.querySelector(".mo-ouvrir");
+  if (!b) return;
+  var ok = !!(s.d.ouverte && mod && mod.m.site);
+  b.hidden = !ok;
+  if (ok) {
+    var n = String(s.d.numero);
+    b.href = mod.m.site.replace(/\/?$/, "/") + "seances/seance-" + (n.length < 2 ? "0" + n : n) + "/";
+  }
+}
+
 function placerEspace(){
   var zm = $("missions-etu"), zsp = $("sp-etu"), zr = $("mes-projets"),
       zau = $("seances-autres"), reste = $("reste-etu");
@@ -114,6 +127,7 @@ function placerEspace(){
   t.moment.forEach(function(s){
     zm.appendChild(s.carte);
     var mod = moduleDe(s.d);
+    brancherOuvrir(s, mod);
     if (mod && !estSP(mod.m)) zm.appendChild(liensCourts(mod.m));
   });
   if (t.prochaine) {

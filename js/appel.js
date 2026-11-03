@@ -41,18 +41,34 @@ function proposerAppel(){
     if (!r || r.error || !r.data) { $("bloc-humeur").hidden = true; majFile(); return; }
     var a = r.data;
 
+    // Depuis le 03/11, « Vous êtes là ? » ne s'affiche plus : la question
+    // « Et aujourd'hui, comment ça va ? » vaut présence. Y répondre envoie
+    // AUSSI la réponse « A » (Présent) à la question d'appel du jour, en
+    // coulisse — l'appel, les absents et le tableau de bord de l'enseignant
+    // lisent donc exactement ce qu'ils lisaient avant. Sans humeur ce jour-là,
+    // on retombe sur l'ancienne carte d'appel.
+    if (a.humeur) {
+      marquerEtape("bloc-appel", true);
+      proposerHumeur(a.humeur, a.seance_id, function(){ pointerEnCoulisse(a); });
+      // Humeur déjà donnée (avant ce changement, ou sur un autre appareil) :
+      // la présence suit.
+      if (a.humeur.repondu) pointerEnCoulisse(a);
+      majFile();
+      return;
+    }
+
     bloc.hidden = false;
     $("appel-titre").textContent = typo(a.intitule || "Question du jour");
     marquerEtape("bloc-appel", false);
-    proposerHumeur(a.humeur, a.seance_id);
 
     if (a.repondu) { appelRepondu(a.ma_reponse, null); return; }
 
     var choix = $("appel-choix");
     choix.innerHTML = "";
     ["A","B","C","D"].forEach(function(lettre, i){
-      // Sans libellés en base, on s'en tient aux lettres : la question est
-      // alors projetée au tableau, et l'écran ne sert qu'à répondre.
+      // Sans libellés en base, on s'en tient aux lettres. Avec des libellés,
+      // une lettre sans libellé n'a rien à proposer : on ne l'affiche pas.
+      if (a.options && a.options.length && !a.options[i]) return;
       var opt = (a.options && a.options[i]) ? lettre + ". " + a.options[i] : lettre;
       var b = document.createElement("button");
       b.type = "button";
@@ -62,6 +78,19 @@ function proposerAppel(){
       choix.appendChild(b);
     });
   });
+}
+
+// La présence, sans carte : « A » (Présent) à la question d'appel du jour.
+// Une seule fois, et en silence — un échec réseau ici se rattrape au
+// prochain chargement de la page, puisque l'humeur, elle, est enregistrée.
+function pointerEnCoulisse(a){
+  if (a.repondu || a._pointe) return;
+  a._pointe = true;
+  sb.rpc("repondre", { p_seance_id: a.seance_id, p_question: a.question, p_reponse: "A" })
+    .then(function(r){
+      if (r && r.error) { a._pointe = false; signalerSessionPerimee(r.error); return; }
+      a.repondu = true;
+    });
 }
 
 function repondreAppel(a, lettre){
@@ -98,7 +127,7 @@ function appelRepondu(lettre, retour){
   erreur("err-appel", texte, true);
 }
 
-function proposerHumeur(h, seanceId){
+function proposerHumeur(h, seanceId, apres){
   var bloc = $("bloc-humeur");
   if (!h) { bloc.hidden = true; majFile(); return; }
   bloc.hidden = false;
@@ -128,6 +157,7 @@ function proposerHumeur(h, seanceId){
             return;
           }
           humeurRepondue(lettre, h.options);
+          if (apres) apres();
         });
     });
     choix.appendChild(b);
@@ -139,7 +169,7 @@ function humeurRepondue(lettre, options){
   marquerEtape("bloc-humeur", true);
   var i = ["A","B","C","D"].indexOf(lettre);
   var dit = (options && i >= 0 && options[i]) ? " — " + options[i] : "";
-  erreur("err-humeur", "C'est noté, merci" + dit + ".", true);
+  erreur("err-humeur", "C'est noté, merci" + dit + ". Votre présence est enregistrée.", true);
 }
 
 

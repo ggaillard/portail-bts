@@ -55,9 +55,14 @@ function chargerMissionsEtu(){
   return sb.rpc("mes_missions").then(function(r){
     // Fonction pas déployée : rien ne s'affiche, comme avant qu'elle existe.
     if (!r || r.error || !r.data || !r.data.ok) { poserSeances([]); return; }
+    // Deux sortes de cartes : les missions d'une séance de projet, et — depuis
+    // le 03/11 au soir — la carte d'une séance de COURS du jour, qui n'a pas
+    // de missions et ne se voyait donc nulle part (tout le BTS1).
     poserSeances((r.data.liste || [])
-      .filter(function(d){ return d.missions && d.missions.length; })
-      .map(function(d){ return { d: d, carte: carteMissions(d) }; }));
+      .filter(function(d){ return (d.missions && d.missions.length) || d.nature === "cours"; })
+      .map(function(d){
+        return { d: d, carte: (d.missions && d.missions.length) ? carteMissions(d) : carteCours(d) };
+      }));
   });
 }
 
@@ -93,6 +98,36 @@ function carteMissions(d){
       : "La séance n'est pas encore ouverte : les cases s'activeront quand elle le sera.";
     c.querySelector("#err-mi-" + d.seance_id).appendChild(m);
   }
+  return c;
+}
+
+// La séance de cours du jour : son titre, son horaire, et UN bouton pour
+// l'ouvrir. Le bouton n'a pas d'adresse ici : c'est moment.js qui la pose,
+// parce que c'est lui qui connaît le site du module (`mo-ouvrir`).
+function heure(iso){
+  var d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ");
+}
+
+function carteCours(d){
+  var c = document.createElement("div");
+  c.className = "card mi-carte mo-cours";
+  c.id = "co-" + d.seance_id;
+  c.setAttribute("data-numero", d.numero);
+  c.innerHTML = '<p class="mo-quand"></p><h2></h2><p class="hint"></p>' +
+                '<a class="btn mo-ouvrir" hidden>Ouvrir la séance →</a>';
+  var t = typo(d.titre || "").replace(/^Séance\s+\d+\s*-\s*/i, "");
+  c.querySelector("h2").textContent = "Séance " + d.numero + " — " + t;
+  var quand = "";
+  if (d.prevue_le) {
+    var auj = new Date(d.prevue_le).toDateString() === new Date().toDateString();
+    quand = (auj ? "Aujourd'hui" : jourCourt(d.prevue_le)) + ", " + heure(d.prevue_le) +
+            (d.fin_prevue ? " – " + heure(d.fin_prevue) : "");
+  }
+  c.querySelector(".mo-quand").textContent = quand;
+  c.querySelector(".hint").textContent = d.ouverte
+    ? "La séance est ouverte. Répondez d'abord aux questions ci-dessus, puis ouvrez-la."
+    : "La séance n'est pas encore ouverte : le bouton apparaîtra quand votre enseignant la lancera. Rechargez la page à ce moment-là.";
   return c;
 }
 
