@@ -70,7 +70,7 @@ ESSAIS = [
      'dans la trace'),
 
     ("un numéro de question inexistant", 'fiche',
-     lambda b: (_migration(b, '*_debriefing.sql'), r"\[7 8\]", '[7 14]'),
+     lambda b: (_migration(b, '*_bts1_seance3*_debriefing.sql'), r"\[7 8\]", '[7 14]'),
      'question 14'),
 
     ("un acte sans point de passage", 'fiche',
