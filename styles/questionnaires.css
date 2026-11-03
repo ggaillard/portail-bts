@@ -163,3 +163,19 @@
 .gs-rev .btn{min-height:44px}
 .gs-qn-t b{overflow-wrap:anywhere}
 .gs-qn-aj{display:flex;flex-direction:column;gap:.25rem;margin-top:.6rem;font-size:.9rem}
+
+/* Un questionnaire étudiant arrive replié (03/11) : son titre, puis une ligne
+   qui dit où l'on en est et invite à répondre — la cible du pouce, 44 px.
+   Fini, le repli disparaît avec le reste : seul l'accusé vert demeure. */
+.qn-corps{margin-top:.2rem}
+.qn-corps > summary{cursor:pointer;min-height:44px;display:flex;align-items:center;
+  flex-wrap:wrap;gap:.3rem .6rem;list-style:none;font-size:.9rem;color:var(--ink-soft)}
+.qn-corps > summary::-webkit-details-marker{display:none}
+.qn-corps > summary .qn-av{font-weight:600;color:var(--ink)}
+.qn-corps > summary .qn-av:empty{display:none}
+.qn-ouvrir{margin-left:auto;font-weight:600;color:var(--accent-ink)}
+.qn-ouvrir::after{content:" ▸"}
+.qn-corps[open] > summary{border-bottom:1px solid var(--rule-soft);margin-bottom:.6rem}
+.qn-corps[open] .qn-ouvrir{color:var(--ink-soft)}
+.qn-corps[open] .qn-ouvrir::after{content:" ▾"}
+.etape[data-fait="oui"] > .qn-corps{display:none}

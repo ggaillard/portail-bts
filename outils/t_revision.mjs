@@ -46,8 +46,14 @@ for (const w of [390, 1280]) {
     window.__e.rendreQuestionnairesEtu(liste);
     const c = document.getElementById('qn-34');
     if (!c) return { carte: 'ABSENTE' };
+    // Depuis le 03/11, un questionnaire arrive REPLIÉ : son titre et une ligne
+    // « Répondre ». On vérifie qu'il l'est, puis on le déplie comme l'étudiant.
+    const corps = c.querySelector('.qn-corps');
+    const repliAuDepart = !!corps && !corps.open;
+    if (corps) corps.open = true;
     const st = (sel) => { const x = c.querySelector(sel); return x ? getComputedStyle(x).display : 'pas de noeud'; };
     return {
+      repliAuDepart,
       fait: c.getAttribute('data-fait'),
       horsFile: c.getAttribute('data-hors-file'),
       hauteur: Math.round(c.getBoundingClientRect().height),
@@ -72,10 +78,11 @@ for (const w of [390, 1280]) {
   }
   if (r.carte === 'ABSENTE') rates.push(`${w} px : la carte de révision ne s'affiche pas du tout`);
   else {
+    if (!r.repliAuDepart) rates.push(`${w} px : le questionnaire arrive déplié — il doit attendre qu'on l'ouvre`);
     if (r.fait === 'oui') rates.push(`${w} px : la carte est marquée « faite » — elle se replie et devient inutilisable`);
     if (r.choix === 'none' || r.boutonsVisibles === 0)
       rates.push(`${w} px : aucune option cliquable (zone des choix : ${r.choix})`);
-    if (r.hauteur < 200) rates.push(`${w} px : carte de ${r.hauteur} px — repliée sur son titre`);
+    if (r.hauteur < 200) rates.push(`${w} px : carte de ${r.hauteur} px une fois dépliée — repliée sur son titre`);
     if (/chose/.test(r.file)) rates.push(`${w} px : la file d'attente réclame la révision, qui n'a pas de fin — ${r.file}`);
     if (err.length) rates.push(`${w} px : erreur JS — ${err[0]}`);
   }
@@ -219,7 +226,7 @@ await nav.close();
 
 console.log();
 if (rates.length) { rates.forEach(x => console.log('  ✗ ' + x)); process.exit(1); }
-console.log("  ✓ La carte de révision est ouverte, ses options sont cliquables,");
+console.log("  ✓ La carte de révision arrive repliée, dépliée ses options sont cliquables,");
 console.log('    et la file d\'attente ne la réclame pas.');
 console.log('  ✓ La certitude passe avant la correction, le bilan se lit par thème,');
 console.log('    et « Tout recommencer » rouvre les questions.');

@@ -215,7 +215,7 @@ function majFile(){
   // Pas d'énumération : à 390 px elle passait sur trois lignes, et les cartes
   // juste en dessous portent déjà leur numéro et leur nom.
   $("file-txt").textContent = reste.length
-    ? (reste.length > 1 ? "choses à faire avant vos projets" : "chose à faire avant vos projets")
+    ? (reste.length > 1 ? "choses à faire avant la séance" : "chose à faire avant la séance")
     : "Tout est fait. Bonne séance.";
   // Le raccourci n'apparaît qu'une fois la présence marquée : c'est elle qui
   // ne peut pas attendre, le reste peut se faire après.

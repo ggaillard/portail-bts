@@ -127,7 +127,7 @@
     <span class="ident-num" id="mon-numero"></span>
     <span class="ident-num" id="mon-avatar"></span>
     <span class="ident-txt">Vous êtes le numéro <b id="mon-numero-2"></b> en <b id="ma-classe"></b>.<br>
-      Vos projets s'ouvrent sans nouvelle saisie.</span>
+      Vos cours et vos dépôts s'ouvrent sans nouvelle saisie.</span>
     <button class="btn btn-sec" id="b-sortie-etu">Ce n'est pas moi</button>
   </div>
   <div class="card" id="bloc-avatar" hidden>
@@ -140,12 +140,12 @@
   <div class="file" id="file-etu" hidden>
     <span class="file-n" id="file-reste"></span>
     <span class="file-t" id="file-txt" aria-live="polite"></span>
-    <a class="file-l" href="#mes-projets" id="file-saut" hidden>Mes projets ↓</a>
+    <a class="file-l" href="#moment-etu" id="file-saut" hidden>Ma séance ↓</a>
   </div>
 
   <div class="card etape" id="bloc-appel" data-etape="Présence" hidden>
     <h2 id="appel-titre">Question du jour</h2>
-    <p class="hint">Répondez avant de rejoindre vos projets : c'est ce qui marque votre présence.</p>
+    <p class="hint">Répondez avant de rejoindre la séance : c'est ce qui marque votre présence.</p>
     <div aria-live="polite" id="err-appel"></div>
     <div class="appel-choix" id="appel-choix"></div>
   </div>
@@ -161,14 +161,23 @@
 
   <div id="questionnaires-etu"></div>
 
-  <!-- Les missions d'une séance de projet : ce n'est pas une étape de la file,
-       c'est la séance elle-même (voir js/missions.js). -->
-  <div id="missions-etu"></div>
+  <!-- En ce moment (03/11) : la séance ouverte ou du jour, et les situations
+       professionnelles. Tout le reste est replié plus bas (voir js/moment.js). -->
+  <section class="mo-zone" id="moment-etu" aria-labelledby="moment-titre">
+    <h2 class="mo-titre" id="moment-titre">En ce moment</h2>
+    <!-- Les missions d'une séance de projet : ce n'est pas une étape de la file,
+         c'est la séance elle-même (voir js/missions.js). -->
+    <div id="missions-etu"></div>
+    <div class="mo-sp" id="sp-etu" hidden></div>
+  </section>
   <!-- Votre équipe (02/10) : journal de fin de séance, points des pairs. -->
   <div id="equipe-etu"></div>
 
-  <h2 style="margin-bottom:.9rem">Vos projets</h2>
-  <div class="projets" id="mes-projets"></div>
+  <details class="card plie mo-reste" id="reste-etu">
+    <summary><h2>Vos modules et séances</h2><span class="mo-compte" id="reste-compte"></span></summary>
+    <div class="projets" id="mes-projets"></div>
+    <div id="seances-autres"></div>
+  </details>
 </section>
 
 <!-- ══════════ ENSEIGNANT CONNECTÉ ══════════ -->

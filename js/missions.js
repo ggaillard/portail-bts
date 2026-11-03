@@ -28,6 +28,7 @@
 
 import { $, sb, suivi, erreur, typo, texteEnvoi, signalerSessionPerimee,
          codeClasseCourante, nomDe, prenomSeul } from './socle.js';
+import { poserSeances } from './moment.js';
 
 const NIVEAUX = { guide: "🟢", semi: "🟡", autonome: "🔴" };
 const JOURS_ARRET = 7;
@@ -45,16 +46,18 @@ function jourChiffres(iso){
 
 /* ══════════════ Côté étudiant ══════════════ */
 
+// Les cartes sont fabriquées ici et PLACÉES par moment.js : la séance du
+// moment en clair, les autres repliées sous leur module (03/11).
 function chargerMissionsEtu(){
   var z = $("missions-etu");
   if (!z) return;
   z.innerHTML = "";
-  sb.rpc("mes_missions").then(function(r){
+  return sb.rpc("mes_missions").then(function(r){
     // Fonction pas déployée : rien ne s'affiche, comme avant qu'elle existe.
-    if (!r || r.error || !r.data || !r.data.ok) return;
-    (r.data.liste || []).forEach(function(d){
-      if (d.missions && d.missions.length) z.appendChild(carteMissions(d));
-    });
+    if (!r || r.error || !r.data || !r.data.ok) { poserSeances([]); return; }
+    poserSeances((r.data.liste || [])
+      .filter(function(d){ return d.missions && d.missions.length; })
+      .map(function(d){ return { d: d, carte: carteMissions(d) }; }));
   });
 }
 
@@ -82,7 +85,12 @@ function carteMissions(d){
   if (!d.ouverte) {
     var m = document.createElement("div");
     m.className = "msg";
-    m.textContent = "La séance n'est pas encore ouverte : les cases s'activeront quand elle le sera.";
+    // Une séance passée n'est pas « pas encore ouverte » : elle est finie.
+    var passee = d.prevue_le && new Date(d.prevue_le) < new Date() &&
+                 new Date(d.prevue_le).toDateString() !== new Date().toDateString();
+    m.textContent = passee
+      ? "Cette séance est fermée : les cases restent telles que vous les avez laissées."
+      : "La séance n'est pas encore ouverte : les cases s'activeront quand elle le sera.";
     c.querySelector("#err-mi-" + d.seance_id).appendChild(m);
   }
   return c;

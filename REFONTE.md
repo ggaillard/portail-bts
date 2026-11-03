@@ -1314,3 +1314,24 @@ détail dans `JOURNAL.md` et dans CLAUDE.md, « La mise en place ») :
 
 Les chiffres de `mesurer.mjs` après ce lot : 1 145 lignes d'`index.html`, 17
 feuilles, 47 modules, 12 818 lignes de JavaScript, 75 fonctions RPC appelées.
+
+**Le 03/11, l'espace étudiant en trois étages** (détail dans CLAUDE.md,
+« L'espace étudiant sur un téléphone ») :
+
+- un module neuf, `moment.js`, qui PLACE sans rien fabriquer : la séance du
+  moment (ouverte ou prévue aujourd'hui, à défaut la prochaine) en clair sous
+  « En ce moment », les situations professionnelles (titre en « SP ») dans la
+  même partie, tout le reste replié dans « Vos modules et séances » ;
+  `missions.js` et `modules.js` lui passent leurs cartes et leurs blocs ;
+- les questionnaires étudiants arrivent repliés (`.qn-corps`) : titre, une
+  ligne d'avancement, « Répondre » ; le rang de la file reste sur le `h2` ;
+- une migration, `20261103060000`, ajoute `module_id`, `prevue_le` et
+  `fin_prevue` à `mes_missions()` — même signature ; sans elle, « du moment »
+  se réduit à « ouverte » ;
+- pas de feuille neuve : des classes neuves à la fin de `missions.css` et de
+  `questionnaires.css` ; `t_revision` vérifie désormais que la carte arrive
+  repliée, puis la déplie. Mesuré sur un BTS2 réaliste à 390 px : 15 400 px
+  avant, 2 470 px après.
+
+Les chiffres de `mesurer.mjs` après ce lot : 1 154 lignes d'`index.html`, 17
+feuilles, 48 modules, 13 048 lignes de JavaScript, 75 fonctions RPC appelées.

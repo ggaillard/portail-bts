@@ -35,7 +35,8 @@ recompte ses chiffres et échoue quand le document a vieilli.
 | `quiz.js` | les trois modes de rendu côté étudiant |
 | `missions.js` | les missions d'une séance de projet : la carte étudiante qui les coche, la grille élèves × missions et son éditeur |
 | `gestion.js` | la carte « Les séances » : créer une séance, régler titre, nature, jalons, échéance, publication, **module** — la liste groupée par module |
-| `modules.js` | les modules : « Vos projets » module par module côté étudiant, la carte « Les modules, par classe » et son formulaire côté enseignant |
+| `moment.js` | l'espace étudiant en trois étages : « En ce moment », les SP, le reste replié (03/11) |
+| `modules.js` | les modules : les blocs de module côté étudiant (placés par `moment.js`), la carte « Les modules, par classe » et son formulaire côté enseignant |
 | `encours.js` | ouvrir En cours sur la séance du jour |
 | `pilote.js` | l'écran de la séance : en-tête collant, quatre vues, filtres et recherche d'élèves, Pause, « Clore » différé |
 | `fiche.js` | la fiche d'un élève, en panneau latéral : présence, séance par séance |
@@ -1252,6 +1253,29 @@ Trois mécanismes, à ne pas défaire :
 3. **Une carte finie se replie** sur son titre et une ligne verte
    (`data-fait="oui"`). Elle ne disparaît pas — « il était là tout à l'heure »
    se lit comme un bogue.
+
+**Trois étages depuis le 03/11 (`js/moment.js`).** L'espace devenait trop
+long : une carte de missions par séance publiée, puis tous les modules. Il
+se lit maintenant ainsi, et pas autrement :
+
+1. **En ce moment** — la séance ouverte ou prévue aujourd'hui (plusieurs si
+   besoin), avec les liens de son module ; à défaut, la prochaine prévue.
+2. **Les situations professionnelles**, dans la même partie : tout module
+   dont le titre commence par « SP » (ou le code par `sp-`) garde ses liens
+   en vue, ses séances repliées dessous. Aucune classe n'est nommée.
+3. **« Vos modules et séances »**, une seule carte repliée : les autres
+   modules, chacun avec ses séances repliées.
+
+`moment.js` ne fabrique rien : `missions.js` lui passe `[{ d, carte }]`,
+`modules.js` `[{ m, bloc }]`, dans un ordre quelconque, et il replace. Une
+carte déplacée garde ses cases. `mes_missions()` rend `module_id` et
+`prevue_le` depuis la migration `20261103060000` ; sans elle, tout ce qui
+n'est pas ouvert tombe dans « Les autres séances ».
+
+**Les questionnaires étudiants arrivent repliés** (`.qn-corps`) : le titre
+(qui porte le rang de la file) et l'accusé restent hors du repli, la ligne
+« Question 3 sur 12 · Répondre » ouvre le reste. Le contrôle d'entrée, lui,
+reste déplié : il se fait avant la séance, pas quand on y pense.
 
 **Typographie : `typo()` avant tout intitulé affiché.** Elle pose une espace
 fine insécable (U+202F) devant `? ! ; :` et dans les guillemets français. Sans

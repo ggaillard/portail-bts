@@ -106,3 +106,28 @@
 .gs-module{margin-top:1.1rem}
 .gs-module:first-child{margin-top:.2rem}
 .gs-sans{color:var(--signal)}
+
+/* ── L'espace étudiant en trois étages (03/11) ──
+   « En ce moment » en clair (séance du jour, situations professionnelles),
+   puis une seule carte repliée pour tout le reste. Voir js/moment.js. */
+.mo-zone{margin:0 0 1rem}
+.mo-titre{margin:0 0 .7rem}
+.mo-vide{margin:0 0 .8rem}
+.mo-liens{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem .6rem;margin:-.4rem 0 1rem}
+.mo-mod{flex:1 1 100%;font-size:.85rem;font-weight:600;color:var(--ink-soft);min-width:0}
+.mo-lien{display:inline-flex;align-items:center;text-decoration:none;font-size:.88rem;padding:.5rem .9rem}
+.mo-sp{margin-top:.4rem}
+.mo-sp-titre{font-size:1.02rem;margin:1rem 0 .6rem}
+.mo-sp .md-bloc{padding:.9rem 1rem .5rem;border:1px solid var(--rule);border-radius:12px;
+  margin:0 0 .8rem;background:var(--surface)}
+.mo-sp .md-bloc:first-child{padding-top:.9rem}
+.mo-sp .md-desc{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mo-seances > .card{margin-bottom:.7rem}
+.mo-reste > summary{gap:.6rem;flex-wrap:wrap}
+.mo-compte{font-family:var(--f-mono);font-size:.82rem;color:var(--ink-soft)}
+.mo-reste[open] .projets.md-etu{margin-top:.4rem}
+#seances-autres > .md-titre{margin-top:1rem}
+.mo-seances > summary{list-style:none;color:var(--accent-ink)}
+.mo-seances > summary::-webkit-details-marker{display:none}
+.mo-seances > summary::after{content:"▸";margin-left:.4rem;color:var(--ink-faint)}
+.mo-seances[open] > summary::after{content:"▾"}

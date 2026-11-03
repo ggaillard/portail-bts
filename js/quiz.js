@@ -68,19 +68,22 @@ function rendreQuestionnairesEtu(liste){
   majFile();
 }
 
+// Le questionnaire arrive REPLIÉ (03/11) : son titre, une ligne qui dit où
+// l'on en est, et on déplie pour répondre. Déplié d'office, chacun prenait
+// un écran entier avant la séance. Le titre reste hors du repli : c'est lui
+// qui porte le rang de la file (`.etape > h2`), et le message d'accusé aussi,
+// pour qu'une carte finie dise encore qu'elle est faite.
 function carteQuestionnaire(d){
   var c = document.createElement("div");
-  c.className = "card etape";
+  c.className = "card etape qn-carte";
   c.id = "qn-" + d.seance_id;
   c.setAttribute("data-etape", d.titre);
-  c.innerHTML = '<h2></h2><p class="hint"></p><div id="err-qn-' + d.seance_id + '"></div>' +
-                '<p class="cn-int"></p><div class="appel-choix"></div>';
+  c.innerHTML = '<h2></h2><div id="err-qn-' + d.seance_id + '"></div>' +
+                '<details class="qn-corps"><summary><b class="qn-av"></b>' +
+                '<span class="qn-ouvrir">Répondre</span></summary>' +
+                '<p class="hint"></p><p class="cn-int"></p><div class="appel-choix"></div></details>';
   c.querySelector("h2").textContent = d.titre;
-  var h = c.querySelector(".hint");
-  h.textContent = (d.intro || "") + " ";
-  var av = document.createElement("b");
-  av.className = "qn-av";
-  h.appendChild(av);
+  c.querySelector(".hint").textContent = d.intro || "";
   return c;
 }
 

@@ -22,6 +22,7 @@
 
 import { $, sb, erreur, typo, classesReelles } from './socle.js';
 import { carte, afficherProjets, rendreProjetsParClasse } from './ensemble.js';
+import { poserModules } from './moment.js';
 
 let apres = function(){};
 export function brancherModules(liens){ apres = (liens && liens.apres) || apres; }
@@ -101,16 +102,17 @@ function chargerModulesEtu(classeId){
 }
 
 function repliProjets(classeId){
+  poserModules(null);
+  $("mes-projets").classList.remove("md-etu");
   return sb.from("projets").select("titre,description,url,icone,ordre")
     .eq("classe_id", classeId).order("ordre")
     .then(function(r){ afficherProjets("mes-projets", r.data); });
 }
 
+// Les blocs sont fabriqués ici et PLACÉS par moment.js : les situations
+// professionnelles en vue avec la séance du moment, le reste replié (03/11).
 function rendreModulesEtu(liste){
-  var z = $("mes-projets");
-  z.innerHTML = "";
-  z.classList.add("md-etu");
-  liste.forEach(function(m){ z.appendChild(blocModule(m, false)); });
+  poserModules(liste.map(function(m){ return { m: m, bloc: blocModule(m, false) }; }));
 }
 
 // ── Côté enseignant ──────────────────────────────────────────────────────
@@ -135,7 +137,8 @@ function rendreModules(liste){
   if (titre) titre.textContent = "Les modules, par classe";
   var aide = $("md-carte-hint");
   if (aide) aide.textContent = "Un module appartient à une classe et a son dépôt GitHub. " +
-    "Ses étudiants le trouvent dans « Vos projets » ; ses séances se rangent " +
+    "Ses étudiants le trouvent dans leur espace — « En ce moment » pour une SP, " +
+    "« Vos modules et séances » sinon ; ses séances se rangent " +
     "dans la carte « Les séances », en les modifiant.";
   // Le formulaire a pu être déplacé sous une classe : on le remet au bas de
   // la carte avant de vider la liste, qui l'emporterait sinon avec elle.
