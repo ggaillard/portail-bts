@@ -101,6 +101,8 @@ begin
 end $$;
 
 -- ─── 5. Contrôle ───────────────────────────────────────────────────────────
+--  Le quiz, ce sont les clés q1…q10 : depuis le 03/11 au soir, la séance porte
+--  aussi les questions au fil de l'heure (f01…), qui ne sont pas du quiz.
 do $$
 declare n int; v_titre text;
 begin
@@ -109,7 +111,7 @@ begin
     join public.seances s on s.id = co.seance_id
     join public.classes c on c.id = s.classe_id
    where c.code = 'BTS1-DEV-2026' and s.numero = 5
-     and co.question not like 'pre-%';
+     and co.question ~ '^q[0-9]+$';
   if n <> 10 then raise exception 'séance 5 : % corrigés de quiz, attendu 10', n; end if;
 
   select count(*) into n
@@ -117,7 +119,7 @@ begin
     join public.seances s on s.id = co.seance_id
     join public.classes c on c.id = s.classe_id
    where c.code = 'BTS1-DEV-2026' and s.numero = 5
-     and co.question not like 'pre-%'
+     and co.question ~ '^q[0-9]+$'
      and (co.intitule is null or co.options is null or array_length(co.options, 1) <> 4);
   if n > 0 then raise exception '% corrigé(s) de la séance 5 sans intitulé ou sans 4 options', n; end if;
 
@@ -125,7 +127,7 @@ begin
     select count(*) as k from public.corriges co
       join public.seances s on s.id = co.seance_id
       join public.classes c on c.id = s.classe_id
-     where c.code = 'BTS1-DEV-2026' and s.numero = 5 and co.question not like 'pre-%'
+     where c.code = 'BTS1-DEV-2026' and s.numero = 5 and co.question ~ '^q[0-9]+$'
      group by co.bonne_reponse) t;
   if n > 3 then raise exception 'une même lettre est bonne % fois sur 10 : motif repérable', n; end if;
 
