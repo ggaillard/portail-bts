@@ -53,4 +53,4 @@ body:has(#espace-ens:not([hidden])) header .sub{display:none}
 .mo-cours h2{margin-top:0}
 .mo-cours .mo-ouvrir{display:inline-flex;justify-content:center;min-height:44px;margin-top:.6rem}
 .mo-cours .mo-ouvrir[hidden]{display:none}
-@media (max-width:480px){.mo-cours .mo-ouvrir{width:100%}}
+@media (max-width: 30rem){.mo-cours .mo-ouvrir{width:100%}}

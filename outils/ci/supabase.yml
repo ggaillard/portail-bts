@@ -232,7 +232,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.122.0   # pas « latest » : la v3 (02/11/2026) vise la base locale par défaut
 
       # Le mot de passe passe par l'environnement et non par -p : il n'apparaît
       # alors dans aucune ligne de commande, même tronquée, même en cas d'erreur.

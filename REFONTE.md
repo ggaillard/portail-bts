@@ -1335,3 +1335,17 @@ feuilles, 47 modules, 12 818 lignes de JavaScript, 75 fonctions RPC appelées.
 
 Les chiffres de `mesurer.mjs` après ce lot : 1 154 lignes d'`index.html`, 17
 feuilles, 48 modules, 13 048 lignes de JavaScript, 75 fonctions RPC appelées.
+
+### Le soir du 03/11 — la séance de cours du jour, l'humeur qui vaut présence
+
+- `mes_missions()` rend aussi les séances de **cours** sans missions, ouvertes
+  ou prévues dans les sept jours (`20261103200000`, `20261103203000`) :
+  `carteCours()` dans `missions.js`, bouton « Ouvrir la séance » posé par
+  `moment.js` depuis le site du module. Tout le BTS1 en était privé.
+- `appel.js` : « Vous êtes là ? » n'est plus affiché quand une humeur est
+  posée ; y répondre envoie « A » à la question d'appel du jour, en coulisse.
+- Une seule classe neuve de style (`mo-cours`, à la fin de `moments.css`), au
+  seuil `telephone`.
+
+Les chiffres de `mesurer.mjs` après ce lot : 2 094 lignes de CSS, 13 127 lignes
+de JavaScript, 1 027 règles, 644 classes, 27 media queries.
