@@ -1368,3 +1368,5 @@ de JavaScript, 1 027 règles, 644 classes, 27 media queries.
 Les chiffres de `mesurer.mjs` après ce lot : 1 162 lignes d'`index.html`,
 49 modules, 13 208 lignes de JavaScript, 76 fonctions RPC appelées.
 
+
+- 04/11, en classe : « Session non initialisée » — la connexion anonyme du chargement échouait en silence (limite Supabase par adresse IP, toute la classe derrière celle du lycée). `assurerSessionAnonyme()` la refait au moment de se connecter, et dit ce qui bloque. Le numéro « 7 » devient « 07 ». 13 239 lignes de JavaScript.

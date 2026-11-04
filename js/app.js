@@ -457,6 +457,21 @@ function ouvrirEspaceEnseignant(){
 }
 
 
+// Une session (anonyme) est exigée par rejoindre() : sans elle, la base
+// répond « Session non initialisée ». Deux essais espacés d'une seconde et
+// demie, puis on renonce en le disant.
+function assurerSessionAnonyme(){
+  return sb.auth.getSession().then(function(s){
+    if (s.data && s.data.session) return true;
+    return sb.auth.signInAnonymously().then(function(r){
+      if (!r.error) return true;
+      return new Promise(function(ok){ setTimeout(ok, 1500); })
+        .then(function(){ return sb.auth.signInAnonymously(); })
+        .then(function(r2){ return !r2.error; });
+    });
+  }).catch(function(){ return false; });
+}
+
 // ── Formulaire étudiant ────────────────────────────────────────────────────
 $("f-etu").addEventListener("submit", function(e){
   e.preventDefault();
@@ -464,15 +479,31 @@ $("f-etu").addEventListener("submit", function(e){
   $("b-etu").disabled = true;
   $("b-etu").textContent = "Connexion…";
 
-  sb.rpc("rejoindre", {
-    p_classe_code: $("classe").value,
-    p_numero:      $("numero").value.trim(),
-    p_pin:         $("pin").value.trim() || null
-  }).then(function(r){
-    $("b-etu").disabled = false;
-    $("b-etu").textContent = "Me connecter";
-    if (r.error) { erreur("err-etu", r.error.message); return; }
-    ouvrirEspaceEtudiant(r.data);
+  // « Session non initialisée » (04/11, en classe) : la connexion anonyme
+  // ouverte au chargement de la page avait échoué en silence — Supabase
+  // limite les connexions anonymes PAR ADRESSE IP, et toute une classe sort
+  // par la même IP du lycée. On s'assure donc d'une session au moment de se
+  // connecter, et l'on dit clairement ce qui bloque si elle est refusée.
+  var numero = $("numero").value.trim();
+  if (/^\d$/.test(numero)) numero = "0" + numero;     // « 7 » → « 07 »
+  assurerSessionAnonyme().then(function(ok){
+    if (!ok) {
+      $("b-etu").disabled = false;
+      $("b-etu").textContent = "Me connecter";
+      erreur("err-etu", "Trop de connexions en même temps depuis ce réseau. " +
+        "Patientez une minute, puis réessayez — ou prévenez votre enseignant.");
+      return;
+    }
+    return sb.rpc("rejoindre", {
+      p_classe_code: $("classe").value,
+      p_numero:      numero,
+      p_pin:         $("pin").value.trim() || null
+    }).then(function(r){
+      $("b-etu").disabled = false;
+      $("b-etu").textContent = "Me connecter";
+      if (r.error) { erreur("err-etu", r.error.message); return; }
+      ouvrirEspaceEtudiant(r.data);
+    });
   });
 });
 
