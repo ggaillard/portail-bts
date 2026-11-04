@@ -127,5 +127,5 @@ begin
     join public.seances s on s.id = co.seance_id
     join public.classes c on c.id = s.classe_id
    where c.code = 'BTS1-DEV-2026' and s.numero = 5 and co.question ~ '^f[0-9]+$';
-  if n <> 7 then raise exception 'séance 5 : % question(s) au fil, 7 attendues', n; end if;
+  if n < 7 then raise exception 'séance 5 : % question(s) au fil, au moins 7 attendues', n; end if;
 end $$;

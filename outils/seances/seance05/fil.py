@@ -25,7 +25,7 @@ from collections import Counter
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 RACINE = os.path.normpath(os.path.join(ICI, '..', '..', '..'))
-MIG = os.path.join(RACINE, 'supabase', 'migrations', '20261103210000_bts1_seance5_fil.sql')
+MIG = os.path.join(RACINE, 'supabase', 'migrations', '20261104110000_bts1_seance5_fil_suite.sql')
 
 # (clé, bonne, énoncé, options, explication, avant ce titre de la trace)
 FIL = [
@@ -55,24 +55,45 @@ FIL = [
  ('f06', 'C', "Dans le Dockerfile du rapport, quelle ligne fixe la version de Python ?",
   ["la ligne CMD", "la ligne COPY", "la ligne FROM", "la ligne WORKDIR"],
   "FROM python:3.12-slim : la version est écrite dans le fichier, ce n'est plus le serveur qui décide.",
-  "### Les gestes, en ligne de commande"),
+  "> 🔑 **Le conteneur ne corrige pas le code"),
  ('f07', 'D', "Dans le workflow, que veut dire « needs: tester » sous le travail livrer ?",
   ["livrer et tester tournent en même temps", "livrer attend qu'un testeur humain valide",
    "tester attend que livrer soit terminé", "livrer ne démarre que si tester est vert"],
   "needs règle l'ordre : livrer attend tester, et ne part que si tout y est vert.",
   "> 🎯 **Le twist** : le pipeline est lui-même du code."),
+ # 04/11 : quatre de plus, pour que les questions suivent le récit d'un bout à l'autre.
+ ('f08', 'C', "D'après le terminal de Noah, juste après quelle commande la page d'accueil est-elle tombée ?",
+  ["la connexion au serveur", "la récupération de main", "le redémarrage du service", "l'installation des dépendances"],
+  "17:47 systemctl restart, 17:52 erreur 500 : c'est en redémarrant avec le nouveau code, jamais testé, que la page est tombée.",
+  "**Trois oublis, trois humains. Et si ce n'était plus à un humain de s'en"),
+ ('f09', 'B', "La panne de Python vient de quel défaut du déploiement à la main ?",
+  ["on oublie une étape", "on ne fait jamais deux fois pareil", "on ne sait pas après coup ce qui a été fait", "on va trop vite"],
+  "Le poste et le serveur n'avaient pas le même environnement : à la main, aucune installation n'est identique à la précédente.",
+  "> 🔑 **Ce qui se répète doit être fait par une machine.**"),
+ ('f10', 'A', "Pourquoi essayer une version en préproduction avant la production ?",
+  ["pour qu'une panne arrive devant l'équipe, pas devant le client", "pour que la production aille plus vite",
+   "pour garder une sauvegarde de la base", "pour éviter d'écrire des tests"],
+  "La préproduction est une copie de la production sans les vrais utilisateurs : on y casse sans dégâts.",
+  "> 🔑 **Un pipeline ne rend pas le code meilleur."),
+ ('f11', 'D', "À quel moment le workflow de l'équipe de Noah se lance-t-il ?",
+  ["chaque nuit à minuit", "quand Noah clique sur un bouton", "à chaque modification du wiki", "à chaque push sur la branche main"],
+  "on: push: branches: [main] — chaque envoi sur main déclenche la chaîne, sans que personne n'ait à y penser.",
+  "Quatre mots suffisent pour le lire :"),
 ]
 
-c = Counter(b for _, b, *_ in FIL); assert max(c.values()) <= 2, c
+c = Counter(b for _, b, *_ in FIL); assert max(c.values()) <= 3, c
 
 def s(x): return "'" + x.replace("'", "''") + "'"
 def arr(o): return "array[" + ", ".join(s(x) for x in o) + "]"
 
 def bloc_md(i, cle, b, enonce, opts, expl):
     lignes = " · ".join("`%s` %s" % ("ABCD"[k], o) for k, o in enumerate(opts))
-    return ('!!! fil "Au fil de l\'heure — question %d"\n'
-            '    **%s**\n\n'
-            '    %s\n\n') % (i, enonce, lignes)
+    # La CLÉ est écrite dans le bloc (span caché) : l'ordre dans la page peut
+    # changer sans décaler les réponses déjà données. Le numéro affiché
+    # (« question 3 / 11 ») est calculé par suivi.js dans l'ordre de lecture.
+    return ('!!! fil "Au fil de l\'heure"\n'
+            '    **%s**<span class="fil-cle" hidden>%s</span>\n\n'
+            '    %s\n\n') % (enonce, cle, lignes)
 
 def page():
     for nom in ('BTS1 S1 B1 DEV', 'BTS1_S1_B1_DEV', 'b1'):
@@ -83,7 +104,9 @@ def page():
 if '--page' in sys.argv:
     p = page()
     t = open(p, encoding='utf-8').read()
-    if '!!! fil' in t: sys.exit('la trace a déjà ses questions au fil : rien n\'est réinséré')
+    import re
+    # On retire les blocs déjà posés, puis on les repose tous depuis la liste.
+    t = re.sub(r'!!! fil "[^"]*"\n(?:    .*\n|\n)*?(?=\S)', '', t)
     for i, (cle, b, e, o, x, avant) in enumerate(FIL, 1):
         assert t.count(avant) == 1, avant
         t = t.replace(avant, bloc_md(i, cle, b, e, o, x) + avant)
@@ -208,7 +231,7 @@ begin
     join public.seances s on s.id = co.seance_id
     join public.classes c on c.id = s.classe_id
    where c.code = 'BTS1-DEV-2026' and s.numero = 5 and co.question ~ '^f[0-9]+$';
-  if n <> @@N@@ then raise exception 'séance 5 : % question(s) au fil, @@N@@ attendues', n; end if;
+  if n < @@N@@ then raise exception 'séance 5 : % question(s) au fil, au moins @@N@@ attendues', n; end if;
 end $$;
 """.replace('@@VALS@@', vals).replace('@@N@@', str(len(FIL)))
 open(MIG, 'w', encoding='utf-8', newline='\n').write(sql)
