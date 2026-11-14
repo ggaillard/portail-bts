@@ -175,3 +175,11 @@
 /* « En direct » : une pastille discrète devant la phrase, pas une alerte. */
 #suivi-mode.direct::before{content:"";display:inline-block;width:.5rem;height:.5rem;
   margin-right:.35rem;border-radius:50%;background:var(--ok);vertical-align:.1rem}
+
+/* Identités déclarées à une séance (14/11) : l'écart se lit en rouge, comme
+   les absents ; le reste en petit, replié tant que tout concorde. */
+.ac-identite{margin:.4rem 0 .6rem}
+.ac-identite > summary{cursor:pointer;font-size:.9rem;font-weight:600;
+  padding:.5rem 0;min-height:44px;display:flex;align-items:center}
+.ac-ecart{color:#963232;font-weight:600;margin:.25rem 0}
+#bloc-identite .err{color:#963232;min-height:1.2em;margin:.3rem 0}

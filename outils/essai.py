@@ -74,7 +74,7 @@ ESSAIS = [
      'question 14'),
 
     ("un acte sans point de passage", 'fiche',
-     lambda b: (_migration(b, '*_passages.sql'), r"\(5, 'Ouvrez le capot', 45,",
+     lambda b: (_migration(b, '*_bts1_seance5_passages.sql'), r"\(5, 'Ouvrez le capot', 45,",
                 "(9, 'Ouvrez le capot', 45,"),
      "l'acte 5 n'a pas de point de passage"),
 

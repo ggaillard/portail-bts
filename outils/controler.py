@@ -231,13 +231,17 @@ def pedagogie(racine, supports):
                        "reste pas la place du cold open et du quiz"
                        % (p, total, ACTES_MIN, ACTES_MAX))
 
-        # 3 — le prérequis nomme la séance d'avant
-        if t.numero and t.numero > 1:
+        # 3 — le prérequis nomme la séance d'avant : la dernière qui EXISTE
+        #     dans docs/seances/, pas « numéro − 1 ». Depuis le 14/11, la
+        #     séance 6 du BTS1 est reportée au S2 : la 7 suit la 5.
+        avant = [x.numero for x in ts if x.numero and t.numero and x.numero < t.numero]
+        if avant:
+            prec = max(avant)
             pre = t.prerequis or ''
-            if ('séance %d' % (t.numero - 1)) not in pre and 'aucun' not in pre.lower():
+            if ('séance %d' % prec) not in pre and 'aucun' not in pre.lower():
                 dur.append("%s : le prérequis ne nomme pas la séance %d — un "
                            "absent ne sait pas quoi rattraper"
-                           % (p, t.numero - 1))
+                           % (p, prec))
 
         # 4 — le quiz ne demande que ce que la séance dit
         d, r = _vocabulaire(p, t)

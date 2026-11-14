@@ -29,6 +29,7 @@ import { $, sb, suivi, erreur, typo, estDemo, classesReelles, nomDe, prenomSeul,
          lireNoms, enregistrerNoms,
          pastilles, pastilleAppel, copierTexte, majFile, marquerEtape,
          texteEnvoi, signalerSessionPerimee } from './socle.js';
+import { blocIdentitesClasse } from './identite.js';
 
 function proposerAppel(){
   var bloc = $("bloc-appel");
@@ -295,6 +296,7 @@ function remplirAppelClasse(bloc, c, a){
   if (!a.pose) {
     q.textContent = "Aucune question posée aujourd'hui — le premier étudiant qui " +
                     "se connectera déclenchera la question de présence.";
+    blocIdentitesClasse(bloc, c);
     return;
   }
   q.textContent = a.intitule || "";
@@ -348,6 +350,9 @@ function remplirAppelClasse(bloc, c, a){
   var zh = document.createElement("div");
   bloc.appendChild(zh);
   rendreHumeurClasse(zh, a);
+
+  // Les jours où la séance l'exige : ce que chaque numéro a déclaré.
+  blocIdentitesClasse(bloc, c);
 }
 
 // « 04 Marwan   05 Sofia   07 Achille » — le numéro reste en gros, le prénom

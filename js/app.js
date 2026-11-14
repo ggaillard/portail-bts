@@ -60,6 +60,7 @@ import { chargerMissionsEtu, brancherMissions } from './missions.js';
 import { brancherGestion, chargerGestion, relireGestion } from './gestion.js';
 import { brancherModules, chargerModules, chargerModulesEtu } from './modules.js';
 import { choisirSeanceDuJour } from './encours.js';
+import { verifierIdentiteEtu } from './identite.js';
 import { texteRefus } from './refus.js';
 // Deux modules qui se branchent seuls au chargement (lot 1, 05/10) : la
 // recherche d'une séance, et les raccourcis clavier.
@@ -164,14 +165,17 @@ function ouvrirEspaceEtudiant(moi){
   $("mon-avatar").textContent   = moi.avatar || "";
   montrer("espace-etu");
 
-  if (!moi.avatar) proposerAvatar(moi);
-  proposerAppel();
-  chargerControlesEtu();
-  chargerQuestionnairesEtu();
-  chargerMissionsEtu();
-  chargerEquipeEtu();
+  // Une séance qui exige l'identité (nom et prénom) passe avant tout le reste.
+  verifierIdentiteEtu(function(){
+    if (!moi.avatar) proposerAvatar(moi);
+    proposerAppel();
+    chargerControlesEtu();
+    chargerQuestionnairesEtu();
+    chargerMissionsEtu();
+    chargerEquipeEtu();
 
-  chargerModulesEtu(moi.classe_id);
+    chargerModulesEtu(moi.classe_id);
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -627,9 +631,11 @@ sb.auth.getSession().then(function(s){
       });
     });
   }
-  return sb.auth.signInAnonymously().then(function(){
-    return chargerClasses().then(function(){ montrer("connexion"); });
-  });
+  // Pas de session : on montre le formulaire sans en ouvrir une. Elle ne
+  // s'ouvre qu'au clic sur « Me connecter » (assurerSessionAnonyme) : une
+  // ouverture à chaque chargement de page épuisait la limite Supabase par
+  // adresse IP, que toute une salle partage (incident du 04/11/2026).
+  return chargerClasses().then(function(){ montrer("connexion"); });
 }).catch(function(){
   $("chargement").textContent =
     "Connexion au service impossible. Réessayez dans un instant, ou prévenez votre enseignant.";

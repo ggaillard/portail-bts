@@ -982,3 +982,47 @@ Ce qu'on doit y lire :
 - Répartir les bonnes réponses sur A, B, C et D. Une classe repère très vite un
   motif.
 - La table `eleves` ne contient **ni nom, ni prénom, ni adresse**. Jamais.
+- **Une salle de classe = une seule adresse IP pour Supabase.** Les ouvertures
+  de session anonyme (`signInAnonymously`) sont plafonnées par IP — 30 par heure
+  par défaut, crédit de 30 au départ. Au-delà : 429, puis `rejoindre()` répond
+  « Session non initialisee ». Incident du mercredi 04/11/2026, séance 5 du
+  BTS1 : 392 sessions anonymes dans la journée, dont 224 entre 12 h 30 et
+  12 h 35, et 17 étudiants sur 31 qui ont pu répondre. Depuis : la session ne
+  s'ouvre qu'au clic sur « Me connecter », et un 429 est affiché en clair. Le
+  plafond se règle dans Supabase → Authentication → Rate Limits → *Anonymous
+  users* : 500 par heure au 14/11, à ne pas redescendre sous 150.
+- **Vérification d'identité à une séance (14/11/2026).** Quand
+  `seances.identite_exigee` est vrai, l'étudiant connecté tape son nom et son
+  prénom avant tout le reste (`js/identite.js`) ; la carte d'appel de
+  l'enseignant les compare à sa liste locale numéro → nom et signale les
+  écarts. Les saisies vivent dans `identites_seance`, sans lecture directe,
+  et sont **effacées à la clôture** de la séance (au plus tard 24 h après).
+  `eleves` reste sans nom. Activé pour la séance 5 du BTS1, le 18/11.
+  Contrôle : `outils/t_identite.mjs`, essayé en le cassant quatre fois.
+- **BTS1 séance 6 « Rouge, puis vert » — écrite, puis REPORTÉE (14/11/2026).**
+  Réécrite au format de la séance 5 (questions au fil, points de passage sur
+  le dépôt de l'étudiant, quiz dans « Réviser ») depuis la branche
+  `seance6-suivi` du 19/10. Le jour même, G. la reporte au **semestre 2, SLAM
+  uniquement** (semaines réduites, classe SISR/SLAM). Au S1, la séance 7 suit
+  la 5. Conséquences traitées :
+  - la séance 6 en base est renumérotée **66** (`20261114130000`) : sinon
+    « À faire » la tient pour la prochaine séance à jamais et juge
+    prématuré le contrôle d'entrée de la 7 ;
+  - `eleves_a_suivre()` compare désormais à la **dernière séance démarrée**,
+    plus à « numéro − 1 » (`20261114120000`) — sinon les notions oubliées
+    entre la 5 et la 7 n'auraient jamais été comptées ;
+  - trace dans `BTS1_S1_B1_DEV/reserve/` (hors site), migrations dans
+    `outils/seances/seance06/en-attente-S2/` (hors chaîne) ;
+  - la séance 7 devra poser son contrôle d'entrée sur les concepts de la
+    **séance 5**.
+- **BTS1 séance 7 « Tous les tests étaient verts » (14/11/2026).** OWASP,
+  vulnérabilité / menace / risque, injection SQL et requête paramétrée, IDOR
+  et CSRF, Top 10 2025, sécurité dès la conception. Suit la séance 5 (la 6
+  est reportée) : contrôle d'entrée sur les concepts de la 5. Source unique
+  `outils/seances/seance07/donnees.py` ; `generer.py --page` remplit la
+  trace, `generer.py` écrit `20261114140*_bts1_seance7*`. Créneau : mercredi
+  25/11, 12 h – 13 h, automatique. Contrôles : `controler.py` corrigé (le
+  prérequis doit nommer la **dernière séance existante**, plus « numéro −
+  1 ») et `essai.py` (l'injection « acte sans point de passage » vise la
+  séance 5 nommément) — les 15 défauts injectés restent tous nommés.
+  **Pas encore en base au 14/11** : appliquée par l'Action au push.
